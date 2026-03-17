@@ -137,6 +137,7 @@ ipcMain.handle(ch.SAVE_CONFIG, (_, config) => {
   global.CLAUDE_BIN = config.claudeBinaryPath
   require('./src/file-watcher').start(mainWindow)
   require('./src/db-reader').open(config.vaultPath)
+  require('./src/vault-scanner').invalidateCache()
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'))
 })
 

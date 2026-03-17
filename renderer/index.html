@@ -689,6 +689,10 @@ const navItems = document.querySelectorAll('.nav-item[data-view]')
 navItems.forEach(item => {
   item.addEventListener('click', () => {
     const view = item.dataset.view
+    // Stop graph simulation when leaving graph view
+    if (document.querySelector('.nav-item.active')?.dataset.view === 'graph' && view !== 'graph') {
+      if (graphSimulation) graphSimulation.alphaTarget(0)
+    }
     navItems.forEach(n => n.classList.remove('active'))
     item.classList.add('active')
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'))
@@ -1237,7 +1241,7 @@ async function renderGraph() {
   node.append('circle')
     .attr('r', nodeRadius)
     .attr('fill', nodeColor)
-    .attr('fill-opacity', 0.85)
+    .attr('fill-opacity', d => (degree[d.id] || 0) === 0 ? 0.4 : 0.85)
     .attr('stroke', d => nodeColor(d))
     .attr('stroke-width', 1)
     .attr('stroke-opacity', 0.4)
@@ -1274,7 +1278,7 @@ async function renderGraph() {
   })
 
   node.on('mouseleave', () => {
-    node.selectAll('circle').attr('fill-opacity', 0.85)
+    node.selectAll('circle').attr('fill-opacity', n => (degree[n.id] || 0) === 0 ? 0.4 : 0.85)
     node.selectAll('text').style('opacity', 0)
     link.attr('stroke', 'rgba(212,165,116,0.12)').attr('stroke-width', 1)
   })
@@ -1325,7 +1329,7 @@ async function renderGraph() {
 
 document.getElementById('graph-refresh-btn').addEventListener('click', async () => {
   await window.ace.vault.invalidateGraph()
-  renderGraph()
+  await renderGraph()
 })
 </script>
 </body>
