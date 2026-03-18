@@ -5,6 +5,8 @@
   <title>ACE Desktop</title>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../node_modules/xterm/css/xterm.css">
+  <script src="lib/chart.umd.js"></script>
+  <script src="lib/Sortable.min.js"></script>
   <style>
     :root {
       --bg-deep:    #060504;
@@ -502,6 +504,29 @@
     .ar-spawn { padding:6px 8px; margin:6px 10px; background:none; border:1px dashed rgba(212,165,116,0.15); border-radius:4px; cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:7.5px; letter-spacing:1px; text-transform:uppercase; color:var(--text-dim); transition:all 0.14s; text-align:center; }
     .ar-spawn:hover { border-color:var(--gold-dim); color:var(--gold); }
     .agents-shell { display:flex; flex-direction:column; flex:1; overflow:hidden; }
+
+    /* ─── Synthesis Bar ──────────────────────────────── */
+    .synthesis-bar {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .synthesis-icon {
+      color: var(--gold);
+      font-size: 16px;
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+    .synthesis-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
@@ -564,42 +589,22 @@
           </div>
         </div>
         <div class="vbody">
-
-          <!-- Greeting -->
           <div class="home-time" id="home-time"></div>
-          <div class="home-name" id="home-name">Good morning, Nikhil.</div>
-          <div class="home-status" id="home-status"></div>
+          <div class="home-name" id="home-name">Good morning.</div>
+
+          <!-- Synthesis bar -->
+          <div id="widget-synthesis"></div>
 
           <!-- Stats strip -->
-          <div class="stats-strip">
-            <div class="sstat">
-              <span class="sv" id="ss-subs" style="color:var(--blue-grey)">—</span>
-              <span class="sl">Subscribers</span>
-            </div>
-            <div class="sstat">
-              <span class="sv" id="ss-mtd" style="color:var(--green)">—</span>
-              <span class="sl">Revenue MTD</span>
-            </div>
-            <div class="sstat">
-              <span class="sv" id="ss-pipe" style="color:var(--gold)">—</span>
-              <span class="sl">Pipeline</span>
-            </div>
-            <div class="sstat">
-              <span class="sv" id="ss-fu" style="color:var(--text-secondary)">—</span>
-              <span class="sl">Follow-ups</span>
-            </div>
-          </div>
+          <div id="widget-metrics"></div>
+
+          <!-- Mode/Energy tags -->
+          <div id="widget-state" style="margin-bottom:12px"></div>
 
           <!-- Two-column content -->
           <div class="home-cols">
-
-            <!-- LEFT: Outcomes + Quick Commands -->
             <div class="home-left">
-              <div class="section-label">Outcomes</div>
-              <div class="outcomes-grid" id="outcomes-grid">
-                <div style="grid-column:1/-1;font-size:10px;color:var(--text-dim);padding:8px 0">Loading…</div>
-              </div>
-
+              <div id="widget-outcomes"></div>
               <div class="section-label">Commands</div>
               <div class="quick-cmds">
                 <div class="qcmd" data-cmd="/start"><div class="qcmd-icon">☀</div><div class="qcmd-label">/start</div></div>
@@ -608,22 +613,14 @@
                 <div class="qcmd" data-cmd="/eod"><div class="qcmd-icon">◐</div><div class="qcmd-label">/eod</div></div>
               </div>
             </div>
-
-            <!-- RIGHT: Targets + Follow-ups + Pipeline -->
             <div class="home-right">
-
-              <div class="section-label">This Week</div>
-              <div id="target-list"></div>
-
-              <div class="section-label" style="margin-top:16px">Follow-ups</div>
-              <div id="followup-list"><div class="fu-empty">Loading…</div></div>
-
-              <div class="section-label" style="margin-top:16px">Pipeline</div>
-              <div id="pipeline-list"><div class="fu-empty">Loading…</div></div>
-
+              <div id="widget-targets"></div>
+              <div style="margin-top:16px" id="widget-followups"></div>
+              <div style="margin-top:16px" id="widget-pipeline"></div>
             </div>
           </div>
 
+          <div id="widget-velocity" style="margin-top:16px"></div>
         </div>
       </div>
 
@@ -1138,209 +1135,6 @@ setInterval(() => {
   })
 }, 1000)
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-function fmtMoney(v) {
-  if (!v) return '$0'
-  if (v >= 1000) return `$${(v / 1000).toFixed(1)}K`
-  return `$${Math.round(v)}`
-}
-function fmtDate(d) {
-  if (!d) return ''
-  const dt = new Date(d + 'T00:00:00')
-  return dt.toLocaleDateString('en-US', { month:'short', day:'numeric' })
-}
-function isOverdue(d) {
-  if (!d) return false
-  return new Date(d + 'T00:00:00') < new Date(new Date().toDateString())
-}
-
-// ─── Render: Outcomes ────────────────────────────────────────────────────────
-function renderOutcomes(outcomes) {
-  const grid = document.getElementById('outcomes-grid')
-  if (!outcomes || !outcomes.length) { grid.innerHTML = '<div style="grid-column:1/-1;font-size:10px;color:var(--text-dim);padding:8px 0">No outcomes found</div>'; return }
-
-  grid.innerHTML = outcomes.map(o => {
-    const days  = o.daysToGate
-    const absD  = Math.abs(days ?? 0)
-    const hasDays = days !== null && days !== undefined
-
-    const daysClass = !hasDays ? 'dim' : days < 0 ? 'overdue' : days <= 7 ? 'urgent' : 'ontrack'
-    const daysText  = !hasDays ? '—' : absD
-    const daysLabel = !hasDays ? '' : days < 0 ? 'days overdue' : `days · ${o.gateLabel}`
-
-    const barColor = !hasDays ? 'dim' : days < 0 ? 'red' : days <= 7 ? 'gold' : 'blue'
-    const barPct   = !hasDays ? 20 : days < 0 ? 100 : days <= 7 ? 88 : days <= 14 ? 65 : days <= 30 ? 45 : 25
-
-    const status = o.status || ''
-    const badgeCls = status === 'ON TRACK' ? 'on-track' : status === 'BLOCKED' ? 'blocked' : status === 'COMPLETE' ? 'complete' : 'at-risk'
-    const badgeTxt = status || 'ACTIVE'
-
-    return `<div class="oc-card">
-      <div class="oc-header">
-        <span class="oc-title">${o.title}</span>
-        <span class="oc-badge ${badgeCls}">${badgeTxt}</span>
-      </div>
-      <div class="oc-days-row">
-        <span class="oc-days ${daysClass}">${daysText}</span>
-        <span class="oc-days-label">${daysLabel}</span>
-      </div>
-      <div class="oc-bar"><div class="oc-bar-fill ${barColor}" style="width:${barPct}%"></div></div>
-    </div>`
-  }).join('')
-}
-
-// ─── Render: Weekly Targets ───────────────────────────────────────────────────
-function renderTargets(targets) {
-  const list = document.getElementById('target-list')
-  if (!targets || !targets.length) { list.innerHTML = '<div class="fu-empty">No targets this week</div>'; return }
-  const unchecked = targets.filter(t => !t.checked)
-  const checked   = targets.filter(t => t.checked)
-  list.innerHTML = [...unchecked, ...checked].map(t => `
-    <div class="target-item">
-      <div class="target-check ${t.checked ? 'done' : ''}"></div>
-      <div class="target-text ${t.checked ? 'done' : ''}">${t.text}</div>
-    </div>`).join('')
-}
-
-// ─── Render: Follow-ups ───────────────────────────────────────────────────────
-function renderFollowUps(followUps) {
-  const el    = document.getElementById('followup-list')
-  const ssEl  = document.getElementById('ss-fu')
-  if (!Array.isArray(followUps) || !followUps.length) { el.innerHTML = '<div class="fu-empty">All clear.</div>'; return }
-
-  const today   = new Date().toISOString().slice(0, 10)
-  const open    = followUps.filter(f => (f.status || '').toLowerCase() !== 'done')
-  const overdue = open.filter(f => f.due && f.due < today)
-  const dueToday = open.filter(f => f.due === today)
-  const upcoming = open.filter(f => !f.due || f.due > today)
-
-  ssEl.textContent = open.length + (overdue.length ? ` ⚠` : '')
-
-  let html = ''
-  if (overdue.length) {
-    html += `<div class="fu-section-label overdue">Overdue (${overdue.length})</div>`
-    html += overdue.map(f => `
-      <div class="fu-row">
-        <span class="fu-person">${f.person}</span>
-        <span class="fu-topic">— ${f.topic || ''}</span>
-        <span class="fu-due overdue">${fmtDate(f.due)}</span>
-      </div>`).join('')
-  }
-  if (dueToday.length) {
-    html += `<div class="fu-section-label today">Today</div>`
-    html += dueToday.map(f => `
-      <div class="fu-row">
-        <span class="fu-person">${f.person}</span>
-        <span class="fu-topic">— ${f.topic || ''}</span>
-        <span class="fu-due">${fmtDate(f.due)}</span>
-      </div>`).join('')
-  }
-  const showUpcoming = upcoming.slice(0, 4)
-  if (showUpcoming.length && !overdue.length && !dueToday.length) {
-    html += showUpcoming.map(f => `
-      <div class="fu-row">
-        <span class="fu-person">${f.person}</span>
-        <span class="fu-topic">— ${f.topic || ''}</span>
-        <span class="fu-due">${fmtDate(f.due)}</span>
-      </div>`).join('')
-  }
-  if (!html) html = '<div class="fu-empty">All clear.</div>'
-  el.innerHTML = html
-}
-
-// ─── Render: Pipeline ────────────────────────────────────────────────────────
-function renderPipeline(deals) {
-  const el   = document.getElementById('pipeline-list')
-  const ssEl = document.getElementById('ss-pipe')
-  if (!Array.isArray(deals) || !deals.length) { el.innerHTML = '<div class="fu-empty">No active deals.</div>'; ssEl.textContent = '0'; return }
-
-  const total = deals.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0)
-  ssEl.textContent = `${deals.length} · ${fmtMoney(total)}`
-
-  el.innerHTML = deals.map(d => {
-    const stage = (d.stage || 'lead').toLowerCase()
-    const due   = d.due_date
-    const dueClass = isOverdue(due) ? 'overdue' : ''
-    const dueText  = due ? (isOverdue(due) ? `⚠ ${fmtDate(due)}` : fmtDate(due)) : ''
-    return `<div class="deal-row">
-      <span class="deal-stage-dot ${stage}"></span>
-      <div class="deal-body">
-        <div class="deal-person">${d.person}</div>
-        <div class="deal-action">${d.next_action || d.product || ''}</div>
-      </div>
-      <div class="deal-right">
-        <div class="deal-amount">${fmtMoney(d.amount)}</div>
-        <div class="deal-due ${dueClass}">${dueText}</div>
-      </div>
-    </div>`
-  }).join('')
-}
-
-// ─── Render: Stats ────────────────────────────────────────────────────────────
-function renderStats(metrics) {
-  if (!metrics || !metrics._stats) return
-  const s = metrics._stats
-  if (s.subscribers) document.getElementById('ss-subs').textContent = Math.round(s.subscribers).toLocaleString()
-  if (s.mtdRevenue)  document.getElementById('ss-mtd').textContent  = fmtMoney(s.mtdRevenue)
-}
-
-// ─── Render: State ────────────────────────────────────────────────────────────
-function renderState(state) {
-  if (!state || state.error) return
-  const status = document.getElementById('home-status')
-  const chip   = document.getElementById('mode-chip')
-  status.innerHTML = ''
-
-  if (state.mode) {
-    const mode = state.mode.toLowerCase()
-    chip.textContent = mode
-    const modeTag = document.createElement('span')
-    modeTag.className = `status-tag ${mode}`
-    modeTag.textContent = mode
-    status.appendChild(modeTag)
-  }
-  if (state.energy) {
-    const eTag = document.createElement('span')
-    eTag.className = 'status-tag energy'
-    eTag.textContent = state.energy
-    status.appendChild(eTag)
-  }
-
-  if (state.outcomes) renderOutcomes(state.outcomes)
-  if (state.weeklyTargets) renderTargets(state.weeklyTargets)
-}
-
-// ─── Load dashboard ───────────────────────────────────────────────────────────
-async function loadDashboard() {
-  try {
-    const [state, followUps, pipeline, metrics] = await Promise.all([
-      window.ace.dash.getState(),
-      window.ace.dash.getFollowUps(),
-      window.ace.dash.getPipeline(),
-      window.ace.dash.getMetrics(),
-    ])
-    renderState(state)
-    renderFollowUps(followUps)
-    renderPipeline(pipeline)
-    renderStats(metrics)
-  } catch (e) {
-    document.getElementById('home-status').innerHTML = '<span class="status-tag energy">Vault connected</span>'
-  }
-}
-
-loadDashboard()
-
-document.getElementById('refresh-btn').addEventListener('click', () => {
-  document.getElementById('home-status').innerHTML = '<span class="status-tag energy">Refreshing…</span>'
-  document.getElementById('outcomes-grid').innerHTML = '<div style="grid-column:1/-1;font-size:10px;color:var(--text-dim);padding:8px 0">Loading…</div>'
-  loadDashboard()
-})
-
-// Live updates
-window.ace.dash.onStateUpdate((_,    s)  => { renderState(s); })
-window.ace.dash.onFollowUpsUpdate((_,  fu) => renderFollowUps(fu))
-window.ace.dash.onPipelineUpdate((_, p)  => renderPipeline(p))
-
 // ─── Vault View ───────────────────────────────────────────────────────────────
 let vaultRootPath      = null
 let vaultInitialized   = false
@@ -1686,5 +1480,29 @@ document.getElementById('graph-refresh-btn').addEventListener('click', async () 
   await renderGraph()
 })
 </script>
+  <script type="module">
+    import { loadDashboard } from './dashboard.js'
+
+    // Greeting
+    function greet() {
+      const h = new Date().getHours()
+      const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'
+      const nameEl = document.getElementById('home-name')
+      const timeEl = document.getElementById('home-time')
+      if (nameEl) nameEl.textContent = `${g}.`
+      if (timeEl) timeEl.textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    }
+    greet()
+    setInterval(greet, 60000)
+
+    loadDashboard()
+
+    document.getElementById('refresh-btn')?.addEventListener('click', () => loadDashboard())
+
+    // Live updates
+    window.ace.dash.onStateUpdate?.(() => loadDashboard())
+    window.ace.dash.onFollowUpsUpdate?.(() => loadDashboard())
+    window.ace.dash.onPipelineUpdate?.(() => loadDashboard())
+  </script>
 </body>
 </html>
