@@ -35,4 +35,11 @@ module.exports = {
   SAVE_CONFIG:     'save-config',
   DETECT_BINARY:   'detect-binary',
   PICK_VAULT:      'pick-vault',
+
+  // Dashboard: new channels
+  GET_VELOCITY:           'get-velocity',
+  GET_SYNTHESIS_STRUCT:   'get-synthesis-structural',
+  GET_SYNTHESIS_AI:       'get-synthesis-ai',
+  SAVE_LAYOUT:            'save-layout',
+  GET_LAYOUT:             'get-layout',
 }
