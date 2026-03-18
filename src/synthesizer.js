@@ -1,9 +1,9 @@
 // src/synthesizer.js
-// Provides structural health summary (instant) and AI synthesis call (async via Anthropic SDK)
+// Provides structural health summary (instant) and AI synthesis call (via claude CLI)
 
-const Anthropic = require('@anthropic-ai/sdk')
-const fs        = require('fs')
-const path      = require('path')
+const { execFile } = require('child_process')
+const fs            = require('fs')
+const path          = require('path')
 
 // ─── Structural synthesis (rule-based, instant) ───────────────────────────────
 
@@ -37,9 +37,22 @@ function parseSignalDetails(vaultPath) {
     const text = fs.readFileSync(
       path.join(vaultPath, '00-System', 'system-metrics.md'), 'utf8'
     )
-    const m = text.match(/signal_details:\s*([^\n]+)/)
-    if (!m) return Array(9).fill('dim')
-    return m[1].split(',').map(s => s.trim().toLowerCase()).slice(0, 9)
+    // Find the last "- Details:" line (most recent pulse snapshot)
+    const lines = text.split('\n')
+    let detailsLine = ''
+    for (let i = lines.length - 1; i >= 0; i--) {
+      if (lines[i].trim().startsWith('- Details:')) { detailsLine = lines[i]; break }
+    }
+    if (!detailsLine) return Array(9).fill('dim')
+
+    // Parse "A1=G A2=G A3=G C1=Y C2=Y C3=G E1=G E2=Y E3=R" format
+    const colorMap = { G: 'green', Y: 'yellow', R: 'red' }
+    const signalOrder = ['A1', 'A2', 'A3', 'C1', 'C2', 'C3', 'E1', 'E2', 'E3']
+    const pairs = {}
+    for (const m of detailsLine.matchAll(/([ACE]\d)=([GYR])/g)) {
+      pairs[m[1]] = colorMap[m[2]] || 'dim'
+    }
+    return signalOrder.map(k => pairs[k] || 'dim')
   } catch {
     return Array(9).fill('dim')
   }
@@ -92,10 +105,10 @@ function buildContext(vaultPath, state, metrics, followUps, velocity, pipeline) 
   }
 }
 
-// ─── AI synthesis (Anthropic SDK) ────────────────────────────────────────────
+// ─── AI synthesis (via claude CLI) ───────────────────────────────────────────
 
-async function getAISynthesis(context, voicePath) {
-  if (!process.env.ANTHROPIC_API_KEY) return null
+async function getAISynthesis(context, voicePath, binaryPath) {
+  if (!binaryPath) return null
 
   let voiceNote = ''
   try {
@@ -104,32 +117,22 @@ async function getAISynthesis(context, voicePath) {
     voiceNote = m ? m[0].slice(0, 300) : ''
   } catch {}
 
-  const prompt = `You are the AI layer of the ACE system for the user. Write a 2-3 sentence synthesis of their system state. Speak directly, in second person, no preamble. Match this voice: ${voiceNote}
+  const prompt = `You are the AI layer of the ACE system. Write a 2-3 sentence synthesis of this system state. Speak directly in second person, no preamble, no labels.${voiceNote ? ` Voice reference: ${voiceNote}` : ''}
 
-System state:
-- Mode: ${context.mode} | Energy: ${context.energy}
-- Coherence: ${context.coherenceScore}/18 (signals: ${context.signals.join(',')})
-- Outcomes: ${context.outcomes.map(o => `${o.title} [${o.status}]`).join(', ')}
-- Weekly targets: ${context.targets.done}/${context.targets.total} done
-- Pipeline: ${context.pipeline.count} deals, $${context.pipeline.value} value
-- Velocity: ${context.velocity.thisWeek} actions this week vs ${context.velocity.lastWeek} last week
-- Overdue follow-ups: ${context.overdueFu}
-- Days since last execution: ${context.daysSinceExecution}
+State: Mode=${context.mode} Energy=${context.energy} Coherence=${context.coherenceScore}/18 Signals=${context.signals.join(',')} Outcomes=${context.outcomes.map(o => `${o.title}[${o.status}]`).join('|')} Targets=${context.targets.done}/${context.targets.total} Pipeline=${context.pipeline.count}deals/$${context.pipeline.value} Velocity=${context.velocity.thisWeek}vs${context.velocity.lastWeek}lastWeek OverdueFU=${context.overdueFu} ExecutionGap=${context.daysSinceExecution}d
 
-Write the synthesis now:`
+Synthesis:`
 
-  try {
-    const client = new Anthropic()
-    const msg = await client.messages.create({
-      model:      'claude-haiku-4-5-20251001',
-      max_tokens: 150,
-      messages:   [{ role: 'user', content: prompt }],
+  return new Promise(resolve => {
+    const proc = execFile(binaryPath, ['--model', 'claude-haiku-4-5-20251001', '-p', prompt], {
+      timeout: 20000,
+      env: process.env,
+    }, (err, stdout) => {
+      if (err) { console.error('[synthesizer] claude call failed:', err.message); resolve(null); return }
+      resolve(stdout.trim() || null)
     })
-    return msg.content[0]?.text?.trim() || null
-  } catch (e) {
-    console.error('[synthesizer] AI call failed:', e.message)
-    return null
-  }
+    proc.on('error', () => resolve(null))
+  })
 }
 
 module.exports = { buildStructural, buildContext, getAISynthesis, parseSignalDetails }

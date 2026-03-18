@@ -13,7 +13,7 @@ export default {
   render(data, el) {
     const targets = data?.weeklyTargets || []
     if (!targets.length) {
-      el.innerHTML = '<div style="font-size:10px;color:var(--text-dim)">No targets set.</div>'
+      el.innerHTML = '<div style="font-size:11px;color:var(--text-dim);padding:8px 0;opacity:0.7">No targets this week — set them in <span style="color:var(--gold)">active.md</span></div>'
       return
     }
     const sorted = [...targets.filter(t => !t.checked), ...targets.filter(t => t.checked)]

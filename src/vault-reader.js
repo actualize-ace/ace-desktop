@@ -73,6 +73,9 @@ function parseOutcomes(activeText) {
     const statusMatch = section.match(/\*\*Status:\*\*\s*(ON TRACK|AT RISK|BLOCKED|COMPLETE|IN PROGRESS|PAUSED)/i)
     const status = statusMatch ? statusMatch[1].toUpperCase() : null
 
+    // Skip section headers with no meaningful outcome data
+    if (!status && daysToGate == null) continue
+
     outcomes.push({ title, daysToGate, gateLabel, status })
   }
 

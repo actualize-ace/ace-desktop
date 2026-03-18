@@ -48,7 +48,8 @@ contextBridge.exposeInMainWorld('ace', {
   // ─── Vault ───────────────────────────────────────────────────────────────────
   vault: {
     listDir:  (dirPath)  => ipcRenderer.invoke(ch.VAULT_LIST_DIR, dirPath),
-    readFile: (filePath) => ipcRenderer.invoke(ch.VAULT_READ_FILE, filePath),
+    readFile:  (filePath) => ipcRenderer.invoke(ch.VAULT_READ_FILE, filePath),
+    writeFile: (filePath, content) => ipcRenderer.invoke(ch.VAULT_WRITE_FILE, filePath, content),
     buildGraph:      ()  => ipcRenderer.invoke(ch.VAULT_BUILD_GRAPH),
     invalidateGraph: ()  => ipcRenderer.invoke(ch.VAULT_GRAPH_INVALIDATE),
   },

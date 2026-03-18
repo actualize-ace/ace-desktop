@@ -21,13 +21,6 @@ async function loadDashboard() {
   const layout = await getLayout()
   const enabledIds = layout.filter(l => l.enabled).map(l => l.id)
 
-  // Collect unique data sources needed by enabled widgets
-  const neededSources = new Set()
-  for (const id of enabledIds) {
-    const w = WIDGETS.find(w => w.id === id)
-    if (w?.dataSource) neededSources.add(w.dataSource)
-  }
-
   // Data source → IPC method map
   const sourceMap = {
     getState:     () => window.ace.dash.getState(),
@@ -35,6 +28,17 @@ async function loadDashboard() {
     getFollowUps: () => window.ace.dash.getFollowUps(),
     getMetrics:   () => window.ace.dash.getMetrics(),
     getVelocity:  () => window.ace.dash.getVelocity(),
+  }
+
+  // Collect unique data sources needed by enabled widgets
+  const neededSources = new Set()
+  for (const id of enabledIds) {
+    const w = WIDGETS.find(w => w.id === id)
+    if (w?.dataSource) neededSources.add(w.dataSource)
+    else if (w && w.dataSource === null) {
+      // Composite widgets receive allData — fetch every source
+      for (const key of Object.keys(sourceMap)) neededSources.add(key)
+    }
   }
 
   // Fetch needed sources in parallel
@@ -46,7 +50,7 @@ async function loadDashboard() {
   // Always fetch velocity for synthesis context (even if velocity widget is disabled)
   if (!data.getVelocity) data.getVelocity = await window.ace.dash.getVelocity()
 
-  // Bundle allData for synthesis widget
+  // Bundle allData for composite widgets (dataSource: null)
   const allData = {
     state:     data.getState,
     metrics:   data.getMetrics,
@@ -55,13 +59,18 @@ async function loadDashboard() {
     velocity:  data.getVelocity,
   }
 
-  // Render each enabled widget into its container
+  // Clear all widget containers first, then render only enabled ones
+  for (const w of WIDGETS) {
+    const container = document.getElementById(`widget-${w.id}`)
+    if (container && !enabledIds.includes(w.id)) container.innerHTML = ''
+  }
+
   for (const id of enabledIds) {
     const widget = WIDGETS.find(w => w.id === id)
     const container = document.getElementById(`widget-${id}`)
     if (!widget || !container) continue
 
-    const widgetData = widget.id === 'synthesis'
+    const widgetData = widget.dataSource === null
       ? allData
       : data[widget.dataSource]
 
@@ -70,6 +79,18 @@ async function loadDashboard() {
     } catch (e) {
       console.error(`[dashboard] widget ${id} render error:`, e)
     }
+  }
+
+  // Render Triad signal dots in column headers
+  const signals = allData.metrics?._signals || Array(9).fill('dim')
+  const dotGroups = {
+    authority:  signals.slice(0, 3),  // A1, A2, A3
+    capacity:   signals.slice(3, 6),  // C1, C2, C3
+    expansion:  signals.slice(6, 9),  // E1, E2, E3
+  }
+  for (const [leg, dots] of Object.entries(dotGroups)) {
+    const el = document.getElementById(`dots-${leg}`)
+    if (el) el.innerHTML = dots.map(c => `<div class="triad-dot ${c}"></div>`).join('')
   }
 }
 

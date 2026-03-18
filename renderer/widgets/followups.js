@@ -32,7 +32,7 @@ export default {
       <div>
         ${overdue.length ? `<div class="fu-section-label overdue">Overdue</div>${renderRows(overdue)}` : ''}
         ${upcoming.length ? renderRows(upcoming) : ''}
-        ${!items.length ? '<div class="fu-empty">All clear.</div>' : ''}
+        ${!items.length ? '<div class="fu-empty" style="color:var(--text-dim);font-size:11px;padding:8px 0;opacity:0.7">No follow-ups — use <span style="color:var(--gold)">/followup</span> to add one</div>' : ''}
       </div>`
   }
 }

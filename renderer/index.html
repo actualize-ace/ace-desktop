@@ -151,8 +151,9 @@
       content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
       width: 2px; height: 18px; background: var(--gold); border-radius: 0 2px 2px 0;
     }
-    .nav-icon { font-size: 13px; width: 18px; text-align: center; opacity: 0.6; flex-shrink: 0; }
-    .nav-item.active .nav-icon { opacity: 1; }
+    .nav-icon { width: 16px; height: 14px; opacity: 0.55; flex-shrink: 0; vertical-align: middle; }
+    .nav-item.active .nav-icon { opacity: 0.9; }
+    .nav-item:hover .nav-icon { opacity: 0.75; }
     .sidebar-div { height: 1px; background: var(--border); margin: 8px 14px; }
     .cmd-section { padding: 0 10px; }
     .cmd-btn {
@@ -181,6 +182,47 @@
     .view-actions { display: flex; gap: 7px; }
     .vbtn { padding: 3px 9px; background: none; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 7.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-dim); transition: all 0.14s; }
     .vbtn:hover { border-color: var(--border-hover); color: var(--text-secondary); }
+    .icon-btn { padding: 4px 6px; display: flex; align-items: center; justify-content: center; }
+    .icon-btn svg { opacity: 0.5; transition: opacity 0.14s; }
+    .icon-btn:hover svg { opacity: 0.9; }
+
+    /* ── Slide-over Settings Panel ── */
+    .dash-settings-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+    }
+    .dash-settings-overlay.open { display: flex; justify-content: flex-end; }
+    .dash-settings-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.25);
+    }
+    .dash-settings-panel {
+      position: relative;
+      width: 280px;
+      background: var(--bg-card);
+      border-left: 1px solid var(--border);
+      padding: 20px 18px;
+      overflow-y: auto;
+      animation: slideIn 0.18s ease-out;
+      z-index: 51;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to   { transform: translateX(0); opacity: 1; }
+    }
+    .dash-settings-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .dash-settings-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--text-dim);
+    }
 
     /* ── HOME VIEW ── */
     .vbody { flex: 1; overflow-y: auto; padding: 18px 22px; }
@@ -208,9 +250,44 @@
     .sl { display: block; font-family: 'JetBrains Mono', monospace; font-size: 7px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); margin-top: 3px; }
 
     /* Two-column layout */
-    .home-cols { display: flex; gap: 18px; }
-    .home-left  { flex: 1.5; min-width: 0; }
-    .home-right { flex: 1; min-width: 0; border-left: 1px solid var(--border); padding-left: 18px; }
+    .triad-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+    .triad-col {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 18px 18px;
+      min-width: 0;
+    }
+    .triad-authority { border-top-color: var(--blue-grey); }
+    .triad-capacity  { border-top-color: var(--ark); }
+    .triad-expansion { border-top-color: var(--gold); }
+    .triad-col-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .triad-col-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      font-weight: 500;
+    }
+    .triad-authority .triad-col-label { color: var(--blue-grey); }
+    .triad-capacity  .triad-col-label { color: var(--ark); }
+    .triad-expansion .triad-col-label { color: var(--gold); }
+    .triad-dots { display: flex; gap: 5px; align-items: center; }
+    .triad-dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    }
+    .triad-dot.green  { background: var(--green);  box-shadow: 0 0 5px rgba(109,184,143,0.5); }
+    .triad-dot.yellow { background: var(--gold);   box-shadow: 0 0 5px rgba(212,165,116,0.5); }
+    .triad-dot.red    { background: var(--red);    box-shadow: 0 0 5px rgba(196,116,116,0.5); }
+    .triad-dot.dim    { background: var(--text-dim); }
 
     .section-label {
       font-family: 'JetBrains Mono', monospace; font-size: 7.5px;
@@ -231,11 +308,9 @@
     .oc-badge.blocked  { color: var(--red);       background: rgba(196,116,116,0.1); border: 1px solid rgba(196,116,116,0.2); }
     .oc-badge.complete { color: var(--text-dim);  background: var(--bg-elevated);    border: 1px solid var(--border); }
     .oc-days-row { display: flex; align-items: baseline; gap: 5px; margin-bottom: 5px; }
-    .oc-days { font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; line-height: 1; }
-    .oc-days.ontrack { color: var(--blue-grey); }
-    .oc-days.urgent  { color: var(--gold); }
-    .oc-days.overdue { color: var(--red); }
-    .oc-days-label { font-family: 'JetBrains Mono', monospace; font-size: 7.5px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; }
+    .oc-meta { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+    .oc-days { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 500; white-space: nowrap; }
+    .oc-gate { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-dim); white-space: nowrap; }
     .oc-bar { width: 100%; height: 2px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; }
     .oc-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
     .oc-bar-fill.red  { background: var(--red); }
@@ -362,6 +437,15 @@
     }
     .vault-render::-webkit-scrollbar { width: 3px; }
     .vault-render::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
+    .vault-editor {
+      display: none; flex: 1; overflow-y: auto; padding: 16px 20px;
+      background: var(--bg-surface); color: var(--text-primary);
+      border: none; border-left: 1px solid var(--border); outline: none; resize: none;
+      font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7;
+      tab-size: 2;
+    }
+    .vault-editor::-webkit-scrollbar { width: 3px; }
+    .vault-editor::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
 
     .vault-empty {
       height: 100%; display: flex; align-items: center; justify-content: center;
@@ -508,10 +592,10 @@
     /* ─── Synthesis Bar ──────────────────────────────── */
     .synthesis-bar {
       display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 14px 16px;
-      margin-bottom: 16px;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
       background: var(--bg-elevated);
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -596,18 +680,30 @@
         </div>
       </div>
       <div class="nav-section">Views</div>
-      <div class="nav-item active" data-view="home"><span class="nav-icon">⌂</span> Home</div>
-      <div class="nav-item" data-view="terminal"><span class="nav-icon">❯</span> ACE Terminal</div>
-      <div class="nav-item" data-view="agents"><span class="nav-icon">◇</span> Agents</div>
-      <div class="nav-item" data-view="vault"><span class="nav-icon">◈</span> Vault</div>
-      <div class="nav-item" data-view="graph"><span class="nav-icon">◉</span> Graph</div>
-      <div class="nav-item" data-view="pipeline"><span class="nav-icon">◎</span> Pipeline</div>
-        <div class="nav-item" data-view="settings" title="Settings">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
-        </div>
+      <div class="nav-item active" data-view="home">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Home
+      </div>
+      <div class="nav-item" data-view="terminal">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        Terminal
+      </div>
+      <div class="nav-item" data-view="agents">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><line x1="12" y1="7" x2="5" y2="17"/><line x1="12" y1="7" x2="19" y2="17"/></svg>
+        Agents
+      </div>
+      <div class="nav-item" data-view="vault">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+        Vault
+      </div>
+      <div class="nav-item" data-view="graph">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><line x1="8.2" y1="10.8" x2="15.8" y2="7.2"/><line x1="8.2" y1="13.2" x2="15.8" y2="16.8"/></svg>
+        Graph
+      </div>
+      <div class="nav-item" data-view="pipeline">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        Pipeline
+      </div>
       <div class="sidebar-div"></div>
       <div class="nav-section">Commands</div>
       <div class="cmd-section">
@@ -630,8 +726,28 @@
         <div class="view-header">
           <div class="view-title">Home</div>
           <div class="view-actions">
-            <button class="vbtn" id="refresh-btn">Refresh</button>
-            <button class="vbtn" id="open-terminal-btn">Terminal</button>
+            <button class="vbtn icon-btn" id="refresh-btn" title="Refresh dashboard">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            </button>
+            <button class="vbtn icon-btn" id="dash-settings-btn" title="Dashboard settings">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+          </div>
+        </div>
+        <!-- Slide-over settings panel -->
+        <div class="dash-settings-overlay" id="dash-settings-overlay">
+          <div class="dash-settings-backdrop" id="dash-settings-backdrop"></div>
+          <div class="dash-settings-panel">
+            <div class="dash-settings-header">
+              <span class="dash-settings-title">Dashboard Layout</span>
+              <div style="display:flex;gap:6px;align-items:center">
+                <button class="vbtn" id="settings-reset-btn" style="font-size:10px;padding:4px 10px">Reset</button>
+                <button class="vbtn icon-btn" id="settings-close-btn" title="Close" style="padding:3px 5px">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+              </div>
+            </div>
+            <div id="layout-list"></div>
           </div>
         </div>
         <div class="vbody">
@@ -644,29 +760,44 @@
           <!-- Stats strip -->
           <div id="widget-metrics"></div>
 
-          <!-- Mode/Energy tags -->
-          <div id="widget-state" style="margin-bottom:12px"></div>
+          <!-- Velocity waveform — above the fold -->
+          <div id="widget-velocity" style="margin-bottom:10px"></div>
 
-          <!-- Two-column content -->
-          <div class="home-cols">
-            <div class="home-left">
-              <div id="widget-outcomes"></div>
-              <div class="section-label">Commands</div>
-              <div class="quick-cmds">
-                <div class="qcmd" data-cmd="/start"><div class="qcmd-icon">☀</div><div class="qcmd-label">/start</div></div>
-                <div class="qcmd" data-cmd="/brief"><div class="qcmd-icon">⚡</div><div class="qcmd-label">/brief</div></div>
-                <div class="qcmd" data-cmd="/pulse"><div class="qcmd-icon">◎</div><div class="qcmd-label">/pulse</div></div>
-                <div class="qcmd" data-cmd="/eod"><div class="qcmd-icon">◐</div><div class="qcmd-label">/eod</div></div>
+          <!-- Triad grid -->
+          <div class="triad-grid">
+            <div class="triad-col triad-authority">
+              <div class="triad-col-header">
+                <div class="triad-col-label">Authority</div>
+                <div class="triad-dots" id="dots-authority"></div>
               </div>
+              <div id="widget-outcomes"></div>
             </div>
-            <div class="home-right">
+            <div class="triad-col triad-capacity">
+              <div class="triad-col-header">
+                <div class="triad-col-label">Capacity</div>
+                <div class="triad-dots" id="dots-capacity"></div>
+              </div>
+              <div id="widget-state" style="margin-bottom:12px"></div>
+              <div id="widget-followups"></div>
+            </div>
+            <div class="triad-col triad-expansion">
+              <div class="triad-col-header">
+                <div class="triad-col-label">Expansion</div>
+                <div class="triad-dots" id="dots-expansion"></div>
+              </div>
               <div id="widget-targets"></div>
-              <div style="margin-top:16px" id="widget-followups"></div>
-              <div style="margin-top:16px" id="widget-pipeline"></div>
+              <div id="widget-pipeline" style="margin-top:14px"></div>
             </div>
           </div>
 
-          <div id="widget-velocity" style="margin-top:16px"></div>
+          <!-- Quick commands -->
+          <div class="section-label">Commands</div>
+          <div class="quick-cmds">
+            <div class="qcmd" data-cmd="/start"><div class="qcmd-icon">☀</div><div class="qcmd-label">/start</div></div>
+            <div class="qcmd" data-cmd="/brief"><div class="qcmd-icon">⚡</div><div class="qcmd-label">/brief</div></div>
+            <div class="qcmd" data-cmd="/pulse"><div class="qcmd-icon">◎</div><div class="qcmd-label">/pulse</div></div>
+            <div class="qcmd" data-cmd="/eod"><div class="qcmd-icon">◐</div><div class="qcmd-label">/eod</div></div>
+          </div>
         </div>
       </div>
 
@@ -686,6 +817,9 @@
           <div class="view-title">Vault</div>
           <div class="vault-breadcrumb" id="vault-breadcrumb"></div>
           <div class="view-actions">
+            <button class="vbtn" id="vault-edit-btn" style="display:none">Edit</button>
+            <button class="vbtn" id="vault-save-btn" style="display:none;color:var(--green);border-color:rgba(109,184,143,0.3)">Save</button>
+            <button class="vbtn" id="vault-cancel-btn" style="display:none">Cancel</button>
             <button class="vbtn" id="vault-open-term-btn">Open in Terminal</button>
           </div>
         </div>
@@ -696,6 +830,7 @@
           <div class="vault-render" id="vault-render">
             <div class="vault-empty">Select a file to read</div>
           </div>
+          <textarea id="vault-editor" class="vault-editor" style="display:none" spellcheck="false"></textarea>
         </div>
       </div>
 
@@ -734,19 +869,6 @@
         </div>
       </div>
 
-      <!-- SETTINGS VIEW -->
-      <div class="view" id="view-settings">
-        <div class="view-header">
-          <div class="view-title">Dashboard Layout</div>
-          <div class="view-actions">
-            <button class="vbtn" id="settings-reset-btn">Reset to Default</button>
-          </div>
-        </div>
-        <div class="vbody">
-          <div style="font-size:11px;color:var(--text-dim);margin-bottom:16px">Drag to reorder. Toggle to show/hide. Changes apply immediately.</div>
-          <div id="layout-list"></div>
-        </div>
-      </div>
 
     </div>
   </div>
@@ -801,6 +923,8 @@ const XTERM_LIGHT = {
   brightCyan:'#287888', brightWhite:'#e8e0d8',
 }
 let theme = localStorage.getItem('ace-theme') || 'dark'
+// Ensure dark mode on first paint before any async rendering
+document.body.classList.toggle('light', theme === 'light')
 function xtermTheme() { return theme === 'light' ? XTERM_LIGHT : XTERM_DARK }
 function applyTheme(t) {
   theme = t
@@ -857,7 +981,7 @@ navItems.forEach(item => {
     }
   })
 })
-document.getElementById('open-terminal-btn').addEventListener('click', () => document.querySelector('.nav-item[data-view="terminal"]').click())
+document.getElementById('open-terminal-btn')?.addEventListener('click', () => document.querySelector('.nav-item[data-view="terminal"]').click())
 document.querySelectorAll('[data-cmd]').forEach(el => {
   el.addEventListener('click', () => {
     document.querySelector('.nav-item[data-view="terminal"]').click()
@@ -1355,6 +1479,66 @@ document.getElementById('vault-open-term-btn').addEventListener('click', () => {
   }, 200)
 })
 
+// ─── Vault Edit Mode ─────────────────────────────────────────────────────────
+let vaultEditRaw = ''
+const editBtn   = document.getElementById('vault-edit-btn')
+const saveBtn   = document.getElementById('vault-save-btn')
+const cancelBtn = document.getElementById('vault-cancel-btn')
+const editorEl  = document.getElementById('vault-editor')
+const renderEl2 = document.getElementById('vault-render')
+
+function showEditButtons(show) {
+  editBtn.style.display   = show && !editorEl.style.display.includes('block') ? '' : 'none'
+  saveBtn.style.display   = show && editorEl.style.display === 'block' ? '' : 'none'
+  cancelBtn.style.display = show && editorEl.style.display === 'block' ? '' : 'none'
+}
+
+// Show Edit button when a file is loaded
+const origOpenVaultFile = openVaultFile
+openVaultFile = async function(filePath, fileName) {
+  await origOpenVaultFile(filePath, fileName)
+  // Exit edit mode if switching files
+  editorEl.style.display = 'none'
+  renderEl2.style.display = ''
+  editBtn.style.display = filePath.match(/\.(md|markdown|txt|yaml|yml|json|js|css|html)$/i) ? '' : 'none'
+  saveBtn.style.display = 'none'
+  cancelBtn.style.display = 'none'
+}
+
+editBtn.addEventListener('click', async () => {
+  if (!activeVaultFile) return
+  const content = await window.ace.vault.readFile(activeVaultFile)
+  if (typeof content !== 'string') return
+  vaultEditRaw = content
+  editorEl.value = content
+  editorEl.style.display = 'block'
+  renderEl2.style.display = 'none'
+  editBtn.style.display = 'none'
+  saveBtn.style.display = ''
+  cancelBtn.style.display = ''
+  editorEl.focus()
+})
+
+saveBtn.addEventListener('click', async () => {
+  if (!activeVaultFile) return
+  const result = await window.ace.vault.writeFile(activeVaultFile, editorEl.value)
+  if (result?.error) { console.error('[vault] save failed:', result.error); return }
+  editorEl.style.display = 'none'
+  renderEl2.style.display = ''
+  saveBtn.style.display = 'none'
+  cancelBtn.style.display = 'none'
+  // Re-render the file with updated content
+  await origOpenVaultFile(activeVaultFile, activeVaultFile.split('/').pop())
+})
+
+cancelBtn.addEventListener('click', () => {
+  editorEl.style.display = 'none'
+  renderEl2.style.display = ''
+  editBtn.style.display = ''
+  saveBtn.style.display = 'none'
+  cancelBtn.style.display = 'none'
+})
+
 // ─── Graph View ───────────────────────────────────────────────────────────────
 let graphInitialized = false
 let graphSimulation  = null
@@ -1543,26 +1727,15 @@ document.getElementById('graph-refresh-btn').addEventListener('click', async () 
   <script type="module">
     import { loadDashboard } from './dashboard.js'
 
-    // Greeting
-    function greet() {
-      const h = new Date().getHours()
-      const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'
-      const nameEl = document.getElementById('home-name')
-      const timeEl = document.getElementById('home-time')
-      if (nameEl) nameEl.textContent = `${g}.`
-      if (timeEl) timeEl.textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    }
-    greet()
-    setInterval(greet, 60000)
-
     loadDashboard()
 
     document.getElementById('refresh-btn')?.addEventListener('click', () => loadDashboard())
 
-    // Live updates
-    window.ace.dash.onStateUpdate?.(() => loadDashboard())
-    window.ace.dash.onFollowUpsUpdate?.(() => loadDashboard())
-    window.ace.dash.onPipelineUpdate?.(() => loadDashboard())
+    // Live updates (debounced)
+    let reloadTimer
+    window.ace.dash.onStateUpdate?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
+    window.ace.dash.onFollowUpsUpdate?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
+    window.ace.dash.onPipelineUpdate?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
   </script>
   <script type="module">
     import { WIDGETS, DEFAULT_LAYOUT } from './widgets/registry.js'
@@ -1616,10 +1789,19 @@ document.getElementById('graph-refresh-btn').addEventListener('click', async () 
       await window.ace.dash.saveLayout(layout)
     }
 
-    // Load settings when view activates
-    document.querySelector('[data-view="settings"]')?.addEventListener('click', () => {
-      setTimeout(renderSettings, 50) // small delay to let view transition complete
-    })
+    // Toggle slide-over settings panel
+    function openSettings() {
+      const overlay = document.getElementById('dash-settings-overlay')
+      if (!overlay) return
+      overlay.classList.add('open')
+      renderSettings()
+    }
+    function closeSettings() {
+      document.getElementById('dash-settings-overlay')?.classList.remove('open')
+    }
+    document.getElementById('dash-settings-btn')?.addEventListener('click', openSettings)
+    document.getElementById('dash-settings-backdrop')?.addEventListener('click', closeSettings)
+    document.getElementById('settings-close-btn')?.addEventListener('click', closeSettings)
 
     // Reset button
     document.getElementById('settings-reset-btn')?.addEventListener('click', async () => {

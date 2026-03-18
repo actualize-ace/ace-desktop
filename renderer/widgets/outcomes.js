@@ -12,7 +12,7 @@ export default {
 
   render(data, el) {
     if (!data?.outcomes?.length) {
-      el.innerHTML = '<div style="font-size:10px;color:var(--text-dim);padding:8px 0">No outcomes found.</div>'
+      el.innerHTML = '<div style="font-size:11px;color:var(--text-dim);padding:8px 0;opacity:0.7">No outcomes yet — define them in <span style="color:var(--gold)">active.md</span></div>'
       return
     }
     el.innerHTML = `

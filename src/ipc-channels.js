@@ -26,7 +26,8 @@ module.exports = {
 
   // Vault
   VAULT_LIST_DIR:  'vault-list-dir',
-  VAULT_READ_FILE: 'vault-read-file',
+  VAULT_READ_FILE:  'vault-read-file',
+  VAULT_WRITE_FILE: 'vault-write-file',
   VAULT_BUILD_GRAPH:    'vault-build-graph',
   VAULT_GRAPH_INVALIDATE: 'vault-graph-invalidate',
 

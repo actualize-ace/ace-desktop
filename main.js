@@ -85,6 +85,11 @@ function createWindow(page) {
   if (!app.isPackaged) {
     mainWindow.webContents.openDevTools({ mode: 'detach' })
   }
+
+  // Forward renderer console errors to stdout for debugging
+  mainWindow.webContents.on('console-message', (_, level, msg, line, source) => {
+    if (level >= 2) console.log(`[renderer:${level}] ${msg} (${source}:${line})`)
+  })
 }
 
 // ─── App Lifecycle ────────────────────────────────────────────────────────────
@@ -187,7 +192,11 @@ ipcMain.handle(ch.GET_FOLLOWUPS, () => {
 })
 
 ipcMain.handle(ch.GET_METRICS, () => {
-  try { return require('./src/db-reader').getMetrics() } catch (e) { return { error: e.message } }
+  try {
+    const metrics = require('./src/db-reader').getMetrics()
+    metrics._signals = require('./src/synthesizer').parseSignalDetails(global.VAULT_PATH)
+    return metrics
+  } catch (e) { return { error: e.message } }
 })
 
 ipcMain.handle(ch.GET_VELOCITY, () => {
@@ -197,7 +206,7 @@ ipcMain.handle(ch.GET_VELOCITY, () => {
 
 ipcMain.handle(ch.GET_SYNTHESIS_AI, async (_, context) => {
   const voicePath = require('path').join(global.VAULT_PATH, '00-System', 'core', 'voice-profile.md')
-  try { return await require('./src/synthesizer').getAISynthesis(context, voicePath) }
+  try { return await require('./src/synthesizer').getAISynthesis(context, voicePath, global.CLAUDE_BIN) }
   catch (e) { return null }
 })
 
@@ -220,7 +229,16 @@ ipcMain.handle(ch.VAULT_LIST_DIR, (_, dirPath) => {
 })
 
 ipcMain.handle(ch.VAULT_READ_FILE, (_, filePath) => {
-  try { return fs.readFileSync(filePath, 'utf8') } catch (e) { return { error: e.message } }
+  const resolved = path.resolve(filePath)
+  if (!resolved.startsWith(global.VAULT_PATH)) return { error: 'Access denied: path outside vault' }
+  try { return fs.readFileSync(resolved, 'utf8') } catch (e) { return { error: e.message } }
+})
+
+ipcMain.handle(ch.VAULT_WRITE_FILE, (_, filePath, content) => {
+  const resolved = path.resolve(filePath)
+  if (!resolved.startsWith(global.VAULT_PATH)) return { error: 'Access denied: path outside vault' }
+  try { fs.writeFileSync(resolved, content, 'utf8'); return { ok: true } }
+  catch (e) { return { error: e.message } }
 })
 
 ipcMain.handle(ch.VAULT_BUILD_GRAPH, () => {

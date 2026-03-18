@@ -48,29 +48,69 @@ export default {
     if (this._chartInstance) { this._chartInstance.destroy(); this._chartInstance = null }
 
     this._chartInstance = new Chart(ctx, {
-      type: 'bar',
+      type: 'line',
       data: {
         labels: series.map(s => s.label),
         datasets: [{
           data: series.map(s => s.value),
-          backgroundColor: 'rgba(212,165,116,0.4)',
-          borderColor: '#d4a574',
-          borderWidth: 1,
-          borderRadius: 2,
+          borderColor: 'rgba(212,165,116,0.9)',
+          borderWidth: 2,
+          fill: true,
+          backgroundColor: function(context) {
+            const chart = context.chart
+            const { ctx: c, chartArea } = chart
+            if (!chartArea) return 'rgba(212,165,116,0.15)'
+            const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom)
+            gradient.addColorStop(0, 'rgba(212,165,116,0.35)')
+            gradient.addColorStop(1, 'rgba(212,165,116,0.01)')
+            return gradient
+          },
+          tension: 0.45,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointHoverBackgroundColor: '#d4a574',
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: { display: false },
-          tooltip: { callbacks: { label: ctx => `${ctx.parsed.y} actions` } }
+          tooltip: {
+            backgroundColor: 'rgba(26,22,18,0.95)',
+            borderColor: 'rgba(212,165,116,0.25)',
+            borderWidth: 1,
+            padding: { x: 12, y: 8 },
+            titleFont: { family: "'JetBrains Mono', monospace", size: 9 },
+            titleColor: 'rgba(138,125,111,0.8)',
+            bodyFont: { family: "'Space Grotesk', sans-serif", size: 13, weight: '500' },
+            bodyColor: '#d4a574',
+            displayColors: false,
+            callbacks: {
+              title: items => {
+                const raw = series[items[0].dataIndex]
+                if (!raw) return ''
+                const d = new Date(raw.label.replace(/(\d+)-(\d+)/, `${new Date().getFullYear()}-$1-$2`))
+                return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+              },
+              label: ctx => `${ctx.parsed.y} actions`,
+              afterLabel: ctx => {
+                const idx = ctx.dataIndex
+                const avg = Math.round(series.slice(Math.max(0, idx - 2), idx + 1).reduce((s, p) => s + p.value, 0) / Math.min(3, idx + 1))
+                return `3-day avg: ${avg}`
+              }
+            }
+          }
         },
         scales: {
-          x: { ticks: { color: '#5a5248', font: { size: 9 } }, grid: { display: false } },
+          x: {
+            grid: { display: false },
+            border: { display: false },
+            ticks: { color: 'rgba(90,82,72,0.7)', font: { size: 9 }, maxRotation: 0, maxTicksLimit: 7 }
+          },
           y: {
-            ticks: { color: '#5a5248', font: { size: 9 }, stepSize: 1 },
-            grid: { color: 'rgba(212,165,116,0.05)' },
+            display: false,
             beginAtZero: true
           }
         }

@@ -19,7 +19,7 @@ export default {
     el.innerHTML = `
       <div class="section-label">Pipeline <span style="color:var(--text-dim);font-weight:400">${deals.length} deals · ${fmtMoney(total)}</span></div>
       <div>${!deals.length
-        ? '<div class="fu-empty">No active deals.</div>'
+        ? '<div class="fu-empty" style="color:var(--text-dim);font-size:11px;padding:8px 0;opacity:0.7">No deals yet — use <span style="color:var(--gold)">/pipeline</span> to start tracking</div>'
         : deals.map(d => {
             const due = d.due_date ? new Date(d.due_date) : null
             if (due) due.setHours(0,0,0,0)
