@@ -184,6 +184,34 @@ ipcMain.handle(ch.GET_METRICS, () => {
   try { return require('./src/db-reader').getMetrics() } catch (e) { return { error: e.message } }
 })
 
+ipcMain.handle(ch.GET_VELOCITY, () => {
+  try { return require('./src/vault-reader').parseExecutionLog(global.VAULT_PATH, 14) }
+  catch (e) { return { byDay: {}, totalThisWeek: 0, totalLastWeek: 0, error: e.message } }
+})
+
+ipcMain.handle(ch.GET_SYNTHESIS_STRUCT, (_, context) => {
+  try { return require('./src/synthesizer').buildStructural(context) }
+  catch (e) { return '' }
+})
+
+ipcMain.handle(ch.GET_SYNTHESIS_AI, async (_, context) => {
+  const voicePath = require('path').join(global.VAULT_PATH, '00-System', 'core', 'voice-profile.md')
+  try { return await require('./src/synthesizer').getAISynthesis(context, voicePath) }
+  catch (e) { return null }
+})
+
+ipcMain.handle(ch.GET_LAYOUT, () => {
+  const config = loadConfig() || {}
+  return config.layout || null
+})
+
+ipcMain.handle(ch.SAVE_LAYOUT, (_, layout) => {
+  const config = loadConfig() || {}
+  config.layout = layout
+  saveConfig(config)
+  return true
+})
+
 // ─── Vault IPC Handlers ───────────────────────────────────────────────────────
 
 ipcMain.handle(ch.VAULT_LIST_DIR, (_, dirPath) => {

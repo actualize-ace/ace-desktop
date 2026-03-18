@@ -38,6 +38,12 @@ contextBridge.exposeInMainWorld('ace', {
     onOutcomesUpdate: (cb) => ipcRenderer.on(ch.DASH_OUTCOMES, cb),
     onFollowUpsUpdate:(cb) => ipcRenderer.on(ch.DASH_FOLLOWUPS,cb),
     onPipelineUpdate: (cb) => ipcRenderer.on(ch.DASH_PIPELINE, cb),
+
+    getVelocity:          ()        => ipcRenderer.invoke(ch.GET_VELOCITY),
+    getSynthesisStruct:   (context) => ipcRenderer.invoke(ch.GET_SYNTHESIS_STRUCT, context),
+    getSynthesisAI:       (context) => ipcRenderer.invoke(ch.GET_SYNTHESIS_AI, context),
+    getLayout:            ()        => ipcRenderer.invoke(ch.GET_LAYOUT),
+    saveLayout:           (layout)  => ipcRenderer.invoke(ch.SAVE_LAYOUT, layout),
   },
 
   // ─── Vault ───────────────────────────────────────────────────────────────────
