@@ -527,6 +527,46 @@
       color: var(--text-secondary);
       line-height: 1.6;
     }
+
+    /* ─── Settings / Layout ─────────────────────────── */
+    .layout-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: grab;
+      user-select: none;
+    }
+    .layout-row:active { cursor: grabbing; }
+    .layout-drag { color: var(--text-dim); font-size: 14px; }
+    .layout-info { flex: 1; }
+    .layout-label { font-size: 12px; color: var(--text-primary); }
+    .layout-desc  { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+    .layout-toggle {
+      width: 32px; height: 18px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-hover);
+      border-radius: 9px;
+      position: relative;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .layout-toggle.on { background: var(--gold-dim); }
+    .layout-toggle::after {
+      content: '';
+      position: absolute;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      top: 2px; left: 2px;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .layout-toggle.on::after { transform: translateX(14px); background: var(--gold); }
   </style>
 </head>
 <body>
@@ -562,6 +602,12 @@
       <div class="nav-item" data-view="vault"><span class="nav-icon">◈</span> Vault</div>
       <div class="nav-item" data-view="graph"><span class="nav-icon">◉</span> Graph</div>
       <div class="nav-item" data-view="pipeline"><span class="nav-icon">◎</span> Pipeline</div>
+        <div class="nav-item" data-view="settings" title="Settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </div>
       <div class="sidebar-div"></div>
       <div class="nav-section">Commands</div>
       <div class="cmd-section">
@@ -685,6 +731,20 @@
             <div class="panes-h-resizer" id="panes-h-resizer" style="display:none"></div>
             <div class="panes-bottom" id="panes-bottom"></div>
           </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS VIEW -->
+      <div class="view" id="view-settings">
+        <div class="view-header">
+          <div class="view-title">Dashboard Layout</div>
+          <div class="view-actions">
+            <button class="vbtn" id="settings-reset-btn">Reset to Default</button>
+          </div>
+        </div>
+        <div class="vbody">
+          <div style="font-size:11px;color:var(--text-dim);margin-bottom:16px">Drag to reorder. Toggle to show/hide. Changes apply immediately.</div>
+          <div id="layout-list"></div>
         </div>
       </div>
 
@@ -1503,6 +1563,70 @@ document.getElementById('graph-refresh-btn').addEventListener('click', async () 
     window.ace.dash.onStateUpdate?.(() => loadDashboard())
     window.ace.dash.onFollowUpsUpdate?.(() => loadDashboard())
     window.ace.dash.onPipelineUpdate?.(() => loadDashboard())
+  </script>
+  <script type="module">
+    import { WIDGETS, DEFAULT_LAYOUT } from './widgets/registry.js'
+    import { loadDashboard } from './dashboard.js'
+
+    async function renderSettings() {
+      const el = document.getElementById('layout-list')
+      if (!el) return
+      const saved = await window.ace.dash.getLayout() || DEFAULT_LAYOUT
+
+      el.innerHTML = saved.map(item => {
+        const w = WIDGETS.find(w => w.id === item.id)
+        if (!w) return ''
+        return `
+          <div class="layout-row" data-id="${w.id}">
+            <span class="layout-drag">⠿</span>
+            <div class="layout-info">
+              <div class="layout-label">${w.label}</div>
+              <div class="layout-desc">${w.description}</div>
+            </div>
+            <div class="layout-toggle ${item.enabled ? 'on' : ''}" data-id="${w.id}"></div>
+          </div>`
+      }).filter(Boolean).join('')
+
+      // Toggle handler
+      el.querySelectorAll('.layout-toggle').forEach(toggle => {
+        toggle.addEventListener('click', async e => {
+          e.stopPropagation()
+          toggle.classList.toggle('on')
+          await saveCurrentLayout()
+          loadDashboard()
+        })
+      })
+
+      // SortableJS drag-to-reorder
+      if (typeof Sortable !== 'undefined') {
+        new Sortable(el, {
+          animation: 150,
+          handle: '.layout-drag',
+          onEnd: async () => { await saveCurrentLayout(); loadDashboard() }
+        })
+      }
+    }
+
+    async function saveCurrentLayout() {
+      const rows = document.querySelectorAll('#layout-list .layout-row')
+      const layout = [...rows].map(row => ({
+        id:      row.dataset.id,
+        enabled: row.querySelector('.layout-toggle').classList.contains('on'),
+      }))
+      await window.ace.dash.saveLayout(layout)
+    }
+
+    // Load settings when view activates
+    document.querySelector('[data-view="settings"]')?.addEventListener('click', () => {
+      setTimeout(renderSettings, 50) // small delay to let view transition complete
+    })
+
+    // Reset button
+    document.getElementById('settings-reset-btn')?.addEventListener('click', async () => {
+      await window.ace.dash.saveLayout(DEFAULT_LAYOUT)
+      renderSettings()
+      loadDashboard()
+    })
   </script>
 </body>
 </html>
