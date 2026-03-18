@@ -1,5 +1,6 @@
 {
   "name": "ace-desktop",
+  "productName": "ACE",
   "version": "0.1.0",
   "description": "ACE Desktop — control plane for the Actualize Coherence Engine",
   "main": "main.js",
@@ -29,7 +30,8 @@
     "productName": "ACE Desktop",
     "mac": {
       "category": "public.app-category.productivity",
-      "target": "dmg"
+      "target": "dmg",
+      "icon": "assets/ace.icns"
     },
     "extraResources": [
       {

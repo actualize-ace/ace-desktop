@@ -4,6 +4,21 @@ const fs = require('fs')
 const { execSync, spawn } = require('child_process')
 const ch = require('./src/ipc-channels')
 
+// ─── Single Instance Lock ─────────────────────────────────────────────────────
+
+const gotLock = app.requestSingleInstanceLock()
+if (!gotLock) {
+  app.quit()
+}
+
+app.on('second-instance', () => {
+  // If someone tries to open a second instance, focus the existing window
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.focus()
+  }
+})
+
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 function getConfigPath() {
@@ -55,6 +70,7 @@ function createWindow(page) {
     height: 900,
     titleBarStyle: 'hiddenInset',
     backgroundColor: '#0a0a0f',
+    icon: path.join(__dirname, 'assets', 'ace.icns'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -73,7 +89,14 @@ function createWindow(page) {
 
 // ─── App Lifecycle ────────────────────────────────────────────────────────────
 
+app.setName('ACE')
+
 app.whenReady().then(() => {
+  // Set dock icon explicitly (required on macOS in dev mode)
+  if (process.platform === 'darwin' && app.dock) {
+    app.dock.setIcon(path.join(__dirname, 'assets', 'ace.png'))
+  }
+
   const config = loadConfig()
   const vaultMissing = config && !fs.existsSync(config.vaultPath)
 
