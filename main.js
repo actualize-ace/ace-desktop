@@ -225,7 +225,9 @@ ipcMain.handle(ch.SAVE_LAYOUT, (_, layout) => {
 // ─── Vault IPC Handlers ───────────────────────────────────────────────────────
 
 ipcMain.handle(ch.VAULT_LIST_DIR, (_, dirPath) => {
-  try { return require('./src/vault-reader').listDir(dirPath || global.VAULT_PATH) } catch (e) { return { error: e.message } }
+  const resolved = path.resolve(dirPath || global.VAULT_PATH)
+  if (!resolved.startsWith(global.VAULT_PATH)) return { error: 'Access denied: path outside vault' }
+  try { return require('./src/vault-reader').listDir(resolved) } catch (e) { return { error: e.message } }
 })
 
 ipcMain.handle(ch.VAULT_READ_FILE, (_, filePath) => {
