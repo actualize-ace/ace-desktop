@@ -5,6 +5,8 @@
   <title>ACE Desktop</title>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../node_modules/xterm/css/xterm.css">
+  <script src="lib/chart.umd.js"></script>
+  <script src="lib/Sortable.min.js"></script>
   <style>
     :root {
       --bg-deep:    #060504;
@@ -149,8 +151,9 @@
       content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
       width: 2px; height: 18px; background: var(--gold); border-radius: 0 2px 2px 0;
     }
-    .nav-icon { font-size: 13px; width: 18px; text-align: center; opacity: 0.6; flex-shrink: 0; }
-    .nav-item.active .nav-icon { opacity: 1; }
+    .nav-icon { width: 16px; height: 14px; opacity: 0.55; flex-shrink: 0; vertical-align: middle; }
+    .nav-item.active .nav-icon { opacity: 0.9; }
+    .nav-item:hover .nav-icon { opacity: 0.75; }
     .sidebar-div { height: 1px; background: var(--border); margin: 8px 14px; }
     .cmd-section { padding: 0 10px; }
     .cmd-btn {
@@ -179,6 +182,47 @@
     .view-actions { display: flex; gap: 7px; }
     .vbtn { padding: 3px 9px; background: none; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 7.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-dim); transition: all 0.14s; }
     .vbtn:hover { border-color: var(--border-hover); color: var(--text-secondary); }
+    .icon-btn { padding: 4px 6px; display: flex; align-items: center; justify-content: center; }
+    .icon-btn svg { opacity: 0.5; transition: opacity 0.14s; }
+    .icon-btn:hover svg { opacity: 0.9; }
+
+    /* ── Slide-over Settings Panel ── */
+    .dash-settings-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+    }
+    .dash-settings-overlay.open { display: flex; justify-content: flex-end; }
+    .dash-settings-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.25);
+    }
+    .dash-settings-panel {
+      position: relative;
+      width: 280px;
+      background: var(--bg-card);
+      border-left: 1px solid var(--border);
+      padding: 20px 18px;
+      overflow-y: auto;
+      animation: slideIn 0.18s ease-out;
+      z-index: 51;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to   { transform: translateX(0); opacity: 1; }
+    }
+    .dash-settings-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .dash-settings-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--text-dim);
+    }
 
     /* ── HOME VIEW ── */
     .vbody { flex: 1; overflow-y: auto; padding: 18px 22px; }
@@ -206,9 +250,44 @@
     .sl { display: block; font-family: 'JetBrains Mono', monospace; font-size: 7px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); margin-top: 3px; }
 
     /* Two-column layout */
-    .home-cols { display: flex; gap: 18px; }
-    .home-left  { flex: 1.5; min-width: 0; }
-    .home-right { flex: 1; min-width: 0; border-left: 1px solid var(--border); padding-left: 18px; }
+    .triad-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+    .triad-col {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 18px 18px;
+      min-width: 0;
+    }
+    .triad-authority { border-top-color: var(--blue-grey); }
+    .triad-capacity  { border-top-color: var(--ark); }
+    .triad-expansion { border-top-color: var(--gold); }
+    .triad-col-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .triad-col-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      font-weight: 500;
+    }
+    .triad-authority .triad-col-label { color: var(--blue-grey); }
+    .triad-capacity  .triad-col-label { color: var(--ark); }
+    .triad-expansion .triad-col-label { color: var(--gold); }
+    .triad-dots { display: flex; gap: 5px; align-items: center; }
+    .triad-dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    }
+    .triad-dot.green  { background: var(--green);  box-shadow: 0 0 5px rgba(109,184,143,0.5); }
+    .triad-dot.yellow { background: var(--gold);   box-shadow: 0 0 5px rgba(212,165,116,0.5); }
+    .triad-dot.red    { background: var(--red);    box-shadow: 0 0 5px rgba(196,116,116,0.5); }
+    .triad-dot.dim    { background: var(--text-dim); }
 
     .section-label {
       font-family: 'JetBrains Mono', monospace; font-size: 7.5px;
@@ -229,11 +308,9 @@
     .oc-badge.blocked  { color: var(--red);       background: rgba(196,116,116,0.1); border: 1px solid rgba(196,116,116,0.2); }
     .oc-badge.complete { color: var(--text-dim);  background: var(--bg-elevated);    border: 1px solid var(--border); }
     .oc-days-row { display: flex; align-items: baseline; gap: 5px; margin-bottom: 5px; }
-    .oc-days { font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; line-height: 1; }
-    .oc-days.ontrack { color: var(--blue-grey); }
-    .oc-days.urgent  { color: var(--gold); }
-    .oc-days.overdue { color: var(--red); }
-    .oc-days-label { font-family: 'JetBrains Mono', monospace; font-size: 7.5px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; }
+    .oc-meta { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+    .oc-days { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 500; white-space: nowrap; }
+    .oc-gate { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-dim); white-space: nowrap; }
     .oc-bar { width: 100%; height: 2px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; }
     .oc-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
     .oc-bar-fill.red  { background: var(--red); }
@@ -360,6 +437,15 @@
     }
     .vault-render::-webkit-scrollbar { width: 3px; }
     .vault-render::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
+    .vault-editor {
+      display: none; flex: 1; overflow-y: auto; padding: 16px 20px;
+      background: var(--bg-surface); color: var(--text-primary);
+      border: none; border-left: 1px solid var(--border); outline: none; resize: none;
+      font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7;
+      tab-size: 2;
+    }
+    .vault-editor::-webkit-scrollbar { width: 3px; }
+    .vault-editor::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
 
     .vault-empty {
       height: 100%; display: flex; align-items: center; justify-content: center;
@@ -502,6 +588,69 @@
     .ar-spawn { padding:6px 8px; margin:6px 10px; background:none; border:1px dashed rgba(212,165,116,0.15); border-radius:4px; cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:7.5px; letter-spacing:1px; text-transform:uppercase; color:var(--text-dim); transition:all 0.14s; text-align:center; }
     .ar-spawn:hover { border-color:var(--gold-dim); color:var(--gold); }
     .agents-shell { display:flex; flex-direction:column; flex:1; overflow:hidden; }
+
+    /* ─── Synthesis Bar ──────────────────────────────── */
+    .synthesis-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .synthesis-icon {
+      color: var(--gold);
+      font-size: 16px;
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+    .synthesis-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ─── Settings / Layout ─────────────────────────── */
+    .layout-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: grab;
+      user-select: none;
+    }
+    .layout-row:active { cursor: grabbing; }
+    .layout-drag { color: var(--text-dim); font-size: 14px; }
+    .layout-info { flex: 1; }
+    .layout-label { font-size: 12px; color: var(--text-primary); }
+    .layout-desc  { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+    .layout-toggle {
+      width: 32px; height: 18px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border-hover);
+      border-radius: 9px;
+      position: relative;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .layout-toggle.on { background: var(--gold-dim); }
+    .layout-toggle::after {
+      content: '';
+      position: absolute;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      top: 2px; left: 2px;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .layout-toggle.on::after { transform: translateX(14px); background: var(--gold); }
   </style>
 </head>
 <body>
@@ -531,12 +680,30 @@
         </div>
       </div>
       <div class="nav-section">Views</div>
-      <div class="nav-item active" data-view="home"><span class="nav-icon">⌂</span> Home</div>
-      <div class="nav-item" data-view="terminal"><span class="nav-icon">❯</span> ACE Terminal</div>
-      <div class="nav-item" data-view="agents"><span class="nav-icon">◇</span> Agents</div>
-      <div class="nav-item" data-view="vault"><span class="nav-icon">◈</span> Vault</div>
-      <div class="nav-item" data-view="graph"><span class="nav-icon">◉</span> Graph</div>
-      <div class="nav-item" data-view="pipeline"><span class="nav-icon">◎</span> Pipeline</div>
+      <div class="nav-item active" data-view="home">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Home
+      </div>
+      <div class="nav-item" data-view="terminal">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        Terminal
+      </div>
+      <div class="nav-item" data-view="agents">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><line x1="12" y1="7" x2="5" y2="17"/><line x1="12" y1="7" x2="19" y2="17"/></svg>
+        Agents
+      </div>
+      <div class="nav-item" data-view="vault">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+        Vault
+      </div>
+      <div class="nav-item" data-view="graph">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><line x1="8.2" y1="10.8" x2="15.8" y2="7.2"/><line x1="8.2" y1="13.2" x2="15.8" y2="16.8"/></svg>
+        Graph
+      </div>
+      <div class="nav-item" data-view="pipeline">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        Pipeline
+      </div>
       <div class="sidebar-div"></div>
       <div class="nav-section">Commands</div>
       <div class="cmd-section">
@@ -559,71 +726,78 @@
         <div class="view-header">
           <div class="view-title">Home</div>
           <div class="view-actions">
-            <button class="vbtn" id="refresh-btn">Refresh</button>
-            <button class="vbtn" id="open-terminal-btn">Terminal</button>
+            <button class="vbtn icon-btn" id="refresh-btn" title="Refresh dashboard">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            </button>
+            <button class="vbtn icon-btn" id="dash-settings-btn" title="Dashboard settings">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+          </div>
+        </div>
+        <!-- Slide-over settings panel -->
+        <div class="dash-settings-overlay" id="dash-settings-overlay">
+          <div class="dash-settings-backdrop" id="dash-settings-backdrop"></div>
+          <div class="dash-settings-panel">
+            <div class="dash-settings-header">
+              <span class="dash-settings-title">Dashboard Layout</span>
+              <div style="display:flex;gap:6px;align-items:center">
+                <button class="vbtn" id="settings-reset-btn" style="font-size:10px;padding:4px 10px">Reset</button>
+                <button class="vbtn icon-btn" id="settings-close-btn" title="Close" style="padding:3px 5px">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+              </div>
+            </div>
+            <div id="layout-list"></div>
           </div>
         </div>
         <div class="vbody">
-
-          <!-- Greeting -->
           <div class="home-time" id="home-time"></div>
-          <div class="home-name" id="home-name">Good morning, Nikhil.</div>
-          <div class="home-status" id="home-status"></div>
+          <div class="home-name" id="home-name">Good morning.</div>
+
+          <!-- Synthesis bar -->
+          <div id="widget-synthesis"></div>
 
           <!-- Stats strip -->
-          <div class="stats-strip">
-            <div class="sstat">
-              <span class="sv" id="ss-subs" style="color:var(--blue-grey)">—</span>
-              <span class="sl">Subscribers</span>
+          <div id="widget-metrics"></div>
+
+          <!-- Velocity waveform — above the fold -->
+          <div id="widget-velocity" style="margin-bottom:10px"></div>
+
+          <!-- Triad grid -->
+          <div class="triad-grid">
+            <div class="triad-col triad-authority">
+              <div class="triad-col-header">
+                <div class="triad-col-label">Authority</div>
+                <div class="triad-dots" id="dots-authority"></div>
+              </div>
+              <div id="widget-outcomes"></div>
             </div>
-            <div class="sstat">
-              <span class="sv" id="ss-mtd" style="color:var(--green)">—</span>
-              <span class="sl">Revenue MTD</span>
+            <div class="triad-col triad-capacity">
+              <div class="triad-col-header">
+                <div class="triad-col-label">Capacity</div>
+                <div class="triad-dots" id="dots-capacity"></div>
+              </div>
+              <div id="widget-state" style="margin-bottom:12px"></div>
+              <div id="widget-followups"></div>
             </div>
-            <div class="sstat">
-              <span class="sv" id="ss-pipe" style="color:var(--gold)">—</span>
-              <span class="sl">Pipeline</span>
-            </div>
-            <div class="sstat">
-              <span class="sv" id="ss-fu" style="color:var(--text-secondary)">—</span>
-              <span class="sl">Follow-ups</span>
+            <div class="triad-col triad-expansion">
+              <div class="triad-col-header">
+                <div class="triad-col-label">Expansion</div>
+                <div class="triad-dots" id="dots-expansion"></div>
+              </div>
+              <div id="widget-targets"></div>
+              <div id="widget-pipeline" style="margin-top:14px"></div>
             </div>
           </div>
 
-          <!-- Two-column content -->
-          <div class="home-cols">
-
-            <!-- LEFT: Outcomes + Quick Commands -->
-            <div class="home-left">
-              <div class="section-label">Outcomes</div>
-              <div class="outcomes-grid" id="outcomes-grid">
-                <div style="grid-column:1/-1;font-size:10px;color:var(--text-dim);padding:8px 0">Loading…</div>
-              </div>
-
-              <div class="section-label">Commands</div>
-              <div class="quick-cmds">
-                <div class="qcmd" data-cmd="/start"><div class="qcmd-icon">☀</div><div class="qcmd-label">/start</div></div>
-                <div class="qcmd" data-cmd="/brief"><div class="qcmd-icon">⚡</div><div class="qcmd-label">/brief</div></div>
-                <div class="qcmd" data-cmd="/pulse"><div class="qcmd-icon">◎</div><div class="qcmd-label">/pulse</div></div>
-                <div class="qcmd" data-cmd="/eod"><div class="qcmd-icon">◐</div><div class="qcmd-label">/eod</div></div>
-              </div>
-            </div>
-
-            <!-- RIGHT: Targets + Follow-ups + Pipeline -->
-            <div class="home-right">
-
-              <div class="section-label">This Week</div>
-              <div id="target-list"></div>
-
-              <div class="section-label" style="margin-top:16px">Follow-ups</div>
-              <div id="followup-list"><div class="fu-empty">Loading…</div></div>
-
-              <div class="section-label" style="margin-top:16px">Pipeline</div>
-              <div id="pipeline-list"><div class="fu-empty">Loading…</div></div>
-
-            </div>
+          <!-- Quick commands -->
+          <div class="section-label">Commands</div>
+          <div class="quick-cmds">
+            <div class="qcmd" data-cmd="/start"><div class="qcmd-icon">☀</div><div class="qcmd-label">/start</div></div>
+            <div class="qcmd" data-cmd="/brief"><div class="qcmd-icon">⚡</div><div class="qcmd-label">/brief</div></div>
+            <div class="qcmd" data-cmd="/pulse"><div class="qcmd-icon">◎</div><div class="qcmd-label">/pulse</div></div>
+            <div class="qcmd" data-cmd="/eod"><div class="qcmd-icon">◐</div><div class="qcmd-label">/eod</div></div>
           </div>
-
         </div>
       </div>
 
@@ -643,6 +817,9 @@
           <div class="view-title">Vault</div>
           <div class="vault-breadcrumb" id="vault-breadcrumb"></div>
           <div class="view-actions">
+            <button class="vbtn" id="vault-edit-btn" style="display:none">Edit</button>
+            <button class="vbtn" id="vault-save-btn" style="display:none;color:var(--green);border-color:rgba(109,184,143,0.3)">Save</button>
+            <button class="vbtn" id="vault-cancel-btn" style="display:none">Cancel</button>
             <button class="vbtn" id="vault-open-term-btn">Open in Terminal</button>
           </div>
         </div>
@@ -653,6 +830,7 @@
           <div class="vault-render" id="vault-render">
             <div class="vault-empty">Select a file to read</div>
           </div>
+          <textarea id="vault-editor" class="vault-editor" style="display:none" spellcheck="false"></textarea>
         </div>
       </div>
 
@@ -690,6 +868,7 @@
           </div>
         </div>
       </div>
+
 
     </div>
   </div>
@@ -744,6 +923,8 @@ const XTERM_LIGHT = {
   brightCyan:'#287888', brightWhite:'#e8e0d8',
 }
 let theme = localStorage.getItem('ace-theme') || 'dark'
+// Ensure dark mode on first paint before any async rendering
+document.body.classList.toggle('light', theme === 'light')
 function xtermTheme() { return theme === 'light' ? XTERM_LIGHT : XTERM_DARK }
 function applyTheme(t) {
   theme = t
@@ -800,7 +981,7 @@ navItems.forEach(item => {
     }
   })
 })
-document.getElementById('open-terminal-btn').addEventListener('click', () => document.querySelector('.nav-item[data-view="terminal"]').click())
+document.getElementById('open-terminal-btn')?.addEventListener('click', () => document.querySelector('.nav-item[data-view="terminal"]').click())
 document.querySelectorAll('[data-cmd]').forEach(el => {
   el.addEventListener('click', () => {
     document.querySelector('.nav-item[data-view="terminal"]').click()
@@ -1138,209 +1319,6 @@ setInterval(() => {
   })
 }, 1000)
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-function fmtMoney(v) {
-  if (!v) return '$0'
-  if (v >= 1000) return `$${(v / 1000).toFixed(1)}K`
-  return `$${Math.round(v)}`
-}
-function fmtDate(d) {
-  if (!d) return ''
-  const dt = new Date(d + 'T00:00:00')
-  return dt.toLocaleDateString('en-US', { month:'short', day:'numeric' })
-}
-function isOverdue(d) {
-  if (!d) return false
-  return new Date(d + 'T00:00:00') < new Date(new Date().toDateString())
-}
-
-// ─── Render: Outcomes ────────────────────────────────────────────────────────
-function renderOutcomes(outcomes) {
-  const grid = document.getElementById('outcomes-grid')
-  if (!outcomes || !outcomes.length) { grid.innerHTML = '<div style="grid-column:1/-1;font-size:10px;color:var(--text-dim);padding:8px 0">No outcomes found</div>'; return }
-
-  grid.innerHTML = outcomes.map(o => {
-    const days  = o.daysToGate
-    const absD  = Math.abs(days ?? 0)
-    const hasDays = days !== null && days !== undefined
-
-    const daysClass = !hasDays ? 'dim' : days < 0 ? 'overdue' : days <= 7 ? 'urgent' : 'ontrack'
-    const daysText  = !hasDays ? '—' : absD
-    const daysLabel = !hasDays ? '' : days < 0 ? 'days overdue' : `days · ${o.gateLabel}`
-
-    const barColor = !hasDays ? 'dim' : days < 0 ? 'red' : days <= 7 ? 'gold' : 'blue'
-    const barPct   = !hasDays ? 20 : days < 0 ? 100 : days <= 7 ? 88 : days <= 14 ? 65 : days <= 30 ? 45 : 25
-
-    const status = o.status || ''
-    const badgeCls = status === 'ON TRACK' ? 'on-track' : status === 'BLOCKED' ? 'blocked' : status === 'COMPLETE' ? 'complete' : 'at-risk'
-    const badgeTxt = status || 'ACTIVE'
-
-    return `<div class="oc-card">
-      <div class="oc-header">
-        <span class="oc-title">${o.title}</span>
-        <span class="oc-badge ${badgeCls}">${badgeTxt}</span>
-      </div>
-      <div class="oc-days-row">
-        <span class="oc-days ${daysClass}">${daysText}</span>
-        <span class="oc-days-label">${daysLabel}</span>
-      </div>
-      <div class="oc-bar"><div class="oc-bar-fill ${barColor}" style="width:${barPct}%"></div></div>
-    </div>`
-  }).join('')
-}
-
-// ─── Render: Weekly Targets ───────────────────────────────────────────────────
-function renderTargets(targets) {
-  const list = document.getElementById('target-list')
-  if (!targets || !targets.length) { list.innerHTML = '<div class="fu-empty">No targets this week</div>'; return }
-  const unchecked = targets.filter(t => !t.checked)
-  const checked   = targets.filter(t => t.checked)
-  list.innerHTML = [...unchecked, ...checked].map(t => `
-    <div class="target-item">
-      <div class="target-check ${t.checked ? 'done' : ''}"></div>
-      <div class="target-text ${t.checked ? 'done' : ''}">${t.text}</div>
-    </div>`).join('')
-}
-
-// ─── Render: Follow-ups ───────────────────────────────────────────────────────
-function renderFollowUps(followUps) {
-  const el    = document.getElementById('followup-list')
-  const ssEl  = document.getElementById('ss-fu')
-  if (!Array.isArray(followUps) || !followUps.length) { el.innerHTML = '<div class="fu-empty">All clear.</div>'; return }
-
-  const today   = new Date().toISOString().slice(0, 10)
-  const open    = followUps.filter(f => (f.status || '').toLowerCase() !== 'done')
-  const overdue = open.filter(f => f.due && f.due < today)
-  const dueToday = open.filter(f => f.due === today)
-  const upcoming = open.filter(f => !f.due || f.due > today)
-
-  ssEl.textContent = open.length + (overdue.length ? ` ⚠` : '')
-
-  let html = ''
-  if (overdue.length) {
-    html += `<div class="fu-section-label overdue">Overdue (${overdue.length})</div>`
-    html += overdue.map(f => `
-      <div class="fu-row">
-        <span class="fu-person">${f.person}</span>
-        <span class="fu-topic">— ${f.topic || ''}</span>
-        <span class="fu-due overdue">${fmtDate(f.due)}</span>
-      </div>`).join('')
-  }
-  if (dueToday.length) {
-    html += `<div class="fu-section-label today">Today</div>`
-    html += dueToday.map(f => `
-      <div class="fu-row">
-        <span class="fu-person">${f.person}</span>
-        <span class="fu-topic">— ${f.topic || ''}</span>
-        <span class="fu-due">${fmtDate(f.due)}</span>
-      </div>`).join('')
-  }
-  const showUpcoming = upcoming.slice(0, 4)
-  if (showUpcoming.length && !overdue.length && !dueToday.length) {
-    html += showUpcoming.map(f => `
-      <div class="fu-row">
-        <span class="fu-person">${f.person}</span>
-        <span class="fu-topic">— ${f.topic || ''}</span>
-        <span class="fu-due">${fmtDate(f.due)}</span>
-      </div>`).join('')
-  }
-  if (!html) html = '<div class="fu-empty">All clear.</div>'
-  el.innerHTML = html
-}
-
-// ─── Render: Pipeline ────────────────────────────────────────────────────────
-function renderPipeline(deals) {
-  const el   = document.getElementById('pipeline-list')
-  const ssEl = document.getElementById('ss-pipe')
-  if (!Array.isArray(deals) || !deals.length) { el.innerHTML = '<div class="fu-empty">No active deals.</div>'; ssEl.textContent = '0'; return }
-
-  const total = deals.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0)
-  ssEl.textContent = `${deals.length} · ${fmtMoney(total)}`
-
-  el.innerHTML = deals.map(d => {
-    const stage = (d.stage || 'lead').toLowerCase()
-    const due   = d.due_date
-    const dueClass = isOverdue(due) ? 'overdue' : ''
-    const dueText  = due ? (isOverdue(due) ? `⚠ ${fmtDate(due)}` : fmtDate(due)) : ''
-    return `<div class="deal-row">
-      <span class="deal-stage-dot ${stage}"></span>
-      <div class="deal-body">
-        <div class="deal-person">${d.person}</div>
-        <div class="deal-action">${d.next_action || d.product || ''}</div>
-      </div>
-      <div class="deal-right">
-        <div class="deal-amount">${fmtMoney(d.amount)}</div>
-        <div class="deal-due ${dueClass}">${dueText}</div>
-      </div>
-    </div>`
-  }).join('')
-}
-
-// ─── Render: Stats ────────────────────────────────────────────────────────────
-function renderStats(metrics) {
-  if (!metrics || !metrics._stats) return
-  const s = metrics._stats
-  if (s.subscribers) document.getElementById('ss-subs').textContent = Math.round(s.subscribers).toLocaleString()
-  if (s.mtdRevenue)  document.getElementById('ss-mtd').textContent  = fmtMoney(s.mtdRevenue)
-}
-
-// ─── Render: State ────────────────────────────────────────────────────────────
-function renderState(state) {
-  if (!state || state.error) return
-  const status = document.getElementById('home-status')
-  const chip   = document.getElementById('mode-chip')
-  status.innerHTML = ''
-
-  if (state.mode) {
-    const mode = state.mode.toLowerCase()
-    chip.textContent = mode
-    const modeTag = document.createElement('span')
-    modeTag.className = `status-tag ${mode}`
-    modeTag.textContent = mode
-    status.appendChild(modeTag)
-  }
-  if (state.energy) {
-    const eTag = document.createElement('span')
-    eTag.className = 'status-tag energy'
-    eTag.textContent = state.energy
-    status.appendChild(eTag)
-  }
-
-  if (state.outcomes) renderOutcomes(state.outcomes)
-  if (state.weeklyTargets) renderTargets(state.weeklyTargets)
-}
-
-// ─── Load dashboard ───────────────────────────────────────────────────────────
-async function loadDashboard() {
-  try {
-    const [state, followUps, pipeline, metrics] = await Promise.all([
-      window.ace.dash.getState(),
-      window.ace.dash.getFollowUps(),
-      window.ace.dash.getPipeline(),
-      window.ace.dash.getMetrics(),
-    ])
-    renderState(state)
-    renderFollowUps(followUps)
-    renderPipeline(pipeline)
-    renderStats(metrics)
-  } catch (e) {
-    document.getElementById('home-status').innerHTML = '<span class="status-tag energy">Vault connected</span>'
-  }
-}
-
-loadDashboard()
-
-document.getElementById('refresh-btn').addEventListener('click', () => {
-  document.getElementById('home-status').innerHTML = '<span class="status-tag energy">Refreshing…</span>'
-  document.getElementById('outcomes-grid').innerHTML = '<div style="grid-column:1/-1;font-size:10px;color:var(--text-dim);padding:8px 0">Loading…</div>'
-  loadDashboard()
-})
-
-// Live updates
-window.ace.dash.onStateUpdate((_,    s)  => { renderState(s); })
-window.ace.dash.onFollowUpsUpdate((_,  fu) => renderFollowUps(fu))
-window.ace.dash.onPipelineUpdate((_, p)  => renderPipeline(p))
-
 // ─── Vault View ───────────────────────────────────────────────────────────────
 let vaultRootPath      = null
 let vaultInitialized   = false
@@ -1499,6 +1477,66 @@ document.getElementById('vault-open-term-btn').addEventListener('click', () => {
   setTimeout(() => {
     if (activeId && dirPath) window.ace.pty.write(activeId, `cd "${dirPath}"\r`)
   }, 200)
+})
+
+// ─── Vault Edit Mode ─────────────────────────────────────────────────────────
+let vaultEditRaw = ''
+const editBtn   = document.getElementById('vault-edit-btn')
+const saveBtn   = document.getElementById('vault-save-btn')
+const cancelBtn = document.getElementById('vault-cancel-btn')
+const editorEl  = document.getElementById('vault-editor')
+const renderEl2 = document.getElementById('vault-render')
+
+function showEditButtons(show) {
+  editBtn.style.display   = show && !editorEl.style.display.includes('block') ? '' : 'none'
+  saveBtn.style.display   = show && editorEl.style.display === 'block' ? '' : 'none'
+  cancelBtn.style.display = show && editorEl.style.display === 'block' ? '' : 'none'
+}
+
+// Show Edit button when a file is loaded
+const origOpenVaultFile = openVaultFile
+openVaultFile = async function(filePath, fileName) {
+  await origOpenVaultFile(filePath, fileName)
+  // Exit edit mode if switching files
+  editorEl.style.display = 'none'
+  renderEl2.style.display = ''
+  editBtn.style.display = filePath.match(/\.(md|markdown|txt|yaml|yml|json|js|css|html)$/i) ? '' : 'none'
+  saveBtn.style.display = 'none'
+  cancelBtn.style.display = 'none'
+}
+
+editBtn.addEventListener('click', async () => {
+  if (!activeVaultFile) return
+  const content = await window.ace.vault.readFile(activeVaultFile)
+  if (typeof content !== 'string') return
+  vaultEditRaw = content
+  editorEl.value = content
+  editorEl.style.display = 'block'
+  renderEl2.style.display = 'none'
+  editBtn.style.display = 'none'
+  saveBtn.style.display = ''
+  cancelBtn.style.display = ''
+  editorEl.focus()
+})
+
+saveBtn.addEventListener('click', async () => {
+  if (!activeVaultFile) return
+  const result = await window.ace.vault.writeFile(activeVaultFile, editorEl.value)
+  if (result?.error) { console.error('[vault] save failed:', result.error); return }
+  editorEl.style.display = 'none'
+  renderEl2.style.display = ''
+  saveBtn.style.display = 'none'
+  cancelBtn.style.display = 'none'
+  // Re-render the file with updated content
+  await origOpenVaultFile(activeVaultFile, activeVaultFile.split('/').pop())
+})
+
+cancelBtn.addEventListener('click', () => {
+  editorEl.style.display = 'none'
+  renderEl2.style.display = ''
+  editBtn.style.display = ''
+  saveBtn.style.display = 'none'
+  cancelBtn.style.display = 'none'
 })
 
 // ─── Graph View ───────────────────────────────────────────────────────────────
@@ -1686,5 +1724,91 @@ document.getElementById('graph-refresh-btn').addEventListener('click', async () 
   await renderGraph()
 })
 </script>
+  <script type="module">
+    import { loadDashboard } from './dashboard.js'
+
+    loadDashboard()
+
+    document.getElementById('refresh-btn')?.addEventListener('click', () => loadDashboard())
+
+    // Live updates (debounced)
+    let reloadTimer
+    window.ace.dash.onStateUpdate?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
+    window.ace.dash.onFollowUpsUpdate?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
+    window.ace.dash.onPipelineUpdate?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
+  </script>
+  <script type="module">
+    import { WIDGETS, DEFAULT_LAYOUT } from './widgets/registry.js'
+    import { loadDashboard } from './dashboard.js'
+
+    async function renderSettings() {
+      const el = document.getElementById('layout-list')
+      if (!el) return
+      const saved = await window.ace.dash.getLayout() || DEFAULT_LAYOUT
+
+      el.innerHTML = saved.map(item => {
+        const w = WIDGETS.find(w => w.id === item.id)
+        if (!w) return ''
+        return `
+          <div class="layout-row" data-id="${w.id}">
+            <span class="layout-drag">⠿</span>
+            <div class="layout-info">
+              <div class="layout-label">${w.label}</div>
+              <div class="layout-desc">${w.description}</div>
+            </div>
+            <div class="layout-toggle ${item.enabled ? 'on' : ''}" data-id="${w.id}"></div>
+          </div>`
+      }).filter(Boolean).join('')
+
+      // Toggle handler
+      el.querySelectorAll('.layout-toggle').forEach(toggle => {
+        toggle.addEventListener('click', async e => {
+          e.stopPropagation()
+          toggle.classList.toggle('on')
+          await saveCurrentLayout()
+          loadDashboard()
+        })
+      })
+
+      // SortableJS drag-to-reorder
+      if (typeof Sortable !== 'undefined') {
+        new Sortable(el, {
+          animation: 150,
+          handle: '.layout-drag',
+          onEnd: async () => { await saveCurrentLayout(); loadDashboard() }
+        })
+      }
+    }
+
+    async function saveCurrentLayout() {
+      const rows = document.querySelectorAll('#layout-list .layout-row')
+      const layout = [...rows].map(row => ({
+        id:      row.dataset.id,
+        enabled: row.querySelector('.layout-toggle').classList.contains('on'),
+      }))
+      await window.ace.dash.saveLayout(layout)
+    }
+
+    // Toggle slide-over settings panel
+    function openSettings() {
+      const overlay = document.getElementById('dash-settings-overlay')
+      if (!overlay) return
+      overlay.classList.add('open')
+      renderSettings()
+    }
+    function closeSettings() {
+      document.getElementById('dash-settings-overlay')?.classList.remove('open')
+    }
+    document.getElementById('dash-settings-btn')?.addEventListener('click', openSettings)
+    document.getElementById('dash-settings-backdrop')?.addEventListener('click', closeSettings)
+    document.getElementById('settings-close-btn')?.addEventListener('click', closeSettings)
+
+    // Reset button
+    document.getElementById('settings-reset-btn')?.addEventListener('click', async () => {
+      await window.ace.dash.saveLayout(DEFAULT_LAYOUT)
+      renderSettings()
+      loadDashboard()
+    })
+  </script>
 </body>
 </html>

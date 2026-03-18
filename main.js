@@ -85,6 +85,11 @@ function createWindow(page) {
   if (!app.isPackaged) {
     mainWindow.webContents.openDevTools({ mode: 'detach' })
   }
+
+  // Forward renderer console errors to stdout for debugging
+  mainWindow.webContents.on('console-message', (_, level, msg, line, source) => {
+    if (level >= 2) console.log(`[renderer:${level}] ${msg} (${source}:${line})`)
+  })
 }
 
 // ─── App Lifecycle ────────────────────────────────────────────────────────────
@@ -99,6 +104,11 @@ app.whenReady().then(() => {
 
   const config = loadConfig()
   const vaultMissing = config && !fs.existsSync(config.vaultPath)
+
+  // Load API key from config if not already in env
+  if (config?.anthropicApiKey && !process.env.ANTHROPIC_API_KEY) {
+    process.env.ANTHROPIC_API_KEY = config.anthropicApiKey
+  }
 
   if (!config || vaultMissing) {
     createWindow('setup.html')
@@ -158,6 +168,7 @@ ipcMain.handle(ch.SAVE_CONFIG, (_, config) => {
   // Reload into main UI
   global.VAULT_PATH = config.vaultPath
   global.CLAUDE_BIN = config.claudeBinaryPath
+  if (config.anthropicApiKey) process.env.ANTHROPIC_API_KEY = config.anthropicApiKey
   require('./src/file-watcher').start(mainWindow)
   require('./src/db-reader').open(config.vaultPath)
   require('./src/vault-scanner').invalidateCache()
@@ -181,17 +192,55 @@ ipcMain.handle(ch.GET_FOLLOWUPS, () => {
 })
 
 ipcMain.handle(ch.GET_METRICS, () => {
-  try { return require('./src/db-reader').getMetrics() } catch (e) { return { error: e.message } }
+  try {
+    const metrics = require('./src/db-reader').getMetrics()
+    metrics._signals = require('./src/synthesizer').parseSignalDetails(global.VAULT_PATH)
+    return metrics
+  } catch (e) { return { error: e.message } }
+})
+
+ipcMain.handle(ch.GET_VELOCITY, () => {
+  try { return require('./src/vault-reader').parseExecutionLog(global.VAULT_PATH, 14) }
+  catch (e) { return { byDay: {}, totalThisWeek: 0, totalLastWeek: 0, error: e.message } }
+})
+
+ipcMain.handle(ch.GET_SYNTHESIS_AI, async (_, context) => {
+  const voicePath = require('path').join(global.VAULT_PATH, '00-System', 'core', 'voice-profile.md')
+  try { return await require('./src/synthesizer').getAISynthesis(context, voicePath, global.CLAUDE_BIN) }
+  catch (e) { return null }
+})
+
+ipcMain.handle(ch.GET_LAYOUT, () => {
+  const config = loadConfig() || {}
+  return config.layout || null
+})
+
+ipcMain.handle(ch.SAVE_LAYOUT, (_, layout) => {
+  const config = loadConfig() || {}
+  config.layout = layout
+  saveConfig(config)
+  return true
 })
 
 // ─── Vault IPC Handlers ───────────────────────────────────────────────────────
 
 ipcMain.handle(ch.VAULT_LIST_DIR, (_, dirPath) => {
-  try { return require('./src/vault-reader').listDir(dirPath || global.VAULT_PATH) } catch (e) { return { error: e.message } }
+  const resolved = path.resolve(dirPath || global.VAULT_PATH)
+  if (!resolved.startsWith(global.VAULT_PATH)) return { error: 'Access denied: path outside vault' }
+  try { return require('./src/vault-reader').listDir(resolved) } catch (e) { return { error: e.message } }
 })
 
 ipcMain.handle(ch.VAULT_READ_FILE, (_, filePath) => {
-  try { return fs.readFileSync(filePath, 'utf8') } catch (e) { return { error: e.message } }
+  const resolved = path.resolve(filePath)
+  if (!resolved.startsWith(global.VAULT_PATH)) return { error: 'Access denied: path outside vault' }
+  try { return fs.readFileSync(resolved, 'utf8') } catch (e) { return { error: e.message } }
+})
+
+ipcMain.handle(ch.VAULT_WRITE_FILE, (_, filePath, content) => {
+  const resolved = path.resolve(filePath)
+  if (!resolved.startsWith(global.VAULT_PATH)) return { error: 'Access denied: path outside vault' }
+  try { fs.writeFileSync(resolved, content, 'utf8'); return { ok: true } }
+  catch (e) { return { error: e.message } }
 })
 
 ipcMain.handle(ch.VAULT_BUILD_GRAPH, () => {

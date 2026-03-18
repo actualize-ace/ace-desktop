@@ -38,12 +38,18 @@ contextBridge.exposeInMainWorld('ace', {
     onOutcomesUpdate: (cb) => ipcRenderer.on(ch.DASH_OUTCOMES, cb),
     onFollowUpsUpdate:(cb) => ipcRenderer.on(ch.DASH_FOLLOWUPS,cb),
     onPipelineUpdate: (cb) => ipcRenderer.on(ch.DASH_PIPELINE, cb),
+
+    getVelocity:          ()        => ipcRenderer.invoke(ch.GET_VELOCITY),
+    getSynthesisAI:       (context) => ipcRenderer.invoke(ch.GET_SYNTHESIS_AI, context),
+    getLayout:            ()        => ipcRenderer.invoke(ch.GET_LAYOUT),
+    saveLayout:           (layout)  => ipcRenderer.invoke(ch.SAVE_LAYOUT, layout),
   },
 
   // ─── Vault ───────────────────────────────────────────────────────────────────
   vault: {
     listDir:  (dirPath)  => ipcRenderer.invoke(ch.VAULT_LIST_DIR, dirPath),
-    readFile: (filePath) => ipcRenderer.invoke(ch.VAULT_READ_FILE, filePath),
+    readFile:  (filePath) => ipcRenderer.invoke(ch.VAULT_READ_FILE, filePath),
+    writeFile: (filePath, content) => ipcRenderer.invoke(ch.VAULT_WRITE_FILE, filePath, content),
     buildGraph:      ()  => ipcRenderer.invoke(ch.VAULT_BUILD_GRAPH),
     invalidateGraph: ()  => ipcRenderer.invoke(ch.VAULT_GRAPH_INVALIDATE),
   },

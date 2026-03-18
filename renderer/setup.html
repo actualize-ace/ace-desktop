@@ -242,11 +242,24 @@
       </div>
     </div>
 
+    <div class="step">
+      <div class="step-label">03 — Anthropic API Key <span style="opacity:0.45;font-size:11px;font-weight:400">(optional — enables AI synthesis bar)</span></div>
+      <div class="step-row">
+        <input type="password" id="api-key-input" placeholder="sk-ant-..." style="
+          flex:1; background:var(--bg-elevated); border:1px solid rgba(212,165,116,0.15);
+          border-radius:6px; padding:10px 14px; font-family:'JetBrains Mono',monospace;
+          font-size:12px; color:var(--text-primary); min-height:42px; outline:none;
+          transition:border-color 0.14s;
+        " />
+        <div class="status-dot" id="api-dot"></div>
+      </div>
+    </div>
+
     <button class="btn-primary" id="launch-btn" disabled>Save &amp; Launch ACE</button>
   </div>
 
   <script>
-    let state = { vaultPath: null, vaultValid: false, binaryPath: null }
+    let state = { vaultPath: null, vaultValid: false, binaryPath: null, apiKey: '' }
 
     const $ = id => document.getElementById(id)
 
@@ -284,6 +297,11 @@
 
     $('recheck-btn').addEventListener('click', detectBinary)
 
+    $('api-key-input').addEventListener('input', () => {
+      state.apiKey = $('api-key-input').value.trim()
+      $('api-dot').className = 'status-dot ' + (state.apiKey.startsWith('sk-ant-') ? 'green' : state.apiKey ? 'amber' : '')
+    })
+
     function checkReady() {
       $('launch-btn').disabled = !(state.vaultPath && state.binaryPath)
     }
@@ -291,11 +309,13 @@
     $('launch-btn').addEventListener('click', async () => {
       $('launch-btn').disabled = true
       $('launch-btn').textContent = 'Launching…'
-      await window.ace.setup.saveConfig({
+      const cfg = {
         vaultPath: state.vaultPath,
         claudeBinaryPath: state.binaryPath,
         configVersion: 1,
-      })
+      }
+      if (state.apiKey) cfg.anthropicApiKey = state.apiKey
+      await window.ace.setup.saveConfig(cfg)
     })
 
     detectBinary()
