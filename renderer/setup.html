@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ACE Desktop — Setup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #060504;
+      --bg-surface: #0a0806;
+      --bg-elevated: #1a1612;
+      --bg-card: #12100c;
+      --border: rgba(212,165,116,0.08);
+      --border-hover: rgba(212,165,116,0.18);
+      --gold: #d4a574;
+      --gold-dim: #8a6a44;
+      --green: #6db88f;
+      --text-primary: #e8ddd0;
+      --text-secondary: #8a7d6f;
+      --text-dim: #5a5248;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      font-family: 'DM Sans', -apple-system, sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-app-region: drag;
+    }
+
+    .setup-card {
+      -webkit-app-region: no-drag;
+      width: 520px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 44px;
+    }
+
+    .logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-orb {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: radial-gradient(circle at 38% 38%, var(--gold), var(--gold-dim));
+      box-shadow: 0 0 12px rgba(212,165,116,0.3);
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 30px;
+      font-weight: 400;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-primary);
+      font-weight: 300;
+      opacity: 0.65;
+      margin-bottom: 36px;
+    }
+
+    .step { margin-bottom: 26px; }
+
+    .step-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      opacity: 0.8;
+    }
+
+    .step-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-value {
+      flex: 1;
+      background: var(--bg-elevated);
+      border: 1px solid rgba(212,165,116,0.15);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: rgba(232,221,208,0.5);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+    }
+    .step-value.valid { color: var(--green); border-color: rgba(109,184,143,0.3); }
+    .step-value.error { color: #e08080; border-color: rgba(196,116,116,0.3); }
+
+    button {
+      background: var(--bg-elevated);
+      border: 1px solid rgba(212,165,116,0.3);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 18px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 0.14s, background 0.14s;
+    }
+    button:hover { border-color: var(--gold); background: rgba(212,165,116,0.08); }
+
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--text-dim); flex-shrink: 0;
+    }
+    .status-dot.green { background: var(--green); box-shadow: 0 0 7px rgba(109,184,143,0.5); }
+    .status-dot.amber { background: #d4c274; }
+    .status-dot.red   { background: #c47474; }
+
+    .install-guide {
+      display: none;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px;
+      margin-top: 10px;
+    }
+    .install-guide.visible { display: block; }
+
+    .install-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 6px 0;
+      font-size: 13px;
+      color: var(--text-primary);
+      font-weight: 300;
+      opacity: 0.8;
+    }
+    .install-step .num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--gold);
+      width: 18px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .install-step code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--gold);
+      background: rgba(212,165,116,0.08);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .warning {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      color: #d4c274;
+      letter-spacing: 0.5px;
+      margin-top: 5px;
+      display: none;
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--gold);
+      border: 1px solid var(--gold);
+      color: #060504;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      padding: 14px;
+      margin-top: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.14s, opacity 0.14s;
+    }
+    .btn-primary:hover { background: #e0b888; border-color: #e0b888; }
+    .btn-primary:disabled { opacity: 0.25; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <div class="setup-card">
+    <div class="logo">
+      <div class="logo-orb"></div>
+      ACE Desktop
+    </div>
+    <h1>Welcome</h1>
+    <p class="subtitle">Connect your vault and Claude Code to get started.</p>
+
+    <div class="step">
+      <div class="step-label">01 — ACE Vault Folder</div>
+      <div class="step-row">
+        <div class="step-value" id="vault-path">No folder selected</div>
+        <div class="status-dot" id="vault-dot"></div>
+        <button id="vault-btn">Browse</button>
+      </div>
+      <div class="warning" id="vault-warning">⚠ No .mcp.json found — this may not be an ACE vault.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-label">02 — Claude Code Binary</div>
+      <div class="step-row">
+        <div class="step-value" id="binary-path">Detecting…</div>
+        <div class="status-dot" id="binary-dot"></div>
+        <button id="recheck-btn">Check Again</button>
+      </div>
+
+      <div class="install-guide" id="install-guide">
+        <div class="install-step">
+          <span class="num">1.</span>
+          <span>Install Node.js from <strong>nodejs.org</strong></span>
+        </div>
+        <div class="install-step">
+          <span class="num">2.</span>
+          <span>Run: <code>npm install -g @anthropic-ai/claude-code</code></span>
+        </div>
+        <div class="install-step">
+          <span class="num">3.</span>
+          <span>Run <code>claude</code> once to authenticate via browser</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="launch-btn" disabled>Save &amp; Launch ACE</button>
+  </div>
+
+  <script>
+    let state = { vaultPath: null, vaultValid: false, binaryPath: null }
+
+    const $ = id => document.getElementById(id)
+
+    $('vault-btn').addEventListener('click', async () => {
+      const result = await window.ace.setup.pickVault()
+      if (!result) return
+      state.vaultPath = result.vaultPath
+      state.vaultValid = result.hasMcp
+      $('vault-path').textContent = result.vaultPath
+      $('vault-path').className = 'step-value ' + (result.hasMcp ? 'valid' : '')
+      $('vault-dot').className = 'status-dot ' + (result.hasMcp ? 'green' : 'amber')
+      $('vault-warning').style.display = result.hasMcp ? 'none' : 'block'
+      checkReady()
+    })
+
+    async function detectBinary() {
+      $('binary-path').textContent = 'Detecting…'
+      $('binary-dot').className = 'status-dot'
+      const found = await window.ace.setup.detectBinary()
+      if (found) {
+        state.binaryPath = found
+        $('binary-path').textContent = found
+        $('binary-path').className = 'step-value valid'
+        $('binary-dot').className = 'status-dot green'
+        $('install-guide').classList.remove('visible')
+      } else {
+        state.binaryPath = null
+        $('binary-path').textContent = 'Not found'
+        $('binary-path').className = 'step-value error'
+        $('binary-dot').className = 'status-dot red'
+        $('install-guide').classList.add('visible')
+      }
+      checkReady()
+    }
+
+    $('recheck-btn').addEventListener('click', detectBinary)
+
+    function checkReady() {
+      $('launch-btn').disabled = !(state.vaultPath && state.binaryPath)
+    }
+
+    $('launch-btn').addEventListener('click', async () => {
+      $('launch-btn').disabled = true
+      $('launch-btn').textContent = 'Launching…'
+      await window.ace.setup.saveConfig({
+        vaultPath: state.vaultPath,
+        claudeBinaryPath: state.binaryPath,
+        configVersion: 1,
+      })
+    })
+
+    detectBinary()
+  </script>
+</body>
+</html>

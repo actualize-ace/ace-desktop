@@ -1,0 +1,144 @@
+const fs   = require('fs')
+const path = require('path')
+
+const MONTHS = {
+  January:0, February:1, March:2, April:3, May:4, June:5,
+  July:6, August:7, September:8, October:9, November:10, December:11,
+}
+
+// ─── State Parser (state.md + active.md) ─────────────────────────────────────
+
+function parseState(vaultPath) {
+  try {
+    const stateText = fs.readFileSync(path.join(vaultPath, '00-System', 'state.md'), 'utf8')
+    const activeText = fs.readFileSync(path.join(vaultPath, '00-System', 'active.md'), 'utf8')
+
+    const stateSection = (heading) => {
+      const re = new RegExp(`## ${heading}\\s*\\n([\\s\\S]*?)(?=\\n## |$)`)
+      const m = stateText.match(re)
+      return m ? m[1].trim() : null
+    }
+
+    const mode   = stateSection('Operating Mode')
+    const energy = stateSection('Energy')
+
+    const failuresRaw = stateSection('Open Failures')
+    const failures = failuresRaw
+      ? failuresRaw.split('\n').filter(l => l.trim().startsWith('-') && !/none/i.test(l)).map(l => l.replace(/^-\s*/, '').trim()).filter(Boolean)
+      : []
+
+    const weeklyTargets = parseWeeklyTargets(activeText)
+    const outcomes      = parseOutcomes(activeText)
+
+    return { mode, energy, failures, weeklyTargets, outcomes }
+  } catch (e) {
+    return { error: e.message }
+  }
+}
+
+// ─── Outcomes (active.md ### sections) ───────────────────────────────────────
+
+function parseOutcomes(activeText) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const sections = activeText.split(/\n(?=### )/)
+  const outcomes = []
+
+  for (const section of sections) {
+    const titleMatch = section.match(/^### (.+)/)
+    if (!titleMatch) continue
+
+    // Strip " — Month Day" suffix from heading
+    const title = titleMatch[1].replace(/\s*—\s*.+$/, '').trim()
+    if (!title || title.toLowerCase() === 'direction') continue
+
+    // Gate: extract last month-day pair → compute days to gate
+    let daysToGate = null
+    let gateLabel  = ''
+    const gateMatch = section.match(/\*\*Gate:\*\*\s*(.+)/)
+    if (gateMatch) {
+      const dateRe = /\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d+)/g
+      const found  = [...gateMatch[1].matchAll(dateRe)]
+      if (found.length) {
+        const last     = found[found.length - 1]
+        const gateDate = new Date(2026, MONTHS[last[1]], parseInt(last[2]))
+        gateDate.setHours(0, 0, 0, 0)
+        daysToGate = Math.round((gateDate - today) / (1000 * 60 * 60 * 24))
+        gateLabel  = `${last[1].slice(0, 3)} ${last[2]}`
+      }
+    }
+
+    // Status: ON TRACK / AT RISK / BLOCKED / COMPLETE etc.
+    const statusMatch = section.match(/\*\*Status:\*\*\s*(ON TRACK|AT RISK|BLOCKED|COMPLETE|IN PROGRESS|PAUSED)/i)
+    const status = statusMatch ? statusMatch[1].toUpperCase() : null
+
+    outcomes.push({ title, daysToGate, gateLabel, status })
+  }
+
+  return outcomes
+}
+
+// ─── Weekly Targets (active.md) ──────────────────────────────────────────────
+
+function parseWeeklyTargets(activeText) {
+  try {
+    const m = activeText.match(/\*\*This Week[^*]+\*\*:?\n([\s\S]*?)(?=\n---|\n\*\*This Week|\n###|$)/)
+    if (!m) return []
+    return m[1].split('\n')
+      .filter(l => /^\s*-\s*\[/.test(l))
+      .map(l => ({
+        text:    l.replace(/^\s*-\s*\[[x ]\]\s*/i, '').trim(),
+        checked: /^\s*-\s*\[x\]/i.test(l),
+      }))
+      .filter(i => i.text.length > 0)
+  } catch {
+    return []
+  }
+}
+
+// ─── Follow-ups Parser ────────────────────────────────────────────────────────
+
+function parseFollowUps(vaultPath) {
+  try {
+    const text = fs.readFileSync(path.join(vaultPath, '04-Network', 'follow-ups.md'), 'utf8')
+
+    const activeSection = text.match(/## Active\s*\n([\s\S]*?)(?=\n## |$)/)
+    if (!activeSection) return []
+
+    const tableLines = activeSection[1].split('\n').filter(l => l.trim().startsWith('|'))
+    if (tableLines.length < 3) return []
+
+    const headers = tableLines[0].split('|').map(h => h.trim().toLowerCase()).filter(Boolean)
+
+    const rows = []
+    for (let i = 2; i < tableLines.length; i++) {
+      const cells = tableLines[i].split('|').slice(1, headers.length + 1).map(c => c.trim())
+      if (cells.length < 2) continue
+      const row = {}
+      headers.forEach((h, idx) => { row[h] = cells[idx] || '' })
+      row.person = (row.person || '').replace(/\[\[(?:[^\]|]+\|)?([^\]]+)\]\]/g, '$1').trim()
+      rows.push(row)
+    }
+
+    return rows.filter(r => r.person)
+  } catch (e) {
+    return { error: e.message }
+  }
+}
+
+// ─── Dir Listing ──────────────────────────────────────────────────────────────
+
+function listDir(dirPath) {
+  try {
+    return fs.readdirSync(dirPath, { withFileTypes: true }).map(e => ({
+      name:  e.name,
+      isDir: e.isDirectory(),
+      path:  path.join(dirPath, e.name),
+    }))
+  } catch (e) {
+    return { error: e.message }
+  }
+}
+
+module.exports = { parseState, parseFollowUps, listDir }

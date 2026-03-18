@@ -56,6 +56,8 @@
     body.light .session-tabs { background: rgba(225,217,207,0.9); }
     body.light .term-hdr     { background: rgba(225,217,207,0.95); }
     body.light .term-xterm   { background: #f0ebe3; }
+    body.light .agents-roster { background: rgba(232,224,214,0.97); }
+    body.light .apane-tab    { background: rgba(225,217,207,0.95); }
 
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
@@ -748,12 +750,12 @@ function applyTheme(t) {
   document.body.classList.toggle('light', t === 'light')
   document.getElementById('theme-btn').textContent = t === 'light' ? '◐' : '◑'
   localStorage.setItem('ace-theme', t)
-  // Guard: sessions/agentSessions declared later in the script — typeof prevents ReferenceError at page load
-  const xt = xtermTheme()
-  if (typeof sessions !== 'undefined')
+  // sessions/agentSessions are const-declared later — try/catch silently skips at page load, works on toggle
+  try {
+    const xt = xtermTheme()
     Object.values(sessions).forEach(s => { if (s?.term) s.term.options.theme = { ...xt } })
-  if (typeof agentSessions !== 'undefined')
     Object.values(agentSessions).forEach(s => { if (s?.term) s.term.options.theme = { ...xt } })
+  } catch(e) {}
 }
 applyTheme(theme)
 document.getElementById('theme-btn').addEventListener('click', () => applyTheme(theme === 'dark' ? 'light' : 'dark'))
@@ -931,6 +933,12 @@ function refreshAgentsLayout() {
   const hasBottom = botEl?.querySelector('.apane') !== null
   if (hResizer) hResizer.style.display = hasBottom ? '' : 'none'
   if (topEl)    topEl.style.flex = hasBottom ? '' : '1'
+  if (botEl)    botEl.style.flex = hasBottom ? '1' : '0'
+  // Set initial 50/50 split when bottom row first gets an agent
+  if (hasBottom && !topEl.style.height) {
+    topEl.style.height = (topEl.parentElement.clientHeight / 2) + 'px'
+  }
+  if (!hasBottom) topEl.style.height = ''
   Object.keys(agentSessions).forEach(id => {
     requestAnimationFrame(() => agentSessions[id]?.fitAddon?.fit())
   })
