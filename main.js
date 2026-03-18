@@ -100,6 +100,11 @@ app.whenReady().then(() => {
   const config = loadConfig()
   const vaultMissing = config && !fs.existsSync(config.vaultPath)
 
+  // Load API key from config if not already in env
+  if (config?.anthropicApiKey && !process.env.ANTHROPIC_API_KEY) {
+    process.env.ANTHROPIC_API_KEY = config.anthropicApiKey
+  }
+
   if (!config || vaultMissing) {
     createWindow('setup.html')
   } else {
@@ -158,6 +163,7 @@ ipcMain.handle(ch.SAVE_CONFIG, (_, config) => {
   // Reload into main UI
   global.VAULT_PATH = config.vaultPath
   global.CLAUDE_BIN = config.claudeBinaryPath
+  if (config.anthropicApiKey) process.env.ANTHROPIC_API_KEY = config.anthropicApiKey
   require('./src/file-watcher').start(mainWindow)
   require('./src/db-reader').open(config.vaultPath)
   require('./src/vault-scanner').invalidateCache()
