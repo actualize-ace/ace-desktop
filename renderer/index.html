@@ -53,8 +53,11 @@
     body.light .sidebar      { background: rgba(228,220,210,0.98); }
     body.light .triad-bar    { background: rgba(228,220,210,0.98); }
     body.light .view-header  { background: rgba(228,220,210,0.6); }
-    body.light .session-tabs { background: rgba(225,217,207,0.9); }
-    body.light .term-hdr     { background: rgba(225,217,207,0.95); }
+    body.light .session-tabs  { background: rgba(225,217,207,0.9); }
+    body.light .term-hdr      { background: rgba(225,217,207,0.95); }
+    body.light .term-xterm    { background: #f0ebe3; }
+    body.light .agents-roster { background: rgba(232,224,214,0.97); }
+    body.light .apane-tab     { background: rgba(225,217,207,0.95); }
 
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
@@ -719,12 +722,36 @@
 <script src="../node_modules/@xterm/addon-fit/lib/addon-fit.js"></script>
 <script>
 // ─── Theme ───────────────────────────────────────────────────────────────────
+const XTERM_DARK = {
+  background:'#020201', foreground:'#e8ddd0', cursor:'#d4a574',
+  selectionBackground:'rgba(212,165,116,0.2)',
+  black:'#1a1612', red:'#c47474', green:'#6db88f', yellow:'#d4c274',
+  blue:'#74a4c4', magenta:'#9b74c4', cyan:'#74c4b4', white:'#e8ddd0',
+  brightBlack:'#5a5248', brightRed:'#d48888', brightGreen:'#80d0a0',
+  brightYellow:'#e0d088', brightBlue:'#88bcd4', brightMagenta:'#b088d4',
+  brightCyan:'#88d4c4', brightWhite:'#f5f0e8',
+}
+const XTERM_LIGHT = {
+  background:'#f0ebe3', foreground:'#3a3028', cursor:'#8b5e3c',
+  selectionBackground:'rgba(139,94,60,0.2)',
+  black:'#3a3028', red:'#b03030', green:'#2a6e48', yellow:'#7a6018',
+  blue:'#1a5090', magenta:'#603090', cyan:'#185868', white:'#c8c0b4',
+  brightBlack:'#6a5e54', brightRed:'#c84848', brightGreen:'#3a8a5c',
+  brightYellow:'#907030', brightBlue:'#2a68b0', brightMagenta:'#7848b0',
+  brightCyan:'#287888', brightWhite:'#e8e0d8',
+}
+function xtermTheme() { return theme === 'light' ? XTERM_LIGHT : XTERM_DARK }
+
 let theme = localStorage.getItem('ace-theme') || 'dark'
 function applyTheme(t) {
   theme = t
   document.body.classList.toggle('light', t === 'light')
   document.getElementById('theme-btn').textContent = t === 'light' ? '◐' : '◑'
   localStorage.setItem('ace-theme', t)
+  // Update all live xterm instances
+  const xt = xtermTheme()
+  Object.values(sessions).forEach(s => { if (s?.term) s.term.options.theme = xt })
+  Object.values(agentSessions).forEach(s => { if (s?.term) s.term.options.theme = xt })
 }
 applyTheme(theme)
 document.getElementById('theme-btn').addEventListener('click', () => applyTheme(theme === 'dark' ? 'light' : 'dark'))
@@ -786,15 +813,7 @@ function spawnSession() {
   const term = new Terminal({
     fontFamily: '"JetBrains Mono", "Fira Code", monospace',
     fontSize: 12.5, lineHeight: 1.5, cursorBlink: true,
-    theme: {
-      background:'#020201', foreground:'#e8ddd0', cursor:'#d4a574',
-      selectionBackground:'rgba(212,165,116,0.2)',
-      black:'#1a1612', red:'#c47474', green:'#6db88f', yellow:'#d4c274',
-      blue:'#74a4c4', magenta:'#9b74c4', cyan:'#74c4b4', white:'#e8ddd0',
-      brightBlack:'#5a5248', brightRed:'#d48888', brightGreen:'#80d0a0',
-      brightYellow:'#e0d088', brightBlue:'#88bcd4', brightMagenta:'#b088d4',
-      brightCyan:'#88d4c4', brightWhite:'#f5f0e8',
-    },
+    theme: xtermTheme(),
     allowProposedApi: true,
   })
   const fitAddon = new FitAddon.FitAddon()
@@ -910,15 +929,7 @@ function spawnAgentPane(targetRow) {
   const term = new Terminal({
     fontFamily: '"JetBrains Mono", "Fira Code", monospace',
     fontSize: 12.5, lineHeight: 1.5, cursorBlink: true,
-    theme: {
-      background:'#020201', foreground:'#e8ddd0', cursor:'#d4a574',
-      selectionBackground:'rgba(212,165,116,0.2)',
-      black:'#1a1612', red:'#c47474', green:'#6db88f', yellow:'#d4c274',
-      blue:'#74a4c4', magenta:'#9b74c4', cyan:'#74c4b4', white:'#e8ddd0',
-      brightBlack:'#5a5248', brightRed:'#d48888', brightGreen:'#80d0a0',
-      brightYellow:'#e0d088', brightBlue:'#88bcd4', brightMagenta:'#b088d4',
-      brightCyan:'#88d4c4', brightWhite:'#f5f0e8',
-    },
+    theme: xtermTheme(),
     allowProposedApi: true,
   })
   const fitAddon = new FitAddon.FitAddon()
