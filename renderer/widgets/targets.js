@@ -1,4 +1,8 @@
 // renderer/widgets/targets.js
+function escapeHtml(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
 export default {
   id: 'targets',
   label: 'This Week',
@@ -18,7 +22,7 @@ export default {
       <div>${sorted.map(t => `
         <div class="target-row">
           <span class="target-check${t.checked ? ' done' : ''}"></span>
-          <span class="target-text${t.checked ? ' done' : ''}">${t.text}</span>
+          <span class="target-text${t.checked ? ' done' : ''}">${escapeHtml(t.text)}</span>
         </div>`).join('')}
       </div>`
   }

@@ -1,4 +1,8 @@
 // renderer/widgets/outcomes.js
+function escapeHtml(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
 export default {
   id: 'outcomes',
   label: 'Outcomes',
@@ -19,11 +23,11 @@ export default {
         const daysLabel   = o.daysToGate == null ? '' : o.daysToGate < 0 ? `${Math.abs(o.daysToGate)}d overdue` : o.daysToGate === 0 ? 'today' : `${o.daysToGate}d`
         return `
           <div class="oc-card">
-            <div class="oc-title">${o.title}</div>
+            <div class="oc-title">${escapeHtml(o.title)}</div>
             <div class="oc-meta">
-              ${o.status ? `<span class="oc-badge ${statusColor}">${o.status}</span>` : ''}
-              ${daysLabel ? `<span class="oc-days" style="color:var(--${daysColor})">${daysLabel}</span>` : ''}
-              ${o.gateLabel ? `<span class="oc-gate">${o.gateLabel}</span>` : ''}
+              ${o.status ? `<span class="oc-badge ${statusColor}">${escapeHtml(o.status)}</span>` : ''}
+              ${daysLabel ? `<span class="oc-days" style="color:var(--${daysColor})">${escapeHtml(daysLabel)}</span>` : ''}
+              ${o.gateLabel ? `<span class="oc-gate">${escapeHtml(o.gateLabel)}</span>` : ''}
             </div>
           </div>`
       }).join('')}</div>`

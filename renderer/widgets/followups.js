@@ -1,4 +1,8 @@
 // renderer/widgets/followups.js
+function escapeHtml(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
 export default {
   id: 'followups',
   label: 'Follow-ups',
@@ -17,8 +21,8 @@ export default {
     const renderRows = arr => arr.slice(0, 5).map(f => {
       const d = f.due ? parse(f.due) : null
       return `<div class="fu-row">
-        <span class="fu-person">${f.person}</span>
-        <span class="fu-topic" style="flex:1">${f.topic || ''}</span>
+        <span class="fu-person">${escapeHtml(f.person)}</span>
+        <span class="fu-topic" style="flex:1">${escapeHtml(f.topic)}</span>
         ${d ? `<span class="fu-due">${d.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})}</span>` : ''}
       </div>`
     }).join('')

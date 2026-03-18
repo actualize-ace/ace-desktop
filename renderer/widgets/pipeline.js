@@ -1,4 +1,8 @@
 // renderer/widgets/pipeline.js
+function escapeHtml(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
 export default {
   id: 'pipeline',
   label: 'Pipeline',
@@ -23,8 +27,8 @@ export default {
             return `
               <div class="fu-row">
                 <span class="deal-stage-dot ${d.stage || 'lead'}"></span>
-                <span class="fu-person">${d.person}</span>
-                <span class="fu-topic" style="flex:1">${d.next_action || d.product || ''}</span>
+                <span class="fu-person">${escapeHtml(d.person)}</span>
+                <span class="fu-topic" style="flex:1">${escapeHtml(d.next_action || d.product)}</span>
                 ${d.amount ? `<span class="fu-due">${fmtMoney(d.amount)}</span>` : ''}
                 ${due ? `<span class="fu-due${overdue ? ' overdue' : ''}">${overdue ? '⚠ ' : ''}${due.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})}</span>` : ''}
               </div>`}).join('')}

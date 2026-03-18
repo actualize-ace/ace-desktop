@@ -195,11 +195,6 @@ ipcMain.handle(ch.GET_VELOCITY, () => {
   catch (e) { return { byDay: {}, totalThisWeek: 0, totalLastWeek: 0, error: e.message } }
 })
 
-ipcMain.handle(ch.GET_SYNTHESIS_STRUCT, (_, context) => {
-  try { return require('./src/synthesizer').buildStructural(context) }
-  catch (e) { return '' }
-})
-
 ipcMain.handle(ch.GET_SYNTHESIS_AI, async (_, context) => {
   const voicePath = require('path').join(global.VAULT_PATH, '00-System', 'core', 'voice-profile.md')
   try { return await require('./src/synthesizer').getAISynthesis(context, voicePath) }

@@ -174,9 +174,8 @@ function parseExecutionLog(vaultPath, days = 14) {
     }
 
     const values = Object.values(byDay)
-    const midpoint = Math.ceil(values.length / 2)
-    const totalThisWeek = values.slice(midpoint).reduce((a, b) => a + b, 0)
-    const totalLastWeek = values.slice(0, midpoint).reduce((a, b) => a + b, 0)
+    const totalThisWeek = values.slice(0, 7).reduce((a, b) => a + b, 0)
+    const totalLastWeek = values.slice(7).reduce((a, b) => a + b, 0)
 
     return { byDay, totalThisWeek, totalLastWeek }
   } catch (e) {
