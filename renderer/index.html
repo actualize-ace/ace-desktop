@@ -53,11 +53,9 @@
     body.light .sidebar      { background: rgba(228,220,210,0.98); }
     body.light .triad-bar    { background: rgba(228,220,210,0.98); }
     body.light .view-header  { background: rgba(228,220,210,0.6); }
-    body.light .session-tabs  { background: rgba(225,217,207,0.9); }
-    body.light .term-hdr      { background: rgba(225,217,207,0.95); }
-    body.light .term-xterm    { background: #f0ebe3; }
-    body.light .agents-roster { background: rgba(232,224,214,0.97); }
-    body.light .apane-tab     { background: rgba(225,217,207,0.95); }
+    body.light .session-tabs { background: rgba(225,217,207,0.9); }
+    body.light .term-hdr     { background: rgba(225,217,207,0.95); }
+    body.light .term-xterm   { background: #f0ebe3; }
 
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
@@ -292,6 +290,9 @@
     .stab:hover { color: var(--text-secondary); background: rgba(212,165,116,0.03); }
     .stab.active { color: var(--text-primary); background: rgba(212,165,116,0.06); border-color: var(--border); }
     .stab-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+    .stab-close { display: flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 3px; font-size: 10px; line-height: 1; color: var(--text-dim); opacity: 0; transition: opacity 0.1s, background 0.1s; margin-left: 2px; }
+    .stab:hover .stab-close { opacity: 1; }
+    .stab-close:hover { background: rgba(212,165,116,0.15); color: var(--text-primary); }
     .stab-add { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; color: var(--text-dim); font-size: 14px; transition: all 0.12s; border: 1px solid transparent; background: none; margin-left: 3px; }
     .stab-add:hover { border-color: var(--border); color: var(--text-secondary); }
     .term-panes { flex: 1; overflow: hidden; position: relative; }
@@ -530,10 +531,10 @@
       <div class="nav-section">Views</div>
       <div class="nav-item active" data-view="home"><span class="nav-icon">⌂</span> Home</div>
       <div class="nav-item" data-view="terminal"><span class="nav-icon">❯</span> ACE Terminal</div>
+      <div class="nav-item" data-view="agents"><span class="nav-icon">◇</span> Agents</div>
       <div class="nav-item" data-view="vault"><span class="nav-icon">◈</span> Vault</div>
       <div class="nav-item" data-view="graph"><span class="nav-icon">◉</span> Graph</div>
       <div class="nav-item" data-view="pipeline"><span class="nav-icon">◎</span> Pipeline</div>
-      <div class="nav-item" data-view="agents"><span class="nav-icon">◇</span> Agents</div>
       <div class="sidebar-div"></div>
       <div class="nav-section">Commands</div>
       <div class="cmd-section">
@@ -740,18 +741,19 @@ const XTERM_LIGHT = {
   brightYellow:'#907030', brightBlue:'#2a68b0', brightMagenta:'#7848b0',
   brightCyan:'#287888', brightWhite:'#e8e0d8',
 }
-function xtermTheme() { return theme === 'light' ? XTERM_LIGHT : XTERM_DARK }
-
 let theme = localStorage.getItem('ace-theme') || 'dark'
+function xtermTheme() { return theme === 'light' ? XTERM_LIGHT : XTERM_DARK }
 function applyTheme(t) {
   theme = t
   document.body.classList.toggle('light', t === 'light')
   document.getElementById('theme-btn').textContent = t === 'light' ? '◐' : '◑'
   localStorage.setItem('ace-theme', t)
-  // Update all live xterm instances
+  // Guard: sessions/agentSessions declared later in the script — typeof prevents ReferenceError at page load
   const xt = xtermTheme()
-  Object.values(sessions).forEach(s => { if (s?.term) s.term.options.theme = xt })
-  Object.values(agentSessions).forEach(s => { if (s?.term) s.term.options.theme = xt })
+  if (typeof sessions !== 'undefined')
+    Object.values(sessions).forEach(s => { if (s?.term) s.term.options.theme = { ...xt } })
+  if (typeof agentSessions !== 'undefined')
+    Object.values(agentSessions).forEach(s => { if (s?.term) s.term.options.theme = { ...xt } })
 }
 applyTheme(theme)
 document.getElementById('theme-btn').addEventListener('click', () => applyTheme(theme === 'dark' ? 'light' : 'dark'))
@@ -832,8 +834,8 @@ function spawnSession() {
 
   const tab = document.createElement('div')
   tab.className = 'stab'; tab.id = 'tab-' + id
-  tab.innerHTML = `<div class="stab-dot"></div><span>ACE</span>`
-  tab.addEventListener('click', () => activateSession(id))
+  tab.innerHTML = `<div class="stab-dot"></div><span>ACE</span><span class="stab-close" id="stab-close-${id}" title="Close session">×</span>`
+  tab.addEventListener('click', (e) => { if (!e.target.classList.contains('stab-close')) activateSession(id) })
   document.getElementById('session-tabs').insertBefore(tab, document.getElementById('new-session-btn'))
 
   sessions[id] = { term, fitAddon, pane, tab }
@@ -845,6 +847,10 @@ function spawnSession() {
     window.ace.pty.create(id, null, term.cols, term.rows).then(() => {
       document.getElementById('hdr-path-' + id).textContent = '~/Documents/Actualize'
     })
+    document.getElementById('stab-close-' + id).addEventListener('click', (e) => {
+      e.stopPropagation()
+      closeSession(id)
+    })
   })
 
   window.ace.pty.onData(id, data => term.write(data))
@@ -854,6 +860,19 @@ function spawnSession() {
   })
   term.onData(data => window.ace.pty.write(id, data))
   term.onResize(({ cols, rows }) => window.ace.pty.resize(id, cols, rows))
+}
+
+function closeSession(id) {
+  const s = sessions[id]
+  if (!s) return
+  window.ace.pty.kill(id)
+  s.pane.remove()
+  s.tab.remove()
+  delete sessions[id]
+  activeId = null
+  // Activate the last remaining session, if any
+  const remaining = Object.keys(sessions)
+  if (remaining.length > 0) activateSession(remaining[remaining.length - 1])
 }
 
 function activateSession(id) {
