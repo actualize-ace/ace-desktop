@@ -141,4 +141,47 @@ function listDir(dirPath) {
   }
 }
 
-module.exports = { parseState, parseFollowUps, listDir }
+// ─── Execution Log Parser (velocity) ─────────────────────────────────────────
+
+function parseExecutionLog(vaultPath, days = 14) {
+  try {
+    const text = fs.readFileSync(
+      path.join(vaultPath, '00-System', 'execution-log.md'), 'utf8'
+    )
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const byDay = {}
+
+    // Build date keys for last N days
+    for (let i = 0; i < days; i++) {
+      const d = new Date(today)
+      d.setDate(d.getDate() - i)
+      byDay[d.toISOString().slice(0, 10)] = 0
+    }
+
+    // Count log entries per date — entries start with "- " under a date heading
+    // Date headings: "## 2026-03-17" or "### 2026-03-17"
+    let currentDate = null
+    for (const line of text.split('\n')) {
+      const headingMatch = line.match(/^#{1,3}\s+(\d{4}-\d{2}-\d{2})/)
+      if (headingMatch) {
+        currentDate = headingMatch[1]
+        continue
+      }
+      if (currentDate && byDay[currentDate] !== undefined && /^\s*-\s+\S/.test(line)) {
+        byDay[currentDate]++
+      }
+    }
+
+    const values = Object.values(byDay)
+    const midpoint = Math.ceil(values.length / 2)
+    const totalThisWeek = values.slice(midpoint).reduce((a, b) => a + b, 0)
+    const totalLastWeek = values.slice(0, midpoint).reduce((a, b) => a + b, 0)
+
+    return { byDay, totalThisWeek, totalLastWeek }
+  } catch (e) {
+    return { byDay: {}, totalThisWeek: 0, totalLastWeek: 0, error: e.message }
+  }
+}
+
+module.exports = { parseState, parseFollowUps, listDir, parseExecutionLog }
