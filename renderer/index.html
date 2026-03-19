@@ -9,22 +9,22 @@
   <script src="lib/Sortable.min.js"></script>
   <style>
     :root {
-      --bg-deep:    #060504;
-      --bg-surface: #0a0806;
-      --bg-elevated:#1a1612;
-      --bg-card:    #12100c;
-      --border:      rgba(212,165,116,0.08);
-      --border-hover:rgba(212,165,116,0.18);
-      --gold:       #d4a574;
-      --gold-dim:   #8a6a44;
+      --bg-deep:    #0e0c09;
+      --bg-surface: #141210;
+      --bg-elevated:#1e1a16;
+      --bg-card:    #181410;
+      --border:      rgba(212,165,116,0.14);
+      --border-hover:rgba(212,165,116,0.28);
+      --gold:       #dab07a;
+      --gold-dim:   #9a7a50;
       --green:      #6db88f;
       --ark:        #9b74c4;
       --blue-grey:  #74a4c4;
       --red:        #c47474;
-      --text-primary:   #e8ddd0;
-      --text-secondary: #8a7d6f;
-      --text-dim:       #5a5248;
-      --authority: #d4a574;
+      --text-primary:   #ede3d6;
+      --text-secondary: #a89a8a;
+      --text-dim:       #7a6e62;
+      --authority: #dab07a;
       --capacity:  #6db88f;
       --expansion: #9b74c4;
       --sidebar-w: 216px;
@@ -82,7 +82,7 @@
     .titlebar {
       height: 38px; display: flex; align-items: center;
       padding: 0 18px 0 80px;
-      background: rgba(5,4,3,0.98); border-bottom: 1px solid var(--border);
+      background: rgba(14,12,9,0.98); border-bottom: 1px solid var(--border);
       flex-shrink: 0; -webkit-app-region: drag;
     }
     .titlebar-center {
@@ -368,7 +368,7 @@
 
     /* ── TERMINAL VIEW ── */
     .term-container { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
-    .session-tabs { display: flex; align-items: center; gap: 2px; padding: 6px 12px 0; background: rgba(7,5,4,0.85); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .session-tabs { display: flex; align-items: center; gap: 2px; padding: 6px 12px 0; background: rgba(14,12,9,0.9); border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .stab { display: flex; align-items: center; gap: 5px; padding: 4px 10px 5px; border-radius: 5px 5px 0 0; border: 1px solid transparent; border-bottom: none; cursor: pointer; flex-shrink: 0; transition: all 0.12s; font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.8px; color: var(--text-dim); background: none; }
     .stab:hover { color: var(--text-secondary); background: rgba(212,165,116,0.03); }
     .stab.active { color: var(--text-primary); background: rgba(212,165,116,0.06); border-color: var(--border); }
@@ -381,11 +381,11 @@
     .term-panes { flex: 1; overflow: hidden; position: relative; }
     .term-pane { position: absolute; inset: 0; display: none; flex-direction: column; overflow: hidden; }
     .term-pane.active { display: flex; }
-    .term-hdr { display: flex; align-items: center; gap: 9px; padding: 9px 16px; background: rgba(7,5,4,0.9); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .term-hdr { display: flex; align-items: center; gap: 9px; padding: 9px 16px; background: rgba(14,12,9,0.92); border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .term-hdr-dot { width: 6px; height: 6px; border-radius: 50%; }
     .term-hdr-label { font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); }
     .term-hdr-path { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--gold-dim); margin-left: auto; }
-    .term-xterm { flex: 1; overflow: hidden; padding: 10px; background: #020201; }
+    .term-xterm { flex: 1; overflow: hidden; padding: 10px; background: #0a0906; }
     .xterm { height: 100% !important; }
     .xterm .xterm-viewport { overflow-y: auto !important; }
     .term-xterm .xterm-viewport::-webkit-scrollbar { width: 8px; }
@@ -411,7 +411,7 @@
     .scroll-to-bottom:hover { background: rgba(212,165,116,0.25); }
 
     /* Triad status bar */
-    .triad-bar { height: 32px; display: flex; align-items: center; padding: 0 18px; gap: 24px; background: rgba(5,4,3,0.98); border-top: 1px solid var(--border); flex-shrink: 0; }
+    .triad-bar { height: 32px; display: flex; align-items: center; padding: 0 18px; gap: 24px; background: rgba(14,12,9,0.98); border-top: 1px solid var(--border); flex-shrink: 0; }
     .tm { display: flex; align-items: center; gap: 7px; flex: 1; }
     .tm-lbl { font-family: 'JetBrains Mono', monospace; font-size: 7px; letter-spacing: 1.5px; text-transform: uppercase; width: 64px; flex-shrink: 0; }
     .tm-track { flex: 1; height: 2px; background: rgba(212,165,116,0.06); border-radius: 2px; overflow: hidden; }
@@ -574,7 +574,7 @@
     }
     /* ── AGENTS VIEW ── */
     .agents-workspace { display:flex; flex:1; overflow:hidden; }
-    .agents-roster { width:148px; flex-shrink:0; border-right:1px solid var(--border); background:rgba(5,4,3,0.97); overflow-y:auto; display:flex; flex-direction:column; }
+    .agents-roster { width:148px; flex-shrink:0; border-right:1px solid var(--border); background:rgba(14,12,9,0.97); overflow-y:auto; display:flex; flex-direction:column; }
     .agents-panes { flex:1; display:flex; flex-direction:column; overflow:hidden; }
     .panes-top { display:flex; overflow:hidden; }
     .panes-h-resizer { height:3px; background:var(--border); flex-shrink:0; cursor:row-resize; transition:background 0.15s; }
@@ -676,6 +676,360 @@
       transition: transform 0.2s, background 0.2s;
     }
     .layout-toggle.on::after { transform: translateX(14px); background: var(--gold); }
+
+    /* ── CHAT VIEW ── */
+    .chat-view { display:flex; flex-direction:column; flex:1; overflow:hidden; min-height:0; }
+    .chat-view.hidden { display:none; }
+    .chat-messages {
+      flex:1; overflow-y:auto; padding:20px 24px; display:flex; flex-direction:column; gap:18px;
+      user-select:text; -webkit-user-select:text;
+    }
+    .chat-messages::-webkit-scrollbar { width:4px; }
+    .chat-messages::-webkit-scrollbar-thumb { background:var(--border-hover); border-radius:2px; }
+    .chat-welcome {
+      flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+      color:var(--text-dim); font-family:'Space Grotesk',sans-serif;
+    }
+    .chat-welcome-icon { font-size:28px; opacity:0.4; }
+    .chat-welcome-text { font-size:14px; font-weight:400; }
+    .chat-welcome-sub { font-size:11px; color:var(--text-dim); }
+
+    /* Messages */
+    .chat-msg { display:flex; flex-direction:column; }
+    .chat-msg-user { align-items:flex-end; }
+    .chat-msg-assistant { align-items:flex-start; }
+    .chat-msg-user .chat-msg-content {
+      background:rgba(212,165,116,0.08); border:1px solid rgba(212,165,116,0.15);
+      border-radius:12px 12px 2px 12px; padding:10px 16px; max-width:80%;
+      font-family:'DM Sans',sans-serif; font-size:13px; line-height:1.6;
+      color:var(--text-primary); white-space:pre-wrap; word-break:break-word;
+    }
+    .chat-msg-assistant .chat-msg-content {
+      width:100%; max-width:100%;
+    }
+    .chat-msg-assistant .chat-msg-content.md-body { max-width:100%; }
+    .chat-msg-label {
+      font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px;
+      text-transform:uppercase; color:var(--text-dim); margin-bottom:4px;
+    }
+
+    /* Streaming tail cursor */
+    .chat-tail:not(:empty)::after {
+      content:''; display:inline-block; width:2px; height:14px;
+      background:var(--gold); margin-left:2px; vertical-align:text-bottom;
+      animation:cursor-blink 0.8s step-end infinite;
+    }
+    @keyframes cursor-blink { 50% { opacity:0; } }
+    .chat-tail { font-family:'DM Sans',sans-serif; font-size:13px; line-height:1.75; color:var(--text-primary); white-space:pre-wrap; word-break:break-word; }
+
+    /* Streaming indicator — three-dot bounce */
+    .chat-streaming-dot {
+      display:inline-block; width:6px; height:6px; border-radius:50%;
+      background:var(--green); margin-left:6px; vertical-align:middle;
+      animation:breathe 1.4s ease-in-out infinite;
+    }
+    .chat-streaming-indicator {
+      display:inline-flex; gap:3px; margin-left:8px; vertical-align:middle;
+    }
+    .chat-streaming-indicator span {
+      display:inline-block; width:4px; height:4px; border-radius:50%;
+      background:var(--gold); animation:typing-bounce 1.2s ease-in-out infinite;
+    }
+    .chat-streaming-indicator span:nth-child(2) { animation-delay:0.15s; }
+    .chat-streaming-indicator span:nth-child(3) { animation-delay:0.3s; }
+    @keyframes typing-bounce {
+      0%, 60%, 100% { transform:translateY(0); opacity:0.4; }
+      30% { transform:translateY(-4px); opacity:1; }
+    }
+    /* Rotating status words */
+    .chat-status-word {
+      display:inline-block; margin-left:8px;
+      font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:0.5px;
+      color:var(--gold-dim); animation:fade-word 2s ease-in-out infinite;
+    }
+    @keyframes fade-word {
+      0%, 100% { opacity:0.3; }
+      50% { opacity:0.8; }
+    }
+
+    /* Code block wrappers */
+    .code-block-wrapper { border:1px solid var(--border); border-radius:6px; margin:12px 0; overflow:hidden; }
+    .code-block-wrapper.streaming { border-color:rgba(212,165,116,0.2); }
+    .code-block-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:5px 12px; background:var(--bg-elevated); border-bottom:1px solid var(--border);
+    }
+    .code-lang {
+      font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:1px;
+      text-transform:uppercase; color:var(--text-dim);
+    }
+    .code-copy-btn {
+      display:flex; align-items:center; gap:4px;
+      background:none; border:1px solid var(--border); border-radius:4px;
+      padding:2px 8px; cursor:pointer;
+      font-family:'JetBrains Mono',monospace; font-size:8px;
+      color:var(--text-dim); transition:all 0.14s;
+    }
+    .code-copy-btn:hover { border-color:var(--border-hover); color:var(--text-secondary); }
+    .code-block-wrapper pre { margin:0; border:none; border-radius:0; }
+    .code-block-wrapper pre code { font-size:11px; }
+
+    /* Tool use blocks */
+    .chat-tool-block { border:1px solid var(--border); border-radius:6px; margin:8px 0; overflow:hidden; }
+    .chat-tool-header {
+      display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer;
+      font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--text-secondary);
+      transition:background 0.12s;
+    }
+    .chat-tool-header:hover { background:rgba(212,165,116,0.03); }
+    .chat-tool-icon { font-size:11px; }
+    .chat-tool-name { font-weight:500; }
+    .chat-tool-chevron { margin-left:auto; font-size:8px; transition:transform 0.15s; }
+    .chat-tool-block:not(.collapsed) .chat-tool-chevron { transform:rotate(90deg); }
+    .chat-tool-detail { padding:0 12px 10px; font-size:11px; }
+    .chat-tool-block.collapsed .chat-tool-detail { display:none; }
+    .chat-tool-detail pre {
+      background:var(--bg-card); border:1px solid var(--border); border-radius:4px;
+      padding:8px 10px; margin:4px 0; overflow-x:auto;
+      font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim);
+    }
+
+    /* Chat status bar */
+    .chat-status {
+      display:flex; align-items:center; gap:14px;
+      padding:4px 24px; border-top:1px solid var(--border);
+      font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--text-dim);
+    }
+
+    /* Chat input area */
+    .chat-input-area {
+      display:flex; align-items:flex-end; gap:8px;
+      padding:10px 24px 14px; border-top:1px solid var(--border);
+      background:var(--bg-surface);
+    }
+    .chat-input {
+      flex:1; min-height:36px; max-height:150px;
+      background:var(--bg-elevated); border:1px solid var(--border); border-radius:8px;
+      padding:8px 12px; color:var(--text-primary);
+      font-family:'DM Sans',sans-serif; font-size:13px; line-height:1.5;
+      resize:none; outline:none; overflow-y:auto;
+      user-select:text; -webkit-user-select:text;
+    }
+    .chat-input:focus { border-color:var(--gold-dim); }
+    .chat-input::placeholder { color:var(--text-dim); }
+    .chat-send-btn {
+      width:34px; height:34px; border-radius:8px; border:1px solid var(--border);
+      background:rgba(212,165,116,0.08); color:var(--gold); cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      font-size:14px; font-weight:600; transition:all 0.14s;
+    }
+    .chat-send-btn:hover { background:rgba(212,165,116,0.18); border-color:var(--gold-dim); }
+    .chat-send-btn:disabled { opacity:0.3; cursor:default; }
+    .chat-send-btn.cancel { background:rgba(196,116,116,0.12); color:var(--red); border-color:rgba(196,116,116,0.2); }
+    .chat-send-btn.cancel:hover { background:rgba(196,116,116,0.22); }
+
+    /* Context bar (in status bar) */
+    .ctx-bar {
+      width:80px; height:3px; background:var(--bg-elevated); border-radius:2px;
+      overflow:hidden; border:1px solid var(--border);
+    }
+    .ctx-bar-fill {
+      height:100%; background:var(--green); border-radius:2px;
+      transition:width 0.3s, background 0.3s; width:0%;
+    }
+    .ctx-bar-fill.warn { background:var(--gold); }
+    .ctx-bar-fill.critical { background:var(--red); }
+    .ctx-bar-pct {
+      font-family:'JetBrains Mono',monospace; font-size:7px; color:var(--text-dim);
+    }
+
+    /* Chat controls bar */
+    .chat-controls {
+      display:flex; align-items:center; gap:6px;
+      padding:4px 24px; border-top:1px solid var(--border);
+    }
+    .chat-select {
+      background:var(--bg-elevated); border:1px solid var(--border); border-radius:4px;
+      padding:2px 6px; color:var(--text-secondary); cursor:pointer;
+      font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:0.5px;
+      outline:none; appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L4 4L7 1' stroke='%235a5248' stroke-width='1.2'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 5px center;
+      padding-right:16px;
+    }
+    .chat-select:hover { border-color:var(--border-hover); }
+    .chat-select:focus { border-color:var(--gold-dim); }
+    .chat-select option { background:var(--bg-card); color:var(--text-primary); }
+
+    /* Mode toggle button */
+    .mode-toggle-btn {
+      background:none; border:1px solid var(--border); border-radius:3px;
+      padding:2px 7px; cursor:pointer;
+      font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:0.8px;
+      text-transform:uppercase; color:var(--text-dim); transition:all 0.12s;
+    }
+    .mode-toggle-btn:hover { border-color:var(--border-hover); color:var(--text-secondary); }
+
+    /* Activity indicator */
+    .chat-activity {
+      font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--text-dim);
+      padding:2px 0 6px; display:flex; align-items:center; gap:6px;
+      animation:fade-in 0.15s ease;
+    }
+    .chat-activity::before {
+      content:''; display:inline-block; width:5px; height:5px; border-radius:50%;
+      background:var(--green); animation:breathe 1.4s ease-in-out infinite;
+    }
+    @keyframes fade-in { from { opacity:0; } to { opacity:1; } }
+
+    /* Tool item list (inside consolidated tool block) */
+    .tool-item {
+      padding:2px 0; font-family:'JetBrains Mono',monospace; font-size:10px;
+      color:var(--text-dim); border-bottom:1px solid var(--border);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .tool-item:last-child { border-bottom:none; }
+
+    /* Tool approval UI */
+    .chat-tool-status {
+      font-size:8px; color:var(--gold); margin-left:auto; margin-right:8px;
+      animation:fade-in 0.15s ease;
+    }
+    .chat-tool-status.approved { color:var(--green); }
+    .chat-tool-status.denied { color:var(--red); }
+    .chat-tool-actions {
+      display:flex; gap:8px; padding:8px 12px; border-top:1px solid var(--border);
+    }
+    .chat-approve-btn, .chat-deny-btn {
+      padding:5px 14px; border-radius:5px; cursor:pointer;
+      font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:500;
+      letter-spacing:0.5px; transition:all 0.14s; border:1px solid;
+    }
+    .chat-approve-btn {
+      background:rgba(109,184,143,0.12); border-color:rgba(109,184,143,0.3);
+      color:var(--green);
+    }
+    .chat-approve-btn:hover { background:rgba(109,184,143,0.22); }
+    .chat-deny-btn {
+      background:rgba(196,116,116,0.08); border-color:rgba(196,116,116,0.2);
+      color:var(--red);
+    }
+    .chat-deny-btn:hover { background:rgba(196,116,116,0.18); }
+
+    /* Question card (AskUserQuestion) */
+    .chat-question-block {
+      padding:14px 16px; border:1px solid var(--gold-dim); border-radius:8px;
+      background:rgba(218,176,122,0.04); margin:8px 0;
+      animation:fade-in 0.2s ease;
+    }
+    .chat-question-block.answered { opacity:0.6; border-color:var(--border); }
+    .chat-question-loading {
+      font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--text-dim);
+    }
+    .question-header { margin-bottom:12px; }
+    .question-header.md-body { max-width:100%; }
+    .question-options { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+    .question-option {
+      display:flex; align-items:flex-start; gap:10px; padding:8px 12px;
+      border:1px solid var(--border); border-radius:6px; cursor:pointer;
+      transition:all 0.14s; user-select:none;
+    }
+    .question-option:hover { background:rgba(218,176,122,0.06); border-color:var(--border-hover); }
+    .question-option input { margin-top:3px; accent-color:var(--gold); cursor:pointer; }
+    .question-option input:checked + .question-option-content .question-option-label { color:var(--gold); }
+    .question-option-content { display:flex; flex-direction:column; gap:2px; }
+    .question-option-label {
+      font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500;
+      color:var(--text-primary); transition:color 0.14s;
+    }
+    .question-option-desc {
+      font-family:'DM Sans',sans-serif; font-size:10px; color:var(--text-dim); line-height:1.4;
+    }
+    .question-submit {
+      margin-top:4px;
+    }
+
+    /* Diff display in approval blocks */
+    .tool-diff { white-space:pre-wrap; word-break:break-word; }
+    .diff-remove {
+      display:block; background:rgba(196,116,116,0.08); color:var(--red);
+      border-left:2px solid var(--red); padding:2px 8px; margin:2px 0;
+    }
+    .diff-add {
+      display:block; background:rgba(109,184,143,0.08); color:var(--green);
+      border-left:2px solid var(--green); padding:2px 8px; margin:2px 0;
+    }
+
+    /* Interactive input prompt (questions, stall detection) */
+    .chat-input-prompt {
+      border:1px solid var(--gold-dim); border-radius:8px;
+      padding:14px 16px; margin:8px 0;
+      background:rgba(212,165,116,0.04);
+      animation:fade-in 0.2s ease;
+    }
+    .chat-input-prompt.answered { opacity:0.5; border-color:var(--border); }
+    .chat-prompt-text {
+      font-family:'DM Sans',sans-serif; font-size:13px; line-height:1.6;
+      color:var(--text-primary); margin-bottom:10px; white-space:pre-wrap;
+    }
+    .chat-prompt-input-area {
+      display:flex; gap:8px; align-items:flex-end;
+    }
+    .chat-prompt-response {
+      flex:1; min-height:36px; max-height:120px;
+      font-size:12px; border-radius:6px;
+      user-select:text; -webkit-user-select:text;
+    }
+
+    /* Queued messages */
+    .chat-msg-queued .chat-msg-content { opacity:0.5; }
+    .chat-msg-queued .chat-msg-label { color:var(--gold-dim); }
+
+    /* Chat error messages */
+    .chat-error {
+      padding:10px 14px; margin:8px 0; border-radius:6px;
+      background:rgba(196,116,116,0.08); border:1px solid rgba(196,116,116,0.2);
+      font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--red);
+    }
+
+    /* Syntax highlighting */
+    .hl-keyword  { color:#c47474; }
+    .hl-string   { color:#6db88f; }
+    .hl-comment  { color:#5a5248; font-style:italic; }
+    .hl-number   { color:#d4c274; }
+    .hl-function { color:#74a4c4; }
+    .hl-operator { color:#9b74c4; }
+    .hl-builtin  { color:#d4a574; }
+    body.light .hl-keyword  { color:#8a3a3a; }
+    body.light .hl-string   { color:#2a6e48; }
+    body.light .hl-comment  { color:#9a7e68; font-style:italic; }
+    body.light .hl-number   { color:#7a6018; }
+    body.light .hl-function { color:#2a5a8a; }
+    body.light .hl-operator { color:#6a449c; }
+    body.light .hl-builtin  { color:#7a4c18; }
+
+    /* Light mode chat overrides */
+    body.light .chat-msg-user .chat-msg-content {
+      background:rgba(120,90,50,0.06); border-color:rgba(120,90,50,0.12);
+    }
+    body.light .chat-input { background:var(--bg-elevated); }
+    body.light .chat-input-area { background:var(--bg-surface); }
+
+    /* ── SPLIT PANE ── */
+    .term-panes.split-mode { display:flex; }
+    .split-left, .split-right { flex:1; overflow:hidden; position:relative; }
+    .split-v-resizer {
+      width:3px; background:var(--border); flex-shrink:0;
+      cursor:col-resize; transition:background 0.15s;
+    }
+    .split-v-resizer:hover { background:var(--gold-dim); }
+    .stab-split {
+      width:26px; height:26px; display:flex; align-items:center; justify-content:center;
+      border-radius:4px; cursor:pointer; color:var(--text-dim); font-size:12px;
+      transition:all 0.12s; border:1px solid transparent; background:none; margin-left:3px;
+    }
+    .stab-split:hover { border-color:var(--border); color:var(--text-secondary); }
+    .stab-split.active { color:var(--gold); border-color:var(--border); }
   </style>
 </head>
 <body>
@@ -831,6 +1185,7 @@
         <div class="term-container">
           <div class="session-tabs" id="session-tabs">
             <button class="stab-add" id="new-session-btn" title="New session">+</button>
+            <button class="stab-split" id="split-btn" title="Split view">⫻</button>
           </div>
           <div class="term-panes" id="term-panes"></div>
         </div>
@@ -930,13 +1285,13 @@
 <script>
 // ─── Theme ───────────────────────────────────────────────────────────────────
 const XTERM_DARK = {
-  background:'#020201', foreground:'#e8ddd0', cursor:'#d4a574',
-  selectionBackground:'rgba(212,165,116,0.2)',
-  black:'#1a1612', red:'#c47474', green:'#6db88f', yellow:'#d4c274',
-  blue:'#74a4c4', magenta:'#9b74c4', cyan:'#74c4b4', white:'#e8ddd0',
-  brightBlack:'#5a5248', brightRed:'#d48888', brightGreen:'#80d0a0',
-  brightYellow:'#e0d088', brightBlue:'#88bcd4', brightMagenta:'#b088d4',
-  brightCyan:'#88d4c4', brightWhite:'#f5f0e8',
+  background:'#0a0906', foreground:'#ede3d6', cursor:'#dab07a',
+  selectionBackground:'rgba(218,176,122,0.2)',
+  black:'#1e1a16', red:'#d48888', green:'#80d0a0', yellow:'#e0d088',
+  blue:'#88bcd4', magenta:'#b088d4', cyan:'#88d4c4', white:'#ede3d6',
+  brightBlack:'#7a6e62', brightRed:'#e09a9a', brightGreen:'#90e0b0',
+  brightYellow:'#f0e098', brightBlue:'#98cce4', brightMagenta:'#c098e4',
+  brightCyan:'#98e4d4', brightWhite:'#f8f2ea',
 }
 const XTERM_LIGHT = {
   background:'#f0ebe3', foreground:'#3a3028', cursor:'#8b5e3c',
@@ -1014,20 +1369,793 @@ document.querySelectorAll('[data-cmd]').forEach(el => {
   })
 })
 
+// ─── Chat Rendering Utilities ─────────────────────────────────────────────────
+
+const SANITIZE_CONFIG = {
+  ALLOWED_TAGS: ['h1','h2','h3','h4','h5','h6','p','a','ul','ol','li',
+    'blockquote','code','pre','strong','em','del','s','table',
+    'thead','tbody','tr','th','td','hr','br','span','div',
+    'input','details','summary','mark','sub','sup'],
+  ALLOWED_ATTR: ['href','class','id','data-target','title','colspan','rowspan','type','checked','disabled'],
+}
+
+// Syntax highlighting — lightweight regex-based
+const HL_LANGS = {
+  javascript: { kw: ['const','let','var','function','return','if','else','for','while','class','import','export','from','async','await','new','this','try','catch','throw','switch','case','default','break','continue','typeof','instanceof','of','true','false','null','undefined','yield'], line:'//', bs:'/*', be:'*/' },
+  typescript: null, // alias
+  python: { kw: ['def','class','import','from','return','if','elif','else','for','while','try','except','finally','with','as','yield','lambda','True','False','None','and','or','not','in','is','pass','raise','break','continue','global','nonlocal','assert','del','async','await'], line:'#' },
+  bash: { kw: ['if','then','else','elif','fi','for','do','done','while','until','case','esac','function','return','exit','echo','export','source','local','readonly','declare','set','unset','true','false','cd','ls','rm','mv','cp','mkdir','cat','grep','sed','awk','curl','sudo','chmod','chown'], line:'#' },
+  shell: null, // alias
+  sh: null,
+  json: { kw: ['true','false','null'] },
+  html: { kw: [] },
+  xml: null,
+  css: { kw: ['import','media','keyframes','font-face','supports','charset'] },
+  go: { kw: ['func','package','import','return','if','else','for','range','switch','case','default','break','continue','var','const','type','struct','interface','map','chan','go','defer','select','true','false','nil','make','len','append','error','string','int','bool','byte','float64'], line:'//', bs:'/*', be:'*/' },
+  rust: { kw: ['fn','let','mut','pub','use','mod','struct','enum','impl','trait','match','if','else','for','while','loop','return','break','continue','true','false','self','Self','super','crate','as','in','ref','move','async','await','where','type','const','static','unsafe','extern'], line:'//', bs:'/*', be:'*/' },
+  sql: { kw: ['SELECT','FROM','WHERE','INSERT','INTO','VALUES','UPDATE','SET','DELETE','CREATE','TABLE','ALTER','DROP','INDEX','JOIN','LEFT','RIGHT','INNER','OUTER','ON','AND','OR','NOT','NULL','IS','IN','LIKE','ORDER','BY','GROUP','HAVING','LIMIT','OFFSET','AS','DISTINCT','COUNT','SUM','AVG','MAX','MIN','UNION','EXISTS','BETWEEN','CASE','WHEN','THEN','ELSE','END','PRIMARY','KEY','FOREIGN','REFERENCES','CASCADE','TRUE','FALSE'], line:'--' },
+  yaml: { kw: ['true','false','null','yes','no','on','off'] },
+  markdown: { kw: [] },
+  md: null,
+}
+HL_LANGS.typescript = HL_LANGS.javascript
+HL_LANGS.shell = HL_LANGS.bash
+HL_LANGS.sh = HL_LANGS.bash
+HL_LANGS.xml = HL_LANGS.html
+HL_LANGS.md = HL_LANGS.markdown
+HL_LANGS.jsx = HL_LANGS.javascript
+HL_LANGS.tsx = HL_LANGS.typescript
+HL_LANGS.zsh = HL_LANGS.bash
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
+function syntaxHighlight(code, lang) {
+  const def = HL_LANGS[(lang || '').toLowerCase()]
+  if (!def) return escapeHtml(code)
+  const kwSet = new Set(def.kw || [])
+  const kwSetLower = new Set((def.kw || []).map(k => k.toLowerCase()))
+  const isSQL = lang.toLowerCase() === 'sql'
+  let result = '', i = 0
+  while (i < code.length) {
+    // Block comment
+    if (def.bs && code.startsWith(def.bs, i)) {
+      const end = code.indexOf(def.be, i + def.bs.length)
+      const slice = end >= 0 ? code.slice(i, end + def.be.length) : code.slice(i)
+      result += `<span class="hl-comment">${escapeHtml(slice)}</span>`
+      i += slice.length; continue
+    }
+    // Line comment
+    if (def.line && code.startsWith(def.line, i) && (i === 0 || code[i-1] === '\n' || code[i-1] === ' ' || code[i-1] === '\t' || code[i-1] === ';' || code[i-1] === ')' || code[i-1] === '}')) {
+      const nl = code.indexOf('\n', i)
+      const slice = nl >= 0 ? code.slice(i, nl) : code.slice(i)
+      result += `<span class="hl-comment">${escapeHtml(slice)}</span>`
+      i += slice.length; continue
+    }
+    // Strings
+    if (code[i] === '"' || code[i] === "'" || code[i] === '`') {
+      const q = code[i]; let j = i + 1
+      while (j < code.length && code[j] !== q) { if (code[j] === '\\') j++; j++ }
+      const slice = code.slice(i, j + 1)
+      result += `<span class="hl-string">${escapeHtml(slice)}</span>`
+      i = j + 1; continue
+    }
+    // Numbers
+    if (/[0-9]/.test(code[i]) && (i === 0 || /[\s,\(\[\{:=+\-*/<>!&|^~%]/.test(code[i-1]))) {
+      let j = i; while (j < code.length && /[0-9a-fA-Fx._]/.test(code[j])) j++
+      result += `<span class="hl-number">${escapeHtml(code.slice(i, j))}</span>`
+      i = j; continue
+    }
+    // Words (keywords, functions)
+    if (/[a-zA-Z_$@]/.test(code[i])) {
+      let j = i; while (j < code.length && /[a-zA-Z0-9_$]/.test(code[j])) j++
+      const word = code.slice(i, j)
+      const isKw = isSQL ? kwSetLower.has(word.toLowerCase()) : kwSet.has(word)
+      if (isKw) {
+        result += `<span class="hl-keyword">${escapeHtml(word)}</span>`
+      } else if (j < code.length && code[j] === '(') {
+        result += `<span class="hl-function">${escapeHtml(word)}</span>`
+      } else {
+        result += escapeHtml(word)
+      }
+      i = j; continue
+    }
+    result += escapeHtml(code[i]); i++
+  }
+  return result
+}
+
+// Settled boundary — find safe split point for partial markdown
+function findSettledBoundary(text) {
+  // Count code fences
+  let inFence = false, fenceChar = '', fenceLen = 0
+  const lines = text.split('\n')
+  let lastSafeLine = -1
+  for (let li = 0; li < lines.length; li++) {
+    const trimmed = lines[li].trimStart()
+    const m = trimmed.match(/^(`{3,}|~{3,})/)
+    if (m) {
+      if (!inFence) { inFence = true; fenceChar = m[1][0]; fenceLen = m[1].length }
+      else if (trimmed[0] === fenceChar && m[1].length >= fenceLen) { inFence = false; lastSafeLine = li }
+    } else if (!inFence) {
+      // A blank line outside a fence is a safe boundary
+      if (trimmed === '' && li > 0) lastSafeLine = li
+    }
+  }
+  if (inFence) {
+    // Find position just before the opening fence
+    let pos = 0
+    for (let li = 0; li < lines.length; li++) {
+      const trimmed = lines[li].trimStart()
+      if (trimmed.match(/^(`{3,}|~{3,})/)) {
+        // Walk back to find the last blank line before this fence
+        for (let k = li - 1; k >= 0; k--) {
+          if (lines[k].trim() === '') { lastSafeLine = k; break }
+        }
+        break
+      }
+      pos += lines[li].length + 1
+    }
+  }
+  if (lastSafeLine < 0) return 0
+  let boundary = 0
+  for (let li = 0; li <= lastSafeLine; li++) boundary += lines[li].length + 1
+  return boundary
+}
+
+// Render partial tail (not yet settled)
+function renderTail(text) {
+  if (!text) return ''
+  // Check for partial code fence
+  const fenceMatch = text.match(/^(`{3,}|~{3,})(\w*)\n?/m)
+  if (fenceMatch) {
+    const fenceStart = text.indexOf(fenceMatch[0])
+    const before = text.slice(0, fenceStart)
+    const codeContent = text.slice(fenceStart + fenceMatch[0].length)
+    const lang = fenceMatch[2] || 'code'
+    const highlighted = syntaxHighlight(codeContent, lang)
+    let html = ''
+    if (before.trim()) html += `<p>${escapeHtml(before).replace(/\n/g, '<br>')}</p>`
+    html += `<div class="code-block-wrapper streaming"><div class="code-block-header"><span class="code-lang">${escapeHtml(lang)}</span><span class="chat-streaming-dot"></span></div><pre><code>${highlighted}</code></pre></div>`
+    return html
+  }
+  // Regular text — basic inline formatting
+  let html = escapeHtml(text)
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>')
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
+  html = html.replace(/\n/g, '<br>')
+  return `<p>${html}</p>`
+}
+
+// Post-process code blocks — add wrappers, copy buttons, syntax highlighting
+function postProcessCodeBlocks(container) {
+  container.querySelectorAll('pre > code').forEach(codeEl => {
+    if (codeEl.closest('.code-block-wrapper')) return
+    const pre = codeEl.parentElement
+    const langClass = [...codeEl.classList].find(c => c.startsWith('language-'))
+    const lang = langClass ? langClass.replace('language-', '') : ''
+    // Apply syntax highlighting
+    if (lang && HL_LANGS[lang.toLowerCase()]) {
+      codeEl.innerHTML = syntaxHighlight(codeEl.textContent, lang)
+    }
+    // Wrap
+    const wrapper = document.createElement('div')
+    wrapper.className = 'code-block-wrapper'
+    const header = document.createElement('div')
+    header.className = 'code-block-header'
+    header.innerHTML = `<span class="code-lang">${escapeHtml(lang || 'code')}</span><button class="code-copy-btn">Copy</button>`
+    header.querySelector('.code-copy-btn').addEventListener('click', () => {
+      navigator.clipboard.writeText(codeEl.textContent)
+      const btn = header.querySelector('.code-copy-btn')
+      btn.textContent = 'Copied!'
+      setTimeout(() => btn.textContent = 'Copy', 1500)
+    })
+    pre.parentNode.insertBefore(wrapper, pre)
+    wrapper.appendChild(header)
+    wrapper.appendChild(pre)
+  })
+}
+
+// Process wikilinks
+function processWikilinks(text) {
+  return text.replace(/\[\[([^\]|#\n]+?)(?:\|([^\]\n]+?))?\]\]/g, (_, target, display) => {
+    const label = (display || target).replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    const t = target.replace(/"/g, '&quot;')
+    return `<span class="wikilink" data-target="${t}">${label}</span>`
+  })
+}
+
+// Chat message send helper
+function sendChatMessage(id, prompt, sessionsObj) {
+  sessionsObj = sessionsObj || sessions
+  const s = sessionsObj[id]
+  if (!s || !prompt.trim()) return
+
+  // If currently streaming, queue the message
+  if (s.isStreaming) {
+    if (!s._messageQueue) s._messageQueue = []
+    s._messageQueue.push(prompt.trim())
+    // Show queued indicator
+    const msgsEl = document.getElementById('chat-msgs-' + id)
+    if (msgsEl) {
+      const queuedMsg = document.createElement('div')
+      queuedMsg.className = 'chat-msg chat-msg-user chat-msg-queued'
+      queuedMsg.innerHTML = `<div class="chat-msg-label">QUEUED</div><div class="chat-msg-content">${escapeHtml(prompt.trim())}</div>`
+      msgsEl.appendChild(queuedMsg)
+      msgsEl.scrollTop = msgsEl.scrollHeight
+    }
+    return
+  }
+
+  // Add user message to DOM
+  const msgsEl = document.getElementById('chat-msgs-' + id)
+  const userMsg = document.createElement('div')
+  userMsg.className = 'chat-msg chat-msg-user'
+  userMsg.innerHTML = `<div class="chat-msg-label">YOU</div><div class="chat-msg-content">${escapeHtml(prompt.trim())}</div>`
+  // Remove welcome if present
+  const welcome = msgsEl.querySelector('.chat-welcome')
+  if (welcome) welcome.remove()
+  msgsEl.appendChild(userMsg)
+
+  // Add assistant message placeholder
+  const assistantMsg = document.createElement('div')
+  assistantMsg.className = 'chat-msg chat-msg-assistant'
+  assistantMsg.innerHTML = `<div class="chat-msg-label">ACE <span class="chat-streaming-indicator"><span></span><span></span><span></span></span><span class="chat-status-word" id="status-word-${id}">Thinking</span></div><div class="chat-msg-content md-body"><div class="chat-settled"></div><div class="chat-tail"></div></div>`
+  msgsEl.appendChild(assistantMsg)
+
+  s.messages.push({ role: 'user', content: prompt.trim(), timestamp: Date.now() })
+  s.currentStreamText = ''
+  s.currentToolInput = ''
+  s.isStreaming = true
+  s._settledBoundary = 0
+  s._settledHTML = ''
+  s._currentAssistantEl = assistantMsg
+  s._pendingRAF = null
+
+  // Update button state
+  const sendBtn = document.getElementById('chat-send-' + id)
+  if (sendBtn) { sendBtn.textContent = '■'; sendBtn.classList.add('cancel') }
+
+  // Auto-scroll to bottom
+  msgsEl.scrollTop = msgsEl.scrollHeight
+
+  // Gather options from controls
+  const modelEl = document.getElementById('chat-model-' + id)
+  const permsEl = document.getElementById('chat-perms-' + id)
+  const effortEl = document.getElementById('chat-effort-' + id)
+  const opts = {
+    model: modelEl?.value || 'sonnet',
+    permissions: permsEl?.value || 'default',
+    effort: effortEl?.value || 'high',
+  }
+
+  // Send to backend
+  window.ace.chat.send(id, prompt.trim(), s.claudeSessionId, opts)
+
+  // Start rotating status words
+  const STATUS_WORDS = ['Thinking', 'Reasoning', 'Analyzing', 'Synthesizing', 'Composing', 'Reflecting', 'Processing', 'Connecting', 'Exploring', 'Weaving']
+  let wordIdx = 0
+  s._wordTimer = setInterval(() => {
+    if (!s.isStreaming) { clearInterval(s._wordTimer); return }
+    wordIdx = (wordIdx + 1) % STATUS_WORDS.length
+    const wordEl = document.getElementById('status-word-' + id)
+    if (wordEl) {
+      wordEl.style.opacity = '0'
+      setTimeout(() => {
+        wordEl.textContent = STATUS_WORDS[wordIdx]
+        wordEl.style.opacity = ''
+      }, 150)
+    }
+  }, 2500)
+}
+
+// Schedule debounced render
+function scheduleRender(id, sessionsObj) {
+  sessionsObj = sessionsObj || sessions
+  const s = sessionsObj[id]
+  if (!s || s._pendingRAF) return
+  s._pendingRAF = requestAnimationFrame(() => {
+    s._pendingRAF = null
+    renderChatStream(id, sessionsObj)
+  })
+}
+
+// Render accumulated stream text
+function renderChatStream(id, sessionsObj) {
+  sessionsObj = sessionsObj || sessions
+  const s = sessionsObj[id]
+  if (!s || !s._currentAssistantEl) return
+  const contentEl = s._currentAssistantEl.querySelector('.chat-msg-content')
+  const settledEl = contentEl.querySelector('.chat-settled')
+  const tailEl = contentEl.querySelector('.chat-tail')
+
+  const boundary = findSettledBoundary(s.currentStreamText)
+  if (boundary > s._settledBoundary) {
+    const settledText = s.currentStreamText.slice(0, boundary)
+    const withWikilinks = processWikilinks(settledText)
+    const raw = marked.parse(withWikilinks)
+    const safe = DOMPurify.sanitize(raw, SANITIZE_CONFIG)
+    settledEl.innerHTML = safe
+    s._settledBoundary = boundary
+    s._settledHTML = safe
+    postProcessCodeBlocks(settledEl)
+  }
+
+  const tail = s.currentStreamText.slice(boundary)
+  tailEl.innerHTML = tail ? renderTail(tail) : ''
+
+  // Auto-scroll
+  const msgsEl = document.getElementById('chat-msgs-' + id)
+  if (msgsEl) {
+    const isAtBottom = (msgsEl.scrollHeight - msgsEl.scrollTop - msgsEl.clientHeight) < 60
+    if (isAtBottom) msgsEl.scrollTop = msgsEl.scrollHeight
+  }
+}
+
+// Finalize a message (streaming complete)
+function finalizeMessage(id, sessionsObj) {
+  sessionsObj = sessionsObj || sessions
+  const s = sessionsObj[id]
+  if (!s) return
+  s.isStreaming = false
+  // Final full render
+  if (s._currentAssistantEl) {
+    const contentEl = s._currentAssistantEl.querySelector('.chat-msg-content')
+    const settledEl = contentEl.querySelector('.chat-settled')
+    const tailEl = contentEl.querySelector('.chat-tail')
+    const withWikilinks = processWikilinks(s.currentStreamText)
+    const raw = marked.parse(withWikilinks)
+    const safe = DOMPurify.sanitize(raw, SANITIZE_CONFIG)
+    settledEl.innerHTML = safe
+    tailEl.innerHTML = ''
+    postProcessCodeBlocks(settledEl)
+    // Remove streaming indicators from label
+    const indicator = s._currentAssistantEl.querySelector('.chat-streaming-indicator')
+    if (indicator) indicator.remove()
+    const statusWord = s._currentAssistantEl.querySelector('.chat-status-word')
+    if (statusWord) statusWord.remove()
+  }
+  s.messages.push({ role: 'assistant', content: s.currentStreamText, timestamp: Date.now() })
+  s.currentStreamText = ''
+  s._settledBoundary = 0
+  s._settledHTML = ''
+  clearActivityIndicator(id, sessionsObj)
+  if (s._wordTimer) { clearInterval(s._wordTimer); s._wordTimer = null }
+  s._toolGroup = null
+  s._currentAssistantEl = null
+
+  // Update button state
+  const sendBtn = document.getElementById('chat-send-' + id)
+  if (sendBtn) { sendBtn.textContent = '↑'; sendBtn.classList.remove('cancel') }
+
+  // Process queued messages
+  if (s._messageQueue && s._messageQueue.length > 0) {
+    const nextPrompt = s._messageQueue.shift()
+    // Remove the queued label from the DOM
+    const msgsEl = document.getElementById('chat-msgs-' + id)
+    const queuedEl = msgsEl?.querySelector('.chat-msg-queued')
+    if (queuedEl) {
+      queuedEl.classList.remove('chat-msg-queued')
+      queuedEl.querySelector('.chat-msg-label').textContent = 'YOU'
+    }
+    setTimeout(() => sendChatMessage(id, nextPrompt, sessionsObj), 300)
+  }
+}
+
+// Tools that need permission approval
+const APPROVAL_TOOLS = new Set(['Edit', 'Write', 'Bash', 'NotebookEdit'])
+// Tools that need user input (questions)
+const QUESTION_TOOLS = new Set(['AskUserQuestion'])
+// Tools that are read-only / safe to auto-group
+const READONLY_TOOLS = new Set(['Read', 'Glob', 'Grep', 'WebFetch', 'WebSearch'])
+
+// Tool block helpers — consolidates consecutive same-type tools into one block
+function appendToolBlock(id, toolInfo, sessionsObj) {
+  sessionsObj = sessionsObj || sessions
+  const s = sessionsObj[id]
+  if (!s || !s._currentAssistantEl) return
+  const contentEl = s._currentAssistantEl.querySelector('.chat-msg-content')
+  const toolName = toolInfo.name || 'Tool'
+  const needsApproval = APPROVAL_TOOLS.has(toolName)
+  const needsInput = QUESTION_TOOLS.has(toolName)
+  const isInteractive = needsApproval || needsInput
+
+  // Only consolidate read-only tools, not interactive tools
+  if (!isInteractive && s._toolGroup && s._toolGroup.name === toolName && s._toolGroup.block) {
+    s._toolGroup.count++
+    s._toolGroup.items.push({ input: '' })
+    const header = s._toolGroup.block.querySelector('.chat-tool-name')
+    if (header) header.textContent = `${toolName} · ${s._toolGroup.count} calls`
+    updateActivityIndicator(id, toolName, sessionsObj)
+    s._currentToolBlock = s._toolGroup.block
+    s.currentToolInput = ''
+    return
+  }
+
+  // New tool block
+  const block = document.createElement('div')
+  const isCollapsed = !needsApproval
+  block.className = 'chat-tool-block' + (isCollapsed ? ' collapsed' : '')
+
+  if (needsInput) {
+    // Question tool — show as a prominent question card, user replies via normal chat input
+    block.className = 'chat-question-block'
+    block.innerHTML = `<div class="question-header" id="question-text-${id}"></div>`
+    s._questionBlockEl = block
+  } else if (needsApproval) {
+    // Approval-style block — expanded with approve/deny buttons
+    block.innerHTML = `
+      <div class="chat-tool-header">
+        <span class="chat-tool-icon">⚡</span>
+        <span class="chat-tool-name">${escapeHtml(toolName)}</span>
+        <span class="chat-tool-status">Waiting for approval</span>
+        <span class="chat-tool-chevron">▸</span>
+      </div>
+      <div class="chat-tool-detail"></div>
+      <div class="chat-tool-actions">
+        <button class="chat-approve-btn" data-chat-id="${id}">Allow</button>
+        <button class="chat-deny-btn" data-chat-id="${id}">Deny</button>
+      </div>`
+    block.querySelector('.chat-approve-btn').addEventListener('click', () => {
+      window.ace.chat.respond(id, 'y')
+      block.querySelector('.chat-tool-actions').remove()
+      const status = block.querySelector('.chat-tool-status')
+      if (status) { status.textContent = 'Allowed'; status.classList.add('approved') }
+      block.classList.add('collapsed')
+    })
+    block.querySelector('.chat-deny-btn').addEventListener('click', () => {
+      window.ace.chat.respond(id, 'n')
+      block.querySelector('.chat-tool-actions').remove()
+      const status = block.querySelector('.chat-tool-status')
+      if (status) { status.textContent = 'Denied'; status.classList.add('denied') }
+      block.classList.add('collapsed')
+    })
+  } else {
+    block.innerHTML = `<div class="chat-tool-header"><span class="chat-tool-icon">⚡</span><span class="chat-tool-name">${escapeHtml(toolName)}</span><span class="chat-tool-chevron">▸</span></div><div class="chat-tool-detail"></div>`
+  }
+
+  block.querySelector('.chat-tool-header').addEventListener('click', () => block.classList.toggle('collapsed'))
+  const tailEl = contentEl.querySelector('.chat-tail')
+  contentEl.insertBefore(block, tailEl)
+
+  if (!needsApproval) {
+    s._toolGroup = { name: toolName, block, count: 1, items: [{ input: '' }] }
+  } else {
+    s._toolGroup = null // Don't group approval tools
+  }
+  s._currentToolBlock = block
+  s.currentToolInput = ''
+
+  updateActivityIndicator(id, toolName, sessionsObj)
+}
+
+function appendToolInput(id, partialJson, sessionsObj) {
+  sessionsObj = sessionsObj || sessions
+  const s = sessionsObj[id]
+  if (!s || !s._currentToolBlock) return
+  s.currentToolInput += partialJson
+
+  // Update activity indicator with file path or tool details
+  let toolGroupName = s._toolGroup?.name || ''
+  try {
+    const parsed = JSON.parse(s.currentToolInput)
+    const detail = parsed.file_path || parsed.path || parsed.command || parsed.pattern || parsed.query || ''
+    if (detail) {
+      const short = detail.split('/').pop() || detail.slice(0, 40)
+      updateActivityIndicator(id, `${toolGroupName}: ${short}`, sessionsObj)
+    }
+  } catch {}
+
+  const detailEl = s._currentToolBlock.querySelector('.chat-tool-detail')
+  if (!detailEl) return
+
+  if (s._toolGroup) {
+    // Grouped read-only tool — update latest item and show compact list
+    const items = s._toolGroup.items
+    if (items.length > 0) items[items.length - 1].input = s.currentToolInput
+    let html = ''
+    for (const item of items) {
+      let label = ''
+      try {
+        const p = JSON.parse(item.input)
+        label = p.file_path || p.path || p.command || p.pattern || p.query || item.input.slice(0, 60)
+        if (label.includes('/')) {
+          const parts = label.split('/')
+          label = parts.length > 3 ? '.../' + parts.slice(-3).join('/') : label
+        }
+      } catch {
+        label = item.input.slice(0, 60) || '...'
+      }
+      html += `<div class="tool-item">${escapeHtml(label)}</div>`
+    }
+    detailEl.innerHTML = html
+  } else if (s._questionBlockEl) {
+    // Question tool — render the question text as markdown
+    try {
+      const parsed = JSON.parse(s.currentToolInput)
+      const question = parsed.question || parsed.text || parsed.message || JSON.stringify(parsed, null, 2)
+      const headerEl = s._questionBlockEl.querySelector('.question-header')
+      if (headerEl) {
+        headerEl.innerHTML = DOMPurify.sanitize(marked.parse(question), SANITIZE_CONFIG)
+        headerEl.classList.add('md-body')
+      }
+      const msgsEl = document.getElementById('chat-msgs-' + id)
+      if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight
+    } catch {}
+    return
+  } else {
+    // Approval tool — show full input as formatted JSON/diff
+    try {
+      const parsed = JSON.parse(s.currentToolInput)
+      if (parsed.old_string != null && parsed.new_string != null) {
+        // Edit tool — show diff-like view
+        const file = parsed.file_path ? `<div class="tool-item" style="font-weight:500">${escapeHtml(parsed.file_path.split('/').slice(-3).join('/'))}</div>` : ''
+        detailEl.innerHTML = `${file}<pre class="tool-diff"><span class="diff-remove">${escapeHtml(parsed.old_string)}</span><span class="diff-add">${escapeHtml(parsed.new_string)}</span></pre>`
+      } else if (parsed.command) {
+        // Bash tool — show command
+        detailEl.innerHTML = `<pre>${escapeHtml(parsed.command)}</pre>`
+      } else if (parsed.content != null) {
+        // Write tool
+        const file = parsed.file_path ? `<div class="tool-item" style="font-weight:500">${escapeHtml(parsed.file_path.split('/').slice(-3).join('/'))}</div>` : ''
+        const preview = parsed.content.length > 500 ? parsed.content.slice(0, 500) + '...' : parsed.content
+        detailEl.innerHTML = `${file}<pre>${escapeHtml(preview)}</pre>`
+      } else {
+        detailEl.innerHTML = `<pre>${escapeHtml(JSON.stringify(parsed, null, 2))}</pre>`
+      }
+    } catch {
+      detailEl.innerHTML = `<pre>${escapeHtml(s.currentToolInput)}</pre>`
+    }
+  }
+}
+
+// Activity indicator — shows what Claude is doing right now
+function updateActivityIndicator(id, text, sessionsObj) {
+  sessionsObj = sessionsObj || sessions
+  const s = sessionsObj[id]
+  if (!s || !s._currentAssistantEl) return
+  let indicator = s._currentAssistantEl.querySelector('.chat-activity')
+  if (!indicator) {
+    indicator = document.createElement('div')
+    indicator.className = 'chat-activity'
+    const label = s._currentAssistantEl.querySelector('.chat-msg-label')
+    if (label) label.after(indicator)
+  }
+  indicator.textContent = text
+  // Also update the status word to match the action
+  const wordEl = document.getElementById('status-word-' + id)
+  if (wordEl) {
+    const action = text.split(':')[0] || text
+    const TOOL_WORDS = { Read: 'Reading', Glob: 'Searching', Grep: 'Scanning', Edit: 'Editing', Write: 'Writing', Bash: 'Executing', WebFetch: 'Fetching', WebSearch: 'Searching' }
+    wordEl.textContent = TOOL_WORDS[action] || action
+  }
+}
+
+function clearActivityIndicator(id, sessionsObj) {
+  sessionsObj = sessionsObj || sessions
+  const s = sessionsObj[id]
+  if (!s || !s._currentAssistantEl) return
+  const indicator = s._currentAssistantEl.querySelector('.chat-activity')
+  if (indicator) indicator.remove()
+}
+
+// Update chat status bar + context bar
+function updateChatStatus(id, event, sessionsObj) {
+  sessionsObj = sessionsObj || sessions
+  const s = sessionsObj[id]
+  if (!s) return
+
+  if (event.total_cost_usd != null) s.totalCost += event.total_cost_usd
+  if (event.usage) {
+    s.totalTokens.input += event.usage.input_tokens || 0
+    s.totalTokens.output += event.usage.output_tokens || 0
+  }
+  const totalTok = s.totalTokens.input + s.totalTokens.output
+
+  // Update status bar labels
+  const statusEl = document.getElementById('chat-status-' + id)
+  if (statusEl) {
+    const costEl = statusEl.querySelector('.chat-cost-label')
+    const tokEl = statusEl.querySelector('.chat-tokens-label')
+    if (costEl) costEl.textContent = '$' + s.totalCost.toFixed(4)
+    if (tokEl) tokEl.textContent = formatTokens(totalTok) + ' tokens'
+  }
+
+  // Update context bar
+  updateContextBar(id, totalTok)
+}
+
+// Also update tokens from stream events (not just result)
+function updateTokensFromStream(id, event, sessionsObj) {
+  sessionsObj = sessionsObj || sessions
+  const s = sessionsObj[id]
+  if (!s) return
+  // message_start and message_delta contain usage info
+  if (event.type === 'stream_event' && event.event) {
+    const e = event.event
+    if (e.type === 'message_start' && e.message?.usage) {
+      s.totalTokens.input = e.message.usage.input_tokens || 0
+      s.totalTokens.output = e.message.usage.output_tokens || 0
+      const totalTok = s.totalTokens.input + s.totalTokens.output
+      const statusEl = document.getElementById('chat-status-' + id)
+      if (statusEl) {
+        const tokEl = statusEl.querySelector('.chat-tokens-label')
+        if (tokEl) tokEl.textContent = formatTokens(totalTok) + ' tokens'
+      }
+      updateContextBar(id, totalTok)
+    }
+    if (e.type === 'message_delta' && e.usage) {
+      s.totalTokens.output += e.usage.output_tokens || 0
+      const totalTok = s.totalTokens.input + s.totalTokens.output
+      const statusEl = document.getElementById('chat-status-' + id)
+      if (statusEl) {
+        const tokEl = statusEl.querySelector('.chat-tokens-label')
+        if (tokEl) tokEl.textContent = formatTokens(totalTok) + ' tokens'
+      }
+      updateContextBar(id, totalTok)
+    }
+  }
+}
+
+function formatTokens(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M'
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K'
+  return n + ''
+}
+
+function updateContextBar(id, totalTokens) {
+  const maxCtx = 200000 // Claude's context window
+  const pct = Math.min(100, (totalTokens / maxCtx) * 100)
+  const fill = document.getElementById('ctx-fill-' + id)
+  const label = document.getElementById('ctx-label-' + id)
+  if (fill) {
+    fill.style.width = pct + '%'
+    fill.className = 'ctx-bar-fill' + (pct > 80 ? ' critical' : pct > 50 ? ' warn' : '')
+  }
+  if (label) label.textContent = formatTokens(totalTokens)
+}
+
+// Wire chat stream listeners for a session
+function wireChatListeners(id, sessionsObj) {
+  sessionsObj = sessionsObj || sessions
+  window.ace.chat.onStream(id, event => {
+    const s = sessionsObj[id]
+    if (!s) return
+    if (event.type === 'system' && event.session_id) {
+      s.claudeSessionId = event.session_id
+    }
+    // Track token usage from stream events
+    updateTokensFromStream(id, event, sessionsObj)
+    if (event.type === 'stream_event' && event.event) {
+      const e = event.event
+      if (e.type === 'content_block_start') {
+        if (e.content_block?.type === 'tool_use') {
+          appendToolBlock(id, e.content_block, sessionsObj)
+        } else if (e.content_block?.type === 'text') {
+          // Text block starts — end any tool group and clear activity
+          s._toolGroup = null
+          clearActivityIndicator(id, sessionsObj)
+        }
+      }
+      if (e.type === 'content_block_delta') {
+        if (e.delta?.type === 'text_delta') {
+          s.currentStreamText += e.delta.text
+          scheduleRender(id, sessionsObj)
+        }
+        if (e.delta?.type === 'input_json_delta') {
+          appendToolInput(id, e.delta.partial_json, sessionsObj)
+        }
+      }
+      if (e.type === 'content_block_stop') {
+        if (s._currentToolBlock) {
+          s._currentToolBlock = null
+          s._questionBlockEl = null
+          s.currentToolInput = ''
+        }
+      }
+      // Don't finalize on message_stop — Claude Code may send multiple
+      // message rounds (text → tool_use → tool_result → more text).
+      // Finalize only on the 'result' event which signals everything is done.
+    }
+    if (event.type === 'result') {
+      updateChatStatus(id, event, sessionsObj)
+      finalizeMessage(id, sessionsObj)
+    }
+  })
+  window.ace.chat.onError(id, msg => {
+    const msgsEl = document.getElementById('chat-msgs-' + id)
+    if (!msgsEl) return
+    if (msg.includes('No STDIN data') || msg.includes('proceeding without')) return
+    const errEl = document.createElement('div')
+    errEl.className = 'chat-error'
+    errEl.textContent = msg
+    msgsEl.appendChild(errEl)
+  })
+  window.ace.chat.onExit(id, code => {
+    const s = sessionsObj[id]
+    if (s && s.isStreaming) finalizeMessage(id, sessionsObj)
+  })
+}
+
+// Render an interactive question card from AskUserQuestion tool input
+function renderQuestionCard(id, data, containerEl, sessionsObj) {
+  sessionsObj = sessionsObj || sessions
+  const question = data.question || data.text || data.message || ''
+  const options = data.options || []
+  const isMulti = data.multiple === true || data.multi === true ||
+                  (data.type && data.type.includes('multi'))
+
+  let html = ''
+  // Question header
+  if (question) {
+    const rendered = DOMPurify.sanitize(marked.parse(question), SANITIZE_CONFIG)
+    html += `<div class="question-header md-body">${rendered}</div>`
+  }
+
+  if (options.length > 0) {
+    // Options with radio buttons or checkboxes
+    const inputType = isMulti ? 'checkbox' : 'radio'
+    const groupName = 'q-' + id + '-' + Date.now()
+    html += `<div class="question-options">`
+    options.forEach((opt, i) => {
+      const label = typeof opt === 'string' ? opt : (opt.label || opt.value || opt.text || JSON.stringify(opt))
+      const desc = typeof opt === 'object' ? (opt.description || opt.desc || '') : ''
+      html += `
+        <label class="question-option">
+          <input type="${inputType}" name="${groupName}" value="${escapeHtml(label)}" />
+          <div class="question-option-content">
+            <span class="question-option-label">${escapeHtml(label)}</span>
+            ${desc ? `<span class="question-option-desc">${escapeHtml(desc)}</span>` : ''}
+          </div>
+        </label>`
+    })
+    html += `</div>`
+    html += `<button class="chat-approve-btn question-submit">Submit</button>`
+  } else {
+    // No predefined options — show text input
+    html += `
+      <div class="chat-prompt-input-area">
+        <textarea class="chat-input chat-prompt-response" placeholder="Type your answer..." rows="2"></textarea>
+        <button class="chat-approve-btn question-submit">Send</button>
+      </div>`
+  }
+
+  containerEl.innerHTML = html
+
+  // Wire submit
+  const submitBtn = containerEl.querySelector('.question-submit')
+  submitBtn.addEventListener('click', () => {
+    let answer = ''
+    if (options.length > 0) {
+      const checked = containerEl.querySelectorAll('input:checked')
+      answer = [...checked].map(c => c.value).join(', ')
+    } else {
+      const textarea = containerEl.querySelector('textarea')
+      answer = textarea?.value?.trim() || ''
+    }
+    if (!answer) return
+    window.ace.chat.respond(id, answer)
+    // Disable the card
+    containerEl.querySelectorAll('input, textarea, button').forEach(el => el.disabled = true)
+    submitBtn.textContent = 'Submitted'
+    containerEl.classList.add('answered')
+  })
+
+  // Auto-scroll
+  const msgsEl = document.getElementById('chat-msgs-' + id)
+  if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight
+}
+
+// No stall detector or special question UI needed.
+// Questions flow naturally as chat: Claude asks → process exits → user replies → --resume continues.
+
 // ─── Sessions ────────────────────────────────────────────────────────────────
 const sessions = {}
 let activeId = null
 
 function spawnSession() {
-  const id   = 'sess-' + Date.now()
-  const term = new Terminal({
-    fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-    fontSize: 12.5, lineHeight: 1.5, cursorBlink: true,
-    theme: xtermTheme(),
-    allowProposedApi: true,
-  })
-  const fitAddon = new FitAddon.FitAddon()
-  term.loadAddon(fitAddon)
+  const id = 'sess-' + Date.now()
 
   const pane = document.createElement('div')
   pane.className = 'term-pane'; pane.id = 'pane-' + id
@@ -1035,10 +2163,50 @@ function spawnSession() {
     <div class="term-hdr">
       <div class="term-hdr-dot" style="background:var(--green);box-shadow:0 0 7px rgba(109,184,143,0.5)"></div>
       <div class="term-hdr-label">ACE Session</div>
-      <div class="term-hdr-path" id="hdr-path-${id}">Starting…</div>
+      <button class="mode-toggle-btn" id="mode-toggle-${id}">Terminal</button>
+      <div class="term-hdr-path" id="hdr-path-${id}">Chat Mode</div>
     </div>
-    <div class="term-xterm" id="xterm-${id}"></div>
-    <button class="scroll-to-bottom" id="scroll-btn-${id}" title="Scroll to bottom">↓</button>`
+    <div class="chat-view" id="chat-view-${id}">
+      <div class="chat-messages" id="chat-msgs-${id}">
+        <div class="chat-welcome">
+          <div class="chat-welcome-icon">◈</div>
+          <div class="chat-welcome-text">ACE Chat</div>
+          <div class="chat-welcome-sub">Enter to send · Shift+Enter for newline · Type a message below</div>
+        </div>
+      </div>
+      <div class="chat-status" id="chat-status-${id}">
+        <span class="chat-cost-label">$0.00</span>
+        <span class="chat-tokens-label">0 tokens</span>
+        <div class="ctx-bar" id="ctx-bar-${id}" title="Context usage">
+          <div class="ctx-bar-fill" id="ctx-fill-${id}"></div>
+        </div>
+        <span class="ctx-bar-pct" id="ctx-label-${id}">0%</span>
+      </div>
+      <div class="chat-controls" id="chat-controls-${id}">
+        <select class="chat-select" id="chat-model-${id}" title="Model">
+          <option value="opus">Opus</option>
+          <option value="sonnet" selected>Sonnet</option>
+          <option value="haiku">Haiku</option>
+        </select>
+        <select class="chat-select" id="chat-perms-${id}" title="Permission mode">
+          <option value="default">Normal</option>
+          <option value="plan">Plan</option>
+          <option value="auto">Auto-accept</option>
+        </select>
+        <select class="chat-select" id="chat-effort-${id}" title="Reasoning effort">
+          <option value="low">Low effort</option>
+          <option value="medium">Medium</option>
+          <option value="high" selected>High</option>
+          <option value="max">Max effort</option>
+        </select>
+      </div>
+      <div class="chat-input-area">
+        <textarea class="chat-input" id="chat-input-${id}" placeholder="Message ACE..." rows="1"></textarea>
+        <button class="chat-send-btn" id="chat-send-${id}">↑</button>
+      </div>
+    </div>
+    <div class="term-xterm" id="xterm-${id}" style="display:none"></div>
+    <button class="scroll-to-bottom" id="scroll-btn-${id}" title="Scroll to bottom" style="display:none">↓</button>`
   document.getElementById('term-panes').appendChild(pane)
 
   const tab = document.createElement('div')
@@ -1047,69 +2215,148 @@ function spawnSession() {
   tab.addEventListener('click', (e) => { if (!e.target.classList.contains('stab-close')) activateSession(id) })
   document.getElementById('session-tabs').insertBefore(tab, document.getElementById('new-session-btn'))
 
-  sessions[id] = { term, fitAddon, pane, tab }
+  sessions[id] = {
+    term: null, fitAddon: null, pane, tab,
+    mode: 'chat',
+    claudeSessionId: null,
+    messages: [],
+    currentStreamText: '',
+    currentToolInput: '',
+    isStreaming: false,
+    totalCost: 0,
+    totalTokens: { input: 0, output: 0 },
+    _settledBoundary: 0, _settledHTML: '', _currentAssistantEl: null, _pendingRAF: null, _currentToolBlock: null,
+  }
   activateSession(id)
 
+  // Close button
+  document.getElementById('stab-close-' + id).addEventListener('click', (e) => {
+    e.stopPropagation()
+    closeSession(id)
+  })
+
+  // Chat input handling
+  const inputEl = document.getElementById('chat-input-' + id)
+  const sendBtn = document.getElementById('chat-send-' + id)
+
+  inputEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      if (sessions[id].isStreaming) return
+      const prompt = inputEl.value
+      if (!prompt.trim()) return
+      inputEl.value = ''
+      inputEl.style.height = 'auto'
+      sendChatMessage(id, prompt)
+    }
+    if (e.key === 'Escape' && sessions[id].isStreaming) {
+      window.ace.chat.cancel(id)
+    }
+  })
+  inputEl.addEventListener('input', () => {
+    inputEl.style.height = 'auto'
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 150) + 'px'
+  })
+
+  sendBtn.addEventListener('click', () => {
+    if (sessions[id].isStreaming) {
+      window.ace.chat.cancel(id)
+      return
+    }
+    const prompt = inputEl.value
+    if (!prompt.trim()) return
+    inputEl.value = ''
+    inputEl.style.height = 'auto'
+    sendChatMessage(id, prompt)
+  })
+
+  // Wire chat stream listeners
+  wireChatListeners(id)
+
+  // Mode toggle (chat ↔ terminal)
+  document.getElementById('mode-toggle-' + id).addEventListener('click', () => {
+    toggleSessionMode(id)
+  })
+}
+
+function toggleSessionMode(id) {
+  const s = sessions[id]
+  if (!s) return
+  const chatView = document.getElementById('chat-view-' + id)
+  const xtermEl = document.getElementById('xterm-' + id)
   const scrollBtn = document.getElementById('scroll-btn-' + id)
-  let userScrolledUp = false
+  const toggleBtn = document.getElementById('mode-toggle-' + id)
+  const hdrPath = document.getElementById('hdr-path-' + id)
 
-  requestAnimationFrame(() => {
-    term.open(document.getElementById('xterm-' + id))
-    fitAddon.fit()
-    window.ace.pty.create(id, null, term.cols, term.rows).then(() => {
-      document.getElementById('hdr-path-' + id).textContent = '~/Documents/Actualize'
-    })
-    document.getElementById('stab-close-' + id).addEventListener('click', (e) => {
-      e.stopPropagation()
-      closeSession(id)
-    })
+  if (s.mode === 'chat') {
+    // Switch to terminal mode
+    s.mode = 'terminal'
+    chatView.style.display = 'none'
+    xtermEl.style.display = ''
+    scrollBtn.style.display = ''
+    toggleBtn.textContent = 'Chat'
+    hdrPath.textContent = '~/Documents/Actualize'
 
-    // Track scroll position
-    term.onScroll(() => {
-      userScrolledUp = term.buffer.active.viewportY < term.buffer.active.baseY
-      scrollBtn.classList.toggle('visible', userScrolledUp)
-    })
-
-    // Handle alternate buffer transitions (prevents edit-jump)
-    term.buffer.onBufferChange(() => {
-      requestAnimationFrame(() => {
-        term.scrollToBottom()
-        userScrolledUp = false
-        scrollBtn.classList.toggle('visible', false)
+    // Lazy-init xterm + PTY
+    if (!s.term) {
+      const term = new Terminal({
+        fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+        fontSize: 12.5, lineHeight: 1.5, cursorBlink: true,
+        theme: xtermTheme(), allowProposedApi: true,
       })
-    })
-  })
+      const fitAddon = new FitAddon.FitAddon()
+      term.loadAddon(fitAddon)
+      s.term = term; s.fitAddon = fitAddon
 
-  // Click to scroll to bottom
-  scrollBtn.addEventListener('click', () => {
-    term.scrollToBottom()
-    userScrolledUp = false
-    scrollBtn.classList.toggle('visible', false)
-  })
+      let userScrolledUp = false
+      requestAnimationFrame(() => {
+        term.open(xtermEl)
+        fitAddon.fit()
+        window.ace.pty.create(id, null, term.cols, term.rows)
 
-  window.ace.pty.onData(id, data => {
-    const wasAtBottom = !userScrolledUp
-    term.write(data, () => {
-      if (wasAtBottom) term.scrollToBottom()
-    })
-  })
-  window.ace.pty.onSessionExit(id, () => {
-    tab.style.opacity = '0.4'
-    document.getElementById('hdr-path-' + id).textContent = 'Session ended'
-  })
-  term.onData(data => window.ace.pty.write(id, data))
-  term.onResize(({ cols, rows }) => window.ace.pty.resize(id, cols, rows))
+        term.onScroll(() => {
+          userScrolledUp = term.buffer.active.viewportY < term.buffer.active.baseY
+          scrollBtn.classList.toggle('visible', userScrolledUp)
+        })
+        term.buffer.onBufferChange(() => {
+          requestAnimationFrame(() => { term.scrollToBottom(); userScrolledUp = false; scrollBtn.classList.toggle('visible', false) })
+        })
+      })
+
+      scrollBtn.addEventListener('click', () => {
+        term.scrollToBottom(); userScrolledUp = false; scrollBtn.classList.toggle('visible', false)
+      })
+      window.ace.pty.onData(id, data => {
+        const wasAtBottom = !userScrolledUp
+        term.write(data, () => { if (wasAtBottom) term.scrollToBottom() })
+      })
+      term.onData(data => window.ace.pty.write(id, data))
+      term.onResize(({ cols, rows }) => window.ace.pty.resize(id, cols, rows))
+    } else {
+      requestAnimationFrame(() => s.fitAddon.fit())
+    }
+  } else {
+    // Switch to chat mode
+    s.mode = 'chat'
+    chatView.style.display = ''
+    xtermEl.style.display = 'none'
+    scrollBtn.style.display = 'none'
+    toggleBtn.textContent = 'Terminal'
+    hdrPath.textContent = 'Chat Mode'
+    // Focus input
+    setTimeout(() => document.getElementById('chat-input-' + id)?.focus(), 50)
+  }
 }
 
 function closeSession(id) {
   const s = sessions[id]
   if (!s) return
-  window.ace.pty.kill(id)
+  if (s.term) window.ace.pty.kill(id)
+  if (s.isStreaming) window.ace.chat.cancel(id)
   s.pane.remove()
   s.tab.remove()
   delete sessions[id]
   activeId = null
-  // Activate the last remaining session, if any
   const remaining = Object.keys(sessions)
   if (remaining.length > 0) activateSession(remaining[remaining.length - 1])
 }
@@ -1119,23 +2366,45 @@ function activateSession(id) {
   Object.values(sessions).forEach(s => { s.pane.classList.remove('active'); s.tab.classList.remove('active') })
   sessions[id].pane.classList.add('active'); sessions[id].tab.classList.add('active')
   activeId = id
-  setTimeout(() => sessions[id].fitAddon.fit(), 50)
+  if (sessions[id].mode === 'terminal' && sessions[id].fitAddon) {
+    setTimeout(() => sessions[id].fitAddon.fit(), 50)
+  } else if (sessions[id].mode === 'chat') {
+    setTimeout(() => document.getElementById('chat-input-' + id)?.focus(), 50)
+  }
 }
-function fitActive()      { if (activeId && sessions[activeId]) sessions[activeId].fitAddon.fit() }
-function sendToActive(t)  { if (activeId) window.ace.pty.write(activeId, t) }
+function fitActive() {
+  if (activeId && sessions[activeId] && sessions[activeId].mode === 'terminal' && sessions[activeId].fitAddon) {
+    sessions[activeId].fitAddon.fit()
+  }
+}
+function sendToActive(t) {
+  if (!activeId) return
+  const s = sessions[activeId]
+  if (s.mode === 'chat') {
+    // Strip trailing \r for chat mode
+    sendChatMessage(activeId, t.replace(/\r$/, ''))
+  } else {
+    window.ace.pty.write(activeId, t)
+  }
+}
 document.getElementById('new-session-btn').addEventListener('click', spawnSession)
 const ro = new ResizeObserver(() => fitActive())
 ro.observe(document.getElementById('term-panes'))
 
+// Split pane — disabled for now, will be reimplemented
+document.getElementById('split-btn').style.display = 'none'
+
 // ─── Window Focus / Visibility ────────────────────────────────────────────────
 function onWindowRegainFocus() {
-  if (activeId && sessions[activeId]) {
-    sessions[activeId].fitAddon.fit()
-    sessions[activeId].term.scrollToBottom()
+  if (activeId && sessions[activeId] && sessions[activeId].mode === 'terminal') {
+    sessions[activeId].fitAddon?.fit()
+    sessions[activeId].term?.scrollToBottom()
   }
   if (focusedAgentId && typeof agentSessions !== 'undefined' && agentSessions[focusedAgentId]) {
-    agentSessions[focusedAgentId].fitAddon?.fit()
-    agentSessions[focusedAgentId].term?.scrollToBottom()
+    if (agentSessions[focusedAgentId].mode === 'terminal') {
+      agentSessions[focusedAgentId].fitAddon?.fit()
+      agentSessions[focusedAgentId].term?.scrollToBottom()
+    }
   }
 }
 document.addEventListener('visibilitychange', () => {
@@ -1206,15 +2475,6 @@ function spawnAgentPane(targetRow) {
   const isTop    = targetRow === 'top'
   const roleName = isTop ? 'orchestrator' : 'agent'
 
-  const term = new Terminal({
-    fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-    fontSize: 12.5, lineHeight: 1.5, cursorBlink: true,
-    theme: xtermTheme(),
-    allowProposedApi: true,
-  })
-  const fitAddon = new FitAddon.FitAddon()
-  term.loadAddon(fitAddon)
-
   const pane = document.createElement('div')
   pane.className = 'apane'; pane.id = 'pane-' + id
   pane.innerHTML = `
@@ -1223,12 +2483,27 @@ function spawnAgentPane(targetRow) {
       <span class="ap-role">${roleName}</span>
       <span class="ap-name-label">${id.slice(-6)}</span>
       <span class="ap-task-label" id="ap-task-${id}">starting…</span>
+      <button class="mode-toggle-btn" id="agent-mode-toggle-${id}">Terminal</button>
       <span class="ap-tokens" id="ap-tokens-${id}">↑ 0 lines</span>
       <span class="ap-time-label" id="ap-time-${id}">0:00</span>
       <span class="ap-close-btn" id="ap-close-${id}">×</span>
     </div>
-    <div class="term-xterm" id="xterm-${id}"></div>
-    <button class="scroll-to-bottom" id="scroll-btn-${id}" title="Scroll to bottom">↓</button>`
+    <div class="chat-view" id="chat-view-${id}">
+      <div class="chat-messages" id="chat-msgs-${id}">
+        <div class="chat-welcome">
+          <div class="chat-welcome-icon">◈</div>
+          <div class="chat-welcome-text">Agent Chat</div>
+          <div class="chat-welcome-sub">Enter to send · Shift+Enter for newline</div>
+        </div>
+      </div>
+      <div class="chat-status" id="chat-status-${id}"></div>
+      <div class="chat-input-area">
+        <textarea class="chat-input" id="chat-input-${id}" placeholder="Message ACE..." rows="1"></textarea>
+        <button class="chat-send-btn" id="chat-send-${id}">↑</button>
+      </div>
+    </div>
+    <div class="term-xterm" id="xterm-${id}" style="display:none"></div>
+    <button class="scroll-to-bottom" id="scroll-btn-${id}" title="Scroll to bottom" style="display:none">↓</button>`
 
   if (!isTop && botEl.querySelector('.apane')) {
     const vRes = document.createElement('div')
@@ -1248,57 +2523,52 @@ function spawnAgentPane(targetRow) {
   arItem.addEventListener('click', () => focusAgentPane(id))
   document.getElementById('ar-list').appendChild(arItem)
 
-  agentSessions[id] = { term, fitAddon, pane, rosterItem: arItem, role: roleName,
-    spawnTime: Date.now(), lineCount: 0, status: 'waiting' }
+  agentSessions[id] = {
+    term: null, fitAddon: null, pane, rosterItem: arItem, role: roleName,
+    spawnTime: Date.now(), lineCount: 0, status: 'waiting',
+    mode: 'chat',
+    claudeSessionId: null, messages: [], currentStreamText: '', currentToolInput: '',
+    isStreaming: false, totalCost: 0, totalTokens: { input: 0, output: 0 },
+    _settledBoundary: 0, _settledHTML: '', _currentAssistantEl: null, _pendingRAF: null, _currentToolBlock: null,
+  }
 
-  const agentScrollBtn = document.getElementById('scroll-btn-' + id)
-  let agentUserScrolledUp = false
+  // Chat input handling for agent
+  const inputEl = document.getElementById('chat-input-' + id)
+  const sendBtn = document.getElementById('chat-send-' + id)
 
-  requestAnimationFrame(() => {
-    term.open(document.getElementById('xterm-' + id))
-    fitAddon.fit()
-    window.ace.pty.create(id, null, term.cols, term.rows).then(() => {
-      if (!agentSessions[id]) return
-      agentSessions[id].status = 'running'
-      document.getElementById('ap-task-' + id).textContent = 'ready'
-      updateAgentDots(id)
-    })
-
-    term.onScroll(() => {
-      agentUserScrolledUp = term.buffer.active.viewportY < term.buffer.active.baseY
-      agentScrollBtn.classList.toggle('visible', agentUserScrolledUp)
-    })
-
-    term.buffer.onBufferChange(() => {
-      requestAnimationFrame(() => {
-        term.scrollToBottom()
-        agentUserScrolledUp = false
-        agentScrollBtn.classList.toggle('visible', false)
-      })
-    })
-  })
-
-  agentScrollBtn.addEventListener('click', () => {
-    term.scrollToBottom()
-    agentUserScrolledUp = false
-    agentScrollBtn.classList.toggle('visible', false)
-  })
-
-  window.ace.pty.onData(id, data => {
-    if (!agentSessions[id]) return
-    const wasAtBottom = !agentUserScrolledUp
-    term.write(data, () => {
-      if (wasAtBottom) term.scrollToBottom()
-    })
-    const newlines = (data.match(/\n/g) || []).length
-    if (newlines > 0) {
-      agentSessions[id].lineCount += newlines
-      const el = document.getElementById('ap-tokens-' + id)
-      if (el) el.textContent = `↑ ${agentSessions[id].lineCount} lines`
+  inputEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      if (agentSessions[id]?.isStreaming) return
+      const prompt = inputEl.value
+      if (!prompt.trim()) return
+      inputEl.value = ''; inputEl.style.height = 'auto'
+      sendChatMessage(id, prompt, agentSessions)
+    }
+    if (e.key === 'Escape' && agentSessions[id]?.isStreaming) {
+      window.ace.chat.cancel(id)
     }
   })
-  term.onData(d => window.ace.pty.write(id, d))
-  term.onResize(({ cols, rows }) => window.ace.pty.resize(id, cols, rows))
+  inputEl.addEventListener('input', () => {
+    inputEl.style.height = 'auto'
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 150) + 'px'
+  })
+  sendBtn.addEventListener('click', () => {
+    if (agentSessions[id]?.isStreaming) { window.ace.chat.cancel(id); return }
+    const prompt = inputEl.value
+    if (!prompt.trim()) return
+    inputEl.value = ''; inputEl.style.height = 'auto'
+    sendChatMessage(id, prompt, agentSessions)
+  })
+
+  // Wire chat listeners for agent
+  wireChatListeners(id, agentSessions)
+
+  // Mode toggle for agent pane
+  document.getElementById('agent-mode-toggle-' + id).addEventListener('click', (e) => {
+    e.stopPropagation()
+    toggleAgentMode(id)
+  })
 
   document.getElementById('ap-close-' + id).addEventListener('click', e => {
     e.stopPropagation(); closeAgentPane(id)
@@ -1310,6 +2580,78 @@ function spawnAgentPane(targetRow) {
   return id
 }
 
+function toggleAgentMode(id) {
+  const s = agentSessions[id]
+  if (!s) return
+  const chatView = document.getElementById('chat-view-' + id)
+  const xtermEl = document.getElementById('xterm-' + id)
+  const scrollBtn = document.getElementById('scroll-btn-' + id)
+  const toggleBtn = document.getElementById('agent-mode-toggle-' + id)
+
+  if (s.mode === 'chat') {
+    s.mode = 'terminal'
+    chatView.style.display = 'none'
+    xtermEl.style.display = ''
+    scrollBtn.style.display = ''
+    toggleBtn.textContent = 'Chat'
+
+    if (!s.term) {
+      const term = new Terminal({
+        fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+        fontSize: 12.5, lineHeight: 1.5, cursorBlink: true,
+        theme: xtermTheme(), allowProposedApi: true,
+      })
+      const fitAddon = new FitAddon.FitAddon()
+      term.loadAddon(fitAddon)
+      s.term = term; s.fitAddon = fitAddon
+
+      let agentUserScrolledUp = false
+      requestAnimationFrame(() => {
+        term.open(xtermEl)
+        fitAddon.fit()
+        window.ace.pty.create(id, null, term.cols, term.rows).then(() => {
+          if (!agentSessions[id]) return
+          agentSessions[id].status = 'running'
+          document.getElementById('ap-task-' + id).textContent = 'ready'
+          updateAgentDots(id)
+        })
+        term.onScroll(() => {
+          agentUserScrolledUp = term.buffer.active.viewportY < term.buffer.active.baseY
+          scrollBtn.classList.toggle('visible', agentUserScrolledUp)
+        })
+        term.buffer.onBufferChange(() => {
+          requestAnimationFrame(() => { term.scrollToBottom(); agentUserScrolledUp = false; scrollBtn.classList.toggle('visible', false) })
+        })
+      })
+      scrollBtn.addEventListener('click', () => {
+        term.scrollToBottom(); agentUserScrolledUp = false; scrollBtn.classList.toggle('visible', false)
+      })
+      window.ace.pty.onData(id, data => {
+        if (!agentSessions[id]) return
+        const wasAtBottom = !agentUserScrolledUp
+        term.write(data, () => { if (wasAtBottom) term.scrollToBottom() })
+        const newlines = (data.match(/\n/g) || []).length
+        if (newlines > 0) {
+          agentSessions[id].lineCount += newlines
+          const el = document.getElementById('ap-tokens-' + id)
+          if (el) el.textContent = `↑ ${agentSessions[id].lineCount} lines`
+        }
+      })
+      term.onData(d => window.ace.pty.write(id, d))
+      term.onResize(({ cols, rows }) => window.ace.pty.resize(id, cols, rows))
+    } else {
+      requestAnimationFrame(() => s.fitAddon.fit())
+    }
+  } else {
+    s.mode = 'chat'
+    chatView.style.display = ''
+    xtermEl.style.display = 'none'
+    scrollBtn.style.display = 'none'
+    toggleBtn.textContent = 'Terminal'
+    setTimeout(() => document.getElementById('chat-input-' + id)?.focus(), 50)
+  }
+}
+
 function focusAgentPane(id) {
   if (!agentSessions[id]) return
   document.querySelectorAll('.apane').forEach(p => p.classList.remove('focused'))
@@ -1317,13 +2659,16 @@ function focusAgentPane(id) {
   agentSessions[id].pane.classList.add('focused')
   agentSessions[id].rosterItem.classList.add('active')
   focusedAgentId = id
-  setTimeout(() => agentSessions[id]?.fitAddon?.fit(), 50)
+  if (agentSessions[id].mode === 'terminal' && agentSessions[id].fitAddon) {
+    setTimeout(() => agentSessions[id]?.fitAddon?.fit(), 50)
+  }
 }
 
 function closeAgentPane(id) {
   const s = agentSessions[id]
   if (!s) return
-  window.ace.pty.kill(id)
+  if (s.term) window.ace.pty.kill(id)
+  if (s.isStreaming) window.ace.chat.cancel(id)
   const topEl  = document.getElementById('panes-top')
   const botEl  = document.getElementById('panes-bottom')
   const wasTop = topEl.querySelector('#pane-' + id) !== null

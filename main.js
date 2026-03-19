@@ -134,6 +134,7 @@ app.on('activate', () => {
 
 app.on('before-quit', () => {
   try { require('./src/pty-manager').killAll() } catch {}
+  try { require('./src/chat-manager').cancelAll() } catch {}
 })
 
 // ─── PTY IPC Handlers ────────────────────────────────────────────────────────
@@ -145,6 +146,15 @@ ipcMain.handle('pty-create', (_, id, cwd, cols, rows) => {
 ipcMain.on('pty-write',  (_, id, data)       => require('./src/pty-manager').write(id, data))
 ipcMain.on('pty-resize', (_, id, cols, rows) => require('./src/pty-manager').resize(id, cols, rows))
 ipcMain.on('pty-kill',   (_, id)             => require('./src/pty-manager').kill(id))
+
+// ─── Chat IPC Handlers (stream-json mode) ────────────────────────────────────
+
+ipcMain.handle(ch.CHAT_SEND, (_, chatId, prompt, claudeSessionId, opts) => {
+  return require('./src/chat-manager').send(mainWindow, chatId, prompt,
+    global.VAULT_PATH, global.CLAUDE_BIN, claudeSessionId, opts)
+})
+ipcMain.on(ch.CHAT_RESPOND, (_, chatId, text) => require('./src/chat-manager').respond(chatId, text))
+ipcMain.on(ch.CHAT_CANCEL, (_, chatId) => require('./src/chat-manager').cancel(chatId))
 
 // ─── Setup IPC Handlers ───────────────────────────────────────────────────────
 

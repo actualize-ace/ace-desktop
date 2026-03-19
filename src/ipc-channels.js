@@ -42,4 +42,12 @@ module.exports = {
   GET_SYNTHESIS_AI:       'get-synthesis-ai',
   SAVE_LAYOUT:            'save-layout',
   GET_LAYOUT:             'get-layout',
+
+  // Chat (stream-json mode)
+  CHAT_SEND:              'chat-send',
+  CHAT_RESPOND:           'chat-respond',
+  CHAT_CANCEL:            'chat-cancel',
+  CHAT_STREAM:            'chat-stream',
+  CHAT_ERROR:             'chat-error',
+  CHAT_EXIT:              'chat-exit',
 }

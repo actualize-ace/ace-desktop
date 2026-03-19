@@ -45,6 +45,28 @@ contextBridge.exposeInMainWorld('ace', {
     saveLayout:           (layout)  => ipcRenderer.invoke(ch.SAVE_LAYOUT, layout),
   },
 
+  // ─── Chat (stream-json mode) ─────────────────────────────────────────────────
+  chat: {
+    send:   (id, prompt, sessionId, opts) => ipcRenderer.invoke(ch.CHAT_SEND, id, prompt, sessionId, opts),
+    respond:(id, text) => ipcRenderer.send(ch.CHAT_RESPOND, id, text),
+    cancel: (id) => ipcRenderer.send(ch.CHAT_CANCEL, id),
+    onStream: (id, cb) => {
+      const channel = `${ch.CHAT_STREAM}:${id}`
+      ipcRenderer.on(channel, (_, event) => cb(event))
+      return () => ipcRenderer.removeAllListeners(channel)
+    },
+    onError: (id, cb) => {
+      const channel = `${ch.CHAT_ERROR}:${id}`
+      ipcRenderer.on(channel, (_, msg) => cb(msg))
+      return () => ipcRenderer.removeAllListeners(channel)
+    },
+    onExit: (id, cb) => {
+      const channel = `${ch.CHAT_EXIT}:${id}`
+      ipcRenderer.on(channel, (_, code) => cb(code))
+      return () => ipcRenderer.removeAllListeners(channel)
+    },
+  },
+
   // ─── Vault ───────────────────────────────────────────────────────────────────
   vault: {
     listDir:  (dirPath)  => ipcRenderer.invoke(ch.VAULT_LIST_DIR, dirPath),
