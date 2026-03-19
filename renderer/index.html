@@ -60,6 +60,10 @@
     body.light .term-xterm   { background: #f0ebe3; }
     body.light .agents-roster { background: rgba(232,224,214,0.97); }
     body.light .apane-tab    { background: rgba(225,217,207,0.95); }
+    body.light .term-xterm .xterm-viewport::-webkit-scrollbar-thumb { background: rgba(120,90,50,0.15); }
+    body.light .term-xterm .xterm-viewport::-webkit-scrollbar-thumb:hover { background: rgba(120,90,50,0.3); }
+    body.light .scroll-to-bottom { background: rgba(120,90,50,0.1); border-color: rgba(120,90,50,0.2); color: var(--gold); }
+    body.light .scroll-to-bottom:hover { background: rgba(120,90,50,0.18); }
 
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
@@ -384,6 +388,27 @@
     .term-xterm { flex: 1; overflow: hidden; padding: 10px; background: #020201; }
     .xterm { height: 100% !important; }
     .xterm .xterm-viewport { overflow-y: auto !important; }
+    .term-xterm .xterm-viewport::-webkit-scrollbar { width: 8px; }
+    .term-xterm .xterm-viewport::-webkit-scrollbar-track { background: transparent; }
+    .term-xterm .xterm-viewport::-webkit-scrollbar-thumb {
+      background: rgba(212,165,116,0.15); border-radius: 4px;
+      border: 2px solid transparent; background-clip: padding-box;
+    }
+    .term-xterm .xterm-viewport::-webkit-scrollbar-thumb:hover {
+      background: rgba(212,165,116,0.3);
+    }
+
+    /* Scroll to bottom button */
+    .scroll-to-bottom {
+      position: absolute; bottom: 16px; right: 20px; z-index: 10;
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(212,165,116,0.15); border: 1px solid rgba(212,165,116,0.25);
+      color: var(--gold); cursor: pointer;
+      display: none; align-items: center; justify-content: center;
+      font-size: 14px; transition: all 0.15s; backdrop-filter: blur(4px);
+    }
+    .scroll-to-bottom.visible { display: flex; }
+    .scroll-to-bottom:hover { background: rgba(212,165,116,0.25); }
 
     /* Triad status bar */
     .triad-bar { height: 32px; display: flex; align-items: center; padding: 0 18px; gap: 24px; background: rgba(5,4,3,0.98); border-top: 1px solid var(--border); flex-shrink: 0; }
@@ -1012,7 +1037,8 @@ function spawnSession() {
       <div class="term-hdr-label">ACE Session</div>
       <div class="term-hdr-path" id="hdr-path-${id}">Starting…</div>
     </div>
-    <div class="term-xterm" id="xterm-${id}"></div>`
+    <div class="term-xterm" id="xterm-${id}"></div>
+    <button class="scroll-to-bottom" id="scroll-btn-${id}" title="Scroll to bottom">↓</button>`
   document.getElementById('term-panes').appendChild(pane)
 
   const tab = document.createElement('div')
@@ -1024,6 +1050,9 @@ function spawnSession() {
   sessions[id] = { term, fitAddon, pane, tab }
   activateSession(id)
 
+  const scrollBtn = document.getElementById('scroll-btn-' + id)
+  let userScrolledUp = false
+
   requestAnimationFrame(() => {
     term.open(document.getElementById('xterm-' + id))
     fitAddon.fit()
@@ -1034,9 +1063,36 @@ function spawnSession() {
       e.stopPropagation()
       closeSession(id)
     })
+
+    // Track scroll position
+    term.onScroll(() => {
+      userScrolledUp = term.buffer.active.viewportY < term.buffer.active.baseY
+      scrollBtn.classList.toggle('visible', userScrolledUp)
+    })
+
+    // Handle alternate buffer transitions (prevents edit-jump)
+    term.buffer.onBufferChange(() => {
+      requestAnimationFrame(() => {
+        term.scrollToBottom()
+        userScrolledUp = false
+        scrollBtn.classList.toggle('visible', false)
+      })
+    })
   })
 
-  window.ace.pty.onData(id, data => term.write(data))
+  // Click to scroll to bottom
+  scrollBtn.addEventListener('click', () => {
+    term.scrollToBottom()
+    userScrolledUp = false
+    scrollBtn.classList.toggle('visible', false)
+  })
+
+  window.ace.pty.onData(id, data => {
+    const wasAtBottom = !userScrolledUp
+    term.write(data, () => {
+      if (wasAtBottom) term.scrollToBottom()
+    })
+  })
   window.ace.pty.onSessionExit(id, () => {
     tab.style.opacity = '0.4'
     document.getElementById('hdr-path-' + id).textContent = 'Session ended'
@@ -1070,6 +1126,22 @@ function sendToActive(t)  { if (activeId) window.ace.pty.write(activeId, t) }
 document.getElementById('new-session-btn').addEventListener('click', spawnSession)
 const ro = new ResizeObserver(() => fitActive())
 ro.observe(document.getElementById('term-panes'))
+
+// ─── Window Focus / Visibility ────────────────────────────────────────────────
+function onWindowRegainFocus() {
+  if (activeId && sessions[activeId]) {
+    sessions[activeId].fitAddon.fit()
+    sessions[activeId].term.scrollToBottom()
+  }
+  if (focusedAgentId && typeof agentSessions !== 'undefined' && agentSessions[focusedAgentId]) {
+    agentSessions[focusedAgentId].fitAddon?.fit()
+    agentSessions[focusedAgentId].term?.scrollToBottom()
+  }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') setTimeout(onWindowRegainFocus, 50)
+})
+window.addEventListener('focus', () => setTimeout(onWindowRegainFocus, 50))
 
 // ─── Agent Sessions ───────────────────────────────────────────────────────────
 const agentSessions = {}
@@ -1155,7 +1227,8 @@ function spawnAgentPane(targetRow) {
       <span class="ap-time-label" id="ap-time-${id}">0:00</span>
       <span class="ap-close-btn" id="ap-close-${id}">×</span>
     </div>
-    <div class="term-xterm" id="xterm-${id}"></div>`
+    <div class="term-xterm" id="xterm-${id}"></div>
+    <button class="scroll-to-bottom" id="scroll-btn-${id}" title="Scroll to bottom">↓</button>`
 
   if (!isTop && botEl.querySelector('.apane')) {
     const vRes = document.createElement('div')
@@ -1178,6 +1251,9 @@ function spawnAgentPane(targetRow) {
   agentSessions[id] = { term, fitAddon, pane, rosterItem: arItem, role: roleName,
     spawnTime: Date.now(), lineCount: 0, status: 'waiting' }
 
+  const agentScrollBtn = document.getElementById('scroll-btn-' + id)
+  let agentUserScrolledUp = false
+
   requestAnimationFrame(() => {
     term.open(document.getElementById('xterm-' + id))
     fitAddon.fit()
@@ -1187,11 +1263,33 @@ function spawnAgentPane(targetRow) {
       document.getElementById('ap-task-' + id).textContent = 'ready'
       updateAgentDots(id)
     })
+
+    term.onScroll(() => {
+      agentUserScrolledUp = term.buffer.active.viewportY < term.buffer.active.baseY
+      agentScrollBtn.classList.toggle('visible', agentUserScrolledUp)
+    })
+
+    term.buffer.onBufferChange(() => {
+      requestAnimationFrame(() => {
+        term.scrollToBottom()
+        agentUserScrolledUp = false
+        agentScrollBtn.classList.toggle('visible', false)
+      })
+    })
+  })
+
+  agentScrollBtn.addEventListener('click', () => {
+    term.scrollToBottom()
+    agentUserScrolledUp = false
+    agentScrollBtn.classList.toggle('visible', false)
   })
 
   window.ace.pty.onData(id, data => {
     if (!agentSessions[id]) return
-    term.write(data)
+    const wasAtBottom = !agentUserScrolledUp
+    term.write(data, () => {
+      if (wasAtBottom) term.scrollToBottom()
+    })
     const newlines = (data.match(/\n/g) || []).length
     if (newlines > 0) {
       agentSessions[id].lineCount += newlines
