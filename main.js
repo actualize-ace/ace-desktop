@@ -153,7 +153,6 @@ ipcMain.handle(ch.CHAT_SEND, (_, chatId, prompt, claudeSessionId, opts) => {
   return require('./src/chat-manager').send(mainWindow, chatId, prompt,
     global.VAULT_PATH, global.CLAUDE_BIN, claudeSessionId, opts)
 })
-ipcMain.on(ch.CHAT_RESPOND, (_, chatId, text) => require('./src/chat-manager').respond(chatId, text))
 ipcMain.on(ch.CHAT_CANCEL, (_, chatId) => require('./src/chat-manager').cancel(chatId))
 
 // ─── Setup IPC Handlers ───────────────────────────────────────────────────────
