@@ -65,7 +65,8 @@ async function loadDashboard() {
     if (container && !enabledIds.includes(w.id)) container.innerHTML = ''
   }
 
-  for (const id of enabledIds) {
+  for (let _wi = 0; _wi < enabledIds.length; _wi++) {
+    const id = enabledIds[_wi]
     const widget = WIDGETS.find(w => w.id === id)
     const container = document.getElementById(`widget-${id}`)
     if (!widget || !container) continue
@@ -76,6 +77,8 @@ async function loadDashboard() {
 
     try {
       widget.render(widgetData, container)
+      // Staggered entrance animation
+      container.style.animation = `widgetReveal 0.35s ease ${_wi * 0.06}s both`
     } catch (e) {
       console.error(`[dashboard] widget ${id} render error:`, e)
     }
