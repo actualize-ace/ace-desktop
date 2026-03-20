@@ -1690,8 +1690,10 @@ function renderChatStream(id, sessionsObj) {
   const s = sessionsObj[id]
   if (!s || !s._currentAssistantEl) return
   const contentEl = s._currentAssistantEl.querySelector('.chat-msg-content')
-  const settledEl = contentEl.querySelector('.chat-settled')
-  const tailEl = contentEl.querySelector('.chat-tail')
+  const settledEls = contentEl.querySelectorAll('.chat-settled')
+  const tailEls = contentEl.querySelectorAll('.chat-tail')
+  const settledEl = settledEls[settledEls.length - 1]
+  const tailEl = tailEls[tailEls.length - 1]
 
   const boundary = findSettledBoundary(s.currentStreamText)
   if (boundary > s._settledBoundary) {
@@ -2056,8 +2058,37 @@ function wireChatListeners(id, sessionsObj) {
           appendToolBlock(id, e.content_block, sessionsObj)
         } else if (e.content_block?.type === 'text') {
           // Text block starts — end any tool group and clear activity
-          s._toolGroup = null
           clearActivityIndicator(id, sessionsObj)
+          // If there were tool blocks before this text, create new settled/tail
+          // so text renders AFTER the tool blocks in the DOM
+          if (s._toolGroup || s._hadToolBlocks) {
+            s._toolGroup = null
+            // Finalize current settled text
+            if (s.currentStreamText && s._currentAssistantEl) {
+              const contentEl = s._currentAssistantEl.querySelector('.chat-msg-content')
+              const settledEl = contentEl?.querySelector('.chat-settled:last-of-type')
+              const tailEl = contentEl?.querySelector('.chat-tail:last-of-type')
+              if (settledEl && s.currentStreamText) {
+                const withWikilinks = processWikilinks(s.currentStreamText)
+                const raw = marked.parse(withWikilinks)
+                const safe = DOMPurify.sanitize(raw, SANITIZE_CONFIG)
+                settledEl.innerHTML = safe
+                postProcessCodeBlocks(settledEl)
+              }
+              if (tailEl) tailEl.innerHTML = ''
+              // Create new settled/tail pair after the tool blocks
+              const newSettled = document.createElement('div')
+              newSettled.className = 'chat-settled'
+              const newTail = document.createElement('div')
+              newTail.className = 'chat-tail'
+              contentEl.appendChild(newSettled)
+              contentEl.appendChild(newTail)
+            }
+            s.currentStreamText = ''
+            s._settledBoundary = 0
+            s._settledHTML = ''
+            s._hadToolBlocks = false
+          }
         }
       }
       if (e.type === 'content_block_delta') {
@@ -2071,6 +2102,7 @@ function wireChatListeners(id, sessionsObj) {
       }
       if (e.type === 'content_block_stop') {
         if (s._currentToolBlock) {
+          s._hadToolBlocks = true
           s._currentToolBlock = null
           s._questionBlockEl = null
           s.currentToolInput = ''
