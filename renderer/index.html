@@ -1880,12 +1880,10 @@ function appendToolBlock(id, toolInfo, sessionsObj) {
   if (!s || !s._currentAssistantEl) return
   const contentEl = s._currentAssistantEl.querySelector('.chat-msg-content')
   const toolName = toolInfo.name || 'Tool'
-  const needsApproval = APPROVAL_TOOLS.has(toolName)
   const needsInput = QUESTION_TOOLS.has(toolName)
-  const isInteractive = needsApproval || needsInput
 
-  // Only consolidate read-only tools, not interactive tools
-  if (!isInteractive && s._toolGroup && s._toolGroup.name === toolName && s._toolGroup.block) {
+  // Consolidate consecutive same-type tools (all tools auto-approved via --allowedTools)
+  if (!needsInput && s._toolGroup && s._toolGroup.name === toolName && s._toolGroup.block) {
     s._toolGroup.count++
     s._toolGroup.items.push({ input: '' })
     const header = s._toolGroup.block.querySelector('.chat-tool-name')
@@ -1898,55 +1896,22 @@ function appendToolBlock(id, toolInfo, sessionsObj) {
 
   // New tool block
   const block = document.createElement('div')
-  const isCollapsed = !needsApproval
-  block.className = 'chat-tool-block' + (isCollapsed ? ' collapsed' : '')
+  block.className = 'chat-tool-block collapsed'
 
   if (needsInput) {
-    // Question tool — show as a prominent question card, user replies via normal chat input
     block.className = 'chat-question-block'
     block.innerHTML = `<div class="question-header" id="question-text-${id}"></div>`
     s._questionBlockEl = block
-  } else if (needsApproval) {
-    // Approval-style block — expanded with approve/deny buttons
-    block.innerHTML = `
-      <div class="chat-tool-header">
-        <span class="chat-tool-icon">⚡</span>
-        <span class="chat-tool-name">${escapeHtml(toolName)}</span>
-        <span class="chat-tool-status">Waiting for approval</span>
-        <span class="chat-tool-chevron">▸</span>
-      </div>
-      <div class="chat-tool-detail"></div>
-      <div class="chat-tool-actions">
-        <button class="chat-approve-btn" data-chat-id="${id}">Allow</button>
-        <button class="chat-deny-btn" data-chat-id="${id}">Deny</button>
-      </div>`
-    block.querySelector('.chat-approve-btn').addEventListener('click', () => {
-      window.ace.chat.respond(id, 'y')
-      block.querySelector('.chat-tool-actions').remove()
-      const status = block.querySelector('.chat-tool-status')
-      if (status) { status.textContent = 'Allowed'; status.classList.add('approved') }
-      block.classList.add('collapsed')
-    })
-    block.querySelector('.chat-deny-btn').addEventListener('click', () => {
-      window.ace.chat.respond(id, 'n')
-      block.querySelector('.chat-tool-actions').remove()
-      const status = block.querySelector('.chat-tool-status')
-      if (status) { status.textContent = 'Denied'; status.classList.add('denied') }
-      block.classList.add('collapsed')
-    })
   } else {
     block.innerHTML = `<div class="chat-tool-header"><span class="chat-tool-icon">⚡</span><span class="chat-tool-name">${escapeHtml(toolName)}</span><span class="chat-tool-chevron">▸</span></div><div class="chat-tool-detail"></div>`
   }
 
-  block.querySelector('.chat-tool-header').addEventListener('click', () => block.classList.toggle('collapsed'))
-  const tailEl = contentEl.querySelector('.chat-tail')
+  const hdr = block.querySelector('.chat-tool-header')
+  if (hdr) hdr.addEventListener('click', () => block.classList.toggle('collapsed'))
+  const tailEl = contentEl.querySelector('.chat-tail:last-of-type')
   contentEl.insertBefore(block, tailEl)
 
-  if (!needsApproval) {
-    s._toolGroup = { name: toolName, block, count: 1, items: [{ input: '' }] }
-  } else {
-    s._toolGroup = null // Don't group approval tools
-  }
+  s._toolGroup = needsInput ? null : { name: toolName, block, count: 1, items: [{ input: '' }] }
   s._currentToolBlock = block
   s.currentToolInput = ''
 
@@ -2007,28 +1972,6 @@ function appendToolInput(id, partialJson, sessionsObj) {
       if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight
     } catch {}
     return
-  } else {
-    // Approval tool — show full input as formatted JSON/diff
-    try {
-      const parsed = JSON.parse(s.currentToolInput)
-      if (parsed.old_string != null && parsed.new_string != null) {
-        // Edit tool — show diff-like view
-        const file = parsed.file_path ? `<div class="tool-item" style="font-weight:500">${escapeHtml(parsed.file_path.split('/').slice(-3).join('/'))}</div>` : ''
-        detailEl.innerHTML = `${file}<pre class="tool-diff"><span class="diff-remove">${escapeHtml(parsed.old_string)}</span><span class="diff-add">${escapeHtml(parsed.new_string)}</span></pre>`
-      } else if (parsed.command) {
-        // Bash tool — show command
-        detailEl.innerHTML = `<pre>${escapeHtml(parsed.command)}</pre>`
-      } else if (parsed.content != null) {
-        // Write tool
-        const file = parsed.file_path ? `<div class="tool-item" style="font-weight:500">${escapeHtml(parsed.file_path.split('/').slice(-3).join('/'))}</div>` : ''
-        const preview = parsed.content.length > 500 ? parsed.content.slice(0, 500) + '...' : parsed.content
-        detailEl.innerHTML = `${file}<pre>${escapeHtml(preview)}</pre>`
-      } else {
-        detailEl.innerHTML = `<pre>${escapeHtml(JSON.stringify(parsed, null, 2))}</pre>`
-      }
-    } catch {
-      detailEl.innerHTML = `<pre>${escapeHtml(s.currentToolInput)}</pre>`
-    }
   }
 }
 

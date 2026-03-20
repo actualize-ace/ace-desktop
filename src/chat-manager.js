@@ -22,11 +22,20 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
     args.push('--model', opts.model)
   }
 
-  // Permission mode
+  // Permission mode — -p mode can't do interactive approvals, so:
+  // "Normal" = pre-approve all standard tools (Bash, Edit, Write, Read, etc.)
+  // "Plan" = read-only permission mode
+  // "Auto" = skip all permissions entirely
   if (opts.permissions === 'auto') {
     args.push('--dangerously-skip-permissions')
   } else if (opts.permissions === 'plan') {
     args.push('--permission-mode', 'plan')
+  } else {
+    // Normal mode — pre-approve standard tools since we can't prompt interactively
+    args.push('--allowedTools',
+      'Bash', 'Edit', 'Write', 'Read', 'Glob', 'Grep',
+      'WebFetch', 'WebSearch', 'NotebookEdit',
+      'TodoWrite', 'Agent')
   }
 
   // Reasoning effort
