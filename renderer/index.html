@@ -28,6 +28,7 @@
       --capacity:  #60d8a8;
       --expansion: #e080a0;
       --sidebar-w: 216px;
+      --ui-zoom: 1;
       /* Neo-Glassmorphic tokens */
       --glow-primary: rgba(140,120,255,0.15);
       --glow-accent:  rgba(200,160,240,0.2);
@@ -103,7 +104,7 @@
     }
 
     /* ── APP SHELL ── */
-    .app-shell { display:flex; flex-direction:column; height:100vh; }
+    .app-shell { display:flex; flex-direction:column; height:100vh; zoom: var(--ui-zoom); }
 
     /* Titlebar */
     .titlebar {
@@ -157,6 +158,11 @@
       transition: all 0.12s; -webkit-app-region: no-drag;
     }
     .theme-btn:hover { border-color: var(--border-hover); color: var(--text-secondary); }
+    .theme-btn:active { transform: scale(0.9); }
+    .zoom-label {
+      font-family: 'JetBrains Mono', monospace; font-size: 8px;
+      color: var(--text-dim); min-width: 28px; text-align: center;
+    }
 
     /* ── APP BODY ── */
     .app-body { flex: 1; display: flex; overflow: hidden; }
@@ -167,7 +173,35 @@
       background: rgba(10,12,22,0.88); backdrop-filter: var(--glass-blur);
       border-right: 1px solid var(--glass-border);
       display: flex; flex-direction: column; overflow: hidden; position:relative;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
+    .sidebar.collapsed { width: 52px; overflow: hidden; }
+    .sidebar.collapsed .sidebar-logo > div:not(.sidebar-orb),
+    .sidebar.collapsed .nav-section,
+    .sidebar.collapsed .sidebar-div,
+    .sidebar.collapsed .sidebar-bottom { display: none; }
+    .sidebar.collapsed .sidebar-logo { justify-content: center; padding: 12px 0; }
+    .sidebar.collapsed .nav-item {
+      justify-content: center; padding: 10px 0; font-size: 0; gap: 0;
+    }
+    .sidebar.collapsed .nav-icon { font-size: initial; margin: 0; width: 18px; height: 16px; }
+    .sidebar.collapsed .nav-item.active::before { height: 24px; }
+    .sidebar.collapsed .cmd-section { display: flex; flex-direction: column; align-items: center; padding: 0 4px; }
+    .sidebar.collapsed .cmd-btn {
+      justify-content: center; padding: 8px 0; font-size: 0; gap: 0;
+      width: 100%; border-radius: 4px;
+    }
+    .sidebar.collapsed .cmd-dot { margin: 0; width: 7px; height: 7px; }
+    .sidebar-toggle {
+      width: 100%; padding: 10px 0; margin-top: auto;
+      background: none; border: none; border-top: 1px solid var(--glass-border);
+      color: var(--text-dim); cursor: pointer; display: flex;
+      align-items: center; justify-content: center; gap: 6px;
+      font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 1px;
+      transition: color 0.14s, background 0.14s;
+    }
+    .sidebar-toggle:hover { color: var(--text-primary); background: rgba(136,120,255,0.06); }
+    .sidebar.collapsed .sidebar-toggle span { display: none; }
     .sidebar-logo {
       display: flex; align-items: center; gap: 9px;
       padding: 16px; border-bottom: 1px solid var(--border);
@@ -1157,6 +1191,9 @@
   <div class="titlebar">
     <div class="titlebar-center">Actualize Coherence Engine</div>
     <div class="titlebar-right">
+      <button class="theme-btn" id="zoom-out-btn" title="Zoom out">−</button>
+      <span class="zoom-label" id="zoom-label">100%</span>
+      <button class="theme-btn" id="zoom-in-btn" title="Zoom in">+</button>
       <button class="theme-btn" id="theme-btn" title="Toggle theme">◑</button>
       <div class="mode-chip" id="mode-chip">—</div>
       <div class="coherence-chip">
@@ -1168,7 +1205,7 @@
 
   <div class="app-body">
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
       <div class="sidebar-logo">
         <div class="sidebar-orb"></div>
         <div>
@@ -1213,6 +1250,7 @@
       <div class="sidebar-bottom">
         <div class="sidebar-status"><div class="status-pulse"></div>ACE Online</div>
       </div>
+      <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle sidebar">◂ <span>Collapse</span></button>
     </div>
 
     <!-- Main content -->
@@ -1438,6 +1476,28 @@ function applyTheme(t) {
 }
 applyTheme(theme)
 document.getElementById('theme-btn').addEventListener('click', () => applyTheme(theme === 'dark' ? 'light' : 'dark'))
+
+// ─── Zoom ─────────────────────────────────────────────────────────────────────
+let uiZoom = parseFloat(localStorage.getItem('ace-zoom') || '1')
+function applyZoom(z) {
+  uiZoom = Math.max(0.75, Math.min(1.5, z))
+  document.documentElement.style.setProperty('--ui-zoom', uiZoom)
+  document.getElementById('zoom-label').textContent = Math.round(uiZoom * 100) + '%'
+  localStorage.setItem('ace-zoom', uiZoom)
+  setTimeout(() => fitActive(), 100)
+}
+applyZoom(uiZoom)
+document.getElementById('zoom-in-btn').addEventListener('click', () => applyZoom(uiZoom + 0.05))
+document.getElementById('zoom-out-btn').addEventListener('click', () => applyZoom(uiZoom - 0.05))
+
+// ─── Sidebar Toggle ──────────────────────────────────────────────────────────
+document.getElementById('sidebar-toggle').addEventListener('click', () => {
+  const sidebar = document.getElementById('sidebar')
+  const btn = document.getElementById('sidebar-toggle')
+  const isCollapsed = sidebar.classList.toggle('collapsed')
+  btn.innerHTML = isCollapsed ? '▸' : '◂ <span>Collapse</span>'
+  setTimeout(() => fitActive(), 250)
+})
 
 // ─── Time ────────────────────────────────────────────────────────────────────
 function updateTime() {
@@ -3143,12 +3203,14 @@ async function renderGraph() {
 
   // Color fn
   const GROUP_COLORS = {
-    '00-System':  '#74a4c4',
-    '01-Journal': '#d4a574',
-    '04-Network': '#6db88f',
-    'Domains':    '#9b74c4',
+    '00-System':  '#70b0e0',
+    '01-Journal': '#c8a0f0',
+    '02-Rituals': '#e0c878',
+    '04-Network': '#60d8a8',
+    '05-Research':'#e080a0',
+    'Domains':    '#8878ff',
   }
-  const nodeColor = d => GROUP_COLORS[d.group] || '#5a5248'
+  const nodeColor = d => GROUP_COLORS[d.group] || '#606080'
 
   // Degree map for radius scaling
   const degree = {}
@@ -3183,7 +3245,7 @@ async function renderGraph() {
   const link = container.append('g').attr('class', 'links')
     .selectAll('line')
     .data(edges).join('line')
-    .attr('stroke', 'rgba(212,165,116,0.12)')
+    .attr('stroke', 'rgba(136,120,255,0.12)')
     .attr('stroke-width', 1)
 
   // Draw nodes
@@ -3233,7 +3295,7 @@ async function renderGraph() {
       .attr('stroke', e => {
         const src = e.source.id || e.source
         const tgt = e.target.id || e.target
-        return (src === d.id || tgt === d.id) ? '#d4a574' : 'rgba(212,165,116,0.04)'
+        return (src === d.id || tgt === d.id) ? '#8878ff' : 'rgba(136,120,255,0.04)'
       })
       .attr('stroke-width', e => {
         const src = e.source.id || e.source
@@ -3245,7 +3307,7 @@ async function renderGraph() {
   node.on('mouseleave', () => {
     node.selectAll('circle').attr('fill-opacity', n => (degree[n.id] || 0) === 0 ? 0.4 : 0.85)
     node.selectAll('text').style('opacity', 0)
-    link.attr('stroke', 'rgba(212,165,116,0.12)').attr('stroke-width', 1)
+    link.attr('stroke', 'rgba(136,120,255,0.12)').attr('stroke-width', 1)
   })
 
   // Click → open in Vault view
@@ -3275,7 +3337,7 @@ async function renderGraph() {
   svg.on('click', () => {
     node.selectAll('circle').attr('fill-opacity', 0.85)
     node.selectAll('text').style('opacity', 0)
-    link.attr('stroke', 'rgba(212,165,116,0.12)').attr('stroke-width', 1)
+    link.attr('stroke', 'rgba(136,120,255,0.12)').attr('stroke-width', 1)
   })
 
   // Force simulation
