@@ -53,22 +53,25 @@ export default {
         labels: series.map(s => s.label),
         datasets: [{
           data: series.map(s => s.value),
-          borderColor: 'rgba(212,165,116,0.9)',
+          borderColor: 'rgba(100,160,255,0.95)',
           borderWidth: 2,
           fill: true,
           backgroundColor: function(context) {
             const chart = context.chart
             const { ctx: c, chartArea } = chart
-            if (!chartArea) return 'rgba(212,165,116,0.15)'
+            if (!chartArea) return 'rgba(100,160,255,0.15)'
             const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom)
-            gradient.addColorStop(0, 'rgba(212,165,116,0.35)')
-            gradient.addColorStop(1, 'rgba(212,165,116,0.01)')
+            gradient.addColorStop(0, 'rgba(100,160,255,0.4)')
+            gradient.addColorStop(0.5, 'rgba(136,120,255,0.15)')
+            gradient.addColorStop(1, 'rgba(136,120,255,0.01)')
             return gradient
           },
           tension: 0.45,
           pointRadius: 0,
-          pointHoverRadius: 4,
-          pointHoverBackgroundColor: '#d4a574',
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: '#88c0ff',
+          pointHoverBorderColor: 'rgba(100,160,255,0.6)',
+          pointHoverBorderWidth: 3,
         }]
       },
       options: {
@@ -79,13 +82,13 @@ export default {
           legend: { display: false },
           tooltip: {
             backgroundColor: 'rgba(26,22,18,0.95)',
-            borderColor: 'rgba(212,165,116,0.25)',
+            borderColor: 'rgba(100,160,255,0.3)',
             borderWidth: 1,
             padding: { x: 12, y: 8 },
             titleFont: { family: "'JetBrains Mono', monospace", size: 9 },
             titleColor: 'rgba(138,125,111,0.8)',
             bodyFont: { family: "'Space Grotesk', sans-serif", size: 13, weight: '500' },
-            bodyColor: '#d4a574',
+            bodyColor: '#88c0ff',
             displayColors: false,
             callbacks: {
               title: items => {

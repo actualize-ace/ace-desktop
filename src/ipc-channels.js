@@ -34,6 +34,7 @@ module.exports = {
   // Config / setup
   GET_CONFIG:      'get-config',
   SAVE_CONFIG:     'save-config',
+  PATCH_CONFIG:    'patch-config',
   DETECT_BINARY:   'detect-binary',
   PICK_VAULT:      'pick-vault',
 
@@ -42,6 +43,10 @@ module.exports = {
   GET_SYNTHESIS_AI:       'get-synthesis-ai',
   SAVE_LAYOUT:            'save-layout',
   GET_LAYOUT:             'get-layout',
+
+  GET_RHYTHM:             'get-rhythm',
+  GET_PEOPLE:             'get-people',
+  GET_USAGE:              'get-usage',
 
   // Chat (stream-json mode)
   CHAT_SEND:              'chat-send',

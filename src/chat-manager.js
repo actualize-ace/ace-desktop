@@ -13,12 +13,11 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   opts = opts || {}
 
   const args = ['-p', prompt, '--output-format', 'stream-json',
-                '--verbose', '--include-partial-messages',
-                '--disallowedTools', 'AskUserQuestion']
+                '--verbose', '--include-partial-messages']
   if (claudeSessionId) args.push('--resume', claudeSessionId)
 
-  // Model selection
-  if (opts.model && opts.model !== 'sonnet') {
+  // Model selection — always pass explicitly (CLI default may differ)
+  if (opts.model) {
     args.push('--model', opts.model)
   }
 
@@ -35,17 +34,18 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
     args.push('--allowedTools',
       'Bash', 'Edit', 'Write', 'Read', 'Glob', 'Grep',
       'WebFetch', 'WebSearch', 'NotebookEdit',
-      'TodoWrite', 'Agent')
+      'TodoWrite', 'Agent', 'Skill', 'ToolSearch', 'SendMessage',
+      'EnterPlanMode', 'ExitPlanMode')
   }
 
-  // Reasoning effort
-  if (opts.effort && opts.effort !== 'high') {
-    args.push('--reasoning-effort', opts.effort)
+  // Reasoning effort — always pass explicitly
+  if (opts.effort) {
+    args.push('--effort', opts.effort)
   }
 
   const proc = spawn(claudeBin, args, {
     cwd,
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env, TERM: 'xterm-256color', COLORTERM: 'truecolor' },
   })
 
@@ -98,4 +98,11 @@ function cancelAll() {
   sessions.clear()
 }
 
-module.exports = { send, cancel, cancelAll }
+function respond(chatId, text) {
+  const s = sessions.get(chatId)
+  if (s?.proc?.stdin?.writable) {
+    s.proc.stdin.write(text + '\n')
+  }
+}
+
+module.exports = { send, cancel, cancelAll, respond }

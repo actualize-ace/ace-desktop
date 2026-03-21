@@ -117,19 +117,48 @@ async function getAISynthesis(context, voicePath, binaryPath) {
     voiceNote = m ? m[0].slice(0, 300) : ''
   } catch {}
 
-  const prompt = `You are the AI layer of the ACE system. Write a 2-3 sentence synthesis of this system state. Speak directly in second person, no preamble, no labels.${voiceNote ? ` Voice reference: ${voiceNote}` : ''}
+  const today = new Date()
+  const dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][today.getDay()]
+  const dateStr = today.toISOString().slice(0, 10)
 
-State: Mode=${context.mode} Energy=${context.energy} Coherence=${context.coherenceScore}/18 Signals=${context.signals.join(',')} Outcomes=${context.outcomes.map(o => `${o.title}[${o.status}]`).join('|')} Targets=${context.targets.done}/${context.targets.total} Pipeline=${context.pipeline.count}deals/$${context.pipeline.value} Velocity=${context.velocity.thisWeek}vs${context.velocity.lastWeek}lastWeek OverdueFU=${context.overdueFu} ExecutionGap=${context.daysSinceExecution}d
+  const prompt = `You are the AI layer of the ACE coherence system. Return ONLY valid JSON with two fields:
 
-Synthesis:`
+1. "synthesis": A 2-3 sentence system read. Speak directly in second person. No preamble, no labels. Be direct and specific about what matters most right now.
+2. "priorities": An array of up to 5 objects, each with "label" (short task name), "context" (brief tag like "3d overdue" or "gate in 5d"), and "reasoning" (one sentence why this matters now). Rank by true importance — what will create the most coherence if done first.
+
+${voiceNote ? `Voice reference: ${voiceNote}` : ''}
+
+System state:
+- Today: ${dayName} ${dateStr}
+- Mode: ${context.mode || 'unknown'}, Energy: ${context.energy || 'unknown'}
+- Coherence: ${context.coherenceScore}/18
+- Signals: ${context.signals?.join(',') || 'unknown'}
+- Outcomes: ${(context.outcomes || []).map(o => `${o.title}[${o.status}]${o.daysToGate != null ? ' gate:' + o.daysToGate + 'd' : ''}`).join(' | ') || 'none'}
+- Targets: ${context.targets?.done || 0}/${context.targets?.total || 0} complete
+- Pipeline: ${context.pipeline?.count || 0} deals / $${context.pipeline?.value || 0}
+- Velocity: ${context.velocity?.thisWeek || 0} this week vs ${context.velocity?.lastWeek || 0} last week
+- Overdue follow-ups: ${context.overdueFu || 0}
+- Execution gap: ${context.daysSinceExecution || 0}d
+
+Return JSON only. No markdown, no code fences.`
 
   return new Promise(resolve => {
-    const proc = execFile(binaryPath, ['--model', 'claude-haiku-4-5-20251001', '-p', prompt], {
-      timeout: 20000,
+    const proc = execFile(binaryPath, ['--model', 'sonnet', '-p', prompt], {
+      timeout: 30000,
       env: process.env,
     }, (err, stdout) => {
       if (err) { console.error('[synthesizer] claude call failed:', err.message); resolve(null); return }
-      resolve(stdout.trim() || null)
+      const text = (stdout || '').trim()
+      try {
+        resolve(JSON.parse(text))
+      } catch {
+        const jsonMatch = text.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          try { resolve(JSON.parse(jsonMatch[0])) } catch { resolve(text) }
+        } else {
+          resolve(text)
+        }
+      }
     })
     proc.on('error', () => resolve(null))
   })

@@ -28,6 +28,7 @@ async function loadDashboard() {
     getFollowUps: () => window.ace.dash.getFollowUps(),
     getMetrics:   () => window.ace.dash.getMetrics(),
     getVelocity:  () => window.ace.dash.getVelocity(),
+    getRhythm:    () => window.ace.dash.getRhythm(),
   }
 
   // Collect unique data sources needed by enabled widgets
@@ -57,6 +58,7 @@ async function loadDashboard() {
     pipeline:  data.getPipeline,
     followUps: data.getFollowUps,
     velocity:  data.getVelocity,
+    rhythm:    data.getRhythm,
   }
 
   // Clear all widget containers first, then render only enabled ones
@@ -94,6 +96,15 @@ async function loadDashboard() {
   for (const [leg, dots] of Object.entries(dotGroups)) {
     const el = document.getElementById(`dots-${leg}`)
     if (el) el.innerHTML = dots.map(c => `<div class="triad-dot ${c}"></div>`).join('')
+  }
+
+  // Dynamic greeting from user.md
+  const userName = allData.state?.userName
+  if (userName) {
+    const hour = new Date().getHours()
+    const greet = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
+    const nameEl = document.getElementById('home-name')
+    if (nameEl) nameEl.textContent = `Good ${greet}, ${userName}.`
   }
 }
 

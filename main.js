@@ -154,6 +154,7 @@ ipcMain.handle(ch.CHAT_SEND, (_, chatId, prompt, claudeSessionId, opts) => {
     global.VAULT_PATH, global.CLAUDE_BIN, claudeSessionId, opts)
 })
 ipcMain.on(ch.CHAT_CANCEL, (_, chatId) => require('./src/chat-manager').cancel(chatId))
+ipcMain.on(ch.CHAT_RESPOND, (_, chatId, text) => require('./src/chat-manager').respond(chatId, text))
 
 // ─── Setup IPC Handlers ───────────────────────────────────────────────────────
 
@@ -184,6 +185,20 @@ ipcMain.handle(ch.SAVE_CONFIG, (_, config) => {
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'))
 })
 
+ipcMain.handle(ch.PATCH_CONFIG, (_, partial) => {
+  const config = loadConfig() || {}
+  // Deep merge for nested objects like defaults
+  for (const key of Object.keys(partial)) {
+    if (typeof partial[key] === 'object' && !Array.isArray(partial[key]) && config[key]) {
+      Object.assign(config[key], partial[key])
+    } else {
+      config[key] = partial[key]
+    }
+  }
+  saveConfig(config)
+  return true
+})
+
 ipcMain.handle(ch.GET_CONFIG, () => loadConfig())
 
 // ─── Dashboard IPC Handlers ───────────────────────────────────────────────────
@@ -211,6 +226,21 @@ ipcMain.handle(ch.GET_METRICS, () => {
 ipcMain.handle(ch.GET_VELOCITY, () => {
   try { return require('./src/vault-reader').parseExecutionLog(global.VAULT_PATH, 14) }
   catch (e) { return { byDay: {}, totalThisWeek: 0, totalLastWeek: 0, error: e.message } }
+})
+
+ipcMain.handle(ch.GET_RHYTHM, () => {
+  try { return require('./src/vault-reader').parseRitualRhythm(global.VAULT_PATH) }
+  catch (e) { return { week: [], streaks: { start: 0, close: 0, eod: 0 }, error: e.message } }
+})
+
+ipcMain.handle(ch.GET_PEOPLE, () => {
+  try { return require('./src/vault-reader').parsePeople(global.VAULT_PATH) }
+  catch (e) { return { people: [], categories: [], error: e.message } }
+})
+
+ipcMain.handle(ch.GET_USAGE, () => {
+  try { return require('./src/usage-probe').probe() }
+  catch (e) { return { session: null, weekly: null, error: e.message } }
 })
 
 ipcMain.handle(ch.GET_SYNTHESIS_AI, async (_, context) => {

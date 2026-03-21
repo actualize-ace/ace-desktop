@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('ace', {
     detectBinary:  ()       => ipcRenderer.invoke(ch.DETECT_BINARY),
     pickVault:     ()       => ipcRenderer.invoke(ch.PICK_VAULT),
     saveConfig:    (config) => ipcRenderer.invoke(ch.SAVE_CONFIG, config),
+    patchConfig:   (partial) => ipcRenderer.invoke(ch.PATCH_CONFIG, partial),
     getConfig:     ()       => ipcRenderer.invoke(ch.GET_CONFIG),
   },
 
@@ -40,6 +41,9 @@ contextBridge.exposeInMainWorld('ace', {
     onPipelineUpdate: (cb) => ipcRenderer.on(ch.DASH_PIPELINE, cb),
 
     getVelocity:          ()        => ipcRenderer.invoke(ch.GET_VELOCITY),
+    getRhythm:            ()        => ipcRenderer.invoke(ch.GET_RHYTHM),
+    getUsage:             ()        => ipcRenderer.invoke(ch.GET_USAGE),
+    getPeople:            ()        => ipcRenderer.invoke(ch.GET_PEOPLE),
     getSynthesisAI:       (context) => ipcRenderer.invoke(ch.GET_SYNTHESIS_AI, context),
     getLayout:            ()        => ipcRenderer.invoke(ch.GET_LAYOUT),
     saveLayout:           (layout)  => ipcRenderer.invoke(ch.SAVE_LAYOUT, layout),
