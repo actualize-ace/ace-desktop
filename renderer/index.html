@@ -76,7 +76,10 @@
     body.light .term-xterm .xterm-viewport::-webkit-scrollbar-thumb:hover { background: rgba(90,72,192,0.25); }
     body.light .scroll-to-bottom { background: rgba(90,72,192,0.08); border-color: rgba(90,72,192,0.15); color: var(--gold); }
     body.light .scroll-to-bottom:hover { background: rgba(90,72,192,0.15); }
-    body.light .sidebar-orb { background: radial-gradient(circle at 38% 38%, #5a48c0, #7a68d0, #1a8a60); box-shadow: 0 0 12px rgba(90,72,192,0.3); }
+    body.light .sidebar-orb { filter: drop-shadow(0 0 6px rgba(90,72,192,0.25)) drop-shadow(0 0 14px rgba(26,138,96,0.12)); }
+    body.light .sidebar-orb.active { filter: drop-shadow(0 0 10px rgba(90,72,192,0.4)) drop-shadow(0 0 22px rgba(26,138,96,0.25)); }
+    body.light .orb-arc { stroke: rgba(0,0,0,0.2); }
+    body.light .orb-dot { fill: rgba(0,0,0,0.25); }
     body.light .chat-msg-user .chat-msg-content { background:linear-gradient(135deg, rgba(90,72,192,0.08), rgba(90,72,192,0.03)); border-color:rgba(90,72,192,0.12); }
     body.light .chat-input { background:rgba(240,238,246,0.8); border-color:rgba(90,72,192,0.12); }
     body.light .chat-input:focus { border-color:rgba(90,72,192,0.3); box-shadow:0 0 0 3px rgba(90,72,192,0.08); }
@@ -208,44 +211,59 @@
       padding: 16px; border-bottom: 1px solid var(--border);
     }
     .sidebar-orb {
-      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; position:relative;
-      background: radial-gradient(circle at 38% 38%, #8878ff, #c8a0f0, #60d8a8);
-      background-size: 200% 200%;
-      box-shadow: 0 0 20px rgba(136,120,255,0.4), 0 0 50px rgba(200,160,240,0.15), 0 0 80px rgba(96,216,168,0.08);
-      animation: orbShift 8s ease-in-out infinite, breathe 4s ease-in-out infinite;
-      transition: box-shadow 0.4s, transform 0.4s;
+      width: 34px; height: 28px; flex-shrink: 0; position: relative;
+      overflow: visible;
+      filter: drop-shadow(0 0 8px rgba(136,120,255,0.3))
+              drop-shadow(0 0 20px rgba(96,216,168,0.15));
+      animation: clubBreath 4s ease-in-out infinite;
+      transition: filter 0.4s ease;
     }
+    .sidebar-orb:hover {
+      filter: drop-shadow(0 0 14px rgba(136,120,255,0.6))
+              drop-shadow(0 0 30px rgba(96,216,168,0.35));
+      transform: scale(1.12);
+      cursor: pointer;
+    }
+    .sidebar-orb:hover .orb-arc { stroke: rgba(255,255,255,0.6); }
+    .sidebar-orb:hover .orb-dot { fill: rgba(255,255,255,0.8); r: 2; }
     .sidebar-orb.active {
-      box-shadow: 0 0 24px rgba(136,120,255,0.6), 0 0 60px rgba(200,160,240,0.3), 0 0 100px rgba(96,216,168,0.15);
-      animation: orbShift 4s ease-in-out infinite, breathe 1.8s ease-in-out infinite;
+      filter: drop-shadow(0 0 12px rgba(136,120,255,0.5))
+              drop-shadow(0 0 28px rgba(96,216,168,0.3));
+      animation: clubPulse 1.8s ease-in-out infinite;
     }
-    /* Spinning gradient ring */
-    .sidebar-orb::after {
-      content:''; position:absolute; inset:-3px; border-radius:50%;
-      background: conic-gradient(from 0deg, #8878ff, #60d8a8, #e080a0, #c8a0f0, #8878ff);
-      opacity:0; z-index:-1;
-      transition: opacity 0.4s;
-      -webkit-mask: radial-gradient(circle, transparent 68%, black 70%, black 100%);
-      mask: radial-gradient(circle, transparent 68%, black 70%, black 100%);
+    .orb-circle {
+      transition: cx 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  cy 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  r  0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  fill 0.8s ease,
+                  opacity 0.4s ease;
     }
-    .sidebar-orb.active::after {
-      opacity:1;
-      animation: orbRingSpin 2s linear infinite;
+    .orb-arc { transition: opacity 0.3s ease, stroke 0.2s ease; }
+    .orb-dot { transition: opacity 0.3s ease, fill 0.2s ease, r 0.2s ease; }
+    .sidebar-orb.active .orb-arc { opacity: 0; }
+    .sidebar-orb.active .orb-dot { opacity: 0; }
+    body.light #orb-tri-group .orb-arc:nth-child(1) { stroke: #4a38a0; }
+    body.light #orb-tri-group .orb-arc:nth-child(2) { stroke: #1a7858; }
+    body.light #orb-tri-group .orb-arc:nth-child(3) { stroke: #6a3898; }
+    @keyframes clubBreath {
+      0%, 100% {
+        filter: drop-shadow(0 0 8px rgba(136,120,255,0.3)) drop-shadow(0 0 20px rgba(96,216,168,0.15));
+        transform: scale(1);
+      }
+      50% {
+        filter: drop-shadow(0 0 14px rgba(136,120,255,0.5)) drop-shadow(0 0 28px rgba(96,216,168,0.3));
+        transform: scale(1.04);
+      }
     }
-    /* Expanding pulse rings */
-    .sidebar-orb::before {
-      content:''; position:absolute; inset:-2px; border-radius:50%;
-      border: 1px solid rgba(136,120,255,0.4);
-      opacity:0; z-index:-1;
-      transition: opacity 0.3s;
-    }
-    .sidebar-orb.active::before {
-      opacity:1;
-      animation: orbPulseRing 2s ease-out infinite;
-    }
-    @keyframes orbRingSpin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+    @keyframes clubPulse {
+      0%, 100% {
+        filter: drop-shadow(0 0 10px rgba(136,120,255,0.5)) drop-shadow(0 0 25px rgba(96,216,168,0.3));
+        transform: scale(1);
+      }
+      50% {
+        filter: drop-shadow(0 0 22px rgba(136,120,255,0.7)) drop-shadow(0 0 42px rgba(96,216,168,0.5));
+        transform: scale(1.06);
+      }
     }
     /* Active streaming — ambient UI effects */
     body.streaming .titlebar { border-bottom-color: rgba(136,120,255,0.2); }
@@ -271,11 +289,7 @@
       50% { background-position: 0% 100%; }
     }
 
-    @keyframes orbPulseRing {
-      0% { transform: scale(1); opacity: 0.6; border-color: rgba(136,120,255,0.5); }
-      70% { transform: scale(1.8); opacity: 0; border-color: rgba(96,216,168,0.3); }
-      100% { transform: scale(1.8); opacity: 0; }
-    }
+    /* orbPulseRing removed — replaced by clubPulse for SVG club logo */
     .sidebar-logo-text { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; }
     .sidebar-logo-sub  { font-family: 'JetBrains Mono', monospace; font-size: 6.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); margin-top: 1px; }
     .nav-section { font-family: 'JetBrains Mono', monospace; font-size: 7.5px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); padding: 12px 16px 5px; }
@@ -2073,7 +2087,69 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
       <div class="sidebar-logo">
-        <div class="sidebar-orb"></div>
+        <svg class="sidebar-orb" width="34" height="28" viewBox="5 3 90 78" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="orb-g-auth" cx="50%" cy="40%" r="55%">
+              <stop offset="0%" stop-color="#a090ff"/><stop offset="100%" stop-color="#7060e0"/>
+            </radialGradient>
+            <radialGradient id="orb-g-cap" cx="45%" cy="40%" r="55%">
+              <stop offset="0%" stop-color="#c8a0f0"/><stop offset="100%" stop-color="#9060c0"/>
+            </radialGradient>
+            <radialGradient id="orb-g-exp" cx="55%" cy="40%" r="55%">
+              <stop offset="0%" stop-color="#80e8b8"/><stop offset="100%" stop-color="#40a878"/>
+            </radialGradient>
+            <radialGradient id="orb-g-merged" cx="38%" cy="38%" r="60%">
+              <stop offset="0%" stop-color="#8878ff"/>
+              <stop offset="50%" stop-color="#c8a0f0"/>
+              <stop offset="100%" stop-color="#60d8a8"/>
+            </radialGradient>
+            <radialGradient id="orb-g-auth-light" cx="50%" cy="40%" r="55%">
+              <stop offset="0%" stop-color="#6858d0"/><stop offset="100%" stop-color="#4a38a0"/>
+            </radialGradient>
+            <radialGradient id="orb-g-cap-light" cx="45%" cy="40%" r="55%">
+              <stop offset="0%" stop-color="#8868c0"/><stop offset="100%" stop-color="#5a3890"/>
+            </radialGradient>
+            <radialGradient id="orb-g-exp-light" cx="55%" cy="40%" r="55%">
+              <stop offset="0%" stop-color="#30b880"/><stop offset="100%" stop-color="#1a8860"/>
+            </radialGradient>
+            <radialGradient id="orb-g-merged-light" cx="38%" cy="38%" r="60%">
+              <stop offset="0%" stop-color="#5a48c0"/>
+              <stop offset="50%" stop-color="#7a68d0"/>
+              <stop offset="100%" stop-color="#1a8a60"/>
+            </radialGradient>
+            <radialGradient id="orb-g-center" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="rgba(220,200,255,0.8)"/>
+              <stop offset="35%" stop-color="rgba(180,160,240,0.35)"/>
+              <stop offset="100%" stop-color="rgba(160,140,240,0)"/>
+            </radialGradient>
+          </defs>
+          <!-- Start merged as single orb -->
+          <circle id="orb-c-top" class="orb-circle" cx="50" cy="48" r="28" fill="url(#orb-g-merged)"/>
+          <circle id="orb-c-bl" class="orb-circle" cx="50" cy="48" r="28" fill="url(#orb-g-cap)" style="opacity:0"/>
+          <circle id="orb-c-br" class="orb-circle" cx="50" cy="48" r="28" fill="url(#orb-g-exp)" style="opacity:0"/>
+          <circle id="orb-center-glow" cx="50" cy="48" r="8" fill="url(#orb-g-center)" opacity="0"/>
+          <circle id="orb-center-core" cx="50" cy="48" r="3" fill="rgba(232,224,255,0.9)" opacity="0"/>
+          <g id="orb-trail2" opacity="0">
+            <path d="M 40,42.3 A 20,20 0 0,1 60,42.3" fill="none" stroke="#b0a0ff" stroke-width="0.8" stroke-linecap="round"/>
+            <path d="M 60,42.3 A 20,20 0 0,1 50,59.6" fill="none" stroke="#70f0c0" stroke-width="0.8" stroke-linecap="round"/>
+            <path d="M 50,59.6 A 20,20 0 0,1 40,42.3" fill="none" stroke="#d0b0f8" stroke-width="0.8" stroke-linecap="round"/>
+          </g>
+          <g id="orb-trail1" opacity="0">
+            <path d="M 40,42.3 A 20,20 0 0,1 60,42.3" fill="none" stroke="#b0a0ff" stroke-width="1.0" stroke-linecap="round"/>
+            <path d="M 60,42.3 A 20,20 0 0,1 50,59.6" fill="none" stroke="#70f0c0" stroke-width="1.0" stroke-linecap="round"/>
+            <path d="M 50,59.6 A 20,20 0 0,1 40,42.3" fill="none" stroke="#d0b0f8" stroke-width="1.0" stroke-linecap="round"/>
+          </g>
+          <g id="orb-tri-group">
+            <path class="orb-arc" d="M 40,42.3 A 20,20 0 0,1 60,42.3" fill="none" stroke="#b0a0ff" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="21" stroke-dashoffset="21"/>
+            <path class="orb-arc" d="M 60,42.3 A 20,20 0 0,1 50,59.6" fill="none" stroke="#70f0c0" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="21" stroke-dashoffset="21"/>
+            <path class="orb-arc" d="M 50,59.6 A 20,20 0 0,1 40,42.3" fill="none" stroke="#d0b0f8" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="21" stroke-dashoffset="21"/>
+            <circle class="orb-dot" cx="40" cy="42.3" r="1.5" fill="rgba(255,255,255,0.5)"/>
+            <circle class="orb-dot" cx="60" cy="42.3" r="1.5" fill="rgba(255,255,255,0.5)"/>
+            <circle class="orb-dot" cx="50" cy="59.6" r="1.5" fill="rgba(255,255,255,0.5)"/>
+          </g>
+          <circle id="orb-pulse1" cx="50" cy="48" r="15" fill="none" stroke="rgba(160,144,255,0.3)" stroke-width="0.6" opacity="0"/>
+          <circle id="orb-pulse2" cx="50" cy="48" r="15" fill="none" stroke="rgba(160,144,255,0.3)" stroke-width="0.6" opacity="0"/>
+        </svg>
         <div>
           <div class="sidebar-logo-text">ACE</div>
           <div class="sidebar-logo-sub">Coherence Engine</div>
@@ -3421,15 +3497,202 @@ function renderQuestionCard(id, data, containerEl, sessionsObj) {
   if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight
 }
 
-// Orb glow state — pulses when any session is streaming
+// ═══════════════════════════════════════════════════════════
+// Orb Engine Animation — Orb → Triangle → Spinning Engine
+// CSS handles glow (clubBreath/clubPulse). JS handles internal SVG only.
+// ═══════════════════════════════════════════════════════════
+const orbEngine = {
+  phase: 0, streaming: false, winding: false,
+  spin: { angle: 0, speed: 0, target: 0 },
+  tri: { opacity: 0, tOpacity: 0, scale: 0.3, tScale: 0.3,
+         dashOffset: 21, tDashOffset: 21, strokeW: 1.2, tStrokeW: 1.2, arcAlpha: 0.6, tArcAlpha: 0.6 },
+  center: { opacity: 0, tOpacity: 0, glowR: 4, tGlowR: 4 },
+  el: {}, lastT: 0, _running: false,
+
+  init() {
+    const q = s => document.querySelector(s), qa = s => document.querySelectorAll(s)
+    this.el = {
+      svg: q('.sidebar-orb'), triG: q('#orb-tri-group'),
+      cT: q('#orb-c-top'), cL: q('#orb-c-bl'), cR: q('#orb-c-br'),
+      arcs: qa('#orb-tri-group .orb-arc'),
+      cGlow: q('#orb-center-glow'), cCore: q('#orb-center-core'),
+      trail1: q('#orb-trail1'), trail2: q('#orb-trail2'),
+      pulse1: q('#orb-pulse1'), pulse2: q('#orb-pulse2'),
+    }
+  },
+
+  _startLoop() {
+    if (this._running) return
+    this._running = true
+    this.lastT = performance.now()
+    this._tick()
+  },
+
+  _stopLoop() { this._running = false },
+
+  _tick() {
+    if (!this._running) return
+    const now = performance.now()
+    const dt = Math.min((now - this.lastT) / 1000, 0.05)
+    this.lastT = now
+
+    const sL = this.spin.speed < this.spin.target ? 0.04 : 0.015
+    this.spin.speed = _oL(this.spin.speed, this.spin.target, sL, dt)
+    if (Math.abs(this.spin.speed) < 0.5 && this.spin.target === 0) this.spin.speed = 0
+    this.spin.angle = (this.spin.angle + this.spin.speed * dt) % 360
+
+    const cn = this.center
+    cn.opacity = _oD(cn.opacity, cn.tOpacity, 0.04, 0.015, dt)
+    cn.glowR = _oD(cn.glowR, cn.tGlowR, 0.035, 0.015, dt)
+
+    const t = this.tri
+    t.opacity = _oD(t.opacity, t.tOpacity, 0.045, 0.018, dt)
+    t.scale = _oD(t.scale, t.tScale, 0.04, 0.012, dt)
+    t.dashOffset = _oD(t.dashOffset, t.tDashOffset, 0.035, 0.022, dt)
+    t.strokeW = _oD(t.strokeW, t.tStrokeW, 0.03, 0.02, dt)
+    t.arcAlpha = _oD(t.arcAlpha, t.tArcAlpha, 0.03, 0.02, dt)
+
+    try { this._render(now) } catch(e) { console.error('orbEngine:', e) }
+
+    // Stop loop when fully at rest
+    if (!this.streaming && !this.winding && this.spin.speed === 0 && t.opacity < 0.01 && cn.opacity < 0.01) {
+      this._running = false
+      return
+    }
+    requestAnimationFrame(() => this._tick())
+  },
+
+  _render(now) {
+    const { el, spin, tri } = this
+    // Triangle group
+    el.triG.setAttribute('transform', `translate(50,48) rotate(${spin.angle}) scale(${tri.scale}) translate(-50,-48)`)
+    el.triG.style.opacity = tri.opacity
+    el.arcs.forEach(a => {
+      a.setAttribute('stroke-dashoffset', tri.dashOffset)
+      a.setAttribute('stroke-width', tri.strokeW)
+      a.setAttribute('stroke-opacity', tri.arcAlpha)
+    })
+    // Trails
+    const trI = Math.min(1, spin.speed / 120)
+    if (trI > 0.02) {
+      el.trail1.setAttribute('transform', `translate(50,48) rotate(${spin.angle - 18}) scale(${tri.scale}) translate(-50,-48)`)
+      el.trail1.style.opacity = tri.opacity * trI * 0.4
+      el.trail2.setAttribute('transform', `translate(50,48) rotate(${spin.angle - 36}) scale(${tri.scale}) translate(-50,-48)`)
+      el.trail2.style.opacity = tri.opacity * trI * 0.15
+    } else { el.trail1.style.opacity = 0; el.trail2.style.opacity = 0 }
+    // Center orb
+    const cn = this.center
+    if (cn.opacity > 0.01) {
+      const csfx = theme === 'light' ? '-light' : ''
+      const pH = 1.2 + (spin.speed / 200) * 1.5, pA = 2 + (spin.speed / 200) * 3
+      el.cGlow.setAttribute('r', Math.max(2, cn.glowR + Math.sin(now / 1000 * pH * Math.PI * 2) * pA).toFixed(1))
+      el.cGlow.style.opacity = cn.opacity; el.cCore.style.opacity = cn.opacity * 0.9
+    } else { el.cGlow.style.opacity = 0; el.cCore.style.opacity = 0 }
+    // Pulse rings — radial circles expanding outward
+    const pI = Math.min(1, spin.speed / 60)
+    if (pI > 0.02) {
+      const period = 2.2 - (spin.speed / 200) * 0.8
+      const sC = theme === 'light' ? 'rgba(90,60,180,' : 'rgba(160,144,255,'
+      ;[el.pulse1, el.pulse2].forEach((p, i) => {
+        const t = ((now / 1000 + i * period * 0.5) % period) / period
+        p.setAttribute('r', (10 + t * 35).toFixed(1))
+        p.setAttribute('stroke', sC + ((1 - t) * 0.5 * pI).toFixed(3) + ')')
+        p.setAttribute('stroke-width', (1.2 - t * 0.6).toFixed(2))
+        p.style.opacity = 1
+      })
+    } else { el.pulse1.style.opacity = 0; el.pulse2.style.opacity = 0 }
+  },
+
+  rampUp() {
+    if (this.streaming) return
+    this.streaming = true; this.winding = false
+    document.body.classList.add('streaming')
+    this.el.svg.classList.add('active')
+    this._startLoop()
+    const sfx = theme === 'light' ? '-light' : ''
+    const { cT, cL, cR } = this.el
+
+    // Phase 1: Orb splits into Triad
+    cL.style.opacity = '1'; cR.style.opacity = '1'
+    cT.setAttribute('cx', '50');  cT.setAttribute('cy', '25');  cT.setAttribute('r', '20')
+    cL.setAttribute('cx', '30');  cL.setAttribute('cy', '59.6'); cL.setAttribute('r', '20')
+    cR.setAttribute('cx', '70');  cR.setAttribute('cy', '59.6'); cR.setAttribute('r', '20')
+    cT.setAttribute('fill', `url(#orb-g-auth${sfx})`)
+    cL.setAttribute('fill', `url(#orb-g-cap${sfx})`)
+    cR.setAttribute('fill', `url(#orb-g-exp${sfx})`)
+
+    // Phase 2: Triangle emerges (after triad settles)
+    this._t1 = setTimeout(() => {
+      if (!this.streaming) return
+      this.tri.tOpacity = 1; this.tri.tDashOffset = 0; this.tri.tScale = 1; this.tri.tArcAlpha = 0.7
+      this.center.tOpacity = 0.6; this.center.tGlowR = 10
+      cT.style.opacity = '0.6'; cL.style.opacity = '0.6'; cR.style.opacity = '0.6'
+    }, 900)
+
+    // Phase 3: Engine spin
+    this._t2 = setTimeout(() => {
+      if (!this.streaming) return
+      this.spin.target = 80
+    }, 1700)
+
+    // Full speed
+    this._t3 = setTimeout(() => {
+      if (!this.streaming) return
+      this.spin.target = 200; this.center.tOpacity = 1; this.center.tGlowR = 18
+      this.tri.tScale = 1.15; this.tri.tStrokeW = 2; this.tri.tArcAlpha = 0.9
+      cT.style.opacity = '0.45'; cL.style.opacity = '0.45'; cR.style.opacity = '0.45'
+    }, 3900)
+  },
+
+  windDown() {
+    if (!this.streaming || this.winding) return
+    this.streaming = false; this.winding = true
+    clearTimeout(this._t1); clearTimeout(this._t2); clearTimeout(this._t3)
+    // Hold active glow during initial deceleration — remove with merge
+    setTimeout(() => this.el.svg.classList.remove('active'), 1200)
+    const sfx = theme === 'light' ? '-light' : ''
+    const { cT, cL, cR } = this.el
+
+    // Spin decelerates, triangle fades
+    this.spin.target = 0
+    this.tri.tOpacity = 0; this.tri.tScale = 0.6; this.tri.tDashOffset = 21
+    this.tri.tStrokeW = 0.8; this.tri.tArcAlpha = 0.3
+    this.center.tOpacity = 0; this.center.tGlowR = 4
+
+    // Circles brighten (crossfade with triangle)
+    cT.style.opacity = '1'; cL.style.opacity = '1'; cR.style.opacity = '1'
+
+    // Merge back to orb
+    setTimeout(() => {
+      cT.setAttribute('cx', '50'); cT.setAttribute('cy', '48'); cT.setAttribute('r', '28')
+      cL.setAttribute('cx', '50'); cL.setAttribute('cy', '48'); cL.setAttribute('r', '28')
+      cR.setAttribute('cx', '50'); cR.setAttribute('cy', '48'); cR.setAttribute('r', '28')
+      cT.setAttribute('fill', `url(#orb-g-merged${sfx})`)
+    }, 1400)
+
+    // Hide BL/BR (merged into orb)
+    setTimeout(() => {
+      cL.style.opacity = '0'; cR.style.opacity = '0'
+    }, 1800)
+
+    // Final rest
+    setTimeout(() => {
+      this.winding = false; document.body.classList.remove('streaming')
+      this.tri.scale = 0.3; this.tri.dashOffset = 21; this.center.opacity = 0
+    }, 2800)
+  },
+}
+function _oL(c,t,f,dt){return c+(t-c)*(1-Math.pow(1-f,dt*60))}
+function _oD(c,t,u,d,dt){return _oL(c,t,c<t?u:d,dt)}
+
+// Legacy wrapper — called by streaming start/stop
 function updateOrbState() {
-  const orb = document.querySelector('.sidebar-orb')
-  if (!orb) return
   const anyStreaming = Object.values(sessions).some(s => s.isStreaming) ||
                        Object.values(agentSessions).some(s => s.isStreaming)
-  orb.classList.toggle('active', anyStreaming)
-  document.body.classList.toggle('streaming', anyStreaming)
+  if (anyStreaming) orbEngine.rampUp()
+  else orbEngine.windDown()
 }
+orbEngine.init()
 
 // Attention state — tracks which sessions need user input
 function setAttention(id, sessionsObj) {

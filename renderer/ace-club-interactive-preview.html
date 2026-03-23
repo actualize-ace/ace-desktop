@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ACE Club Logo — Interactive Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0e0e14;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    color: #e0e0e8;
+    padding: 40px;
+    gap: 30px;
+  }
+
+  h1 {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #555;
+  }
+
+  .stage {
+    position: relative;
+    width: 240px;
+    height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ─── Controls ─── */
+  .controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 600px;
+  }
+  .control-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .control-row button {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #ccc;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .control-row button:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.2);
+    color: #fff;
+  }
+  .control-row button.active {
+    background: rgba(136,120,255,0.2);
+    border-color: rgba(136,120,255,0.4);
+    color: #c0b8ff;
+  }
+  .control-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #444;
+    width: 100%;
+    text-align: center;
+  }
+
+  .status-text {
+    font-size: 11px;
+    color: #555;
+    letter-spacing: 1px;
+    text-align: center;
+    min-height: 18px;
+  }
+
+  /* ─── SVG transitions ─── */
+  .logo-circle {
+    transition: cx 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+                cy 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+                r  0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+                fill 0.8s ease,
+                opacity 0.4s ease;
+  }
+  .logo-arc {
+    transition: opacity 0.3s ease, d 0.6s ease;
+  }
+  .logo-dot {
+    transition: opacity 0.3s ease,
+                cx 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+                cy 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* ─── Breath animation ─── */
+  @keyframes breath {
+    0%, 100% {
+      filter: drop-shadow(0 0 6px rgba(136,120,255,0.3)) drop-shadow(0 0 16px rgba(96,216,168,0.15));
+      transform: scale(1);
+    }
+    50% {
+      filter: drop-shadow(0 0 12px rgba(136,120,255,0.5)) drop-shadow(0 0 24px rgba(96,216,168,0.3));
+      transform: scale(1.02);
+    }
+  }
+  .breathing svg { animation: breath 4s ease-in-out infinite; }
+
+  /* ─── Agentic pulse ─── */
+  @keyframes agenticPulse {
+    0%, 100% {
+      filter: drop-shadow(0 0 10px rgba(136,120,255,0.5)) drop-shadow(0 0 25px rgba(96,216,168,0.3));
+      transform: scale(1);
+    }
+    50% {
+      filter: drop-shadow(0 0 20px rgba(136,120,255,0.7)) drop-shadow(0 0 40px rgba(96,216,168,0.5));
+      transform: scale(1.04);
+    }
+  }
+  .agentic svg { animation: agenticPulse 1.8s ease-in-out infinite; }
+
+  /* ─── Sidebar preview ─── */
+  .sidebar-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .sidebar-preview .ace-text {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #e0e0e8;
+  }
+</style>
+</head>
+<body>
+
+<h1>ACE Club — Interactive State Demo</h1>
+
+<!-- ═══════════════ Main Logo Stage ═══════════════ -->
+<div class="stage breathing" id="stage">
+  <svg width="200" height="200" viewBox="0 0 100 100" id="logo" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- Triad gradients -->
+      <radialGradient id="g-auth" cx="50%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="#a090ff"/><stop offset="100%" stop-color="#7060e0"/>
+      </radialGradient>
+      <radialGradient id="g-cap" cx="45%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="#c8a0f0"/><stop offset="100%" stop-color="#9060c0"/>
+      </radialGradient>
+      <radialGradient id="g-exp" cx="55%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="#80e8b8"/><stop offset="100%" stop-color="#40a878"/>
+      </radialGradient>
+
+      <!-- Coherence state gradients -->
+      <radialGradient id="g-coherent" cx="40%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="#a8f0c0"/><stop offset="100%" stop-color="#3a8e5e"/>
+      </radialGradient>
+      <radialGradient id="g-stable" cx="40%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="#f5d090"/><stop offset="100%" stop-color="#c4842a"/>
+      </radialGradient>
+      <radialGradient id="g-drifting" cx="40%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="#f0e070"/><stop offset="100%" stop-color="#a89020"/>
+      </radialGradient>
+      <radialGradient id="g-fragmented" cx="40%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="#f0a060"/><stop offset="100%" stop-color="#b04010"/>
+      </radialGradient>
+      <radialGradient id="g-critical" cx="40%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="#f07070"/><stop offset="100%" stop-color="#a01010"/>
+      </radialGradient>
+
+      <!-- Merged orb gradient -->
+      <radialGradient id="g-merged" cx="38%" cy="38%" r="60%">
+        <stop offset="0%" stop-color="#8878ff"/>
+        <stop offset="50%" stop-color="#c8a0f0"/>
+        <stop offset="100%" stop-color="#60d8a8"/>
+      </radialGradient>
+    </defs>
+
+    <!--
+      GEOMETRY:
+      Spread (three): Top (50,25), BL (30,59.6), BR (70,59.6), r=20
+      Merged (one):   All at (50,48), r=28
+
+      Tangent points: (40,42.3), (60,42.3), (50,59.6)
+      Centroid: (50,48)
+    -->
+
+    <!-- Three circles -->
+    <circle id="c-top" class="logo-circle" cx="50" cy="25"   r="20" fill="url(#g-auth)"/>
+    <circle id="c-bl"  class="logo-circle" cx="30" cy="59.6" r="20" fill="url(#g-cap)"/>
+    <circle id="c-br"  class="logo-circle" cx="70" cy="59.6" r="20" fill="url(#g-exp)"/>
+
+    <!-- Connecting arcs (the curvilinear triangle edges) -->
+    <path id="arc1" class="logo-arc" d="M 40,42.3 A 20,20 0 0,1 60,42.3"  fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/>
+    <path id="arc2" class="logo-arc" d="M 60,42.3 A 20,20 0 0,1 50,59.6"  fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/>
+    <path id="arc3" class="logo-arc" d="M 50,59.6 A 20,20 0 0,1 40,42.3"  fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/>
+
+    <!-- Tangent point dots -->
+    <circle id="d1" class="logo-dot" cx="40" cy="42.3" r="1.2" fill="rgba(255,255,255,0.5)"/>
+    <circle id="d2" class="logo-dot" cx="60" cy="42.3" r="1.2" fill="rgba(255,255,255,0.5)"/>
+    <circle id="d3" class="logo-dot" cx="50" cy="59.6" r="1.2" fill="rgba(255,255,255,0.5)"/>
+  </svg>
+</div>
+
+<div id="statusText" class="status-text">Triad — Resting</div>
+
+<!-- ═══════════════ Controls ═══════════════ -->
+<div class="controls">
+
+  <div class="control-label">Shape</div>
+  <div class="control-row" id="shapeControls">
+    <button class="active" onclick="setShape('triad')">Triad (Three)</button>
+    <button onclick="setShape('merged')">Merged (One)</button>
+  </div>
+
+  <div class="control-label">Coherence State</div>
+  <div class="control-row" id="stateControls">
+    <button class="active" onclick="setState('triad')">Default Triad</button>
+    <button onclick="setState('coherent')">Coherent</button>
+    <button onclick="setState('stable')">Stable</button>
+    <button onclick="setState('drifting')">Drifting</button>
+    <button onclick="setState('fragmented')">Fragmented</button>
+    <button onclick="setState('critical')">Critical</button>
+  </div>
+
+  <div class="control-label">Animation</div>
+  <div class="control-row" id="animControls">
+    <button class="active" onclick="setAnim('breathing')">Breathing</button>
+    <button onclick="setAnim('agentic')">Agentic / Streaming</button>
+    <button onclick="setAnim('none')">None</button>
+  </div>
+
+  <div class="control-label" style="margin-top:10px;">Presets</div>
+  <div class="control-row">
+    <button onclick="preset('resting')">Resting</button>
+    <button onclick="preset('execute')">Execute Mode</button>
+    <button onclick="preset('streaming')">Streaming</button>
+    <button onclick="preset('critical-alert')">Critical Alert</button>
+  </div>
+</div>
+
+<!-- ═══════════════ Sidebar Preview ═══════════════ -->
+<h1 style="margin-top:30px;">Sidebar Preview (32px)</h1>
+<div class="sidebar-preview breathing" id="sidebarStage">
+  <svg width="32" height="32" viewBox="0 0 100 100" id="sidebarLogo" xmlns="http://www.w3.org/2000/svg">
+    <circle id="sc-top" class="logo-circle" cx="50" cy="25"   r="20" fill="url(#g-auth)"/>
+    <circle id="sc-bl"  class="logo-circle" cx="30" cy="59.6" r="20" fill="url(#g-cap)"/>
+    <circle id="sc-br"  class="logo-circle" cx="70" cy="59.6" r="20" fill="url(#g-exp)"/>
+    <path id="sarc1" class="logo-arc" d="M 40,42.3 A 20,20 0 0,1 60,42.3"  fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+    <path id="sarc2" class="logo-arc" d="M 60,42.3 A 20,20 0 0,1 50,59.6"  fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+    <path id="sarc3" class="logo-arc" d="M 50,59.6 A 20,20 0 0,1 40,42.3"  fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+    <circle id="sd1" class="logo-dot" cx="40" cy="42.3" r="2" fill="rgba(255,255,255,0.5)"/>
+    <circle id="sd2" class="logo-dot" cx="60" cy="42.3" r="2" fill="rgba(255,255,255,0.5)"/>
+    <circle id="sd3" class="logo-dot" cx="50" cy="59.6" r="2" fill="rgba(255,255,255,0.5)"/>
+  </svg>
+  <span class="ace-text">ACE</span>
+</div>
+
+
+<script>
+// ─── Geometry ───
+const SPREAD = {
+  top: { cx: 50, cy: 25,   r: 20 },
+  bl:  { cx: 30, cy: 59.6, r: 20 },
+  br:  { cx: 70, cy: 59.6, r: 20 },
+};
+const MERGED = {
+  top: { cx: 50, cy: 48, r: 28 },
+  bl:  { cx: 50, cy: 48, r: 28 },
+  br:  { cx: 50, cy: 48, r: 28 },
+};
+
+// ─── Elements ───
+const $ = id => document.getElementById(id);
+const circles = {
+  main: { top: $('c-top'), bl: $('c-bl'), br: $('c-br') },
+  side: { top: $('sc-top'), bl: $('sc-bl'), br: $('sc-br') },
+};
+const arcs = {
+  main: [$('arc1'), $('arc2'), $('arc3')],
+  side: [$('sarc1'), $('sarc2'), $('sarc3')],
+};
+const dots = {
+  main: [$('d1'), $('d2'), $('d3')],
+  side: [$('sd1'), $('sd2'), $('sd3')],
+};
+
+let currentShape = 'triad';
+let currentState = 'triad';
+let currentAnim  = 'breathing';
+
+// ─── Shape: three ↔ one ───
+function setShape(shape) {
+  currentShape = shape;
+  const geo = shape === 'merged' ? MERGED : SPREAD;
+  const showArcs = shape !== 'merged';
+
+  ['main', 'side'].forEach(ctx => {
+    const c = circles[ctx];
+    // Move circles
+    Object.entries(geo).forEach(([key, pos]) => {
+      c[key].setAttribute('cx', pos.cx);
+      c[key].setAttribute('cy', pos.cy);
+      c[key].setAttribute('r',  pos.r);
+    });
+
+    // If merged, hide two circles behind the first (set opacity)
+    if (shape === 'merged') {
+      c.bl.style.opacity = '0';
+      c.br.style.opacity = '0';
+      c.top.setAttribute('fill', 'url(#g-merged)');
+    } else {
+      c.bl.style.opacity = '1';
+      c.br.style.opacity = '1';
+      // Restore per-circle colors based on current state
+      applyStateColors(currentState);
+    }
+
+    // Arcs & dots
+    arcs[ctx].forEach(a => a.style.opacity = showArcs ? '1' : '0');
+    dots[ctx].forEach(d => d.style.opacity = showArcs ? '1' : '0');
+  });
+
+  updateButtons('shapeControls', shape === 'merged' ? 1 : 0);
+  updateStatus();
+}
+
+// ─── Coherence state colors ───
+function setState(state) {
+  currentState = state;
+  if (currentShape === 'merged') {
+    // In merged mode, apply uniform color
+    const gradId = state === 'triad' ? 'g-merged' : `g-${state}`;
+    ['main', 'side'].forEach(ctx => {
+      circles[ctx].top.setAttribute('fill', `url(#${gradId})`);
+    });
+  } else {
+    applyStateColors(state);
+  }
+  updateButtons('stateControls', ['triad','coherent','stable','drifting','fragmented','critical'].indexOf(state));
+  updateStatus();
+}
+
+function applyStateColors(state) {
+  if (state === 'triad') {
+    ['main', 'side'].forEach(ctx => {
+      circles[ctx].top.setAttribute('fill', 'url(#g-auth)');
+      circles[ctx].bl.setAttribute('fill',  'url(#g-cap)');
+      circles[ctx].br.setAttribute('fill',  'url(#g-exp)');
+    });
+  } else {
+    const gradId = `g-${state}`;
+    ['main', 'side'].forEach(ctx => {
+      circles[ctx].top.setAttribute('fill', `url(#${gradId})`);
+      circles[ctx].bl.setAttribute('fill',  `url(#${gradId})`);
+      circles[ctx].br.setAttribute('fill',  `url(#${gradId})`);
+    });
+  }
+}
+
+// ─── Animation mode ───
+function setAnim(anim) {
+  currentAnim = anim;
+  const stage = $('stage');
+  const sidebar = $('sidebarStage');
+  stage.classList.remove('breathing', 'agentic');
+  sidebar.classList.remove('breathing', 'agentic');
+  if (anim !== 'none') {
+    stage.classList.add(anim);
+    sidebar.classList.add(anim);
+  }
+  updateButtons('animControls', ['breathing','agentic','none'].indexOf(anim));
+  updateStatus();
+}
+
+// ─── Presets ───
+function preset(name) {
+  switch (name) {
+    case 'resting':
+      setShape('triad');
+      setState('triad');
+      setAnim('breathing');
+      break;
+    case 'execute':
+      setShape('merged');
+      setState('triad');
+      setAnim('agentic');
+      break;
+    case 'streaming':
+      setShape('merged');
+      setState('coherent');
+      setAnim('agentic');
+      break;
+    case 'critical-alert':
+      setShape('triad');
+      setState('critical');
+      setAnim('agentic');
+      break;
+  }
+}
+
+// ─── UI helpers ───
+function updateButtons(groupId, activeIdx) {
+  const btns = $(groupId).querySelectorAll('button');
+  btns.forEach((b, i) => b.classList.toggle('active', i === activeIdx));
+}
+
+function updateStatus() {
+  const shapeLabel = currentShape === 'merged' ? 'Merged' : 'Triad';
+  const stateLabel = currentState.charAt(0).toUpperCase() + currentState.slice(1);
+  const animLabel  = currentAnim === 'none' ? 'Static' : currentAnim.charAt(0).toUpperCase() + currentAnim.slice(1);
+  $('statusText').textContent = `${shapeLabel} — ${stateLabel} — ${animLabel}`;
+}
+</script>
+
+</body>
+</html>

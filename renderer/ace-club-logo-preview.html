@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ACE Club Logo — Design Exploration v3</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0e0e14;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    color: #e0e0e8;
+    gap: 50px;
+    padding: 50px 40px;
+  }
+  h1 {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #555;
+    margin-top: 20px;
+  }
+  .note {
+    font-size: 11px;
+    color: #444;
+    max-width: 500px;
+    text-align: center;
+    line-height: 1.7;
+    margin-top: -30px;
+  }
+  .row {
+    display: flex;
+    gap: 60px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .variant {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .variant label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #555;
+  }
+
+  @keyframes clubBreath {
+    0%, 100% { filter: drop-shadow(0 0 8px rgba(136,120,255,0.4)) drop-shadow(0 0 20px rgba(96,216,168,0.2)); transform: scale(1); }
+    50%      { filter: drop-shadow(0 0 16px rgba(136,120,255,0.6)) drop-shadow(0 0 32px rgba(96,216,168,0.4)); transform: scale(1.02); }
+  }
+  .animated svg { animation: clubBreath 4s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<!-- ─── Shared defs ─── -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <radialGradient id="grad-default" cx="38%" cy="38%" r="60%">
+      <stop offset="0%"   stop-color="#8878ff"/>
+      <stop offset="50%"  stop-color="#c8a0f0"/>
+      <stop offset="100%" stop-color="#60d8a8"/>
+    </radialGradient>
+    <radialGradient id="grad-top" cx="50%" cy="40%" r="55%">
+      <stop offset="0%"   stop-color="#a090ff"/>
+      <stop offset="100%" stop-color="#7060e0"/>
+    </radialGradient>
+    <radialGradient id="grad-bl" cx="45%" cy="40%" r="55%">
+      <stop offset="0%"   stop-color="#c8a0f0"/>
+      <stop offset="100%" stop-color="#9060c0"/>
+    </radialGradient>
+    <radialGradient id="grad-br" cx="55%" cy="40%" r="55%">
+      <stop offset="0%"   stop-color="#80e8b8"/>
+      <stop offset="100%" stop-color="#40a878"/>
+    </radialGradient>
+    <!-- Subtle center glow for the Asraya void -->
+    <radialGradient id="grad-center-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="rgba(200,180,255,0.25)"/>
+      <stop offset="100%" stop-color="rgba(200,180,255,0)"/>
+    </radialGradient>
+  </defs>
+</svg>
+
+<!--
+  GEOMETRY (shared across all variants):
+  r = 20, equilateral triangle side = 40
+  Top:    (50, 25)
+  BL:     (30, 59.6)
+  BR:     (70, 59.6)
+  Centroid: (50, 48)
+
+  Curvilinear triangle vertices (where circles kiss):
+  Top-left tangent:   midpoint of Top & BL centers = (40, 42.3)
+  Top-right tangent:  midpoint of Top & BR centers = (60, 42.3)
+  Bottom tangent:     midpoint of BL & BR centers  = (50, 59.6)
+-->
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- 1. OUTER RING — Container circle wrapping the mark -->
+<!-- ═══════════════════════════════════════════════════ -->
+<h1>1 — Outer Ring</h1>
+<p class="note">An encompassing circle = the container. Three circles inside = the Triad.<br>The void = Asraya. Immediately distinct from Asana.</p>
+<div class="row">
+
+  <div class="variant">
+    <svg width="160" height="160" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <!-- Outer ring -->
+      <circle cx="50" cy="48" r="46" fill="none" stroke="url(#grad-default)" stroke-width="1.5" opacity="0.4"/>
+      <!-- Three tangent circles -->
+      <circle cx="50" cy="25" r="20" fill="url(#grad-default)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-default)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-default)"/>
+    </svg>
+    <label>Unified</label>
+  </div>
+
+  <div class="variant">
+    <svg width="160" height="160" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="48" r="46" fill="none" stroke="rgba(160,144,255,0.3)" stroke-width="1.5"/>
+      <circle cx="50" cy="25" r="20" fill="url(#grad-top)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-bl)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-br)"/>
+    </svg>
+    <label>Triad</label>
+  </div>
+
+  <div class="variant animated">
+    <svg width="36" height="36" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="48" r="46" fill="none" stroke="url(#grad-default)" stroke-width="2" opacity="0.35"/>
+      <circle cx="50" cy="25" r="20" fill="url(#grad-default)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-default)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-default)"/>
+    </svg>
+    <label>32px</label>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- 2. CENTER DOT — Small circle in the void           -->
+<!-- ═══════════════════════════════════════════════════ -->
+<h1>2 — Center Dot (Coherence Point)</h1>
+<p class="note">A small circle at the centroid — the point where all three forces converge.<br>Like a keystone. Adds focus and depth.</p>
+<div class="row">
+
+  <div class="variant">
+    <svg width="160" height="160" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="25" r="20" fill="url(#grad-default)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-default)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-default)"/>
+      <!-- Center dot -->
+      <circle cx="50" cy="48" r="4" fill="#e8e0ff"/>
+      <circle cx="50" cy="48" r="4" fill="url(#grad-center-glow)"/>
+    </svg>
+    <label>Unified + Dot</label>
+  </div>
+
+  <div class="variant">
+    <svg width="160" height="160" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="25" r="20" fill="url(#grad-top)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-bl)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-br)"/>
+      <!-- Center dot -->
+      <circle cx="50" cy="48" r="4" fill="#e8e0ff"/>
+    </svg>
+    <label>Triad + Dot</label>
+  </div>
+
+  <div class="variant animated">
+    <svg width="36" height="36" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="25" r="20" fill="url(#grad-default)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-default)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-default)"/>
+      <circle cx="50" cy="48" r="4" fill="#e8e0ff"/>
+    </svg>
+    <label>32px</label>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- 3. OUTER RING + CENTER DOT — Full geometry         -->
+<!-- ═══════════════════════════════════════════════════ -->
+<h1>3 — Ring + Center Dot</h1>
+<p class="note">Both elements together. The container holds the Triad. The dot marks the convergence.<br>Maximum differentiation from Asana. Rich geometry without clutter.</p>
+<div class="row">
+
+  <div class="variant">
+    <svg width="160" height="160" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="48" r="46" fill="none" stroke="url(#grad-default)" stroke-width="1.5" opacity="0.35"/>
+      <circle cx="50" cy="25" r="20" fill="url(#grad-default)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-default)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-default)"/>
+      <circle cx="50" cy="48" r="4" fill="#e8e0ff"/>
+    </svg>
+    <label>Unified</label>
+  </div>
+
+  <div class="variant">
+    <svg width="160" height="160" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="48" r="46" fill="none" stroke="rgba(160,144,255,0.3)" stroke-width="1.5"/>
+      <circle cx="50" cy="25" r="20" fill="url(#grad-top)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-bl)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-br)"/>
+      <circle cx="50" cy="48" r="4" fill="#e8e0ff"/>
+    </svg>
+    <label>Triad</label>
+  </div>
+
+  <div class="variant animated">
+    <svg width="36" height="36" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="48" r="46" fill="none" stroke="url(#grad-default)" stroke-width="2.5" opacity="0.35"/>
+      <circle cx="50" cy="25" r="20" fill="url(#grad-default)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-default)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-default)"/>
+      <circle cx="50" cy="48" r="4" fill="#e8e0ff"/>
+    </svg>
+    <label>32px</label>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- 4. HIGHLIGHTED VOID — The Asraya curvilinear tri   -->
+<!-- ═══════════════════════════════════════════════════ -->
+<h1>4 — Highlighted Void (The Asraya Shape)</h1>
+<p class="note">The curvilinear triangle — the space between spaces — rendered as a subtle glow.<br>Asraya lives in the negative space. This makes that visible.</p>
+<div class="row">
+
+  <div class="variant">
+    <svg width="160" height="160" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Curvilinear triangle path: three concave arcs -->
+        <!-- Arc from top-left tangent (40,42.3) to bottom (50,59.6), curving inward along Top circle -->
+        <!-- Arc from bottom (50,59.6) to top-right (60,42.3), curving inward along BR circle -->
+        <!-- Arc from top-right (60,42.3) to top-left (40,42.3), curving inward along BL... wait -->
+        <!--
+          Tangent points:
+          T_ab = midpoint(Top, BL) = (40, 42.3)   — where Top & BL kiss
+          T_ac = midpoint(Top, BR) = (60, 42.3)   — where Top & BR kiss
+          T_bc = midpoint(BL, BR)  = (50, 59.6)   — where BL & BR kiss
+
+          The curvilinear triangle is bounded by:
+          - Arc from T_ab to T_ac, curving INWARD (concave toward center) along the BOTTOM of Top circle (cx=50,cy=25,r=20)
+          - Arc from T_ac to T_bc, curving INWARD along the LEFT of BR circle (cx=70,cy=59.6,r=20)
+          - Arc from T_bc to T_ab, curving INWARD along the RIGHT of BL circle (cx=30,cy=59.6,r=20)
+
+          Each arc subtends a 60-degree portion of its circle.
+          For SVG arc: A rx ry x-rotation large-arc-flag sweep-flag x y
+          r=20 for all. The arcs are minor arcs (< 180), so large-arc=0.
+          Sweep direction: for concave (curving inward), we want the arc to bulge AWAY from center.
+        -->
+        <clipPath id="void-clip">
+          <path d="
+            M 40,42.3
+            A 20,20 0 0,1 60,42.3
+            A 20,20 0 0,1 50,59.6
+            A 20,20 0 0,1 40,42.3
+            Z
+          "/>
+        </clipPath>
+        <radialGradient id="void-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="rgba(200,180,255,0.35)"/>
+          <stop offset="70%"  stop-color="rgba(160,140,240,0.12)"/>
+          <stop offset="100%" stop-color="rgba(160,140,240,0)"/>
+        </radialGradient>
+      </defs>
+
+      <!-- Three tangent circles -->
+      <circle cx="50" cy="25" r="20" fill="url(#grad-default)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-default)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-default)"/>
+      <!-- The void — subtle glow in the curvilinear triangle -->
+      <rect x="30" y="35" width="40" height="30" fill="url(#void-glow)" clip-path="url(#void-clip)"/>
+    </svg>
+    <label>Unified + Void Glow</label>
+  </div>
+
+  <div class="variant">
+    <svg width="160" height="160" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <clipPath id="void-clip2">
+          <path d="
+            M 40,42.3
+            A 20,20 0 0,1 60,42.3
+            A 20,20 0 0,1 50,59.6
+            A 20,20 0 0,1 40,42.3
+            Z
+          "/>
+        </clipPath>
+      </defs>
+      <circle cx="50" cy="25" r="20" fill="url(#grad-top)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-bl)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-br)"/>
+      <rect x="30" y="35" width="40" height="30" fill="url(#void-glow)" clip-path="url(#void-clip2)"/>
+    </svg>
+    <label>Triad + Void Glow</label>
+  </div>
+
+  <div class="variant">
+    <svg width="160" height="160" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <clipPath id="void-clip3">
+          <path d="
+            M 40,42.3
+            A 20,20 0 0,1 60,42.3
+            A 20,20 0 0,1 50,59.6
+            A 20,20 0 0,1 40,42.3
+            Z
+          "/>
+        </clipPath>
+      </defs>
+      <circle cx="50" cy="48" r="46" fill="none" stroke="rgba(160,144,255,0.3)" stroke-width="1.5"/>
+      <circle cx="50" cy="25" r="20" fill="url(#grad-top)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-bl)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-br)"/>
+      <rect x="30" y="35" width="40" height="30" fill="url(#void-glow)" clip-path="url(#void-clip3)"/>
+      <circle cx="50" cy="48" r="3.5" fill="rgba(232,224,255,0.8)"/>
+    </svg>
+    <label>Full — Ring + Void + Dot</label>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- 5. CONNECTING ARCS — Lines between tangent points  -->
+<!-- ═══════════════════════════════════════════════════ -->
+<h1>5 — Connecting Arcs</h1>
+<p class="note">Thin arcs trace the curvilinear triangle edges — drawing attention to the void<br>without filling it. The geometry becomes visible as linework.</p>
+<div class="row">
+
+  <div class="variant">
+    <svg width="160" height="160" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="25" r="20" fill="url(#grad-default)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-default)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-default)"/>
+      <!-- Arcs tracing the inner void edges -->
+      <path d="M 40,42.3 A 20,20 0 0,1 60,42.3"  fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/>
+      <path d="M 60,42.3 A 20,20 0 0,1 50,59.6"  fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/>
+      <path d="M 50,59.6 A 20,20 0 0,1 40,42.3"  fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/>
+    </svg>
+    <label>Unified + Arcs</label>
+  </div>
+
+  <div class="variant">
+    <svg width="160" height="160" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="25" r="20" fill="url(#grad-top)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-bl)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-br)"/>
+      <path d="M 40,42.3 A 20,20 0 0,1 60,42.3"  fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/>
+      <path d="M 60,42.3 A 20,20 0 0,1 50,59.6"  fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/>
+      <path d="M 50,59.6 A 20,20 0 0,1 40,42.3"  fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/>
+      <!-- Small dot at each tangent point -->
+      <circle cx="40" cy="42.3" r="1.2" fill="rgba(255,255,255,0.5)"/>
+      <circle cx="60" cy="42.3" r="1.2" fill="rgba(255,255,255,0.5)"/>
+      <circle cx="50" cy="59.6" r="1.2" fill="rgba(255,255,255,0.5)"/>
+    </svg>
+    <label>Triad + Arcs + Points</label>
+  </div>
+
+  <div class="variant animated">
+    <svg width="36" height="36" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="25" r="20" fill="url(#grad-default)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-default)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-default)"/>
+      <path d="M 40,42.3 A 20,20 0 0,1 60,42.3"  fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
+      <path d="M 60,42.3 A 20,20 0 0,1 50,59.6"  fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
+      <path d="M 50,59.6 A 20,20 0 0,1 40,42.3"  fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
+    </svg>
+    <label>32px</label>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- 6. COMPOSITE — The everything version              -->
+<!-- ═══════════════════════════════════════════════════ -->
+<h1>6 — Composite (Ring + Arcs + Void + Dot)</h1>
+<p class="note">All elements layered. Rich but still clean.<br>Container. Triad. Connective tissue. Convergence point.</p>
+<div class="row">
+
+  <div class="variant">
+    <svg width="180" height="180" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <clipPath id="void-clip-comp">
+          <path d="
+            M 40,42.3
+            A 20,20 0 0,1 60,42.3
+            A 20,20 0 0,1 50,59.6
+            A 20,20 0 0,1 40,42.3
+            Z
+          "/>
+        </clipPath>
+      </defs>
+      <!-- Outer ring -->
+      <circle cx="50" cy="48" r="46" fill="none" stroke="url(#grad-default)" stroke-width="1.2" opacity="0.3"/>
+      <!-- Three tangent circles -->
+      <circle cx="50" cy="25" r="20" fill="url(#grad-top)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-bl)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-br)"/>
+      <!-- Void glow -->
+      <rect x="30" y="35" width="40" height="30" fill="url(#void-glow)" clip-path="url(#void-clip-comp)"/>
+      <!-- Inner arcs -->
+      <path d="M 40,42.3 A 20,20 0 0,1 60,42.3"  fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.6"/>
+      <path d="M 60,42.3 A 20,20 0 0,1 50,59.6"  fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.6"/>
+      <path d="M 50,59.6 A 20,20 0 0,1 40,42.3"  fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.6"/>
+      <!-- Center dot -->
+      <circle cx="50" cy="48" r="3" fill="rgba(232,224,255,0.7)"/>
+    </svg>
+    <label>Full Composite</label>
+  </div>
+
+  <div class="variant animated">
+    <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="48" r="46" fill="none" stroke="url(#grad-default)" stroke-width="2" opacity="0.3"/>
+      <circle cx="50" cy="25" r="20" fill="url(#grad-top)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-bl)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-br)"/>
+      <circle cx="50" cy="48" r="3.5" fill="rgba(232,224,255,0.7)"/>
+    </svg>
+    <label>Sidebar 36px</label>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- COMPARISON: Side by side with Asana               -->
+<!-- ═══════════════════════════════════════════════════ -->
+<h1 style="margin-top:40px;">Asana Comparison (for reference)</h1>
+<p class="note">Asana = three separated dots, no tangency, no void, no ring, single color, no stem. The tangent arrangement + curvilinear void + additional geometry puts significant distance between the marks.</p>
+<div class="row">
+  <div class="variant">
+    <svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <!-- Asana-style: three separated dots -->
+      <circle cx="50" cy="22" r="14" fill="#f06a6a"/>
+      <circle cx="30" cy="62" r="14" fill="#f06a6a"/>
+      <circle cx="70" cy="62" r="14" fill="#f06a6a"/>
+    </svg>
+    <label style="color:#f06a6a66">Asana (approx)</label>
+  </div>
+
+  <div class="variant">
+    <svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <!-- ACE: tangent + ring + dot -->
+      <circle cx="50" cy="48" r="46" fill="none" stroke="url(#grad-default)" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="25" r="20" fill="url(#grad-top)"/>
+      <circle cx="30" cy="59.6" r="20" fill="url(#grad-bl)"/>
+      <circle cx="70" cy="59.6" r="20" fill="url(#grad-br)"/>
+      <circle cx="50" cy="48" r="3" fill="rgba(232,224,255,0.7)"/>
+    </svg>
+    <label>ACE</label>
+  </div>
+</div>
+
+
+<p style="margin-top:60px; color:#3a3a48; font-size:11px; text-align:center; max-width:560px; line-height:1.8; padding-bottom:60px;">
+  Three circles = Authority + Capacity + Expansion.<br>
+  The curved void between them = Asraya — the space between spaces, the connective tissue.<br>
+  The center dot = coherence — where all forces converge.<br>
+  The outer ring = the container that holds it all.<br><br>
+  ACE is the creative OS. Asraya is what emerges in the gaps.
+</p>
+
+</body>
+</html>

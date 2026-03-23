@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ACE Logo — Engine Animation Concept</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: radial-gradient(ellipse at 50% 45%, #13131d 0%, #0a0a10 65%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    color: #e0e0e8;
+    gap: 28px;
+    padding: 40px 20px;
+  }
+
+  .title {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #3a3a48;
+  }
+
+  /* ─── Phase Timeline ─── */
+  .timeline {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .timeline .ph {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #252530;
+    padding: 4px 11px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.03);
+    transition: all 0.5s ease;
+  }
+  .timeline .ph.active {
+    color: #b0a8e8;
+    border-color: rgba(136,120,255,0.25);
+    background: rgba(136,120,255,0.08);
+  }
+  .timeline .ph.passed {
+    color: #555;
+    border-color: rgba(136,120,255,0.1);
+  }
+  .timeline .arr { color: #1a1a24; font-size: 9px; }
+
+  /* ─── Stage ─── */
+  .stage {
+    width: 280px;
+    height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ─── Circle CSS transitions (spring easing for position) ─── */
+  .orb-circle {
+    transition: cx 0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
+                cy 0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
+                r  0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
+                fill 0.9s ease,
+                opacity 0.7s ease;
+  }
+
+
+  /* ─── Status ─── */
+  .status {
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: #3a3a48;
+    min-height: 18px;
+    transition: color 0.4s;
+  }
+
+  /* ─── Controls ─── */
+  .controls {
+    display: flex;
+    gap: 12px;
+  }
+  .controls button {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    color: #777;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.25s;
+    font-family: inherit;
+  }
+  .controls button:hover:not(:disabled) {
+    background: rgba(136,120,255,0.1);
+    border-color: rgba(136,120,255,0.3);
+    color: #c0b8ff;
+  }
+  .controls button:disabled {
+    opacity: 0.25;
+    cursor: default;
+  }
+
+  /* ─── Sidebar Preview ─── */
+  .sidebar-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.015);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.03);
+    margin-top: 8px;
+  }
+  .sidebar-preview .lbl {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    color: #c8c8d0;
+  }
+
+  /* ─── Descriptions ─── */
+  .descriptions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 520px;
+    margin-top: 16px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.03);
+  }
+  .descriptions .d {
+    font-size: 10px;
+    color: #333;
+    line-height: 1.6;
+    letter-spacing: 0.5px;
+  }
+  .descriptions .d strong {
+    color: #555;
+    font-weight: 500;
+  }
+
+  /* ─── Theme Toggle ─── */
+  .theme-toggle {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #666;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.3s;
+  }
+  .theme-toggle:hover { color: #c0b8ff; }
+
+  /* ─── Light Mode ─── */
+  body.light {
+    background: radial-gradient(ellipse at 50% 45%, #f8f7fc 0%, #eeedf5 65%);
+    color: #2a2a38;
+  }
+  body.light .title { color: #aaa; }
+  body.light .timeline .ph { color: #c0c0c8; border-color: rgba(0,0,0,0.05); }
+  body.light .timeline .ph.active {
+    color: #6858d0;
+    border-color: rgba(100,80,200,0.25);
+    background: rgba(100,80,200,0.06);
+  }
+  body.light .timeline .ph.passed { color: #999; border-color: rgba(100,80,200,0.1); }
+  body.light .timeline .arr { color: #d0d0d8; }
+  body.light .status { color: #aaa; }
+  body.light .controls button {
+    background: rgba(0,0,0,0.03);
+    border-color: rgba(0,0,0,0.08);
+    color: #888;
+  }
+  body.light .controls button:hover:not(:disabled) {
+    background: rgba(100,80,200,0.08);
+    border-color: rgba(100,80,200,0.25);
+    color: #5a48c0;
+  }
+  body.light .sidebar-preview {
+    background: rgba(0,0,0,0.02);
+    border-color: rgba(0,0,0,0.06);
+  }
+  body.light .sidebar-preview .lbl { color: #3a3a48; }
+  body.light .descriptions { border-top-color: rgba(0,0,0,0.06); }
+  body.light .descriptions .d { color: #aaa; }
+  body.light .descriptions .d strong { color: #777; }
+  body.light .theme-toggle {
+    background: rgba(0,0,0,0.04);
+    border-color: rgba(0,0,0,0.08);
+    color: #999;
+  }
+  body.light .theme-toggle:hover { color: #5a48c0; }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="E.toggleTheme()">Light Mode</button>
+<div class="title">Engine Animation Concept</div>
+
+<!-- Phase Timeline -->
+<div class="timeline">
+  <div class="ph active" data-p="0">Orb</div>
+  <div class="arr">›</div>
+  <div class="ph" data-p="1">Triad</div>
+  <div class="arr">›</div>
+  <div class="ph" data-p="2">Triangle</div>
+  <div class="arr">›</div>
+  <div class="ph" data-p="3">Engine</div>
+</div>
+
+<!-- Main Stage -->
+<div class="stage" id="stage">
+  <svg width="240" height="240" viewBox="0 0 100 100" id="logo" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="g-auth" cx="50%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="#a090ff"/><stop offset="100%" stop-color="#7060e0"/>
+      </radialGradient>
+      <radialGradient id="g-cap" cx="45%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="#c8a0f0"/><stop offset="100%" stop-color="#9060c0"/>
+      </radialGradient>
+      <radialGradient id="g-exp" cx="55%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="#80e8b8"/><stop offset="100%" stop-color="#40a878"/>
+      </radialGradient>
+      <radialGradient id="g-merged" cx="38%" cy="38%" r="60%">
+        <stop offset="0%" stop-color="#8878ff"/>
+        <stop offset="50%" stop-color="#c8a0f0"/>
+        <stop offset="100%" stop-color="#60d8a8"/>
+      </radialGradient>
+      <!-- Light mode gradients (deeper, saturated) -->
+      <radialGradient id="g-auth-light" cx="50%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="#6858d0"/><stop offset="100%" stop-color="#4a38a0"/>
+      </radialGradient>
+      <radialGradient id="g-cap-light" cx="45%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="#8868c0"/><stop offset="100%" stop-color="#5a3890"/>
+      </radialGradient>
+      <radialGradient id="g-exp-light" cx="55%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="#30b880"/><stop offset="100%" stop-color="#1a8860"/>
+      </radialGradient>
+      <radialGradient id="g-merged-light" cx="38%" cy="38%" r="60%">
+        <stop offset="0%" stop-color="#5a48c0"/>
+        <stop offset="50%" stop-color="#7a68d0"/>
+        <stop offset="100%" stop-color="#1a8a60"/>
+      </radialGradient>
+      <!-- Center coherence glow -->
+      <radialGradient id="g-center" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="rgba(220,200,255,0.8)"/>
+        <stop offset="35%" stop-color="rgba(180,160,240,0.35)"/>
+        <stop offset="100%" stop-color="rgba(160,140,240,0)"/>
+      </radialGradient>
+      <radialGradient id="g-center-light" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="rgba(100,80,200,0.6)"/>
+        <stop offset="35%" stop-color="rgba(80,60,180,0.25)"/>
+        <stop offset="100%" stop-color="rgba(80,60,180,0)"/>
+      </radialGradient>
+    </defs>
+
+    <!-- Three circles (start merged as single orb) -->
+    <circle id="c-top" class="orb-circle" cx="50" cy="48" r="28" fill="url(#g-merged)"/>
+    <circle id="c-bl"  class="orb-circle" cx="50" cy="48" r="28" fill="url(#g-cap)" style="opacity:0"/>
+    <circle id="c-br"  class="orb-circle" cx="50" cy="48" r="28" fill="url(#g-exp)" style="opacity:0"/>
+
+    <!-- Center coherence orb (ignites during engine phase) -->
+    <circle id="centerGlow" cx="50" cy="48" r="8" fill="url(#g-center)" opacity="0"/>
+    <circle id="centerCore" cx="50" cy="48" r="3" fill="rgba(232,224,255,0.9)" opacity="0"/>
+    <!-- Spin trails (render behind main triangle, create motion blur) -->
+    <g id="trail2" opacity="0">
+      <path d="M 40,42.3 A 20,20 0 0,1 60,42.3" fill="none" stroke="#b0a0ff" stroke-width="0.8" stroke-linecap="round"/>
+      <path d="M 60,42.3 A 20,20 0 0,1 50,59.6" fill="none" stroke="#70f0c0" stroke-width="0.8" stroke-linecap="round"/>
+      <path d="M 50,59.6 A 20,20 0 0,1 40,42.3" fill="none" stroke="#d0b0f8" stroke-width="0.8" stroke-linecap="round"/>
+    </g>
+    <g id="trail1" opacity="0">
+      <path d="M 40,42.3 A 20,20 0 0,1 60,42.3" fill="none" stroke="#b0a0ff" stroke-width="1.0" stroke-linecap="round"/>
+      <path d="M 60,42.3 A 20,20 0 0,1 50,59.6" fill="none" stroke="#70f0c0" stroke-width="1.0" stroke-linecap="round"/>
+      <path d="M 50,59.6 A 20,20 0 0,1 40,42.3" fill="none" stroke="#d0b0f8" stroke-width="1.0" stroke-linecap="round"/>
+    </g>
+
+    <!-- Curvilinear triangle group (JS-animated: rotation + scale) -->
+    <g id="triGroup">
+      <path class="tri-arc" d="M 40,42.3 A 20,20 0 0,1 60,42.3"
+            fill="none" stroke="#b0a0ff" stroke-width="1.2" stroke-linecap="round"
+            stroke-dasharray="21" stroke-dashoffset="21"/>
+      <path class="tri-arc" d="M 60,42.3 A 20,20 0 0,1 50,59.6"
+            fill="none" stroke="#70f0c0" stroke-width="1.2" stroke-linecap="round"
+            stroke-dasharray="21" stroke-dashoffset="21"/>
+      <path class="tri-arc" d="M 50,59.6 A 20,20 0 0,1 40,42.3"
+            fill="none" stroke="#d0b0f8" stroke-width="1.2" stroke-linecap="round"
+            stroke-dasharray="21" stroke-dashoffset="21"/>
+      <circle class="tri-dot" cx="40" cy="42.3" r="1.5" fill="rgba(255,255,255,0.65)"/>
+      <circle class="tri-dot" cx="60" cy="42.3" r="1.5" fill="rgba(255,255,255,0.65)"/>
+      <circle class="tri-dot" cx="50" cy="59.6" r="1.5" fill="rgba(255,255,255,0.65)"/>
+    </g>
+  </svg>
+</div>
+
+<div id="status" class="status">Resting</div>
+
+<div class="controls">
+  <button id="btnStart" onclick="E.startAgent()">Start Agent</button>
+  <button id="btnStop" onclick="E.stopAgent()" disabled>Stop Agent</button>
+</div>
+
+<!-- Sidebar Mini Preview -->
+<div class="sidebar-preview">
+  <svg width="32" height="32" viewBox="0 0 100 100" id="mini" xmlns="http://www.w3.org/2000/svg">
+    <circle id="m-top" class="orb-circle" cx="50" cy="48" r="28" fill="url(#g-merged)"/>
+    <circle id="m-bl"  class="orb-circle" cx="50" cy="48" r="28" fill="url(#g-cap)" style="opacity:0"/>
+    <circle id="m-br"  class="orb-circle" cx="50" cy="48" r="28" fill="url(#g-exp)" style="opacity:0"/>
+    <circle id="mCenterGlow" cx="50" cy="48" r="8" fill="url(#g-center)" opacity="0"/>
+    <circle id="mCenterCore" cx="50" cy="48" r="4" fill="rgba(232,224,255,0.9)" opacity="0"/>
+    <g id="mTriGroup">
+      <path class="m-arc" d="M 40,42.3 A 20,20 0 0,1 60,42.3"
+            fill="none" stroke="#b0a0ff" stroke-width="2.5" stroke-linecap="round"
+            stroke-dasharray="21" stroke-dashoffset="21"/>
+      <path class="m-arc" d="M 60,42.3 A 20,20 0 0,1 50,59.6"
+            fill="none" stroke="#70f0c0" stroke-width="2.5" stroke-linecap="round"
+            stroke-dasharray="21" stroke-dashoffset="21"/>
+      <path class="m-arc" d="M 50,59.6 A 20,20 0 0,1 40,42.3"
+            fill="none" stroke="#d0b0f8" stroke-width="2.5" stroke-linecap="round"
+            stroke-dasharray="21" stroke-dashoffset="21"/>
+    </g>
+  </svg>
+  <span class="lbl">ACE</span>
+</div>
+
+<!-- Phase Descriptions -->
+<div class="descriptions">
+  <div class="d"><strong>0 — Orb:</strong> Resting. Single merged orb, breathing glow. System idle.</div>
+  <div class="d"><strong>1 — Triad:</strong> Awakening. Orb splits into Authority + Capacity + Expansion.</div>
+  <div class="d"><strong>2 — Triangle:</strong> Emerging. Curvilinear void appears and grows. Streaming begins.</div>
+  <div class="d"><strong>3 — Engine:</strong> Running. Triangle spins clockwise, accelerating. Full power.</div>
+  <div class="d"><strong>↓ Wind Down:</strong> Graceful decay. Spin decelerates. Triangle fades. Circles re-emerge and merge. Glow contracts last.</div>
+</div>
+
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// ACE Engine Animation — Concept Prototype
+// ═══════════════════════════════════════════════════════════
+//
+// Ramp Up:   Orb → Triad → Triangle → Spinning Engine
+// Wind Down: Spin decelerates → Triangle fades → Triad re-emerges → Orb
+//
+// Asymmetric: ramp-up is sequential ignition, wind-down is
+// overlapping graceful decay (turbine spool-down).
+
+// Theme color configs
+const THEMES = {
+  dark: {
+    sfx: '',   // gradient ID suffix
+    arcs: ['#b0a0ff', '#70f0c0', '#d0b0f8'],
+    dots: 'rgba(255,255,255,0.65)',
+    glowC1: '136,120,255',   // purple channel
+    glowC2: '96,216,168',    // teal channel
+  },
+  light: {
+    sfx: '-light',
+    arcs: ['#4a38a0', '#1a7858', '#6a3898'],
+    dots: 'rgba(60,40,120,0.55)',
+    glowC1: '90,60,180',
+    glowC2: '30,130,90',
+  },
+};
+
+const E = {
+  phase: 0,
+  running: false,
+  winding: false,
+  theme: 'dark',
+
+  // ── Spin (JS-driven via rAF) ──
+  spin: { angle: 0, speed: 0, target: 0 },
+
+  // ── Center coherence orb ──
+  center: {
+    opacity: 0,  tOpacity: 0,
+    glowR:   4,  tGlowR:   4,
+  },
+
+  // ── Triangle (JS-driven via rAF) ──
+  tri: {
+    opacity:    0,    tOpacity:    0,
+    scale:      0.3,  tScale:      0.3,
+    dashOffset: 21,   tDashOffset: 21,
+    strokeW:    1.2,  tStrokeW:    1.2,
+    arcAlpha:   0.6,  tArcAlpha:   0.6,
+  },
+
+  // ── Glow (JS-driven via rAF) ──
+  glow: {
+    r1: 8,    tR1: 8,
+    a1: 0.25, tA1: 0.25,
+    r2: 18,   tR2: 18,
+    a2: 0.12, tA2: 0.12,
+  },
+
+  // ── DOM cache ──
+  el: {},
+  lastT: 0,
+
+  // ═══════════════════════════════════
+  // INIT
+  // ═══════════════════════════════════
+  init() {
+    const q = s => document.querySelector(s);
+    const qa = s => document.querySelectorAll(s);
+    this.el = {
+      logo: q('#logo'), mini: q('#mini'),
+      triG: q('#triGroup'), mTriG: q('#mTriGroup'),
+      cT: q('#c-top'), cL: q('#c-bl'), cR: q('#c-br'),
+      mT: q('#m-top'), mL: q('#m-bl'), mR: q('#m-br'),
+      arcs: qa('.tri-arc'), mArcs: qa('.m-arc'),
+      cGlow: q('#centerGlow'), cCore: q('#centerCore'),
+      mcGlow: q('#mCenterGlow'), mcCore: q('#mCenterCore'),
+      trail1: q('#trail1'), trail2: q('#trail2'),
+      status: q('#status'),
+      btnGo: q('#btnStart'), btnStop: q('#btnStop'),
+      phases: qa('.ph'),
+    };
+    this.lastT = performance.now();
+    this.tick();
+  },
+
+  // ═══════════════════════════════════
+  // ANIMATION LOOP
+  // ═══════════════════════════════════
+  tick() {
+    const now = performance.now();
+    const dt = Math.min((now - this.lastT) / 1000, 0.05);
+    this.lastT = now;
+
+    // Spin — asymmetric lerp (fast accel, slow decel)
+    const sLerp = this.spin.speed < this.spin.target ? 0.04 : 0.015;
+    this.spin.speed = lerp(this.spin.speed, this.spin.target, sLerp, dt);
+    if (Math.abs(this.spin.speed) < 0.5 && this.spin.target === 0) this.spin.speed = 0;
+    this.spin.angle = (this.spin.angle + this.spin.speed * dt) % 360;
+
+    // Center coherence orb
+    const cn = this.center;
+    cn.opacity = dlerp(cn.opacity, cn.tOpacity, 0.04, 0.015, dt);
+    cn.glowR   = dlerp(cn.glowR,  cn.tGlowR,   0.035, 0.015, dt);
+
+    // Triangle — directional lerp (faster in, slower out)
+    const t = this.tri;
+    t.opacity    = dlerp(t.opacity,    t.tOpacity,    0.045, 0.018, dt);
+    t.scale      = dlerp(t.scale,      t.tScale,      0.04,  0.012, dt);
+    t.dashOffset = dlerp(t.dashOffset, t.tDashOffset, 0.035, 0.022, dt);
+    t.strokeW    = dlerp(t.strokeW,    t.tStrokeW,    0.03,  0.02,  dt);
+    t.arcAlpha   = dlerp(t.arcAlpha,   t.tArcAlpha,   0.03,  0.02,  dt);
+
+    // Glow
+    const g = this.glow;
+    g.r1 = lerp(g.r1, g.tR1, 0.02, dt);
+    g.a1 = lerp(g.a1, g.tA1, 0.02, dt);
+    g.r2 = lerp(g.r2, g.tR2, 0.02, dt);
+    g.a2 = lerp(g.a2, g.tA2, 0.02, dt);
+
+    // Breath pulse (frequency scales with phase)
+    const breathHz = this.phase >= 3 ? 1.1 : 0.4;
+    const breath = Math.sin(now / 1000 * breathHz * Math.PI * 2) * 0.5 + 0.5; // 0..1
+
+    this.render(breath);
+    requestAnimationFrame(() => this.tick());
+  },
+
+  // ═══════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════
+  render(breath) {
+    const { el, spin, tri, glow } = this;
+
+    // ── Triangle group transform (rotate + scale around centroid 50,48) ──
+    const xf = `translate(50,48) rotate(${spin.angle}) scale(${tri.scale}) translate(-50,-48)`;
+    el.triG.setAttribute('transform', xf);
+    el.triG.style.opacity = tri.opacity;
+    el.mTriG.setAttribute('transform', xf);
+    el.mTriG.style.opacity = tri.opacity;
+
+    // ── Arc strokes ──
+    el.arcs.forEach(a => {
+      a.setAttribute('stroke-dashoffset', tri.dashOffset);
+      a.setAttribute('stroke-width', tri.strokeW);
+      a.setAttribute('stroke-opacity', tri.arcAlpha);
+    });
+    el.mArcs.forEach(a => {
+      a.setAttribute('stroke-dashoffset', tri.dashOffset);
+      a.setAttribute('stroke-width', tri.strokeW + 1);
+      a.setAttribute('stroke-opacity', tri.arcAlpha);
+    });
+
+    // ── Spin trails (motion blur behind the triangle) ──
+    const trailIntensity = Math.min(1, spin.speed / 120); // trails appear at higher speeds
+    if (trailIntensity > 0.02) {
+      // Trail 1: 18° behind, 40% opacity
+      const t1xf = `translate(50,48) rotate(${spin.angle - 18}) scale(${tri.scale}) translate(-50,-48)`;
+      el.trail1.setAttribute('transform', t1xf);
+      el.trail1.style.opacity = tri.opacity * trailIntensity * 0.4;
+
+      // Trail 2: 36° behind, 15% opacity
+      const t2xf = `translate(50,48) rotate(${spin.angle - 36}) scale(${tri.scale}) translate(-50,-48)`;
+      el.trail2.setAttribute('transform', t2xf);
+      el.trail2.style.opacity = tri.opacity * trailIntensity * 0.15;
+    } else {
+      el.trail1.style.opacity = 0;
+      el.trail2.style.opacity = 0;
+    }
+
+    // ── Center coherence orb ──
+    const cn = this.center;
+    if (cn.opacity > 0.01) {
+      const csfx = this.theme === 'light' ? '-light' : '';
+      const now = performance.now();
+      // Glow radius pulses — faster and more dramatic at higher spin speeds
+      const pulseHz = 1.2 + (spin.speed / 200) * 1.5;  // 1.2Hz → 2.7Hz at full speed
+      const pulseAmp = 2 + (spin.speed / 200) * 3;      // ±2 → ±5 at full speed
+      const grPulse = Math.sin(now / 1000 * pulseHz * Math.PI * 2) * pulseAmp;
+      const gr = cn.glowR + grPulse;
+
+      el.cGlow.setAttribute('r', Math.max(2, gr).toFixed(1));
+      el.cGlow.setAttribute('fill', `url(#g-center${csfx})`);
+      el.cGlow.style.opacity = cn.opacity;
+      el.cCore.style.opacity = cn.opacity * 0.9;
+      el.mcGlow.setAttribute('r', Math.max(2, gr).toFixed(1));
+      el.mcGlow.setAttribute('fill', `url(#g-center${csfx})`);
+      el.mcGlow.style.opacity = cn.opacity;
+      el.mcCore.style.opacity = cn.opacity * 0.9;
+    } else {
+      el.cGlow.style.opacity = 0;
+      el.cCore.style.opacity = 0;
+      el.mcGlow.style.opacity = 0;
+      el.mcCore.style.opacity = 0;
+    }
+
+    // ── Glow with breath modulation (theme-aware) ──
+    const tc = THEMES[this.theme];
+    const bm = breath * 0.2;
+    const r1 = glow.r1 + bm * 8;
+    const a1 = Math.min(1, glow.a1 + bm * 0.2);
+    const r2 = glow.r2 + bm * 14;
+    const a2 = Math.min(1, glow.a2 + bm * 0.12);
+    const f = `drop-shadow(0 0 ${r1.toFixed(1)}px rgba(${tc.glowC1},${a1.toFixed(3)})) `
+            + `drop-shadow(0 0 ${r2.toFixed(1)}px rgba(${tc.glowC2},${a2.toFixed(3)}))`;
+    el.logo.style.filter = f;
+    el.mini.style.filter = f;
+  },
+
+  // ═══════════════════════════════════
+  // PHASE INDICATOR
+  // ═══════════════════════════════════
+  setPhase(p) {
+    this.phase = p;
+    this.el.phases.forEach(el => {
+      const n = parseInt(el.dataset.p);
+      el.classList.toggle('active', n === p);
+      el.classList.toggle('passed', n < p);
+    });
+  },
+
+  // ═══════════════════════════════════
+  // THEME
+  // ═══════════════════════════════════
+  toggleTheme() {
+    this.theme = this.theme === 'dark' ? 'light' : 'dark';
+    document.body.classList.toggle('light', this.theme === 'light');
+    document.querySelector('.theme-toggle').textContent =
+      this.theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+    this.applyThemeColors();
+  },
+
+  applyThemeColors() {
+    const tc = THEMES[this.theme];
+    const sfx = tc.sfx;
+
+    // Arc strokes
+    const allArcs = [...this.el.arcs, ...this.el.mArcs];
+    allArcs.forEach((a, i) => {
+      a.setAttribute('stroke', tc.arcs[i % 3]);
+    });
+
+    // Tangent dots
+    document.querySelectorAll('.tri-dot').forEach(d => {
+      d.setAttribute('fill', tc.dots);
+    });
+
+    // Circle gradient fills (match current phase state)
+    const { cT, cL, cR, mT, mL, mR } = this.el;
+    if (this.phase === 0 && !this.winding) {
+      // Merged orb
+      cT.setAttribute('fill', `url(#g-merged${sfx})`);
+      mT.setAttribute('fill', `url(#g-merged${sfx})`);
+    } else if (this.phase >= 1) {
+      // Triad separated
+      cT.setAttribute('fill', `url(#g-auth${sfx})`);
+      mT.setAttribute('fill', `url(#g-auth${sfx})`);
+      cL.setAttribute('fill', `url(#g-cap${sfx})`);
+      mL.setAttribute('fill', `url(#g-cap${sfx})`);
+      cR.setAttribute('fill', `url(#g-exp${sfx})`);
+      mR.setAttribute('fill', `url(#g-exp${sfx})`);
+    }
+  },
+
+  // ═══════════════════════════════════
+  // RAMP UP
+  // ═══════════════════════════════════
+  startAgent() {
+    if (this.running || this.winding) return;
+    this.running = true;
+    this.el.btnGo.disabled = true;
+    this.el.btnStop.disabled = false;
+    this.p1();
+  },
+
+  // Phase 1: Orb → Triad (three balls separate)
+  p1() {
+    this.setPhase(1);
+    this.el.status.textContent = 'Triad Awakening';
+
+    // Show + separate all three circles
+    const { cT, cL, cR, mT, mL, mR } = this.el;
+    cL.style.opacity = '1';  cR.style.opacity = '1';
+    mL.style.opacity = '1';  mR.style.opacity = '1';
+
+    scp(cT, 50, 25, 20);   scp(mT, 50, 25, 20);
+    scp(cL, 30, 59.6, 20); scp(mL, 30, 59.6, 20);
+    scp(cR, 70, 59.6, 20); scp(mR, 70, 59.6, 20);
+
+    const sfx = THEMES[this.theme].sfx;
+    cT.setAttribute('fill', `url(#g-auth${sfx})`);
+    mT.setAttribute('fill', `url(#g-auth${sfx})`);
+    cL.setAttribute('fill', `url(#g-cap${sfx})`);
+    mL.setAttribute('fill', `url(#g-cap${sfx})`);
+    cR.setAttribute('fill', `url(#g-exp${sfx})`);
+    mR.setAttribute('fill', `url(#g-exp${sfx})`);
+
+    // Slight glow increase
+    this.glow.tR1 = 10; this.glow.tA1 = 0.3;
+    this.glow.tR2 = 22; this.glow.tA2 = 0.16;
+
+    setTimeout(() => { if (this.running) this.p2(); }, 900);
+  },
+
+  // Phase 2: Triangle emerges (arcs draw in, scale up)
+  p2() {
+    this.setPhase(2);
+    this.el.status.textContent = 'Triangle Emerging';
+
+    this.tri.tOpacity = 1;
+    this.tri.tDashOffset = 0;
+    this.tri.tScale = 1;
+    this.tri.tArcAlpha = 0.7;
+
+    this.glow.tR1 = 14; this.glow.tA1 = 0.4;
+    this.glow.tR2 = 30; this.glow.tA2 = 0.22;
+
+    setTimeout(() => { if (this.running) this.p3(); }, 800);
+  },
+
+  // Phase 3: Engine spins (accelerates in two stages)
+  p3() {
+    this.setPhase(3);
+    this.el.status.textContent = 'Engine Starting';
+
+    // Initial spin
+    this.spin.target = 80;
+
+    // Center orb ignites
+    this.center.tOpacity = 0.6;
+    this.center.tGlowR = 10;
+
+    // Dim circles — triangle takes focus
+    this.el.cT.style.opacity = '0.6';
+    this.el.cL.style.opacity = '0.6';
+    this.el.cR.style.opacity = '0.6';
+    this.el.mT.style.opacity = '0.6';
+    this.el.mL.style.opacity = '0.6';
+    this.el.mR.style.opacity = '0.6';
+
+    this.glow.tR1 = 18; this.glow.tA1 = 0.5;
+    this.glow.tR2 = 36; this.glow.tA2 = 0.32;
+
+    // Accelerate to full speed
+    this._accelTimer = setTimeout(() => {
+      if (!this.running || this.phase !== 3) return;
+      this.spin.target = 200;
+      this.center.tOpacity = 1;   // center orb full intensity
+      this.center.tGlowR = 18;   // big glow — the main event
+      this.tri.tScale = 1.15;
+      this.tri.tStrokeW = 2;
+      this.tri.tArcAlpha = 0.9;
+      this.el.status.textContent = 'Full Speed';
+
+      this.el.cT.style.opacity = '0.45';
+      this.el.cL.style.opacity = '0.45';
+      this.el.cR.style.opacity = '0.45';
+      this.el.mT.style.opacity = '0.45';
+      this.el.mL.style.opacity = '0.45';
+      this.el.mR.style.opacity = '0.45';
+
+      this.glow.tR1 = 30; this.glow.tA1 = 0.7;
+      this.glow.tR2 = 60; this.glow.tA2 = 0.5;
+    }, 2200);
+  },
+
+  // ═══════════════════════════════════
+  // GRACEFUL DECAY (Wind Down)
+  // ═══════════════════════════════════
+  stopAgent() {
+    if (!this.running || this.winding) return;
+    this.running = false;
+    this.winding = true;
+    clearTimeout(this._accelTimer);
+    this.el.btnStop.disabled = true;
+    this.el.status.textContent = 'Winding Down';
+
+    const { cT, cL, cR, mT, mL, mR } = this.el;
+
+    // 1. Spin decelerates (slow lerp — the "turbine tail")
+    this.spin.target = 0;
+
+    // Center orb fades
+    this.center.tOpacity = 0;
+    this.center.tGlowR = 4;
+
+    // 2. Triangle fades + shrinks + arcs retract
+    this.tri.tOpacity = 0;
+    this.tri.tScale = 0.6;
+    this.tri.tDashOffset = 21;
+    this.tri.tStrokeW = 0.8;
+    this.tri.tArcAlpha = 0.3;
+
+    // 3. Circles brighten back (crossfade with triangle)
+    cT.style.opacity = '1';  mT.style.opacity = '1';
+    cL.style.opacity = '1';  mL.style.opacity = '1';
+    cR.style.opacity = '1';  mR.style.opacity = '1';
+
+    // 4. Glow eases down
+    this.glow.tR1 = 10; this.glow.tA1 = 0.3;
+    this.glow.tR2 = 22; this.glow.tA2 = 0.16;
+
+    // 5. After triangle mostly gone — drift circles to center
+    setTimeout(() => {
+
+      scp(cT, 50, 48, 28); scp(mT, 50, 48, 28);
+      scp(cL, 50, 48, 28); scp(mL, 50, 48, 28);
+      scp(cR, 50, 48, 28); scp(mR, 50, 48, 28);
+
+      const sfx = THEMES[this.theme].sfx;
+      cT.setAttribute('fill', `url(#g-merged${sfx})`);
+      mT.setAttribute('fill', `url(#g-merged${sfx})`);
+    }, 1400);
+
+    // 6. Hide BL/BR (they've merged into the orb)
+    setTimeout(() => {
+      cL.style.opacity = '0'; cR.style.opacity = '0';
+      mL.style.opacity = '0'; mR.style.opacity = '0';
+
+      this.glow.tR1 = 8;  this.glow.tA1 = 0.25;
+      this.glow.tR2 = 18; this.glow.tA2 = 0.12;
+    }, 1800);
+
+    // 7. Final resting state
+    setTimeout(() => {
+      this.winding = false;
+      this.setPhase(0);
+      this.el.status.textContent = 'Resting';
+      this.el.btnGo.disabled = false;
+      this.tri.scale = 0.3;
+      this.tri.dashOffset = 21;
+      this.center.opacity = 0;
+      this.center.glowR = 4;
+    }, 2800);
+  },
+};
+
+// ─── Helpers ───
+
+// Frame-rate independent lerp
+function lerp(cur, target, factor, dt) {
+  return cur + (target - cur) * (1 - Math.pow(1 - factor, dt * 60));
+}
+
+// Directional lerp: different rates for increasing vs decreasing
+function dlerp(cur, target, upRate, downRate, dt) {
+  const rate = cur < target ? upRate : downRate;
+  return lerp(cur, target, rate, dt);
+}
+
+// Set circle position
+function scp(el, cx, cy, r) {
+  el.setAttribute('cx', cx);
+  el.setAttribute('cy', cy);
+  el.setAttribute('r', r);
+}
+
+// ─── Boot ───
+E.init();
+</script>
+
+</body>
+</html>
