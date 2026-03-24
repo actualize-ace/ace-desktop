@@ -79,4 +79,10 @@ contextBridge.exposeInMainWorld('ace', {
     buildGraph:      ()  => ipcRenderer.invoke(ch.VAULT_BUILD_GRAPH),
     invalidateGraph: ()  => ipcRenderer.invoke(ch.VAULT_GRAPH_INVALIDATE),
   },
+
+  // ─── Claude Settings (~/.claude/settings.json) ─────────────────────────────
+  claudeSettings: {
+    read:  ()        => ipcRenderer.invoke(ch.CLAUDE_SETTINGS_READ),
+    write: (content) => ipcRenderer.invoke(ch.CLAUDE_SETTINGS_WRITE, content),
+  },
 })

@@ -282,6 +282,19 @@ ipcMain.handle(ch.VAULT_WRITE_FILE, (_, filePath, content) => {
   catch (e) { return { error: e.message } }
 })
 
+// Claude settings (~/.claude/settings.json)
+const CLAUDE_SETTINGS_PATH = path.join(require('os').homedir(), '.claude', 'settings.json')
+
+ipcMain.handle(ch.CLAUDE_SETTINGS_READ, () => {
+  try { return fs.readFileSync(CLAUDE_SETTINGS_PATH, 'utf8') }
+  catch (e) { return { error: e.message } }
+})
+
+ipcMain.handle(ch.CLAUDE_SETTINGS_WRITE, (_, content) => {
+  try { fs.writeFileSync(CLAUDE_SETTINGS_PATH, content, 'utf8'); return { ok: true } }
+  catch (e) { return { error: e.message } }
+})
+
 ipcMain.handle(ch.VAULT_BUILD_GRAPH, () => {
   try { return require('./src/vault-scanner').buildGraph(global.VAULT_PATH) }
   catch (e) { return { error: e.message } }

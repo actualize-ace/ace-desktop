@@ -55,4 +55,8 @@ module.exports = {
   CHAT_STREAM:            'chat-stream',
   CHAT_ERROR:             'chat-error',
   CHAT_EXIT:              'chat-exit',
+
+  // Claude settings (~/.claude/settings.json)
+  CLAUDE_SETTINGS_READ:   'claude-settings-read',
+  CLAUDE_SETTINGS_WRITE:  'claude-settings-write',
 }
