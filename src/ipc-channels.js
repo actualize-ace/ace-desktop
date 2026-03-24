@@ -60,4 +60,9 @@ module.exports = {
   // Claude settings (~/.claude/settings.json)
   CLAUDE_SETTINGS_READ:   'claude-settings-read',
   CLAUDE_SETTINGS_WRITE:  'claude-settings-write',
+
+  // Chat History
+  HISTORY_LIST:           'history-list',
+  HISTORY_READ:           'history-read',
+  HISTORY_SEARCH:         'history-search',
 }

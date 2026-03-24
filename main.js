@@ -295,6 +295,20 @@ ipcMain.handle(ch.CLAUDE_SETTINGS_WRITE, (_, content) => {
   catch (e) { return { error: e.message } }
 })
 
+// ─── Chat History ─────────────────────────────────────────────────────────────
+ipcMain.handle(ch.HISTORY_LIST, (_, projectFilter, offset, limit) => {
+  try { return require('./src/session-reader').listSessions(projectFilter, offset, limit) }
+  catch (e) { return { error: e.message } }
+})
+ipcMain.handle(ch.HISTORY_READ, (_, project, sessionId) => {
+  try { return require('./src/session-reader').readSession(project, sessionId) }
+  catch (e) { return { error: e.message } }
+})
+ipcMain.handle(ch.HISTORY_SEARCH, (_, query, projectFilter) => {
+  try { return require('./src/session-reader').searchSessions(query, projectFilter) }
+  catch (e) { return { error: e.message } }
+})
+
 ipcMain.handle(ch.VAULT_BUILD_GRAPH, () => {
   try { return require('./src/vault-scanner').buildGraph(global.VAULT_PATH) }
   catch (e) { return { error: e.message } }

@@ -1138,6 +1138,134 @@
       fill: var(--text-secondary); pointer-events: none;
       opacity: 0;
     }
+    /* ── HISTORY VIEW ── */
+    .history-body { flex: 1; display: flex; overflow: hidden; }
+    .history-list {
+      width: 320px; flex-shrink: 0; overflow-y: auto; overflow-x: hidden;
+      border-right: 1px solid var(--border); padding: 0;
+    }
+    .history-list::-webkit-scrollbar { width: 3px; }
+    .history-list::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
+    .history-search {
+      width: 180px; padding: 4px 10px; border-radius: 6px;
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      color: var(--text-primary); outline: none;
+      font-family: 'JetBrains Mono', monospace; font-size: 9px;
+      transition: border-color 0.14s;
+    }
+    .history-search:focus { border-color: rgba(136,120,255,0.3); }
+    .history-search::placeholder { color: var(--text-dim); }
+    .history-project-select {
+      padding: 3px 8px; border-radius: 6px;
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      color: var(--text-secondary); outline: none;
+      font-family: 'JetBrains Mono', monospace; font-size: 8px;
+      cursor: pointer;
+    }
+    .history-date-group {
+      font-family: 'JetBrains Mono', monospace; font-size: 7.5px;
+      letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim);
+      padding: 12px 14px 4px; position: sticky; top: 0;
+      background: var(--bg-surface); z-index: 1;
+    }
+    .history-item {
+      display: flex; flex-direction: column; gap: 2px;
+      padding: 10px 14px; cursor: pointer;
+      border-bottom: 1px solid rgba(140,120,255,0.04);
+      transition: all 0.12s;
+    }
+    .history-item:hover { background: rgba(136,120,255,0.05); }
+    .history-item.active { background: rgba(136,120,255,0.08); }
+    .history-item-title {
+      font-size: 11.5px; color: var(--text-primary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      line-height: 1.3;
+    }
+    .history-item.active .history-item-title { color: var(--gold); }
+    .history-item-meta {
+      display: flex; gap: 8px; align-items: center;
+      font-family: 'JetBrains Mono', monospace; font-size: 7.5px;
+      color: var(--text-dim);
+    }
+    .history-item-tag {
+      padding: 1px 5px; border-radius: 3px;
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      white-space: nowrap; font-size: 7px;
+    }
+    .history-load-more {
+      display: flex; justify-content: center; padding: 12px;
+      font-family: 'JetBrains Mono', monospace; font-size: 8px;
+      color: var(--text-dim); cursor: pointer;
+    }
+    .history-load-more:hover { color: var(--text-secondary); }
+    .history-detail {
+      flex: 1; overflow-y: auto; padding: 0;
+    }
+    .history-detail::-webkit-scrollbar { width: 3px; }
+    .history-detail::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
+    .history-detail-header {
+      position: sticky; top: 0; z-index: 2;
+      padding: 16px 24px; background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+    }
+    .history-detail-title {
+      font-family: 'Space Grotesk', sans-serif; font-size: 14px;
+      font-weight: 500; color: var(--text-primary); margin-bottom: 6px;
+    }
+    .history-detail-meta {
+      display: flex; flex-wrap: wrap; gap: 12px;
+      font-family: 'JetBrains Mono', monospace; font-size: 8px;
+      color: var(--text-dim);
+    }
+    .history-transcript {
+      padding: 16px 24px; display: flex; flex-direction: column; gap: 16px;
+    }
+    .history-msg { display: flex; flex-direction: column; gap: 4px; }
+    .history-msg-label {
+      font-family: 'JetBrains Mono', monospace; font-size: 8px;
+      letter-spacing: 1px; text-transform: uppercase; color: var(--text-dim);
+    }
+    .history-msg-user .history-msg-content {
+      background: linear-gradient(135deg, rgba(136,120,255,0.08), rgba(200,160,240,0.04));
+      border: 1px solid rgba(136,120,255,0.12);
+      border-radius: 10px; padding: 10px 14px;
+      font-size: 12.5px; line-height: 1.6; color: var(--text-primary);
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .history-msg-assistant .history-msg-content {
+      font-size: 12.5px; line-height: 1.75; color: var(--text-primary);
+      padding: 4px 0;
+    }
+    .history-msg-assistant .history-msg-content pre {
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: 6px; padding: 10px 12px; overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    }
+    .history-msg-assistant .history-msg-content code {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    }
+    .history-msg-assistant .history-msg-content p { margin: 0 0 8px 0; }
+    .history-msg-assistant .history-msg-content p:last-child { margin-bottom: 0; }
+    .history-tool-summary {
+      border: 1px solid var(--border); border-radius: 6px;
+      margin: 6px 0; overflow: hidden;
+    }
+    .history-tool-header {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 10px; cursor: pointer;
+      font-family: 'JetBrains Mono', monospace; font-size: 8.5px;
+      color: var(--text-dim); transition: background 0.12s;
+    }
+    .history-tool-header:hover { background: rgba(136,120,255,0.03); }
+    .history-tool-summary.collapsed .history-tool-detail { display: none; }
+    .history-tool-detail {
+      padding: 0 10px 8px;
+      font-family: 'JetBrains Mono', monospace; font-size: 9px;
+      color: var(--text-dim); max-height: 150px; overflow: auto;
+    }
+    .history-tool-detail pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
+
     /* ── AGENTS VIEW ── */
     .agents-workspace { display:flex; flex:1; overflow:hidden; }
     .agents-roster { width:148px; flex-shrink:0; border-right:1px solid var(--glass-border); background:rgba(10,12,22,0.92); backdrop-filter:var(--glass-blur); overflow-y:auto; display:flex; flex-direction:column; }
@@ -2418,6 +2546,10 @@
         <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="7" r="3"/><path d="M9 13c-4 0-6 2-6 4v1h12v-1c0-2-2-4-6-4z"/><circle cx="17" cy="9" r="2.5"/><path d="M17 13.5c-2 0-4 1.2-4 2.5"/></svg>
         People
       </div>
+      <div class="nav-item" data-view="history">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        History
+      </div>
       <div class="nav-item" data-view="pipeline">
         <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         Pipeline
@@ -2634,6 +2766,27 @@
           </div>
           <div class="people-graph" id="people-graph" style="display:none">
             <div class="vault-empty" id="people-graph-empty">Loading graph...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORY VIEW -->
+      <div class="view" id="view-history">
+        <div class="view-header">
+          <div class="view-title">Chat History</div>
+          <div class="view-actions" style="gap:8px">
+            <input type="text" class="history-search" id="history-search" placeholder="Search sessions..." />
+            <select class="history-project-select" id="history-project-select">
+              <option value="">All Projects</option>
+            </select>
+          </div>
+        </div>
+        <div class="history-body" id="history-body">
+          <div class="history-list" id="history-list">
+            <div class="vault-empty">Loading...</div>
+          </div>
+          <div class="history-detail" id="history-detail">
+            <div class="vault-empty">Select a session</div>
           </div>
         </div>
       </div>
@@ -2860,6 +3013,7 @@ navItems.forEach(item => {
     else if (view === 'vault' && !vaultInitialized) initVault()
     else if (view === 'graph' && !graphInitialized) initGraph()
     else if (view === 'people' && !peopleInitialized) initPeople()
+    else if (view === 'history' && !historyInitialized) initHistory()
     else if (view === 'agents' && !agentsInitialized) {
       agentsInitialized = true
       spawnAgentPane('top')
@@ -4390,6 +4544,269 @@ document.addEventListener('visibilitychange', () => {
 })
 window.addEventListener('focus', () => setTimeout(onWindowRegainFocus, 50))
 
+// ─── Chat History ─────────────────────────────────────────────────────────────
+let historyInitialized = false
+let historySessionsList = []
+let historyProjects = []
+let historyTotal = 0
+let historyOffset = 0
+let historyActiveProject = null
+let historyActiveSession = null
+
+function formatTokens(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M tok'
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k tok'
+  return n + ' tok'
+}
+
+function formatDuration(ms) {
+  const mins = Math.floor(ms / 60000)
+  if (mins < 60) return mins + 'm'
+  return Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm'
+}
+
+function formatFileSize(bytes) {
+  if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + ' MB'
+  if (bytes >= 1024) return (bytes / 1024).toFixed(0) + ' KB'
+  return bytes + ' B'
+}
+
+async function initHistory() {
+  if (historyInitialized) return
+  historyInitialized = true
+
+  const listEl = document.getElementById('history-list')
+  listEl.innerHTML = '<div class="vault-empty">Scanning sessions...</div>'
+
+  // Derive current project from vault path
+  const cfg = await window.ace.setup.getConfig()
+  const vaultPath = cfg?.vaultPath || ''
+  const defaultProject = '-' + vaultPath.replace(/\//g, '-').replace(/^-/, '')
+
+  const data = await window.ace.history.list(null, 0, 50)
+  if (data.error) {
+    listEl.innerHTML = `<div class="vault-empty">${escapeHtml(data.error)}</div>`
+    return
+  }
+
+  historySessionsList = data.sessions
+  historyProjects = data.projects
+  historyTotal = data.total
+  historyOffset = 50
+
+  // Populate project dropdown
+  const select = document.getElementById('history-project-select')
+  select.innerHTML = `<option value="">All Projects (${data.total})</option>` +
+    data.projects.map(p => {
+      const label = p.replace(/-/g, '/').replace(/^\//, '').split('/').slice(-2).join('/')
+      return `<option value="${escapeHtml(p)}">${escapeHtml(label)}</option>`
+    }).join('')
+
+  // Auto-filter to current vault's project if found
+  if (data.projects.includes(defaultProject)) {
+    select.value = defaultProject
+    historyActiveProject = defaultProject
+    const filtered = await window.ace.history.list(defaultProject, 0, 50)
+    if (!filtered.error) {
+      historySessionsList = filtered.sessions
+      historyTotal = filtered.total
+      historyOffset = 50
+    }
+  }
+
+  renderHistoryList()
+
+  // Event listeners
+  select.addEventListener('change', async () => {
+    const project = select.value || null
+    historyActiveProject = project
+    historyOffset = 0
+    const d = await window.ace.history.list(project, 0, 50)
+    if (d.error) return
+    historySessionsList = d.sessions
+    historyTotal = d.total
+    historyOffset = 50
+    renderHistoryList()
+    document.getElementById('history-detail').innerHTML = '<div class="vault-empty">Select a session</div>'
+  })
+
+  let searchTimer
+  document.getElementById('history-search').addEventListener('input', () => {
+    clearTimeout(searchTimer)
+    searchTimer = setTimeout(async () => {
+      const query = document.getElementById('history-search').value.trim()
+      if (!query) {
+        const d = await window.ace.history.list(historyActiveProject, 0, 50)
+        if (!d.error) {
+          historySessionsList = d.sessions
+          historyTotal = d.total
+          historyOffset = 50
+          renderHistoryList()
+        }
+        return
+      }
+      const results = await window.ace.history.search(query, historyActiveProject)
+      if (results && !results.error) {
+        historySessionsList = Array.isArray(results) ? results : results.sessions || []
+        historyTotal = historySessionsList.length
+        historyOffset = historyTotal
+        renderHistoryList()
+      }
+    }, 300)
+  })
+}
+
+function renderHistoryList() {
+  const listEl = document.getElementById('history-list')
+  if (!historySessionsList.length) {
+    listEl.innerHTML = '<div class="vault-empty">No sessions found</div>'
+    return
+  }
+
+  const todayStart = new Date().setHours(0, 0, 0, 0)
+  const yesterdayStart = todayStart - 86400000
+  const weekStart = todayStart - 6 * 86400000
+
+  let html = ''
+  let currentGroup = ''
+
+  for (const s of historySessionsList) {
+    let group
+    if (s.mtime >= todayStart) group = 'Today'
+    else if (s.mtime >= yesterdayStart) group = 'Yesterday'
+    else if (s.mtime >= weekStart) group = 'This Week'
+    else group = new Date(s.mtime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
+    if (group !== currentGroup) {
+      currentGroup = group
+      html += `<div class="history-date-group">${escapeHtml(group)}</div>`
+    }
+
+    const time = new Date(s.mtime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    const title = s.title || s.slug || 'Untitled session'
+    const modelShort = s.model ? s.model.replace('claude-', '').replace(/-\d{8}$/, '') : ''
+    const modelTag = modelShort ? `<span class="history-item-tag">${escapeHtml(modelShort)}</span>` : ''
+    const branchTag = s.gitBranch ? `<span class="history-item-tag">${escapeHtml(s.gitBranch)}</span>` : ''
+    const tokens = s.tokenCount ? formatTokens(s.tokenCount) : ''
+
+    html += `
+      <div class="history-item" data-project="${escapeHtml(s.project)}" data-id="${escapeHtml(s.id)}">
+        <div class="history-item-title">${escapeHtml(title)}</div>
+        <div class="history-item-meta">
+          <span>${time}</span>
+          ${modelTag}${branchTag}
+          ${tokens ? `<span>${tokens}</span>` : ''}
+        </div>
+      </div>`
+  }
+
+  if (historyOffset < historyTotal) {
+    html += `<div class="history-load-more" id="history-load-more">Load more (${historyTotal - historyOffset} remaining)</div>`
+  }
+
+  listEl.innerHTML = html
+
+  // Click handlers
+  listEl.querySelectorAll('.history-item').forEach(item => {
+    item.addEventListener('click', () => {
+      listEl.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'))
+      item.classList.add('active')
+      openSessionDetail(item.dataset.project, item.dataset.id)
+    })
+  })
+
+  // Load more
+  const loadMoreEl = document.getElementById('history-load-more')
+  if (loadMoreEl) {
+    loadMoreEl.addEventListener('click', async () => {
+      const d = await window.ace.history.list(historyActiveProject, historyOffset, 50)
+      if (d.error) return
+      historySessionsList = historySessionsList.concat(d.sessions)
+      historyOffset += 50
+      renderHistoryList()
+    })
+  }
+}
+
+async function openSessionDetail(project, sessionId) {
+  const detailEl = document.getElementById('history-detail')
+  detailEl.innerHTML = '<div class="vault-empty">Loading transcript...</div>'
+  historyActiveSession = { project, sessionId }
+
+  const data = await window.ace.history.read(project, sessionId)
+  if (data.error) {
+    detailEl.innerHTML = `<div class="vault-empty">${escapeHtml(data.error)}</div>`
+    return
+  }
+
+  const meta = data.meta || {}
+  const firstMsg = data.messages.find(m => m.role === 'user')
+  const title = firstMsg?.content?.slice(0, 120) || meta.slug || 'Untitled'
+  const duration = meta.duration ? formatDuration(meta.duration) : ''
+  const modelShort = meta.model ? meta.model.replace('claude-', '').replace(/-\d{8}$/, '') : ''
+
+  let headerHtml = `
+    <div class="history-detail-header">
+      <div class="history-detail-title">${escapeHtml(title)}</div>
+      <div class="history-detail-meta">
+        ${modelShort ? `<span>Model: ${escapeHtml(modelShort)}</span>` : ''}
+        ${meta.slug ? `<span>Slug: ${escapeHtml(meta.slug)}</span>` : ''}
+        ${meta.gitBranch ? `<span>Branch: ${escapeHtml(meta.gitBranch)}</span>` : ''}
+        ${meta.tokens ? `<span>Tokens: ${formatTokens(meta.tokens.input + meta.tokens.output)}</span>` : ''}
+        ${duration ? `<span>Duration: ${duration}</span>` : ''}
+        ${meta.fileSize ? `<span>Size: ${formatFileSize(meta.fileSize)}</span>` : ''}
+        <span>${data.messages.length} messages</span>
+        ${meta.truncated ? '<span style="color:var(--red)">Truncated</span>' : ''}
+      </div>
+    </div>`
+
+  let transcriptHtml = '<div class="history-transcript">'
+  for (const msg of data.messages) {
+    const roleClass = msg.role === 'user' ? 'history-msg-user' : 'history-msg-assistant'
+    const label = msg.role === 'user' ? 'YOU' : 'CLAUDE'
+    const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' }) : ''
+
+    let contentHtml
+    if (msg.role === 'user') {
+      contentHtml = `<div class="history-msg-content">${escapeHtml(msg.content)}</div>`
+    } else {
+      // Render markdown for assistant messages
+      try {
+        const raw = marked.parse(msg.content || '')
+        const safe = DOMPurify.sanitize(raw)
+        contentHtml = `<div class="history-msg-content md-body">${safe}</div>`
+      } catch {
+        contentHtml = `<div class="history-msg-content">${escapeHtml(msg.content || '')}</div>`
+      }
+    }
+
+    // Tool calls (collapsed by default)
+    let toolsHtml = ''
+    if (msg.toolCalls && msg.toolCalls.length > 0) {
+      toolsHtml = msg.toolCalls.map(tc => `
+        <div class="history-tool-summary collapsed">
+          <div class="history-tool-header" onclick="this.parentElement.classList.toggle('collapsed')">
+            <span style="font-size:10px">&#9889;</span>
+            <span>${escapeHtml(tc.name)}</span>
+            <span style="margin-left:auto;font-size:7px">&#x25B8;</span>
+          </div>
+          <div class="history-tool-detail"><pre>${escapeHtml(tc.input)}</pre></div>
+        </div>`).join('')
+    }
+
+    transcriptHtml += `
+      <div class="history-msg ${roleClass}">
+        <div class="history-msg-label">${label}${time ? ` <span style="opacity:0.5;margin-left:8px">${time}</span>` : ''}</div>
+        ${contentHtml}
+        ${toolsHtml}
+      </div>`
+  }
+  transcriptHtml += '</div>'
+
+  detailEl.innerHTML = headerHtml + transcriptHtml
+  detailEl.scrollTop = 0
+}
+
 // ─── Agent Sessions ───────────────────────────────────────────────────────────
 const agentSessions = {}
 let focusedAgentId   = null
@@ -5440,6 +5857,265 @@ function highlightGraphCategory(catName) {
     const tgtMatch = (peopleData?.people?.find(p => p.fileName === tgt)?.category === catName)
     return srcMatch && tgtMatch ? 0.5 : tgt.startsWith('_hub_') && tgt.includes(catName.toLowerCase().replace(/\s+/g, '-')) ? 0.5 : 0.03
   })
+}
+
+// ─── History View ─────────────────────────────────────────────────────────────
+let historyInitialized = false
+let historySessionsList = []
+let historyProjects = []
+let historyTotal = 0
+let historyOffset = 0
+let historyActiveProject = null
+let historyActiveSession = null
+
+function formatTokens(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M tok'
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k tok'
+  return n + ' tok'
+}
+
+function formatDuration(ms) {
+  const mins = Math.floor(ms / 60000)
+  if (mins < 60) return mins + 'm'
+  return Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm'
+}
+
+function renderHistoryList() {
+  const listEl = document.getElementById('history-list')
+  if (!historySessionsList.length) {
+    listEl.innerHTML = '<div class="vault-empty">No sessions found</div>'
+    return
+  }
+
+  const todayStart = new Date().setHours(0,0,0,0)
+  const yesterdayStart = todayStart - 86400000
+  const weekStart = todayStart - 6 * 86400000
+
+  let html = ''
+  let currentGroup = ''
+
+  for (const s of historySessionsList) {
+    let group
+    if (s.mtime >= todayStart) group = 'Today'
+    else if (s.mtime >= yesterdayStart) group = 'Yesterday'
+    else if (s.mtime >= weekStart) group = 'This Week'
+    else group = new Date(s.mtime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
+    if (group !== currentGroup) {
+      currentGroup = group
+      html += `<div class="history-date-group">${escapeHtml(group)}</div>`
+    }
+
+    const time = new Date(s.mtime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    const title = s.title || s.slug || 'Untitled session'
+    const modelTag = s.model ? `<span class="history-item-tag">${escapeHtml(s.model.replace('claude-', ''))}</span>` : ''
+    const branchTag = s.gitBranch ? `<span class="history-item-tag">${escapeHtml(s.gitBranch)}</span>` : ''
+    const tokens = s.tokenCount ? formatTokens(s.tokenCount) : ''
+
+    html += `
+      <div class="history-item" data-project="${escapeHtml(s.project)}" data-id="${escapeHtml(s.id)}">
+        <div class="history-item-title">${escapeHtml(title)}</div>
+        <div class="history-item-meta">
+          <span>${time}</span>
+          ${modelTag}${branchTag}
+          ${tokens ? `<span>${tokens}</span>` : ''}
+        </div>
+      </div>`
+  }
+
+  if (historyOffset < historyTotal) {
+    html += `<div class="history-load-more" id="history-load-more">Load more (${historyTotal - historyOffset} remaining)</div>`
+  }
+
+  listEl.innerHTML = html
+
+  listEl.querySelectorAll('.history-item').forEach(item => {
+    item.addEventListener('click', () => {
+      listEl.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'))
+      item.classList.add('active')
+      openSessionDetail(item.dataset.project, item.dataset.id)
+    })
+  })
+
+  const loadMoreEl = document.getElementById('history-load-more')
+  if (loadMoreEl) loadMoreEl.addEventListener('click', loadMoreSessions)
+}
+
+async function loadMoreSessions() {
+  const data = await window.ace.history.list(historyActiveProject, historyOffset, 50)
+  if (data.error) return
+  historySessionsList = historySessionsList.concat(data.sessions)
+  historyOffset += 50
+  renderHistoryList()
+}
+
+async function openSessionDetail(project, sessionId) {
+  const detailEl = document.getElementById('history-detail')
+  detailEl.innerHTML = '<div class="vault-empty">Loading transcript...</div>'
+  historyActiveSession = { project, sessionId }
+
+  const data = await window.ace.history.read(project, sessionId)
+  if (data.error) {
+    detailEl.innerHTML = `<div class="vault-empty">${escapeHtml(data.error)}</div>`
+    return
+  }
+
+  const meta = data.meta || {}
+  const firstMsg = data.messages.find(m => m.role === 'user')
+  const title = firstMsg?.content?.slice(0, 120) || meta.slug || 'Untitled'
+  const duration = meta.duration ? formatDuration(meta.duration) : ''
+
+  let headerHtml = `
+    <div class="history-detail-header">
+      <div class="history-detail-title">${escapeHtml(title)}</div>
+      <div class="history-detail-meta">
+        ${meta.model ? `<span>Model: ${escapeHtml(meta.model.replace('claude-', ''))}</span>` : ''}
+        ${meta.slug ? `<span>Slug: ${escapeHtml(meta.slug)}</span>` : ''}
+        ${meta.gitBranch ? `<span>Branch: ${escapeHtml(meta.gitBranch)}</span>` : ''}
+        ${meta.tokens ? `<span>Tokens: ${formatTokens(meta.tokens.input + meta.tokens.output)}</span>` : ''}
+        ${duration ? `<span>Duration: ${duration}</span>` : ''}
+        <span>${data.messages.length} messages</span>
+      </div>
+    </div>`
+
+  let transcriptHtml = '<div class="history-transcript">'
+  for (const msg of data.messages) {
+    const roleClass = msg.role === 'user' ? 'history-msg-user' : 'history-msg-assistant'
+    const label = msg.role === 'user' ? 'YOU' : 'ASSISTANT'
+    const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', second:'2-digit' }) : ''
+
+    let contentHtml
+    if (msg.role === 'user') {
+      contentHtml = `<div class="history-msg-content">${escapeHtml(msg.content)}</div>`
+    } else {
+      // Render markdown for assistant messages
+      let rendered = ''
+      try {
+        if (typeof marked !== 'undefined') {
+          const raw = marked.parse(msg.content || '')
+          rendered = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(raw) : raw
+        } else {
+          rendered = escapeHtml(msg.content || '')
+        }
+      } catch { rendered = escapeHtml(msg.content || '') }
+      contentHtml = `<div class="history-msg-content">${rendered}</div>`
+    }
+
+    let toolsHtml = ''
+    if (msg.toolCalls && msg.toolCalls.length > 0) {
+      toolsHtml = msg.toolCalls.map(tc => {
+        const truncated = tc.input.length > 500 ? tc.input.slice(0, 500) + '...' : tc.input
+        return `<div class="history-tool-summary collapsed">
+          <div class="history-tool-header" onclick="this.parentElement.classList.toggle('collapsed')">
+            <span>\u26A1</span>
+            <span>${escapeHtml(tc.name)}</span>
+            <span style="margin-left:auto;font-size:7px">\u25B8</span>
+          </div>
+          <div class="history-tool-detail"><pre>${escapeHtml(truncated)}</pre></div>
+        </div>`
+      }).join('')
+    }
+
+    transcriptHtml += `
+      <div class="history-msg ${roleClass}">
+        <div class="history-msg-label">${label}${time ? ` <span style="opacity:0.5;margin-left:8px">${time}</span>` : ''}</div>
+        ${contentHtml}
+        ${toolsHtml}
+      </div>`
+  }
+  transcriptHtml += '</div>'
+
+  detailEl.innerHTML = headerHtml + transcriptHtml
+  detailEl.scrollTop = 0
+}
+
+function debounceHistorySearch() {
+  let timer
+  return () => {
+    clearTimeout(timer)
+    timer = setTimeout(async () => {
+      const query = document.getElementById('history-search').value.trim()
+      if (!query) {
+        const data = await window.ace.history.list(historyActiveProject, 0, 50)
+        if (!data.error) {
+          historySessionsList = data.sessions
+          historyTotal = data.total
+          historyOffset = 50
+          renderHistoryList()
+        }
+        return
+      }
+      const results = await window.ace.history.search(query, historyActiveProject)
+      if (!results.error) {
+        historySessionsList = Array.isArray(results) ? results : results.sessions || []
+        historyTotal = historySessionsList.length
+        historyOffset = historyTotal
+        renderHistoryList()
+      }
+    }, 300)
+  }
+}
+
+async function initHistory() {
+  if (historyInitialized) return
+  historyInitialized = true
+
+  const listEl = document.getElementById('history-list')
+  listEl.innerHTML = '<div class="vault-empty">Scanning sessions...</div>'
+
+  // Derive current project from vault path
+  const cfg = await window.ace.setup.getConfig()
+  const vaultPath = cfg?.vaultPath || ''
+  const defaultProject = '-' + vaultPath.replace(/\//g, '-')
+
+  const data = await window.ace.history.list(null, 0, 50)
+  if (data.error) {
+    listEl.innerHTML = `<div class="vault-empty">${escapeHtml(data.error)}</div>`
+    return
+  }
+
+  historySessionsList = data.sessions
+  historyProjects = data.projects
+  historyTotal = data.total
+  historyOffset = 50
+
+  // Populate project dropdown
+  const select = document.getElementById('history-project-select')
+  select.innerHTML = `<option value="">All Projects (${data.total})</option>` +
+    data.projects.map(p => {
+      const label = p.replace(/-/g, '/').replace(/^\//, '').split('/').slice(-2).join('/')
+      const selected = p === defaultProject ? ' selected' : ''
+      return `<option value="${escapeHtml(p)}"${selected}>${escapeHtml(label)}</option>`
+    }).join('')
+
+  // Auto-filter to current vault's project
+  if (data.projects.includes(defaultProject)) {
+    select.value = defaultProject
+    historyActiveProject = defaultProject
+    const filtered = await window.ace.history.list(defaultProject, 0, 50)
+    if (!filtered.error) {
+      historySessionsList = filtered.sessions
+      historyTotal = filtered.total
+      historyOffset = 50
+    }
+  }
+
+  renderHistoryList()
+
+  select.addEventListener('change', async () => {
+    const project = select.value || null
+    historyActiveProject = project
+    historyOffset = 0
+    const d = await window.ace.history.list(project, 0, 50)
+    if (d.error) return
+    historySessionsList = d.sessions
+    historyTotal = d.total
+    historyOffset = 50
+    renderHistoryList()
+    document.getElementById('history-detail').innerHTML = '<div class="vault-empty">Select a session</div>'
+  })
+
+  document.getElementById('history-search').addEventListener('input', debounceHistorySearch())
 }
 
 // ─── Vault View ───────────────────────────────────────────────────────────────
@@ -6522,6 +7198,261 @@ let _settingsConfig = null
   // Load config on init for cost guardrails
   loadSettingsFromConfig().catch(() => {})
 })()
+
+// ─── History View ─────────────────────────────────────────────────────────────
+let historyInitialized = false
+let historySessionsList = []
+let historyProjects = []
+let historyTotal = 0
+let historyOffset = 0
+let historyActiveProject = null
+
+function formatHistoryTokens(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M tok'
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k tok'
+  return n + ' tok'
+}
+
+function formatHistoryDuration(ms) {
+  const mins = Math.floor(ms / 60000)
+  if (mins < 60) return mins + 'm'
+  return Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm'
+}
+
+function escapeHistoryHtml(str) {
+  if (!str) return ''
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
+async function initHistory() {
+  if (historyInitialized) return
+  historyInitialized = true
+
+  const listEl = document.getElementById('history-list')
+  listEl.innerHTML = '<div class="vault-empty">Scanning sessions...</div>'
+
+  // Derive current project from vault path
+  const cfg = await window.ace.setup.getConfig()
+  const vaultPath = cfg?.vaultPath || ''
+  const defaultProject = '-' + vaultPath.replace(/\//g, '-').replace(/^-/, '')
+
+  const data = await window.ace.history.list(null, 0, 50)
+  if (data.error) {
+    listEl.innerHTML = '<div class="vault-empty">' + escapeHistoryHtml(data.error) + '</div>'
+    return
+  }
+
+  historySessionsList = data.sessions
+  historyProjects = data.projects
+  historyTotal = data.total
+  historyOffset = 50
+
+  // Populate project dropdown
+  const select = document.getElementById('history-project-select')
+  select.innerHTML = '<option value="">All Projects (' + data.total + ')</option>' +
+    data.projects.map(p => {
+      const label = p.replace(/-/g, '/').replace(/^\//, '').split('/').slice(-2).join('/')
+      const selected = p === defaultProject ? ' selected' : ''
+      return '<option value="' + escapeHistoryHtml(p) + '"' + selected + '>' + escapeHistoryHtml(label) + '</option>'
+    }).join('')
+
+  // Auto-filter to current vault's project
+  if (data.projects.includes(defaultProject)) {
+    select.value = defaultProject
+    historyActiveProject = defaultProject
+    const filtered = await window.ace.history.list(defaultProject, 0, 50)
+    if (!filtered.error) {
+      historySessionsList = filtered.sessions
+      historyTotal = filtered.total
+      historyOffset = 50
+    }
+  }
+
+  renderHistoryList()
+
+  // Event listeners
+  select.addEventListener('change', async () => {
+    const project = select.value || null
+    historyActiveProject = project
+    historyOffset = 0
+    const d = await window.ace.history.list(project, 0, 50)
+    if (d.error) return
+    historySessionsList = d.sessions
+    historyTotal = d.total
+    historyOffset = 50
+    renderHistoryList()
+    document.getElementById('history-detail').innerHTML = '<div class="vault-empty">Select a session</div>'
+  })
+
+  let searchTimer
+  document.getElementById('history-search').addEventListener('input', () => {
+    clearTimeout(searchTimer)
+    searchTimer = setTimeout(async () => {
+      const query = document.getElementById('history-search').value.trim()
+      if (!query) {
+        const d = await window.ace.history.list(historyActiveProject, 0, 50)
+        if (!d.error) {
+          historySessionsList = d.sessions
+          historyTotal = d.total
+          historyOffset = 50
+          renderHistoryList()
+        }
+        return
+      }
+      const results = await window.ace.history.search(query, historyActiveProject)
+      if (!results.error) {
+        historySessionsList = Array.isArray(results) ? results : results.sessions || []
+        historyTotal = historySessionsList.length
+        historyOffset = historyTotal
+        renderHistoryList()
+      }
+    }, 300)
+  })
+}
+
+function renderHistoryList() {
+  const listEl = document.getElementById('history-list')
+  if (!historySessionsList.length) {
+    listEl.innerHTML = '<div class="vault-empty">No sessions found</div>'
+    return
+  }
+
+  const todayStart = new Date().setHours(0,0,0,0)
+  const yesterdayStart = todayStart - 86400000
+  const weekStart = todayStart - 6 * 86400000
+
+  let html = ''
+  let currentGroup = ''
+
+  for (const s of historySessionsList) {
+    let group
+    if (s.mtime >= todayStart) group = 'Today'
+    else if (s.mtime >= yesterdayStart) group = 'Yesterday'
+    else if (s.mtime >= weekStart) group = 'This Week'
+    else group = new Date(s.mtime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
+    if (group !== currentGroup) {
+      currentGroup = group
+      html += '<div class="history-date-group">' + escapeHistoryHtml(group) + '</div>'
+    }
+
+    const time = new Date(s.mtime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    const title = s.title || s.slug || 'Untitled session'
+    const modelTag = s.model ? '<span class="history-item-tag">' + escapeHistoryHtml(s.model.replace('claude-', '')) + '</span>' : ''
+    const branchTag = s.gitBranch ? '<span class="history-item-tag">' + escapeHistoryHtml(s.gitBranch) + '</span>' : ''
+    const tokens = s.tokenCount ? formatHistoryTokens(s.tokenCount) : ''
+
+    html += '<div class="history-item" data-project="' + escapeHistoryHtml(s.project) + '" data-id="' + escapeHistoryHtml(s.id) + '">' +
+      '<div class="history-item-title">' + escapeHistoryHtml(title) + '</div>' +
+      '<div class="history-item-meta">' +
+        '<span>' + time + '</span>' +
+        modelTag + branchTag +
+        (tokens ? '<span>' + tokens + '</span>' : '') +
+      '</div>' +
+    '</div>'
+  }
+
+  if (historyOffset < historyTotal) {
+    html += '<div class="history-load-more" id="history-load-more">Load more (' + (historyTotal - historyOffset) + ' remaining)</div>'
+  }
+
+  listEl.innerHTML = html
+
+  // Click handlers
+  listEl.querySelectorAll('.history-item').forEach(item => {
+    item.addEventListener('click', () => {
+      listEl.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'))
+      item.classList.add('active')
+      openSessionDetail(item.dataset.project, item.dataset.id)
+    })
+  })
+
+  const loadMoreEl = document.getElementById('history-load-more')
+  if (loadMoreEl) {
+    loadMoreEl.addEventListener('click', async () => {
+      const d = await window.ace.history.list(historyActiveProject, historyOffset, 50)
+      if (d.error) return
+      historySessionsList = historySessionsList.concat(d.sessions)
+      historyOffset += 50
+      renderHistoryList()
+    })
+  }
+}
+
+async function openSessionDetail(project, sessionId) {
+  const detailEl = document.getElementById('history-detail')
+  detailEl.innerHTML = '<div class="vault-empty">Loading transcript...</div>'
+
+  const data = await window.ace.history.read(project, sessionId)
+  if (data.error) {
+    detailEl.innerHTML = '<div class="vault-empty">' + escapeHistoryHtml(data.error) + '</div>'
+    return
+  }
+
+  const meta = data.meta || {}
+  const firstMsg = data.messages.find(m => m.role === 'user')
+  const title = firstMsg ? firstMsg.content.slice(0, 120) : meta.slug || 'Untitled'
+  const duration = meta.duration ? formatHistoryDuration(meta.duration) : ''
+
+  let headerHtml = '<div class="history-detail-header">' +
+    '<div class="history-detail-title">' + escapeHistoryHtml(title) + '</div>' +
+    '<div class="history-detail-meta">' +
+      (meta.model ? '<span>Model: ' + escapeHistoryHtml(meta.model.replace('claude-', '')) + '</span>' : '') +
+      (meta.slug ? '<span>Slug: ' + escapeHistoryHtml(meta.slug) + '</span>' : '') +
+      (meta.gitBranch ? '<span>Branch: ' + escapeHistoryHtml(meta.gitBranch) + '</span>' : '') +
+      (meta.tokens ? '<span>Tokens: ' + formatHistoryTokens(meta.tokens.input + meta.tokens.output) + '</span>' : '') +
+      (duration ? '<span>Duration: ' + duration + '</span>' : '') +
+      '<span>' + data.messages.length + ' messages</span>' +
+    '</div>' +
+  '</div>'
+
+  let transcriptHtml = '<div class="history-transcript">'
+  for (const msg of data.messages) {
+    const roleClass = msg.role === 'user' ? 'history-msg-user' : 'history-msg-assistant'
+    const label = msg.role === 'user' ? 'YOU' : 'ASSISTANT'
+    const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' }) : ''
+
+    let contentHtml
+    if (msg.role === 'user') {
+      contentHtml = '<div class="history-msg-content">' + escapeHistoryHtml(msg.content) + '</div>'
+    } else {
+      // Render markdown for assistant messages
+      const raw = typeof marked !== 'undefined' && marked.parse ? marked.parse(msg.content || '') : escapeHistoryHtml(msg.content || '')
+      const safe = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(raw) : raw
+      contentHtml = '<div class="history-msg-content">' + safe + '</div>'
+    }
+
+    // Tool calls (collapsed by default)
+    let toolsHtml = ''
+    if (msg.toolCalls && msg.toolCalls.length > 0) {
+      toolsHtml = msg.toolCalls.map(tc => {
+        return '<div class="history-tool-summary collapsed">' +
+          '<div class="history-tool-header">' +
+            '<span style="font-size:10px">&#9889;</span>' +
+            '<span>' + escapeHistoryHtml(tc.name) + '</span>' +
+            '<span style="margin-left:auto;font-size:7px">&#x25B8;</span>' +
+          '</div>' +
+          '<div class="history-tool-detail"><pre>' + escapeHistoryHtml(tc.input) + '</pre></div>' +
+        '</div>'
+      }).join('')
+    }
+
+    transcriptHtml += '<div class="history-msg ' + roleClass + '">' +
+      '<div class="history-msg-label">' + label + (time ? ' <span style="opacity:0.5;margin-left:8px">' + time + '</span>' : '') + '</div>' +
+      contentHtml +
+      toolsHtml +
+    '</div>'
+  }
+  transcriptHtml += '</div>'
+
+  detailEl.innerHTML = headerHtml + transcriptHtml
+  detailEl.scrollTop = 0
+
+  // Wire tool call toggle
+  detailEl.querySelectorAll('.history-tool-header').forEach(header => {
+    header.addEventListener('click', () => header.parentElement.classList.toggle('collapsed'))
+  })
+}
 </script>
   <script type="module">
     import { loadDashboard } from './dashboard.js'

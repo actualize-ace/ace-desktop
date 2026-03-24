@@ -86,4 +86,11 @@ contextBridge.exposeInMainWorld('ace', {
     read:  ()        => ipcRenderer.invoke(ch.CLAUDE_SETTINGS_READ),
     write: (content) => ipcRenderer.invoke(ch.CLAUDE_SETTINGS_WRITE, content),
   },
+
+  // ─── Chat History ─────────────────────────────────────────────────────────
+  history: {
+    list:   (project, offset, limit) => ipcRenderer.invoke(ch.HISTORY_LIST, project, offset, limit),
+    read:   (project, sessionId)     => ipcRenderer.invoke(ch.HISTORY_READ, project, sessionId),
+    search: (query, project)         => ipcRenderer.invoke(ch.HISTORY_SEARCH, query, project),
+  },
 })
