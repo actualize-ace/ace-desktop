@@ -124,6 +124,49 @@
       margin-left: auto; display: flex; align-items: center; gap: 9px;
       -webkit-app-region: no-drag;
     }
+    /* Titlebar Next Move indicator */
+    .titlebar-nextmove {
+      display: none; align-items: center; gap: 6px;
+      padding: 3px 10px; border-radius: 5px;
+      border: 1px solid var(--glass-border);
+      background: color-mix(in srgb, var(--gold), transparent 92%);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      max-width: 260px;
+    }
+    .titlebar-nextmove.visible { display: flex; }
+    .titlebar-nextmove:hover {
+      border-color: color-mix(in srgb, var(--gold), transparent 60%);
+      background: color-mix(in srgb, var(--gold), transparent 85%);
+    }
+    .titlebar-nm-dot {
+      width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+      background: var(--gold);
+      box-shadow: 0 0 4px color-mix(in srgb, var(--gold), transparent 50%);
+    }
+    .titlebar-nm-dot.critical, .titlebar-nm-dot.urgent {
+      background: var(--red);
+      box-shadow: 0 0 4px color-mix(in srgb, var(--red), transparent 50%);
+    }
+    .titlebar-nm-dot.normal { background: var(--text-dim); box-shadow: none; }
+    .titlebar-nm-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; color: var(--text-secondary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 160px;
+    }
+    .titlebar-nm-context {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px; color: var(--text-dim);
+      white-space: nowrap;
+    }
+    .titlebar-nm-close {
+      background: none; border: none; color: var(--text-dim);
+      font-size: 11px; cursor: pointer; padding: 0 0 0 4px;
+      line-height: 1; opacity: 0; transition: opacity 0.12s;
+    }
+    .titlebar-nextmove:hover .titlebar-nm-close { opacity: 1; }
+    .titlebar-nm-close:hover { color: var(--text-primary); }
     .mode-chip {
       font-family: 'JetBrains Mono', monospace; font-size: 7.5px;
       letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-dim);
@@ -1211,6 +1254,51 @@
       flex: 1; font-size: 13px; line-height: 1.65;
       color: var(--text-secondary); transition: opacity 0.4s ease;
     }
+    .cc-synth-loading {
+      display: none;
+      margin-top: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: 1px;
+      color: var(--text-dim);
+      overflow: hidden;
+      position: relative;
+      padding: 3px 0;
+    }
+    .cc-synth-loading.active { display: flex; align-items: center; gap: 8px; }
+    .cc-synth-loading span {
+      background: linear-gradient(90deg, #8878ff, #c8a0f0, #60d8a8, #d4a574, #e080a0, #8878ff);
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: synthTextFlow 2.5s linear infinite;
+    }
+    @keyframes synthTextFlow {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+    .cc-synth-loading-bar {
+      flex: 1; height: 2px; border-radius: 1px;
+      background: var(--glass-border);
+      overflow: hidden;
+      position: relative;
+    }
+    .cc-synth-loading-bar::after {
+      content: ''; position: absolute;
+      top: 0; left: 0; width: 200%; height: 100%;
+      border-radius: 1px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        #8878ff 10%, #c8a0f0 20%, #60d8a8 30%, #d4a574 40%, #e080a0 50%,
+        #8878ff 60%, #c8a0f0 70%, #60d8a8 80%, #d4a574 90%,
+        transparent 100%
+      );
+      animation: synthFlow 2.2s linear infinite;
+    }
+    @keyframes synthFlow {
+      0%   { transform: translateX(-50%); }
+      100% { transform: translateX(0%); }
+    }
     .cc-right {
       display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0;
     }
@@ -1501,6 +1589,169 @@
     .oracle-fab:active { width: 30px; }
     .oracle-fab.open { opacity: 0; pointer-events: none; }
 
+    /* Oracle FAB proactive state — pulses when urgent Next Move exists */
+    .oracle-fab.proactive .oracle-fab-dot {
+      background: radial-gradient(circle at 40% 35%, #d4a574, #c8a0f0);
+      box-shadow: 0 0 12px rgba(212,165,116,0.6);
+      animation: breathe 1.5s ease-in-out infinite;
+    }
+    .oracle-fab.proactive {
+      border-color: rgba(212,165,116,0.3);
+      background: linear-gradient(180deg, rgba(212,165,116,0.12), rgba(200,160,240,0.06));
+    }
+    .oracle-fab.proactive .oracle-fab-label { color: rgba(212,165,116,0.7); }
+
+    /* ─── CC Next Move (integrated into Command Center Now view) ─────────── */
+    .cc-nextmove { padding: 2px 10px 0; }
+    .cc-nextmove-featured {
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--glass-border);
+      background: color-mix(in srgb, var(--bg-deep, #080a14), transparent 40%);
+      box-shadow: inset 0 1px 4px rgba(0,0,0,0.12);
+    }
+    body.light .cc-nextmove-featured {
+      background: color-mix(in srgb, var(--bg-deep), transparent 50%);
+      box-shadow: inset 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .cc-nextmove-header {
+      display: flex; align-items: center; gap: 6px;
+      margin-bottom: 6px;
+    }
+    .cc-nextmove-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--gold); opacity: 0.75;
+    }
+    .cc-nextmove-type {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7px; letter-spacing: 0.6px; text-transform: uppercase;
+      color: var(--text-dim);
+      padding: 1px 5px; border-radius: 3px;
+      border: 1px solid var(--glass-border);
+    }
+    .cc-nextmove-label {
+      font-size: 13px; font-weight: 500;
+      color: var(--text-primary); line-height: 1.35;
+    }
+    .cc-nextmove-context {
+      font-size: 10px; color: var(--text-dim);
+      margin-top: 2px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .cc-nextmove-expand-toggle {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; color: var(--text-dim);
+      cursor: pointer; padding: 4px 0; margin-top: 4px;
+      display: flex; align-items: center; gap: 4px;
+      transition: color 0.12s; user-select: none;
+    }
+    .cc-nextmove-expand-toggle:hover { color: var(--text-secondary); }
+    .cc-nextmove-expand-icon { font-size: 8px; }
+    .cc-nextmove-expanded {
+      padding: 6px 0 2px;
+      border-top: 1px solid var(--glass-border);
+      margin-top: 4px;
+    }
+    .cc-nextmove-info-grid {
+      display: grid; grid-template-columns: auto 1fr; gap: 2px 10px;
+      font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    }
+    .cc-nextmove-info-label {
+      color: var(--text-dim); text-transform: uppercase;
+      font-size: 7.5px; letter-spacing: 0.5px; padding-top: 1px;
+    }
+    .cc-nextmove-info-value { color: var(--text-secondary); }
+    .cc-nextmove-actions {
+      display: flex; gap: 6px; margin-top: 8px;
+    }
+    .cc-nextmove-actions button {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: 0.4px;
+      padding: 4px 12px; border-radius: 5px;
+      border: 1px solid var(--glass-border);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer; transition: all 0.15s ease;
+    }
+    .cc-nextmove-agree {
+      color: var(--capacity) !important;
+      border-color: color-mix(in srgb, var(--capacity), transparent 75%) !important;
+    }
+    .cc-nextmove-agree:hover {
+      background: color-mix(in srgb, var(--capacity), transparent 88%) !important;
+      box-shadow: 0 0 8px color-mix(in srgb, var(--capacity), transparent 85%);
+    }
+    .cc-nextmove-ask {
+      color: var(--gold) !important;
+      border-color: color-mix(in srgb, var(--gold), transparent 75%) !important;
+    }
+    .cc-nextmove-ask:hover {
+      background: color-mix(in srgb, var(--gold), transparent 88%) !important;
+      box-shadow: 0 0 8px color-mix(in srgb, var(--gold), transparent 85%);
+    }
+    .cc-nextmove-skip:hover {
+      background: color-mix(in srgb, var(--authority), transparent 90%);
+    }
+    .cc-nextmove-queue {
+      padding: 0 4px;
+    }
+    .cc-nextmove-queue-row {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 6px; font-size: 10px;
+      color: var(--text-dim);
+      border-radius: 4px;
+      cursor: default;
+      transition: background 0.12s;
+    }
+    .cc-nextmove-queue-row:hover {
+      background: color-mix(in srgb, var(--gold), transparent 92%);
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .cc-nextmove-queue-label { flex: 1; }
+    .cc-nextmove-queue-context {
+      margin-left: auto; font-family: 'JetBrains Mono', monospace;
+      font-size: 8px; color: var(--text-dim);
+    }
+    .cc-nextmove-nav {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 2px;
+    }
+    .cc-nextmove-prev, .cc-nextmove-next {
+      width: 18px; height: 18px; border-radius: 4px;
+      border: 1px solid var(--glass-border);
+      background: transparent; color: var(--text-dim);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; line-height: 1; padding: 0;
+      transition: all 0.12s;
+    }
+    .cc-nextmove-prev:hover:not([disabled]), .cc-nextmove-next:hover:not([disabled]) {
+      border-color: var(--border-hover); color: var(--text-secondary);
+      background: color-mix(in srgb, var(--gold), transparent 92%);
+    }
+    .cc-nextmove-prev[disabled], .cc-nextmove-next[disabled] {
+      opacity: 0.25; cursor: default;
+    }
+    .cc-nextmove-pos {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px; color: var(--text-dim);
+      min-width: 24px; text-align: center;
+    }
+    .cc-nextmove-skipped {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7.5px; color: var(--text-dim);
+      cursor: pointer; margin-right: 4px;
+      opacity: 0.7; transition: all 0.12s;
+    }
+    .cc-nextmove-skipped:hover { color: var(--gold); opacity: 1; }
+    .cc-nextmove-reset {
+      color: var(--gold); cursor: pointer;
+      text-decoration: underline; text-underline-offset: 2px;
+    }
+    .cc-nextmove-reset:hover { opacity: 0.8; }
+
     .oracle-overlay {
       display: none; position: fixed; inset: 0; z-index: 200;
     }
@@ -1546,6 +1797,22 @@
       font-weight: 500; letter-spacing: 1px; color: var(--text-primary);
       flex: 1;
     }
+    .oracle-model-select {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: 0.5px;
+      padding: 3px 6px; border-radius: 4px;
+      border: 1px solid var(--border);
+      background: transparent; color: var(--text-dim);
+      cursor: pointer; outline: none;
+      transition: all 0.12s;
+      -webkit-appearance: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l3 3 3-3' stroke='%23606080' stroke-width='1.2'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 4px center;
+      padding-right: 16px;
+    }
+    .oracle-model-select:hover { border-color: var(--border-hover); color: var(--text-secondary); }
+    .oracle-model-select:focus { border-color: rgba(136,120,255,0.4); }
+    .oracle-model-select option { background: var(--bg-elevated, #1a1830); color: var(--text-primary); }
     .oracle-close {
       background: none; border: 1px solid var(--border); border-radius: 4px;
       width: 24px; height: 24px; cursor: pointer; color: var(--text-dim);
@@ -2060,6 +2327,12 @@
   <div class="titlebar">
     <div class="titlebar-center">Actualize Coherence Engine</div>
     <div class="titlebar-right">
+      <div class="titlebar-nextmove" id="titlebar-nextmove" title="Click to execute">
+        <div class="titlebar-nm-dot" id="titlebar-nm-dot"></div>
+        <span class="titlebar-nm-label" id="titlebar-nm-label"></span>
+        <span class="titlebar-nm-context" id="titlebar-nm-context"></span>
+        <button class="titlebar-nm-close" id="titlebar-nm-close" title="Silence for this session">&times;</button>
+      </div>
       <button class="theme-btn" id="zoom-out-btn" title="Zoom out">−</button>
       <span class="zoom-label" id="zoom-label">100%</span>
       <button class="theme-btn" id="zoom-in-btn" title="Zoom in">+</button>
@@ -2403,6 +2676,11 @@
       <div class="oracle-header">
         <div class="oracle-title-orb"></div>
         <div class="oracle-title">Oracle</div>
+        <select class="oracle-model-select" id="oracle-model" title="Model">
+          <option value="sonnet" selected>Sonnet</option>
+          <option value="opus">Opus</option>
+          <option value="haiku">Haiku</option>
+        </select>
         <button class="oracle-expand" id="oracle-expand" title="Expand">&#x2922;</button>
         <button class="oracle-close" id="oracle-close">&times;</button>
       </div>
@@ -5664,7 +5942,15 @@ document.getElementById('people-ask-btn').addEventListener('click', () => {
     if (e.key === 'Escape' && overlay.classList.contains('open')) closeOracle()
   })
 
+  window.openOracle = openOracle
   window.sendOracleQuery = sendOracleQuery
+  window.resetOracleSession = function() {
+    oracleSessionId = null
+    msgsEl.innerHTML = ''
+    // Re-show presets
+    const presetsEl = document.getElementById('oracle-presets')
+    if (presetsEl) presetsEl.style.display = ''
+  }
   function sendOracleQuery(query) {
     if (!query.trim() || oracleStreaming) return
 
@@ -5698,7 +5984,9 @@ document.getElementById('people-ask-btn').addEventListener('click', () => {
 
     // Send via chat IPC with a dedicated oracle ID
     const oracleId = 'oracle-' + Date.now()
-    const opts = { model: 'sonnet', permissions: 'auto', effort: 'high' }
+    const oracleModelEl = document.getElementById('oracle-model')
+    const selectedModel = oracleModelEl ? oracleModelEl.value : 'sonnet'
+    const opts = { model: selectedModel, permissions: 'auto', effort: 'high' }
 
     // Wire up stream listener for this query
     const cleanupStream = window.ace.chat.onStream(oracleId, event => {
@@ -6247,6 +6535,7 @@ let _settingsConfig = null
     window.ace.dash.onStateUpdate?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
     window.ace.dash.onFollowUpsUpdate?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
     window.ace.dash.onPipelineUpdate?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
+    window.ace.dash.onSitrepUpdate?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
   </script>
   <script type="module">
     import { WIDGETS, DEFAULT_LAYOUT } from './widgets/registry.js'

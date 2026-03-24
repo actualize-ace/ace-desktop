@@ -11,6 +11,7 @@ function start(win) {
   const watched = [
     path.join(vaultPath, '00-System', 'state.md'),
     path.join(vaultPath, '00-System', 'active.md'),
+    path.join(vaultPath, '00-System', 'sitrep.md'),
     path.join(vaultPath, '04-Network', 'follow-ups.md'),
   ]
 
@@ -36,6 +37,10 @@ function start(win) {
         const followUps = require('./vault-reader').parseFollowUps(vaultPath)
         win.webContents.send(ch.DASH_FOLLOWUPS, followUps)
       } catch {}
+    }
+
+    if (name === 'sitrep.md') {
+      win.webContents.send(ch.DASH_SITREP)
     }
   })
 }

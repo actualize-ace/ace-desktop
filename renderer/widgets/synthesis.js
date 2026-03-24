@@ -36,6 +36,10 @@ export default {
             <span class="cc-orb-label">${label}</span>
           </div>
           <div class="cc-synthesis" id="cc-synthesis-text">${escapeHtml(structural)}</div>
+          <div class="cc-synth-loading" id="cc-synth-loading">
+            <span>Synthesizing</span>
+            <div class="cc-synth-loading-bar"></div>
+          </div>
           <div class="cc-right">
             <div class="cc-signals">
               ${[0,1,2].map(row => {
@@ -78,8 +82,12 @@ export default {
       })
     }
 
-    // Wire click handlers for attention items
-    this._wirePriorityClicks(el, priorities)
+    // Wire next move actions (Agree/Ask Oracle/Skip/expand/titlebar/FAB)
+    this._wireNextMoveActions(el, priorities, allData, ctx)
+
+    // Show synthesis loading indicator
+    const loadingEl = document.getElementById('cc-synth-loading')
+    if (loadingEl) loadingEl.classList.add('active')
 
     // Async AI layer
     this._fetchAI(ctx, allData, el, priorities)
@@ -127,8 +135,10 @@ export default {
     return chips
   },
 
-  _renderNowView(momentum, priorities) {
-    const top3 = priorities.slice(0, 3)
+  _renderNowView(momentum, priorities, viewIdx) {
+    const dismissed = this._getDismissed()
+    const active = priorities.filter(p => !dismissed.includes(p.label))
+    const idx = viewIdx || 0
 
     // Momentum zone
     let momentumHtml = ''
@@ -137,25 +147,117 @@ export default {
         `<div class="cc-momentum-chip"><span class="chip-icon">${m.icon}</span>${escapeHtml(m.text)}</div>`
       ).join('')}</div>`
     } else {
-      // Day 1 / empty state nudge
       momentumHtml = `<div class="cc-momentum-nudge">Run <span>/start</span> to begin your day and activate your system.</div>`
     }
 
-    // Attention zone
-    let attentionHtml = ''
-    if (top3.length > 0) {
-      attentionHtml = `<div class="cc-nextup">${top3.map((p, i) => `
-        <div class="cc-nextup-row" data-priority-idx="${i}">
-          <div class="cc-nextup-dot ${p.urgency}"></div>
-          <span class="cc-nextup-label">${escapeHtml(p.label)}</span>
-          <span class="cc-nextup-context">${escapeHtml(p.context)}</span>
-          <span class="cc-nextup-arrow">\u2192</span>
-        </div>`).join('')}</div>`
+    // Next Move zone — featured item with nav + queue
+    let nextMoveHtml = ''
+    if (active.length > 0) {
+      const currentIdx = Math.min(idx, active.length - 1)
+      const current = active[currentIdx]
+      const queue = active.slice(currentIdx + 1, currentIdx + 4)
+      const expanded = this._buildExpandedInfo(current)
+      const typeLabel = this._nextMoveTypeLabel(current.type)
+
+      nextMoveHtml = `<div class="cc-nextmove">
+        <div class="cc-nextmove-featured">
+          <div class="cc-nextmove-header">
+            <div class="cc-nextup-dot ${current.urgency}"></div>
+            <span class="cc-nextmove-badge">Next Move</span>
+            ${typeLabel ? `<span class="cc-nextmove-type">${escapeHtml(typeLabel)}</span>` : ''}
+            ${active.length > 1 ? `
+              <div class="cc-nextmove-nav">
+                ${dismissed.length > 0 ? `<span class="cc-nextmove-skipped" title="Click to reset">${dismissed.length} skipped</span>` : ''}
+                <button class="cc-nextmove-prev" ${currentIdx === 0 ? 'disabled' : ''} title="Previous">&#8249;</button>
+                <span class="cc-nextmove-pos">${currentIdx + 1}/${active.length}</span>
+                <button class="cc-nextmove-next" ${currentIdx >= active.length - 1 ? 'disabled' : ''} title="Next">&#8250;</button>
+              </div>
+            ` : ''}
+          </div>
+          <div class="cc-nextmove-label">${escapeHtml(current.label)}</div>
+          <div class="cc-nextmove-context">${escapeHtml(current.context)}</div>
+          ${expanded ? `
+            <div class="cc-nextmove-expand-toggle">
+              <span class="cc-nextmove-expand-icon">&#9662;</span> Details
+            </div>
+            <div class="cc-nextmove-expanded" style="display:none">${expanded}</div>
+          ` : ''}
+          <div class="cc-nextmove-actions">
+            <button class="cc-nextmove-agree">Agree</button>
+            <button class="cc-nextmove-ask">Ask Oracle</button>
+            <button class="cc-nextmove-skip">Skip</button>
+          </div>
+        </div>
+        ${queue.length > 0 ? `<div class="cc-nextmove-queue">
+          ${queue.map((q, qi) => {
+            const tip = this._buildQueueTooltip(q)
+            return `
+            <div class="cc-nextmove-queue-row" data-queue-idx="${qi}" ${tip ? `title="${escapeHtml(tip)}"` : ''}>
+              <div class="cc-nextup-dot small ${q.urgency}"></div>
+              <span class="cc-nextmove-queue-label">${escapeHtml(q.label)}</span>
+              <span class="cc-nextmove-queue-context">${escapeHtml(q.context)}</span>
+            </div>`}).join('')}
+        </div>` : ''}
+      </div>`
     } else {
-      attentionHtml = `<div class="cc-nextup"><div class="cc-nextup-empty">No urgent items \u2014 your system is clean.</div></div>`
+      nextMoveHtml = `<div class="cc-nextup"><div class="cc-nextup-empty">No urgent items \u2014 your system is clean.${dismissed.length > 0 ? ' <span class="cc-nextmove-reset">Reset skipped</span>' : ''}</div></div>`
     }
 
-    return momentumHtml + attentionHtml
+    return momentumHtml + nextMoveHtml
+  },
+
+  _nextMoveTypeLabel(type) {
+    const labels = {
+      followup: 'follow-up', outcome: 'outcome', pipeline: 'deal',
+      target: 'target', cadence: 'ritual',
+    }
+    return labels[type] || ''
+  },
+
+  _buildExpandedInfo(move) {
+    const rows = []
+    if (move._raw) {
+      if (move._raw.person) rows.push({ label: 'Person', value: move._raw.person })
+      if (move._raw.topic && move._raw.topic !== 'general') rows.push({ label: 'Topic', value: move._raw.topic })
+      if (move._raw.due) rows.push({ label: 'Due date', value: move._raw.due })
+      if (move._raw.amount) {
+        const fmt = move._raw.amount >= 1000 ? `$${Math.round(move._raw.amount/1000)}K` : `$${Math.round(move._raw.amount)}`
+        rows.push({ label: 'Amount', value: fmt })
+      }
+      if (move._raw.stage) rows.push({ label: 'Stage', value: move._raw.stage })
+      if (move._raw.nextAction) rows.push({ label: 'Next action', value: move._raw.nextAction })
+      if (move._raw.status) rows.push({ label: 'Status', value: move._raw.status })
+      if (move._raw.gateLabel) rows.push({ label: 'Gate', value: move._raw.gateLabel })
+    }
+    const reasons = {
+      followup: 'Overdue follow-up detected', outcome: 'Outcome gate approaching or passed',
+      pipeline: 'Pipeline deal needs movement', target: 'Unchecked weekly target',
+      cadence: 'Recurring ritual for today',
+    }
+    if (reasons[move.type]) rows.push({ label: 'Why now', value: reasons[move.type] })
+    if (rows.length === 0) return ''
+    return `<div class="cc-nextmove-info-grid">${rows.map(r =>
+      `<div class="cc-nextmove-info-label">${escapeHtml(r.label)}</div><div class="cc-nextmove-info-value">${escapeHtml(r.value)}</div>`
+    ).join('')}</div>`
+  },
+
+  _buildQueueTooltip(move) {
+    const parts = []
+    if (move._raw) {
+      if (move._raw.person) parts.push(move._raw.person)
+      if (move._raw.topic && move._raw.topic !== 'general') parts.push(move._raw.topic)
+      if (move._raw.due) parts.push(`Due: ${move._raw.due}`)
+      if (move._raw.stage) parts.push(move._raw.stage)
+      if (move._raw.nextAction) parts.push(move._raw.nextAction)
+      if (move._raw.status) parts.push(move._raw.status)
+      if (move._raw.gateLabel) parts.push(`Gate: ${move._raw.gateLabel}`)
+    }
+    const reasons = {
+      followup: 'Overdue follow-up', outcome: 'Outcome gate', pipeline: 'Pipeline deal',
+      target: 'Weekly target', cadence: 'Recurring ritual',
+    }
+    if (reasons[move.type]) parts.push(reasons[move.type])
+    return parts.join(' · ')
   },
 
   _renderWeekView(ctx) {
@@ -250,7 +352,7 @@ export default {
         setTimeout(() => {
           if (view === 'now') {
             contentEl.innerHTML = this._renderNowView(momentum, priorities)
-            this._wirePriorityClicks(el, priorities)
+            this._wireNextMoveActions(el, priorities, allData, ctx)
           } else if (view === 'week') {
             contentEl.innerHTML = this._renderWeekView(ctx)
           } else if (view === 'signals') {
@@ -338,12 +440,14 @@ export default {
       .forEach(f => {
         const d = new Date(f.due); d.setHours(0, 0, 0, 0)
         const days = Math.round((today - d) / (1000 * 60 * 60 * 24))
+        const urgency = days >= 15 ? 'critical' : days >= 8 ? 'urgent' : days >= 3 ? 'warning' : 'normal'
         priorities.push({
-          type: 'followup', urgency: 'urgent',
+          type: 'followup', urgency,
           label: `${f.person} follow-up`,
           context: `${days}d overdue`,
           prompt: `I need to follow up with ${f.person}. Topic: ${f.topic || 'general'}. It's ${days} days overdue (was due ${f.due}). Help me draft a message or plan my approach.`,
           tabLabel: `${f.person} follow-up`,
+          _raw: { person: f.person, topic: f.topic, due: f.due },
         })
       })
 
@@ -358,6 +462,7 @@ export default {
           context: `${Math.abs(o.daysToGate)}d past gate`,
           prompt: `My outcome "${o.title}" is ${Math.abs(o.daysToGate)} days past its gate (${o.gateLabel}). Status: ${o.status}. Help me assess whether to push the gate or accelerate.`,
           tabLabel: o.title,
+          _raw: { status: o.status, gateLabel: o.gateLabel },
         })
       })
 
@@ -372,6 +477,7 @@ export default {
           context: o.daysToGate === 0 ? 'gate today' : `gate in ${o.daysToGate}d`,
           prompt: `My outcome "${o.title}" has a gate on ${o.gateLabel} (${o.daysToGate} days away) and status is ${o.status}. Help me identify the next concrete step to stay on track.`,
           tabLabel: o.title,
+          _raw: { status: o.status, gateLabel: o.gateLabel },
         })
       })
 
@@ -391,6 +497,7 @@ export default {
           context: `${days}d overdue`,
           prompt: `${d.person} is at ${d.stage} stage${d.amount ? ', ' + fmtMoney(d.amount) : ''}. Next action: ${d.next_action || 'TBD'} (${days}d overdue). Help me move this forward.`,
           tabLabel: `${d.person} deal`,
+          _raw: { person: d.person, stage: d.stage, amount: d.amount, nextAction: d.next_action, due: d.due_date },
         })
       })
 
@@ -426,39 +533,193 @@ export default {
     return priorities
   },
 
-  _wirePriorityClicks(el, priorities) {
-    el.querySelectorAll('.cc-nextup-row').forEach(row => {
+  _wireNextMoveActions(el, priorities, allData, ctx, viewIdx) {
+    const dismissed = this._getDismissed()
+    const active = priorities.filter(p => !dismissed.includes(p.label))
+    const idx = Math.min(viewIdx || 0, Math.max(active.length - 1, 0))
+    const current = active[idx]
+
+    // Update titlebar + FAB with the top (not necessarily viewed) item
+    this._updateTitlebar(active[0] || null)
+    this._updateFAB(active[0] || null)
+
+    // Expand toggle
+    const toggle = el.querySelector('.cc-nextmove-expand-toggle')
+    const expanded = el.querySelector('.cc-nextmove-expanded')
+    if (toggle && expanded) {
+      toggle.addEventListener('click', () => {
+        const isOpen = expanded.style.display !== 'none'
+        expanded.style.display = isOpen ? 'none' : ''
+        toggle.querySelector('.cc-nextmove-expand-icon').innerHTML = isOpen ? '&#9662;' : '&#9652;'
+      })
+    }
+
+    // Helper to re-render at a given index
+    const rerender = (newIdx) => {
+      const contentEl = document.getElementById('cc-view-content')
+      if (!contentEl) return
+      const momentum = this._buildMomentum(ctx)
+      contentEl.style.opacity = '0'
+      setTimeout(() => {
+        contentEl.innerHTML = this._renderNowView(momentum, priorities, newIdx)
+        contentEl.style.opacity = '1'
+        this._wireNextMoveActions(el, priorities, allData, ctx, newIdx)
+      }, 150)
+    }
+
+    // Prev / Next navigation
+    const prevBtn = el.querySelector('.cc-nextmove-prev')
+    const nextBtn = el.querySelector('.cc-nextmove-next')
+    if (prevBtn) prevBtn.addEventListener('click', () => { if (idx > 0) rerender(idx - 1) })
+    if (nextBtn) nextBtn.addEventListener('click', () => { if (idx < active.length - 1) rerender(idx + 1) })
+
+    // Queue item clicks — open in terminal
+    el.querySelectorAll('.cc-nextmove-queue-row').forEach(row => {
+      row.style.cursor = 'pointer'
       row.addEventListener('click', () => {
-        const idx = parseInt(row.dataset.priorityIdx)
-        const p = priorities[idx]
-        if (!p) return
-
-        document.querySelector('.nav-item[data-view="terminal"]').click()
-
-        setTimeout(() => {
-          if (typeof spawnSession === 'function') spawnSession()
-
-          setTimeout(() => {
-            if (typeof activeId !== 'undefined' && activeId && typeof sessions !== 'undefined') {
-              const modelEl = document.getElementById('chat-model-' + activeId)
-              const permsEl = document.getElementById('chat-perms-' + activeId)
-              if (modelEl) modelEl.value = 'sonnet'
-              if (permsEl) permsEl.value = 'auto'
-
-              const tab = sessions[activeId]?.tab
-              if (tab) {
-                const span = tab.querySelector('span:not(.stab-close)')
-                if (span) span.textContent = p.tabLabel || 'ACE'
-              }
-
-              if (typeof sendChatMessage === 'function') {
-                sendChatMessage(activeId, p.prompt)
-              }
-            }
-          }, 200)
-        }, 150)
+        const qi = parseInt(row.dataset.queueIdx)
+        const queueItems = active.slice(idx + 1)
+        const item = queueItems[qi]
+        if (item) this._openTerminalWithPrompt(item)
       })
     })
+
+    // Skip counter — click to reset
+    const skippedBtn = el.querySelector('.cc-nextmove-skipped')
+    if (skippedBtn) {
+      skippedBtn.addEventListener('click', () => {
+        this._clearDismissed()
+        rerender(0)
+      })
+    }
+
+    // Agree — open terminal session + auto-advance
+    const agreeBtn = el.querySelector('.cc-nextmove-agree')
+    if (agreeBtn && current) {
+      agreeBtn.addEventListener('click', () => {
+        this._openTerminalWithPrompt(current)
+        this._addDismissed(current.label)
+        rerender(0)
+      })
+    }
+
+    // Ask Oracle
+    const askBtn = el.querySelector('.cc-nextmove-ask')
+    if (askBtn && current) {
+      askBtn.addEventListener('click', () => {
+        if (typeof window.resetOracleSession === 'function') window.resetOracleSession()
+        if (typeof window.openOracle === 'function') window.openOracle()
+        setTimeout(() => {
+          const input = document.getElementById('oracle-input')
+          if (input) {
+            input.value = `Regarding: ${current.label} — `
+            input.focus()
+          }
+        }, 200)
+      })
+    }
+
+    // Skip
+    const skipBtn = el.querySelector('.cc-nextmove-skip')
+    if (skipBtn && current) {
+      skipBtn.addEventListener('click', () => {
+        this._addDismissed(current.label)
+        rerender(0)
+      })
+    }
+
+    // Reset skipped
+    const resetBtn = el.querySelector('.cc-nextmove-reset')
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        this._clearDismissed()
+        rerender(0)
+      })
+    }
+  },
+
+  _openTerminalWithPrompt(p) {
+    document.querySelector('.nav-item[data-view="terminal"]')?.click()
+    setTimeout(() => {
+      if (typeof spawnSession === 'function') spawnSession()
+      setTimeout(() => {
+        if (typeof activeId !== 'undefined' && activeId && typeof sessions !== 'undefined') {
+          const modelEl = document.getElementById('chat-model-' + activeId)
+          const permsEl = document.getElementById('chat-perms-' + activeId)
+          if (modelEl) modelEl.value = 'sonnet'
+          if (permsEl) permsEl.value = 'auto'
+          const tab = sessions[activeId]?.tab
+          if (tab) {
+            const span = tab.querySelector('span:not(.stab-close)')
+            if (span) span.textContent = p.tabLabel || 'ACE'
+          }
+          if (typeof sendChatMessage === 'function') {
+            sendChatMessage(activeId, p.prompt)
+          }
+        }
+      }, 200)
+    }, 150)
+  },
+
+  _updateFAB(topMove) {
+    const fab = document.getElementById('oracle-fab')
+    if (!fab) return
+    if (topMove && (topMove.urgency === 'critical' || topMove.urgency === 'urgent')) {
+      fab.classList.add('proactive')
+    } else {
+      fab.classList.remove('proactive')
+    }
+  },
+
+  _updateTitlebar(topMove) {
+    const container = document.getElementById('titlebar-nextmove')
+    if (!container) return
+    if (this._titlebarSilenced) return
+    if (!topMove) {
+      container.classList.remove('visible')
+      return
+    }
+    const dot = document.getElementById('titlebar-nm-dot')
+    const label = document.getElementById('titlebar-nm-label')
+    const context = document.getElementById('titlebar-nm-context')
+    container.classList.add('visible')
+    if (dot) dot.className = `titlebar-nm-dot ${topMove.urgency}`
+    if (label) label.textContent = topMove.label
+    if (context) context.textContent = topMove.context
+
+    // Wire click — clone to remove old listeners
+    const newContainer = container.cloneNode(true)
+    container.parentNode.replaceChild(newContainer, container)
+    newContainer.addEventListener('click', (e) => {
+      // Don't trigger terminal if clicking the close button
+      if (e.target.classList.contains('titlebar-nm-close')) return
+      this._openTerminalWithPrompt(topMove)
+    })
+    // Wire close/silence button
+    const closeBtn = newContainer.querySelector('.titlebar-nm-close')
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        this._titlebarSilenced = true
+        newContainer.classList.remove('visible')
+      })
+    }
+  },
+
+  // Dismiss tracking — localStorage keyed by date, resets daily
+  _getDismissed() {
+    const key = `nextmove-dismissed-${new Date().toISOString().slice(0, 10)}`
+    try { return JSON.parse(localStorage.getItem(key) || '[]') } catch { return [] }
+  },
+  _addDismissed(label) {
+    const key = `nextmove-dismissed-${new Date().toISOString().slice(0, 10)}`
+    const list = this._getDismissed()
+    if (!list.includes(label)) list.push(label)
+    localStorage.setItem(key, JSON.stringify(list))
+  },
+  _clearDismissed() {
+    const key = `nextmove-dismissed-${new Date().toISOString().slice(0, 10)}`
+    localStorage.removeItem(key)
   },
 
   _fetchAI(ctx, allData, el, fallbackPriorities) {
@@ -476,6 +737,10 @@ export default {
       } catch {
         synthesis = typeof raw === 'string' ? raw : null
       }
+
+      // Hide loading indicator
+      const loadingEl = document.getElementById('cc-synth-loading')
+      if (loadingEl) loadingEl.classList.remove('active')
 
       if (synthesis) {
         const textEl = document.getElementById('cc-synthesis-text')
@@ -496,32 +761,41 @@ export default {
         const listEl = document.getElementById('cc-view-content')
         if (!listEl) return
 
-        const mapped = aiPriorities.slice(0, 3).map((ai, i) => {
+        // Merge AI re-ranking with full priority list:
+        // AI's top picks go first, remaining originals follow
+        const aiMapped = aiPriorities.slice(0, 5).map(ai => {
           const match = fallbackPriorities.find(fp =>
             fp.label.toLowerCase().includes((ai.label || '').toLowerCase().split(' ')[0]) ||
             (ai.label || '').toLowerCase().includes(fp.label.toLowerCase().split(' ')[0])
-          ) || fallbackPriorities[i]
-
-          return {
-            type: match?.type || 'ai',
-            urgency: match?.urgency || 'normal',
-            label: ai.label || match?.label || 'Action item',
-            context: ai.context || match?.context || '',
-            prompt: match?.prompt || `Help me with: ${ai.label}. ${ai.reasoning || ''}`,
-            tabLabel: match?.tabLabel || ai.label || 'ACE',
+          )
+          return match ? { ...match, _aiRanked: true } : {
+            type: 'ai', urgency: 'normal',
+            label: ai.label || 'Action item',
+            context: ai.context || '',
+            prompt: `Help me with: ${ai.label}. ${ai.reasoning || ''}`,
+            tabLabel: ai.label || 'ACE',
+            _aiRanked: true,
           }
         })
 
-        // Re-render Now view with AI priorities
+        // Append remaining originals that AI didn't mention
+        const aiLabels = new Set(aiMapped.map(m => m.label.toLowerCase()))
+        const remaining = fallbackPriorities.filter(fp => !aiLabels.has(fp.label.toLowerCase()))
+        const merged = [...aiMapped, ...remaining]
+
+        // Re-render Now view with merged priorities
         const momentum = this._buildMomentum(ctx)
         listEl.style.opacity = '0'
         listEl.style.transition = 'opacity 0.4s ease'
         setTimeout(() => {
-          listEl.innerHTML = this._renderNowView(momentum, mapped)
+          listEl.innerHTML = this._renderNowView(momentum, merged)
           listEl.style.opacity = '1'
-          this._wirePriorityClicks(el, mapped)
+          this._wireNextMoveActions(el, merged, allData, ctx)
         }, 400)
       }
-    }).catch(() => {})
+    }).catch(() => {
+      const loadingEl = document.getElementById('cc-synth-loading')
+      if (loadingEl) loadingEl.classList.remove('active')
+    })
   },
 }
