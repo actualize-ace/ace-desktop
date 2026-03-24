@@ -76,10 +76,7 @@
     body.light .term-xterm .xterm-viewport::-webkit-scrollbar-thumb:hover { background: rgba(90,72,192,0.25); }
     body.light .scroll-to-bottom { background: rgba(90,72,192,0.08); border-color: rgba(90,72,192,0.15); color: var(--gold); }
     body.light .scroll-to-bottom:hover { background: rgba(90,72,192,0.15); }
-    body.light .sidebar-orb { filter: drop-shadow(0 0 6px rgba(90,72,192,0.25)) drop-shadow(0 0 14px rgba(26,138,96,0.12)); }
-    body.light .sidebar-orb.active { filter: drop-shadow(0 0 10px rgba(90,72,192,0.4)) drop-shadow(0 0 22px rgba(26,138,96,0.25)); }
-    body.light .orb-arc { stroke: rgba(0,0,0,0.2); }
-    body.light .orb-dot { fill: rgba(0,0,0,0.25); }
+    /* light mode mark handled via inline SVG gradient fills */
     body.light .chat-msg-user .chat-msg-content { background:linear-gradient(135deg, rgba(90,72,192,0.08), rgba(90,72,192,0.03)); border-color:rgba(90,72,192,0.12); }
     body.light .chat-input { background:rgba(240,238,246,0.8); border-color:rgba(90,72,192,0.12); }
     body.light .chat-input:focus { border-color:rgba(90,72,192,0.3); box-shadow:0 0 0 3px rgba(90,72,192,0.08); }
@@ -180,7 +177,7 @@
       transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .sidebar.collapsed { width: 52px; overflow: hidden; }
-    .sidebar.collapsed .sidebar-logo > div:not(.sidebar-orb),
+    .sidebar.collapsed .sidebar-logo > div:not(.sidebar-mark),
     .sidebar.collapsed .nav-section,
     .sidebar.collapsed .sidebar-div,
     .sidebar.collapsed .sidebar-bottom { display: none; }
@@ -210,60 +207,46 @@
       display: flex; align-items: center; gap: 9px;
       padding: 16px; border-bottom: 1px solid var(--border);
     }
-    .sidebar-orb {
-      width: 34px; height: 28px; flex-shrink: 0; position: relative;
-      overflow: visible;
-      filter: drop-shadow(0 0 8px rgba(136,120,255,0.3))
-              drop-shadow(0 0 20px rgba(96,216,168,0.15));
-      animation: clubBreath 4s ease-in-out infinite;
-      transition: filter 0.4s ease;
+    /* ── ACE Mark — SVG concave triangle + morph to orb ── */
+    .sidebar-mark {
+      width: 26px; height: 26px; flex-shrink: 0; position: relative;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      box-shadow: 0 0 14px rgba(136,120,255,0.3), 0 0 40px rgba(200,160,240,0.1);
+      transition: box-shadow 0.6s ease;
     }
-    .sidebar-orb:hover {
-      filter: drop-shadow(0 0 14px rgba(136,120,255,0.6))
-              drop-shadow(0 0 30px rgba(96,216,168,0.35));
-      transform: scale(1.12);
-      cursor: pointer;
+    .sidebar-mark.active {
+      box-shadow: 0 0 24px rgba(136,120,255,0.6), 0 0 60px rgba(200,160,240,0.3), 0 0 100px rgba(96,216,168,0.15);
     }
-    .sidebar-orb:hover .orb-arc { stroke: rgba(255,255,255,0.6); }
-    .sidebar-orb:hover .orb-dot { fill: rgba(255,255,255,0.8); r: 2; }
-    .sidebar-orb.active {
-      filter: drop-shadow(0 0 12px rgba(136,120,255,0.5))
-              drop-shadow(0 0 28px rgba(96,216,168,0.3));
-      animation: clubPulse 1.8s ease-in-out infinite;
+    .sidebar-mark svg { display: block; }
+    .sidebar-mark-ring {
+      position: absolute; inset: -2px; border-radius: 50%;
+      background: conic-gradient(from 0deg, #8878ff, #c8a0f0, #60d8a8, #8878ff);
+      -webkit-mask: radial-gradient(circle, transparent 72%, black 76%, black 90%, transparent 94%);
+      mask: radial-gradient(circle, transparent 72%, black 76%, black 90%, transparent 94%);
+      opacity: 0; pointer-events: none;
     }
-    .orb-circle {
-      transition: cx 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
-                  cy 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
-                  r  0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
-                  fill 0.8s ease,
-                  opacity 0.4s ease;
+    body.light .sidebar-mark-ring {
+      background: conic-gradient(from 0deg, #5a48c0, #8868c0, #1a8860, #5a48c0);
     }
-    .orb-arc { transition: opacity 0.3s ease, stroke 0.2s ease; }
-    .orb-dot { transition: opacity 0.3s ease, fill 0.2s ease, r 0.2s ease; }
-    .sidebar-orb.active .orb-arc { opacity: 0; }
-    .sidebar-orb.active .orb-dot { opacity: 0; }
-    body.light #orb-tri-group .orb-arc:nth-child(1) { stroke: #4a38a0; }
-    body.light #orb-tri-group .orb-arc:nth-child(2) { stroke: #1a7858; }
-    body.light #orb-tri-group .orb-arc:nth-child(3) { stroke: #6a3898; }
-    @keyframes clubBreath {
-      0%, 100% {
-        filter: drop-shadow(0 0 8px rgba(136,120,255,0.3)) drop-shadow(0 0 20px rgba(96,216,168,0.15));
-        transform: scale(1);
-      }
-      50% {
-        filter: drop-shadow(0 0 14px rgba(136,120,255,0.5)) drop-shadow(0 0 28px rgba(96,216,168,0.3));
-        transform: scale(1.04);
-      }
+    /* Expanding pulse rings */
+    .sidebar-mark::before,
+    .sidebar-mark::after {
+      content:''; position:absolute; inset:-1px; border-radius:50%;
+      border: 1px solid rgba(136,120,255,0.4);
+      opacity:0; pointer-events:none;
     }
-    @keyframes clubPulse {
-      0%, 100% {
-        filter: drop-shadow(0 0 10px rgba(136,120,255,0.5)) drop-shadow(0 0 25px rgba(96,216,168,0.3));
-        transform: scale(1);
-      }
-      50% {
-        filter: drop-shadow(0 0 22px rgba(136,120,255,0.7)) drop-shadow(0 0 42px rgba(96,216,168,0.5));
-        transform: scale(1.06);
-      }
+    .sidebar-mark.active::before {
+      opacity:1;
+      animation: markPulseRing 2s ease-out infinite;
+    }
+    .sidebar-mark.active::after {
+      opacity:1;
+      animation: markPulseRing 2s ease-out 1s infinite;
+    }
+    @keyframes markPulseRing {
+      0% { transform: scale(1); opacity: 0.5; border-color: rgba(136,120,255,0.4); }
+      100% { transform: scale(2.2); opacity: 0; border-color: rgba(96,216,168,0.1); }
     }
     /* Active streaming — ambient UI effects */
     body.streaming .titlebar { border-bottom-color: rgba(136,120,255,0.2); }
@@ -2087,69 +2070,44 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
       <div class="sidebar-logo">
-        <svg class="sidebar-orb" width="34" height="28" viewBox="5 3 90 78" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <radialGradient id="orb-g-auth" cx="50%" cy="40%" r="55%">
-              <stop offset="0%" stop-color="#a090ff"/><stop offset="100%" stop-color="#7060e0"/>
-            </radialGradient>
-            <radialGradient id="orb-g-cap" cx="45%" cy="40%" r="55%">
-              <stop offset="0%" stop-color="#c8a0f0"/><stop offset="100%" stop-color="#9060c0"/>
-            </radialGradient>
-            <radialGradient id="orb-g-exp" cx="55%" cy="40%" r="55%">
-              <stop offset="0%" stop-color="#80e8b8"/><stop offset="100%" stop-color="#40a878"/>
-            </radialGradient>
-            <radialGradient id="orb-g-merged" cx="38%" cy="38%" r="60%">
-              <stop offset="0%" stop-color="#8878ff"/>
-              <stop offset="50%" stop-color="#c8a0f0"/>
-              <stop offset="100%" stop-color="#60d8a8"/>
-            </radialGradient>
-            <radialGradient id="orb-g-auth-light" cx="50%" cy="40%" r="55%">
-              <stop offset="0%" stop-color="#6858d0"/><stop offset="100%" stop-color="#4a38a0"/>
-            </radialGradient>
-            <radialGradient id="orb-g-cap-light" cx="45%" cy="40%" r="55%">
-              <stop offset="0%" stop-color="#8868c0"/><stop offset="100%" stop-color="#5a3890"/>
-            </radialGradient>
-            <radialGradient id="orb-g-exp-light" cx="55%" cy="40%" r="55%">
-              <stop offset="0%" stop-color="#30b880"/><stop offset="100%" stop-color="#1a8860"/>
-            </radialGradient>
-            <radialGradient id="orb-g-merged-light" cx="38%" cy="38%" r="60%">
-              <stop offset="0%" stop-color="#5a48c0"/>
-              <stop offset="50%" stop-color="#7a68d0"/>
-              <stop offset="100%" stop-color="#1a8a60"/>
-            </radialGradient>
-            <radialGradient id="orb-g-center" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="rgba(220,200,255,0.8)"/>
-              <stop offset="35%" stop-color="rgba(180,160,240,0.35)"/>
-              <stop offset="100%" stop-color="rgba(160,140,240,0)"/>
-            </radialGradient>
-          </defs>
-          <!-- Start merged as single orb -->
-          <circle id="orb-c-top" class="orb-circle" cx="50" cy="48" r="28" fill="url(#orb-g-merged)"/>
-          <circle id="orb-c-bl" class="orb-circle" cx="50" cy="48" r="28" fill="url(#orb-g-cap)" style="opacity:0"/>
-          <circle id="orb-c-br" class="orb-circle" cx="50" cy="48" r="28" fill="url(#orb-g-exp)" style="opacity:0"/>
-          <circle id="orb-center-glow" cx="50" cy="48" r="8" fill="url(#orb-g-center)" opacity="0"/>
-          <circle id="orb-center-core" cx="50" cy="48" r="3" fill="rgba(232,224,255,0.9)" opacity="0"/>
-          <g id="orb-trail2" opacity="0">
-            <path d="M 40,42.3 A 20,20 0 0,1 60,42.3" fill="none" stroke="#b0a0ff" stroke-width="0.8" stroke-linecap="round"/>
-            <path d="M 60,42.3 A 20,20 0 0,1 50,59.6" fill="none" stroke="#70f0c0" stroke-width="0.8" stroke-linecap="round"/>
-            <path d="M 50,59.6 A 20,20 0 0,1 40,42.3" fill="none" stroke="#d0b0f8" stroke-width="0.8" stroke-linecap="round"/>
-          </g>
-          <g id="orb-trail1" opacity="0">
-            <path d="M 40,42.3 A 20,20 0 0,1 60,42.3" fill="none" stroke="#b0a0ff" stroke-width="1.0" stroke-linecap="round"/>
-            <path d="M 60,42.3 A 20,20 0 0,1 50,59.6" fill="none" stroke="#70f0c0" stroke-width="1.0" stroke-linecap="round"/>
-            <path d="M 50,59.6 A 20,20 0 0,1 40,42.3" fill="none" stroke="#d0b0f8" stroke-width="1.0" stroke-linecap="round"/>
-          </g>
-          <g id="orb-tri-group">
-            <path class="orb-arc" d="M 40,42.3 A 20,20 0 0,1 60,42.3" fill="none" stroke="#b0a0ff" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="21" stroke-dashoffset="21"/>
-            <path class="orb-arc" d="M 60,42.3 A 20,20 0 0,1 50,59.6" fill="none" stroke="#70f0c0" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="21" stroke-dashoffset="21"/>
-            <path class="orb-arc" d="M 50,59.6 A 20,20 0 0,1 40,42.3" fill="none" stroke="#d0b0f8" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="21" stroke-dashoffset="21"/>
-            <circle class="orb-dot" cx="40" cy="42.3" r="1.5" fill="rgba(255,255,255,0.5)"/>
-            <circle class="orb-dot" cx="60" cy="42.3" r="1.5" fill="rgba(255,255,255,0.5)"/>
-            <circle class="orb-dot" cx="50" cy="59.6" r="1.5" fill="rgba(255,255,255,0.5)"/>
-          </g>
-          <circle id="orb-pulse1" cx="50" cy="48" r="15" fill="none" stroke="rgba(160,144,255,0.3)" stroke-width="0.6" opacity="0"/>
-          <circle id="orb-pulse2" cx="50" cy="48" r="15" fill="none" stroke="rgba(160,144,255,0.3)" stroke-width="0.6" opacity="0"/>
-        </svg>
+        <div class="sidebar-mark" id="sidebarMark">
+          <div class="sidebar-mark-ring" id="sidebarRing"></div>
+          <svg width="26" height="26" viewBox="0 0 100 100" id="sidebarSvg" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="sg-mark" cx="40%" cy="38%" r="65%">
+                <stop offset="0%" stop-color="#8878ff"/>
+                <stop offset="45%" stop-color="#c8a0f0"/>
+                <stop offset="100%" stop-color="#60d8a8"/>
+              </radialGradient>
+              <radialGradient id="sg-auth" cx="50%" cy="40%" r="55%">
+                <stop offset="0%" stop-color="#a090ff"/><stop offset="100%" stop-color="#7060e0"/>
+              </radialGradient>
+              <radialGradient id="sg-cap" cx="45%" cy="40%" r="55%">
+                <stop offset="0%" stop-color="#c8a0f0"/><stop offset="100%" stop-color="#9060c0"/>
+              </radialGradient>
+              <radialGradient id="sg-exp" cx="55%" cy="40%" r="55%">
+                <stop offset="0%" stop-color="#80e8b8"/><stop offset="100%" stop-color="#40a878"/>
+              </radialGradient>
+              <radialGradient id="sg-orb" cx="38%" cy="38%" r="60%">
+                <stop offset="0%" stop-color="#8878ff"/>
+                <stop offset="50%" stop-color="#c8a0f0"/>
+                <stop offset="100%" stop-color="#60d8a8"/>
+              </radialGradient>
+              <radialGradient id="sg-center" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="rgba(220,200,255,0.9)"/>
+                <stop offset="30%" stop-color="rgba(180,160,240,0.4)"/>
+                <stop offset="100%" stop-color="rgba(160,140,240,0)"/>
+              </radialGradient>
+            </defs>
+            <circle id="smDisc" cx="50" cy="50" r="38" fill="url(#sg-orb)" opacity="0.08"/>
+            <circle id="smOrb" cx="50" cy="50" r="0" fill="url(#sg-orb)" opacity="0"/>
+            <circle id="smGlow" cx="50" cy="50" r="10" fill="url(#sg-center)" opacity="0"/>
+            <circle id="smOrbA" cx="50" cy="16" r="0" fill="url(#sg-auth)" opacity="0"/>
+            <circle id="smOrbC" cx="20.6" cy="67" r="0" fill="url(#sg-cap)" opacity="0"/>
+            <circle id="smOrbE" cx="79.4" cy="67" r="0" fill="url(#sg-exp)" opacity="0"/>
+            <path id="smMark" fill="url(#sg-mark)" d=""/>
+          </svg>
+        </div>
         <div>
           <div class="sidebar-logo-text">ACE</div>
           <div class="sidebar-logo-sub">Coherence Engine</div>
@@ -3497,202 +3455,249 @@ function renderQuestionCard(id, data, containerEl, sessionsObj) {
   if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight
 }
 
-// ═══════════════════════════════════════════════════════════
-// Orb Engine Animation — Orb → Triangle → Spinning Engine
-// CSS handles glow (clubBreath/clubPulse). JS handles internal SVG only.
-// ═══════════════════════════════════════════════════════════
-const orbEngine = {
-  phase: 0, streaming: false, winding: false,
-  spin: { angle: 0, speed: 0, target: 0 },
-  tri: { opacity: 0, tOpacity: 0, scale: 0.3, tScale: 0.3,
-         dashOffset: 21, tDashOffset: 21, strokeW: 1.2, tStrokeW: 1.2, arcAlpha: 0.6, tArcAlpha: 0.6 },
-  center: { opacity: 0, tOpacity: 0, glowR: 4, tGlowR: 4 },
-  el: {}, lastT: 0, _running: false,
+// ── ACE Mark Animation Engine — Full Flow ──
+// Mark (concave A) → Float (3 orbs) → Merge (1 orb) → Spinning
+const ACE_MARK = {
+  CX: 50, CY: 50, TRI_R: 34, BULGE: -12,
+  active: false, phase: 0, winding: false,
+  lastT: 0, _timers: [],
+
+  // Mark
+  markScale: 1, tMarkScale: 1,
+  markOp: 1, tMarkOp: 1,
+  // Disc
+  discOp: 0.1, tDiscOp: 0.1,
+  // Three orbs: [{x,y,r,op, tx,ty,tr,tOp}]
+  orbs: null,
+  // Merged orb
+  orbR: 0, tOrbR: 0, orbOp: 0, tOrbOp: 0,
+  // Center
+  centerOp: 0, tCenterOp: 0, centerR: 4, tCenterR: 4,
+  // Ring
+  ringOp: 0, tRingOp: 0, ringAngle: 0, ringSpeed: 0, tRingSpeed: 0,
+
+  triVerts(R) {
+    return [0,1,2].map(i => {
+      const a = (-90 + i * 120) * Math.PI / 180
+      return { x: this.CX + R * Math.cos(a), y: this.CY + R * Math.sin(a) }
+    })
+  },
+
+  computePath(scale) {
+    const R = this.TRI_R * scale
+    const bulge = this.BULGE * scale
+    const v = this.triVerts(R)
+    let d = `M ${v[0].x.toFixed(2)},${v[0].y.toFixed(2)}`
+    for (let i = 0; i < 3; i++) {
+      const p1 = v[i], p2 = v[(i+1)%3]
+      const mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2
+      const dx = p2.x-p1.x, dy = p2.y-p1.y
+      const len = Math.sqrt(dx*dx+dy*dy)
+      let nx = -dy/len, ny = dx/len
+      if (nx*(mx-this.CX)+ny*(my-this.CY) < 0) { nx=-nx; ny=-ny }
+      d += ` Q ${(mx+nx*bulge).toFixed(2)},${(my+ny*bulge).toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)}`
+    }
+    return d + ' Z'
+  },
 
   init() {
-    const q = s => document.querySelector(s), qa = s => document.querySelectorAll(s)
-    this.el = {
-      svg: q('.sidebar-orb'), triG: q('#orb-tri-group'),
-      cT: q('#orb-c-top'), cL: q('#orb-c-bl'), cR: q('#orb-c-br'),
-      arcs: qa('#orb-tri-group .orb-arc'),
-      cGlow: q('#orb-center-glow'), cCore: q('#orb-center-core'),
-      trail1: q('#orb-trail1'), trail2: q('#orb-trail2'),
-      pulse1: q('#orb-pulse1'), pulse2: q('#orb-pulse2'),
-    }
-  },
+    this.elMark = document.getElementById('smMark')
+    this.elDisc = document.getElementById('smDisc')
+    this.elOrb  = document.getElementById('smOrb')
+    this.elGlow = document.getElementById('smGlow')
+    this.elRing = document.getElementById('sidebarRing')
+    this.elSvg  = document.getElementById('sidebarSvg')
+    this.elWrap = document.getElementById('sidebarMark')
+    this.elOrbEls = [
+      document.getElementById('smOrbA'),
+      document.getElementById('smOrbC'),
+      document.getElementById('smOrbE'),
+    ]
+    if (!this.elMark) return
 
-  _startLoop() {
-    if (this._running) return
-    this._running = true
+    const verts = this.triVerts(this.TRI_R)
+    this.orbs = verts.map(v => ({
+      x: v.x, y: v.y, r: 0, op: 0,
+      tx: v.x, ty: v.y, tr: 0, tOp: 0,
+    }))
+
+    this.elMark.setAttribute('d', this.computePath(1))
     this.lastT = performance.now()
-    this._tick()
+    this.tick()
   },
 
-  _stopLoop() { this._running = false },
+  _lr(cur, target, factor, dt) {
+    return cur + (target - cur) * (1 - Math.pow(1 - factor, dt * 60))
+  },
+  _dl(cur, target, up, down, dt) {
+    return this._lr(cur, target, cur < target ? up : down, dt)
+  },
 
-  _tick() {
-    if (!this._running) return
+  tick() {
+    if (!this.elMark) return
     const now = performance.now()
     const dt = Math.min((now - this.lastT) / 1000, 0.05)
     this.lastT = now
 
-    const sL = this.spin.speed < this.spin.target ? 0.04 : 0.015
-    this.spin.speed = _oL(this.spin.speed, this.spin.target, sL, dt)
-    if (Math.abs(this.spin.speed) < 0.5 && this.spin.target === 0) this.spin.speed = 0
-    this.spin.angle = (this.spin.angle + this.spin.speed * dt) % 360
-
-    const cn = this.center
-    cn.opacity = _oD(cn.opacity, cn.tOpacity, 0.04, 0.015, dt)
-    cn.glowR = _oD(cn.glowR, cn.tGlowR, 0.035, 0.015, dt)
-
-    const t = this.tri
-    t.opacity = _oD(t.opacity, t.tOpacity, 0.045, 0.018, dt)
-    t.scale = _oD(t.scale, t.tScale, 0.04, 0.012, dt)
-    t.dashOffset = _oD(t.dashOffset, t.tDashOffset, 0.035, 0.022, dt)
-    t.strokeW = _oD(t.strokeW, t.tStrokeW, 0.03, 0.02, dt)
-    t.arcAlpha = _oD(t.arcAlpha, t.tArcAlpha, 0.03, 0.02, dt)
-
-    try { this._render(now) } catch(e) { console.error('orbEngine:', e) }
-
-    // Stop loop when fully at rest
-    if (!this.streaming && !this.winding && this.spin.speed === 0 && t.opacity < 0.01 && cn.opacity < 0.01) {
-      this._running = false
-      return
+    this.markScale = this._dl(this.markScale, this.tMarkScale, 0.05, 0.03, dt)
+    this.markOp = this._dl(this.markOp, this.tMarkOp, 0.05, 0.03, dt)
+    this.discOp = this._dl(this.discOp, this.tDiscOp, 0.05, 0.025, dt)
+    for (const o of this.orbs) {
+      o.x = this._dl(o.x, o.tx, 0.06, 0.05, dt)
+      o.y = this._dl(o.y, o.ty, 0.06, 0.05, dt)
+      if (Math.abs(o.x - o.tx) < 0.3) o.x = o.tx
+      if (Math.abs(o.y - o.ty) < 0.3) o.y = o.ty
+      o.r = this._dl(o.r, o.tr, 0.05, 0.03, dt)
+      o.op = this._dl(o.op, o.tOp, 0.06, 0.03, dt)
     }
-    requestAnimationFrame(() => this._tick())
+    this.orbR = this._dl(this.orbR, this.tOrbR, 0.04, 0.025, dt)
+    this.orbOp = this._dl(this.orbOp, this.tOrbOp, 0.05, 0.025, dt)
+    this.centerOp = this._dl(this.centerOp, this.tCenterOp, 0.05, 0.02, dt)
+    this.centerR = this._dl(this.centerR, this.tCenterR, 0.04, 0.02, dt)
+    this.ringOp = this._dl(this.ringOp, this.tRingOp, 0.05, 0.02, dt)
+    this.ringSpeed = this._dl(this.ringSpeed, this.tRingSpeed, 0.04, 0.01, dt)
+    if (Math.abs(this.ringSpeed) < 0.3 && this.tRingSpeed === 0) this.ringSpeed = 0
+    this.ringAngle = (this.ringAngle + this.ringSpeed * dt) % 360
+
+    this.render(now)
+    requestAnimationFrame(() => this.tick())
   },
 
-  _render(now) {
-    const { el, spin, tri } = this
-    // Triangle group
-    el.triG.setAttribute('transform', `translate(50,48) rotate(${spin.angle}) scale(${tri.scale}) translate(-50,-48)`)
-    el.triG.style.opacity = tri.opacity
-    el.arcs.forEach(a => {
-      a.setAttribute('stroke-dashoffset', tri.dashOffset)
-      a.setAttribute('stroke-width', tri.strokeW)
-      a.setAttribute('stroke-opacity', tri.arcAlpha)
+  render(now) {
+    if (this.markOp > 0.01) {
+      this.elMark.setAttribute('d', this.computePath(this.markScale))
+      this.elMark.style.opacity = this.markOp
+    } else {
+      this.elMark.style.opacity = 0
+    }
+    this.elDisc.style.opacity = this.discOp
+    this.orbs.forEach((o, i) => {
+      const el = this.elOrbEls[i]
+      el.setAttribute('cx', o.x)
+      el.setAttribute('cy', o.y)
+      el.setAttribute('r', Math.max(0, o.r))
+      el.style.opacity = o.op
     })
-    // Trails
-    const trI = Math.min(1, spin.speed / 120)
-    if (trI > 0.02) {
-      el.trail1.setAttribute('transform', `translate(50,48) rotate(${spin.angle - 18}) scale(${tri.scale}) translate(-50,-48)`)
-      el.trail1.style.opacity = tri.opacity * trI * 0.4
-      el.trail2.setAttribute('transform', `translate(50,48) rotate(${spin.angle - 36}) scale(${tri.scale}) translate(-50,-48)`)
-      el.trail2.style.opacity = tri.opacity * trI * 0.15
-    } else { el.trail1.style.opacity = 0; el.trail2.style.opacity = 0 }
-    // Center orb
-    const cn = this.center
-    if (cn.opacity > 0.01) {
-      const csfx = theme === 'light' ? '-light' : ''
-      const pH = 1.2 + (spin.speed / 200) * 1.5, pA = 2 + (spin.speed / 200) * 3
-      el.cGlow.setAttribute('r', Math.max(2, cn.glowR + Math.sin(now / 1000 * pH * Math.PI * 2) * pA).toFixed(1))
-      el.cGlow.style.opacity = cn.opacity; el.cCore.style.opacity = cn.opacity * 0.9
-    } else { el.cGlow.style.opacity = 0; el.cCore.style.opacity = 0 }
-    // Pulse rings — radial circles expanding outward
-    const pI = Math.min(1, spin.speed / 60)
-    if (pI > 0.02) {
-      const period = 2.2 - (spin.speed / 200) * 0.8
-      const sC = theme === 'light' ? 'rgba(90,60,180,' : 'rgba(160,144,255,'
-      ;[el.pulse1, el.pulse2].forEach((p, i) => {
-        const t = ((now / 1000 + i * period * 0.5) % period) / period
-        p.setAttribute('r', (10 + t * 35).toFixed(1))
-        p.setAttribute('stroke', sC + ((1 - t) * 0.5 * pI).toFixed(3) + ')')
-        p.setAttribute('stroke-width', (1.2 - t * 0.6).toFixed(2))
-        p.style.opacity = 1
-      })
-    } else { el.pulse1.style.opacity = 0; el.pulse2.style.opacity = 0 }
+    this.elOrb.setAttribute('r', Math.max(0, this.orbR))
+    this.elOrb.style.opacity = this.orbOp
+    if (this.centerOp > 0.01) {
+      const pulseAmp = 3 + (this.ringSpeed / 200) * 4
+      const gr = this.centerR + Math.sin(now / 1000 * 1.5 * Math.PI * 2) * pulseAmp
+      this.elGlow.setAttribute('r', Math.max(2, gr).toFixed(1))
+      this.elGlow.style.opacity = this.centerOp
+    } else {
+      this.elGlow.style.opacity = 0
+    }
+    this.elRing.style.opacity = this.ringOp
+    this.elRing.style.transform = `rotate(${this.ringAngle}deg)`
+    const breath = Math.sin(now / 1000 * 0.4 * Math.PI * 2) * 0.5 + 0.5
+    const bm = breath * 0.15
+    const glowBase = this.active ? 10 : 5
+    const glowAlpha = this.active ? 0.5 : 0.2
+    const r1 = glowBase + bm * 6
+    const a1 = glowAlpha + bm * 0.1
+    this.elSvg.style.filter = `drop-shadow(0 0 ${r1.toFixed(1)}px rgba(136,120,255,${a1.toFixed(3)}))`
+  },
+
+  clearTimers() {
+    this._timers.forEach(t => clearTimeout(t))
+    this._timers = []
+  },
+  after(ms, fn) {
+    this._timers.push(setTimeout(fn, ms))
+  },
+
+  setActive(isActive) {
+    if (isActive && !this.active && !this.winding) {
+      this.active = true
+      if (this.elWrap) this.elWrap.classList.add('active')
+      this.rampUp()
+    } else if (!isActive && this.active && !this.winding) {
+      this.active = false
+      if (this.elWrap) this.elWrap.classList.remove('active')
+      this.windDown()
+    }
   },
 
   rampUp() {
-    if (this.streaming) return
-    this.streaming = true; this.winding = false
-    document.body.classList.add('streaming')
-    this.el.svg.classList.add('active')
-    this._startLoop()
-    const sfx = theme === 'light' ? '-light' : ''
-    const { cT, cL, cR } = this.el
-
-    // Phase 1: Orb splits into Triad
-    cL.style.opacity = '1'; cR.style.opacity = '1'
-    cT.setAttribute('cx', '50');  cT.setAttribute('cy', '25');  cT.setAttribute('r', '20')
-    cL.setAttribute('cx', '30');  cL.setAttribute('cy', '59.6'); cL.setAttribute('r', '20')
-    cR.setAttribute('cx', '70');  cR.setAttribute('cy', '59.6'); cR.setAttribute('r', '20')
-    cT.setAttribute('fill', `url(#orb-g-auth${sfx})`)
-    cL.setAttribute('fill', `url(#orb-g-cap${sfx})`)
-    cR.setAttribute('fill', `url(#orb-g-exp${sfx})`)
-
-    // Phase 2: Triangle emerges (after triad settles)
-    this._t1 = setTimeout(() => {
-      if (!this.streaming) return
-      this.tri.tOpacity = 1; this.tri.tDashOffset = 0; this.tri.tScale = 1; this.tri.tArcAlpha = 0.7
-      this.center.tOpacity = 0.6; this.center.tGlowR = 10
-      cT.style.opacity = '0.6'; cL.style.opacity = '0.6'; cR.style.opacity = '0.6'
-    }, 900)
-
-    // Phase 3: Engine spin
-    this._t2 = setTimeout(() => {
-      if (!this.streaming) return
-      this.spin.target = 80
-    }, 1700)
-
-    // Full speed
-    this._t3 = setTimeout(() => {
-      if (!this.streaming) return
-      this.spin.target = 200; this.center.tOpacity = 1; this.center.tGlowR = 18
-      this.tri.tScale = 1.15; this.tri.tStrokeW = 2; this.tri.tArcAlpha = 0.9
-      cT.style.opacity = '0.45'; cL.style.opacity = '0.45'; cR.style.opacity = '0.45'
-    }, 3900)
+    this.clearTimers()
+    this.phase = 1
+    const verts = this.triVerts(this.TRI_R)
+    const wide = this.triVerts(this.TRI_R * 1.1)
+    this.tMarkScale = 0.5
+    this.tMarkOp = 0
+    this.orbs.forEach((o, i) => {
+      o.x = verts[i].x; o.y = verts[i].y; o.r = 0; o.op = 0
+      o.tx = wide[i].x; o.ty = wide[i].y
+      o.tr = 12; o.tOp = 0.9
+    })
+    this.after(1000, () => {
+      if (!this.active) return
+      this.phase = 2
+      this.orbs.forEach(o => {
+        o.tx = this.CX; o.ty = this.CY; o.tr = 7
+      })
+      this.centerOp = 0; this.tCenterOp = 0.5; this.tCenterR = 10
+    })
+    this.after(1800, () => {
+      if (!this.active) return
+      this.orbs.forEach(o => { o.tr = 0; o.tOp = 0 })
+      this.tOrbR = 40; this.tOrbOp = 1
+      this.tDiscOp = 0
+      this.tCenterOp = 0.8; this.tCenterR = 14
+    })
+    this.after(2400, () => {
+      if (!this.active) return
+      this.phase = 3
+      this.tRingOp = 1; this.tRingSpeed = 180
+      this.tCenterOp = 1; this.tCenterR = 16
+    })
   },
 
   windDown() {
-    if (!this.streaming || this.winding) return
-    this.streaming = false; this.winding = true
-    clearTimeout(this._t1); clearTimeout(this._t2); clearTimeout(this._t3)
-    // Hold active glow during initial deceleration — remove with merge
-    setTimeout(() => this.el.svg.classList.remove('active'), 1200)
-    const sfx = theme === 'light' ? '-light' : ''
-    const { cT, cL, cR } = this.el
-
-    // Spin decelerates, triangle fades
-    this.spin.target = 0
-    this.tri.tOpacity = 0; this.tri.tScale = 0.6; this.tri.tDashOffset = 21
-    this.tri.tStrokeW = 0.8; this.tri.tArcAlpha = 0.3
-    this.center.tOpacity = 0; this.center.tGlowR = 4
-
-    // Circles brighten (crossfade with triangle)
-    cT.style.opacity = '1'; cL.style.opacity = '1'; cR.style.opacity = '1'
-
-    // Merge back to orb
-    setTimeout(() => {
-      cT.setAttribute('cx', '50'); cT.setAttribute('cy', '48'); cT.setAttribute('r', '28')
-      cL.setAttribute('cx', '50'); cL.setAttribute('cy', '48'); cL.setAttribute('r', '28')
-      cR.setAttribute('cx', '50'); cR.setAttribute('cy', '48'); cR.setAttribute('r', '28')
-      cT.setAttribute('fill', `url(#orb-g-merged${sfx})`)
-    }, 1400)
-
-    // Hide BL/BR (merged into orb)
-    setTimeout(() => {
-      cL.style.opacity = '0'; cR.style.opacity = '0'
-    }, 1800)
-
-    // Final rest
-    setTimeout(() => {
-      this.winding = false; document.body.classList.remove('streaming')
-      this.tri.scale = 0.3; this.tri.dashOffset = 21; this.center.opacity = 0
-    }, 2800)
+    this.clearTimers()
+    this.winding = true
+    this.tRingSpeed = 0; this.tRingOp = 0
+    this.tCenterOp = 0; this.tCenterR = 4
+    this.after(600, () => {
+      this.tOrbR = 0; this.tOrbOp = 0
+      const verts = this.triVerts(this.TRI_R)
+      this.orbs.forEach((o, i) => {
+        o.x = this.CX; o.y = this.CY; o.r = 0; o.op = 0
+        o.tx = verts[i].x; o.ty = verts[i].y
+        o.tr = 10; o.tOp = 0.8
+      })
+    })
+    this.after(1500, () => {
+      this.orbs.forEach(o => { o.tr = 0; o.tOp = 0 })
+      this.markScale = 0.5; this.markOp = 0
+      this.tMarkScale = 1; this.tMarkOp = 1
+      this.tDiscOp = 0.08
+    })
+    this.after(2800, () => {
+      this.winding = false
+      this.phase = 0
+      this.ringSpeed = 0; this.ringOp = 0
+      this.orbR = 0; this.orbOp = 0
+      this.centerOp = 0; this.centerR = 4
+      this.orbs.forEach((o, i) => {
+        const v = this.triVerts(this.TRI_R)[i]
+        o.x = v.x; o.y = v.y; o.r = 0; o.op = 0
+      })
+    })
   },
 }
-function _oL(c,t,f,dt){return c+(t-c)*(1-Math.pow(1-f,dt*60))}
-function _oD(c,t,u,d,dt){return _oL(c,t,c<t?u:d,dt)}
 
-// Legacy wrapper — called by streaming start/stop
+// Orb glow state — pulses when any session is streaming
 function updateOrbState() {
   const anyStreaming = Object.values(sessions).some(s => s.isStreaming) ||
                        Object.values(agentSessions).some(s => s.isStreaming)
-  if (anyStreaming) orbEngine.rampUp()
-  else orbEngine.windDown()
+  ACE_MARK.setActive(anyStreaming)
+  document.body.classList.toggle('streaming', anyStreaming)
 }
-orbEngine.init()
+
+// Init ACE Mark animation
+ACE_MARK.init()
 
 // Attention state — tracks which sessions need user input
 function setAttention(id, sessionsObj) {
