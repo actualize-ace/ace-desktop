@@ -65,4 +65,7 @@ module.exports = {
   HISTORY_LIST:           'history-list',
   HISTORY_READ:           'history-read',
   HISTORY_SEARCH:         'history-search',
+
+  // PTY Resume
+  PTY_RESUME:             'pty-resume',
 }

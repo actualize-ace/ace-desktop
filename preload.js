@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('ace', {
     onError: (cb) => ipcRenderer.on(ch.PTY_ERROR, (_, reason) => cb(reason)),
     onSessionSpawned: (cb) => ipcRenderer.on(ch.SESSION_SPAWNED, (_, id) => cb(id)),
     onSessionExit:    (cb) => ipcRenderer.on(ch.SESSION_EXIT, (_, id, code) => cb(id, code)),
+    resume: (id, cwd, cols, rows, sessionId) => ipcRenderer.invoke(ch.PTY_RESUME, id, cwd, cols, rows, sessionId),
   },
 
   // ─── Dashboard ───────────────────────────────────────────────────────────────

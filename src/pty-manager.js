@@ -55,4 +55,36 @@ function killAll() {
   sessions.clear()
 }
 
-module.exports = { sessions, create, write, resize, kill, killAll }
+function resume(win, id, cwd, claudeBin, cols, rows, sessionId) {
+  const shell = pty.spawn(claudeBin, ['--resume', sessionId], {
+    name: 'xterm-256color',
+    cols: cols || 120,
+    rows: rows || 30,
+    cwd,
+    env: {
+      ...process.env,
+      TERM:      'xterm-256color',
+      COLORTERM: 'truecolor',
+    },
+  })
+
+  sessions.set(id, shell)
+
+  shell.onData(data => {
+    if (!win.isDestroyed()) {
+      win.webContents.send(`${ch.PTY_DATA}:${id}`, data)
+    }
+  })
+
+  shell.onExit(({ exitCode }) => {
+    sessions.delete(id)
+    if (!win.isDestroyed()) {
+      win.webContents.send(ch.SESSION_EXIT, id, exitCode)
+    }
+  })
+
+  win.webContents.send(ch.SESSION_SPAWNED, id)
+  return id
+}
+
+module.exports = { sessions, create, resume, write, resize, kill, killAll }

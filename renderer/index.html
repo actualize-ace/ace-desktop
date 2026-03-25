@@ -1265,6 +1265,17 @@
       color: var(--text-dim); max-height: 150px; overflow: auto;
     }
     .history-tool-detail pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
+    .history-resume-btn {
+      padding: 5px 14px; border-radius: 6px; cursor: pointer; white-space: nowrap;
+      background: linear-gradient(135deg, rgba(136,120,255,0.15), rgba(200,160,240,0.1));
+      border: 1px solid rgba(136,120,255,0.2);
+      color: var(--gold); font-family: 'JetBrains Mono', monospace; font-size: 9px;
+      letter-spacing: 0.5px; transition: all 0.15s;
+    }
+    .history-resume-btn:hover {
+      background: linear-gradient(135deg, rgba(136,120,255,0.25), rgba(200,160,240,0.18));
+      border-color: rgba(136,120,255,0.35); box-shadow: 0 0 12px rgba(136,120,255,0.15);
+    }
 
     /* ── AGENTS VIEW ── */
     .agents-workspace { display:flex; flex:1; overflow:hidden; }
@@ -4279,7 +4290,9 @@ let chatDefaults = { model: 'opus', permissions: 'default', effort: 'high' }
 const sessions = {}
 let activeId = null
 
-function spawnSession() {
+function spawnSession(opts) {
+  const resumeId = opts?.resumeId || null
+  const resumeCwd = opts?.resumeCwd || null
   const id = 'sess-' + Date.now()
 
   const pane = document.createElement('div')
@@ -4344,6 +4357,8 @@ function spawnSession() {
     term: null, fitAddon: null, pane, tab,
     mode: 'chat',
     claudeSessionId: null,
+    resumeId: resumeId,
+    resumeCwd: resumeCwd,
     messages: [],
     currentStreamText: '',
     currentToolInput: '',
@@ -4407,6 +4422,11 @@ function spawnSession() {
   document.getElementById('mode-toggle-' + id).addEventListener('click', () => {
     toggleSessionMode(id)
   })
+
+  // Auto-switch to terminal mode for resumed sessions
+  if (resumeId) {
+    requestAnimationFrame(() => toggleSessionMode(id))
+  }
 }
 
 function toggleSessionMode(id) {
@@ -4442,7 +4462,11 @@ function toggleSessionMode(id) {
       requestAnimationFrame(() => {
         term.open(xtermEl)
         fitAddon.fit()
-        window.ace.pty.create(id, null, term.cols, term.rows)
+        if (s.resumeId) {
+          window.ace.pty.resume(id, s.resumeCwd, term.cols, term.rows, s.resumeId)
+        } else {
+          window.ace.pty.create(id, null, term.cols, term.rows)
+        }
 
         term.onScroll(() => {
           userScrolledUp = term.buffer.active.viewportY < term.buffer.active.baseY
@@ -4543,269 +4567,6 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') setTimeout(onWindowRegainFocus, 50)
 })
 window.addEventListener('focus', () => setTimeout(onWindowRegainFocus, 50))
-
-// ─── Chat History ─────────────────────────────────────────────────────────────
-let historyInitialized = false
-let historySessionsList = []
-let historyProjects = []
-let historyTotal = 0
-let historyOffset = 0
-let historyActiveProject = null
-let historyActiveSession = null
-
-function formatTokens(n) {
-  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M tok'
-  if (n >= 1000) return (n / 1000).toFixed(1) + 'k tok'
-  return n + ' tok'
-}
-
-function formatDuration(ms) {
-  const mins = Math.floor(ms / 60000)
-  if (mins < 60) return mins + 'm'
-  return Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm'
-}
-
-function formatFileSize(bytes) {
-  if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + ' MB'
-  if (bytes >= 1024) return (bytes / 1024).toFixed(0) + ' KB'
-  return bytes + ' B'
-}
-
-async function initHistory() {
-  if (historyInitialized) return
-  historyInitialized = true
-
-  const listEl = document.getElementById('history-list')
-  listEl.innerHTML = '<div class="vault-empty">Scanning sessions...</div>'
-
-  // Derive current project from vault path
-  const cfg = await window.ace.setup.getConfig()
-  const vaultPath = cfg?.vaultPath || ''
-  const defaultProject = '-' + vaultPath.replace(/\//g, '-').replace(/^-/, '')
-
-  const data = await window.ace.history.list(null, 0, 50)
-  if (data.error) {
-    listEl.innerHTML = `<div class="vault-empty">${escapeHtml(data.error)}</div>`
-    return
-  }
-
-  historySessionsList = data.sessions
-  historyProjects = data.projects
-  historyTotal = data.total
-  historyOffset = 50
-
-  // Populate project dropdown
-  const select = document.getElementById('history-project-select')
-  select.innerHTML = `<option value="">All Projects (${data.total})</option>` +
-    data.projects.map(p => {
-      const label = p.replace(/-/g, '/').replace(/^\//, '').split('/').slice(-2).join('/')
-      return `<option value="${escapeHtml(p)}">${escapeHtml(label)}</option>`
-    }).join('')
-
-  // Auto-filter to current vault's project if found
-  if (data.projects.includes(defaultProject)) {
-    select.value = defaultProject
-    historyActiveProject = defaultProject
-    const filtered = await window.ace.history.list(defaultProject, 0, 50)
-    if (!filtered.error) {
-      historySessionsList = filtered.sessions
-      historyTotal = filtered.total
-      historyOffset = 50
-    }
-  }
-
-  renderHistoryList()
-
-  // Event listeners
-  select.addEventListener('change', async () => {
-    const project = select.value || null
-    historyActiveProject = project
-    historyOffset = 0
-    const d = await window.ace.history.list(project, 0, 50)
-    if (d.error) return
-    historySessionsList = d.sessions
-    historyTotal = d.total
-    historyOffset = 50
-    renderHistoryList()
-    document.getElementById('history-detail').innerHTML = '<div class="vault-empty">Select a session</div>'
-  })
-
-  let searchTimer
-  document.getElementById('history-search').addEventListener('input', () => {
-    clearTimeout(searchTimer)
-    searchTimer = setTimeout(async () => {
-      const query = document.getElementById('history-search').value.trim()
-      if (!query) {
-        const d = await window.ace.history.list(historyActiveProject, 0, 50)
-        if (!d.error) {
-          historySessionsList = d.sessions
-          historyTotal = d.total
-          historyOffset = 50
-          renderHistoryList()
-        }
-        return
-      }
-      const results = await window.ace.history.search(query, historyActiveProject)
-      if (results && !results.error) {
-        historySessionsList = Array.isArray(results) ? results : results.sessions || []
-        historyTotal = historySessionsList.length
-        historyOffset = historyTotal
-        renderHistoryList()
-      }
-    }, 300)
-  })
-}
-
-function renderHistoryList() {
-  const listEl = document.getElementById('history-list')
-  if (!historySessionsList.length) {
-    listEl.innerHTML = '<div class="vault-empty">No sessions found</div>'
-    return
-  }
-
-  const todayStart = new Date().setHours(0, 0, 0, 0)
-  const yesterdayStart = todayStart - 86400000
-  const weekStart = todayStart - 6 * 86400000
-
-  let html = ''
-  let currentGroup = ''
-
-  for (const s of historySessionsList) {
-    let group
-    if (s.mtime >= todayStart) group = 'Today'
-    else if (s.mtime >= yesterdayStart) group = 'Yesterday'
-    else if (s.mtime >= weekStart) group = 'This Week'
-    else group = new Date(s.mtime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-
-    if (group !== currentGroup) {
-      currentGroup = group
-      html += `<div class="history-date-group">${escapeHtml(group)}</div>`
-    }
-
-    const time = new Date(s.mtime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-    const title = s.title || s.slug || 'Untitled session'
-    const modelShort = s.model ? s.model.replace('claude-', '').replace(/-\d{8}$/, '') : ''
-    const modelTag = modelShort ? `<span class="history-item-tag">${escapeHtml(modelShort)}</span>` : ''
-    const branchTag = s.gitBranch ? `<span class="history-item-tag">${escapeHtml(s.gitBranch)}</span>` : ''
-    const tokens = s.tokenCount ? formatTokens(s.tokenCount) : ''
-
-    html += `
-      <div class="history-item" data-project="${escapeHtml(s.project)}" data-id="${escapeHtml(s.id)}">
-        <div class="history-item-title">${escapeHtml(title)}</div>
-        <div class="history-item-meta">
-          <span>${time}</span>
-          ${modelTag}${branchTag}
-          ${tokens ? `<span>${tokens}</span>` : ''}
-        </div>
-      </div>`
-  }
-
-  if (historyOffset < historyTotal) {
-    html += `<div class="history-load-more" id="history-load-more">Load more (${historyTotal - historyOffset} remaining)</div>`
-  }
-
-  listEl.innerHTML = html
-
-  // Click handlers
-  listEl.querySelectorAll('.history-item').forEach(item => {
-    item.addEventListener('click', () => {
-      listEl.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'))
-      item.classList.add('active')
-      openSessionDetail(item.dataset.project, item.dataset.id)
-    })
-  })
-
-  // Load more
-  const loadMoreEl = document.getElementById('history-load-more')
-  if (loadMoreEl) {
-    loadMoreEl.addEventListener('click', async () => {
-      const d = await window.ace.history.list(historyActiveProject, historyOffset, 50)
-      if (d.error) return
-      historySessionsList = historySessionsList.concat(d.sessions)
-      historyOffset += 50
-      renderHistoryList()
-    })
-  }
-}
-
-async function openSessionDetail(project, sessionId) {
-  const detailEl = document.getElementById('history-detail')
-  detailEl.innerHTML = '<div class="vault-empty">Loading transcript...</div>'
-  historyActiveSession = { project, sessionId }
-
-  const data = await window.ace.history.read(project, sessionId)
-  if (data.error) {
-    detailEl.innerHTML = `<div class="vault-empty">${escapeHtml(data.error)}</div>`
-    return
-  }
-
-  const meta = data.meta || {}
-  const firstMsg = data.messages.find(m => m.role === 'user')
-  const title = firstMsg?.content?.slice(0, 120) || meta.slug || 'Untitled'
-  const duration = meta.duration ? formatDuration(meta.duration) : ''
-  const modelShort = meta.model ? meta.model.replace('claude-', '').replace(/-\d{8}$/, '') : ''
-
-  let headerHtml = `
-    <div class="history-detail-header">
-      <div class="history-detail-title">${escapeHtml(title)}</div>
-      <div class="history-detail-meta">
-        ${modelShort ? `<span>Model: ${escapeHtml(modelShort)}</span>` : ''}
-        ${meta.slug ? `<span>Slug: ${escapeHtml(meta.slug)}</span>` : ''}
-        ${meta.gitBranch ? `<span>Branch: ${escapeHtml(meta.gitBranch)}</span>` : ''}
-        ${meta.tokens ? `<span>Tokens: ${formatTokens(meta.tokens.input + meta.tokens.output)}</span>` : ''}
-        ${duration ? `<span>Duration: ${duration}</span>` : ''}
-        ${meta.fileSize ? `<span>Size: ${formatFileSize(meta.fileSize)}</span>` : ''}
-        <span>${data.messages.length} messages</span>
-        ${meta.truncated ? '<span style="color:var(--red)">Truncated</span>' : ''}
-      </div>
-    </div>`
-
-  let transcriptHtml = '<div class="history-transcript">'
-  for (const msg of data.messages) {
-    const roleClass = msg.role === 'user' ? 'history-msg-user' : 'history-msg-assistant'
-    const label = msg.role === 'user' ? 'YOU' : 'CLAUDE'
-    const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' }) : ''
-
-    let contentHtml
-    if (msg.role === 'user') {
-      contentHtml = `<div class="history-msg-content">${escapeHtml(msg.content)}</div>`
-    } else {
-      // Render markdown for assistant messages
-      try {
-        const raw = marked.parse(msg.content || '')
-        const safe = DOMPurify.sanitize(raw)
-        contentHtml = `<div class="history-msg-content md-body">${safe}</div>`
-      } catch {
-        contentHtml = `<div class="history-msg-content">${escapeHtml(msg.content || '')}</div>`
-      }
-    }
-
-    // Tool calls (collapsed by default)
-    let toolsHtml = ''
-    if (msg.toolCalls && msg.toolCalls.length > 0) {
-      toolsHtml = msg.toolCalls.map(tc => `
-        <div class="history-tool-summary collapsed">
-          <div class="history-tool-header" onclick="this.parentElement.classList.toggle('collapsed')">
-            <span style="font-size:10px">&#9889;</span>
-            <span>${escapeHtml(tc.name)}</span>
-            <span style="margin-left:auto;font-size:7px">&#x25B8;</span>
-          </div>
-          <div class="history-tool-detail"><pre>${escapeHtml(tc.input)}</pre></div>
-        </div>`).join('')
-    }
-
-    transcriptHtml += `
-      <div class="history-msg ${roleClass}">
-        <div class="history-msg-label">${label}${time ? ` <span style="opacity:0.5;margin-left:8px">${time}</span>` : ''}</div>
-        ${contentHtml}
-        ${toolsHtml}
-      </div>`
-  }
-  transcriptHtml += '</div>'
-
-  detailEl.innerHTML = headerHtml + transcriptHtml
-  detailEl.scrollTop = 0
-}
 
 // ─── Agent Sessions ───────────────────────────────────────────────────────────
 const agentSessions = {}
@@ -5857,265 +5618,6 @@ function highlightGraphCategory(catName) {
     const tgtMatch = (peopleData?.people?.find(p => p.fileName === tgt)?.category === catName)
     return srcMatch && tgtMatch ? 0.5 : tgt.startsWith('_hub_') && tgt.includes(catName.toLowerCase().replace(/\s+/g, '-')) ? 0.5 : 0.03
   })
-}
-
-// ─── History View ─────────────────────────────────────────────────────────────
-let historyInitialized = false
-let historySessionsList = []
-let historyProjects = []
-let historyTotal = 0
-let historyOffset = 0
-let historyActiveProject = null
-let historyActiveSession = null
-
-function formatTokens(n) {
-  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M tok'
-  if (n >= 1000) return (n / 1000).toFixed(1) + 'k tok'
-  return n + ' tok'
-}
-
-function formatDuration(ms) {
-  const mins = Math.floor(ms / 60000)
-  if (mins < 60) return mins + 'm'
-  return Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm'
-}
-
-function renderHistoryList() {
-  const listEl = document.getElementById('history-list')
-  if (!historySessionsList.length) {
-    listEl.innerHTML = '<div class="vault-empty">No sessions found</div>'
-    return
-  }
-
-  const todayStart = new Date().setHours(0,0,0,0)
-  const yesterdayStart = todayStart - 86400000
-  const weekStart = todayStart - 6 * 86400000
-
-  let html = ''
-  let currentGroup = ''
-
-  for (const s of historySessionsList) {
-    let group
-    if (s.mtime >= todayStart) group = 'Today'
-    else if (s.mtime >= yesterdayStart) group = 'Yesterday'
-    else if (s.mtime >= weekStart) group = 'This Week'
-    else group = new Date(s.mtime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-
-    if (group !== currentGroup) {
-      currentGroup = group
-      html += `<div class="history-date-group">${escapeHtml(group)}</div>`
-    }
-
-    const time = new Date(s.mtime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-    const title = s.title || s.slug || 'Untitled session'
-    const modelTag = s.model ? `<span class="history-item-tag">${escapeHtml(s.model.replace('claude-', ''))}</span>` : ''
-    const branchTag = s.gitBranch ? `<span class="history-item-tag">${escapeHtml(s.gitBranch)}</span>` : ''
-    const tokens = s.tokenCount ? formatTokens(s.tokenCount) : ''
-
-    html += `
-      <div class="history-item" data-project="${escapeHtml(s.project)}" data-id="${escapeHtml(s.id)}">
-        <div class="history-item-title">${escapeHtml(title)}</div>
-        <div class="history-item-meta">
-          <span>${time}</span>
-          ${modelTag}${branchTag}
-          ${tokens ? `<span>${tokens}</span>` : ''}
-        </div>
-      </div>`
-  }
-
-  if (historyOffset < historyTotal) {
-    html += `<div class="history-load-more" id="history-load-more">Load more (${historyTotal - historyOffset} remaining)</div>`
-  }
-
-  listEl.innerHTML = html
-
-  listEl.querySelectorAll('.history-item').forEach(item => {
-    item.addEventListener('click', () => {
-      listEl.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'))
-      item.classList.add('active')
-      openSessionDetail(item.dataset.project, item.dataset.id)
-    })
-  })
-
-  const loadMoreEl = document.getElementById('history-load-more')
-  if (loadMoreEl) loadMoreEl.addEventListener('click', loadMoreSessions)
-}
-
-async function loadMoreSessions() {
-  const data = await window.ace.history.list(historyActiveProject, historyOffset, 50)
-  if (data.error) return
-  historySessionsList = historySessionsList.concat(data.sessions)
-  historyOffset += 50
-  renderHistoryList()
-}
-
-async function openSessionDetail(project, sessionId) {
-  const detailEl = document.getElementById('history-detail')
-  detailEl.innerHTML = '<div class="vault-empty">Loading transcript...</div>'
-  historyActiveSession = { project, sessionId }
-
-  const data = await window.ace.history.read(project, sessionId)
-  if (data.error) {
-    detailEl.innerHTML = `<div class="vault-empty">${escapeHtml(data.error)}</div>`
-    return
-  }
-
-  const meta = data.meta || {}
-  const firstMsg = data.messages.find(m => m.role === 'user')
-  const title = firstMsg?.content?.slice(0, 120) || meta.slug || 'Untitled'
-  const duration = meta.duration ? formatDuration(meta.duration) : ''
-
-  let headerHtml = `
-    <div class="history-detail-header">
-      <div class="history-detail-title">${escapeHtml(title)}</div>
-      <div class="history-detail-meta">
-        ${meta.model ? `<span>Model: ${escapeHtml(meta.model.replace('claude-', ''))}</span>` : ''}
-        ${meta.slug ? `<span>Slug: ${escapeHtml(meta.slug)}</span>` : ''}
-        ${meta.gitBranch ? `<span>Branch: ${escapeHtml(meta.gitBranch)}</span>` : ''}
-        ${meta.tokens ? `<span>Tokens: ${formatTokens(meta.tokens.input + meta.tokens.output)}</span>` : ''}
-        ${duration ? `<span>Duration: ${duration}</span>` : ''}
-        <span>${data.messages.length} messages</span>
-      </div>
-    </div>`
-
-  let transcriptHtml = '<div class="history-transcript">'
-  for (const msg of data.messages) {
-    const roleClass = msg.role === 'user' ? 'history-msg-user' : 'history-msg-assistant'
-    const label = msg.role === 'user' ? 'YOU' : 'ASSISTANT'
-    const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', second:'2-digit' }) : ''
-
-    let contentHtml
-    if (msg.role === 'user') {
-      contentHtml = `<div class="history-msg-content">${escapeHtml(msg.content)}</div>`
-    } else {
-      // Render markdown for assistant messages
-      let rendered = ''
-      try {
-        if (typeof marked !== 'undefined') {
-          const raw = marked.parse(msg.content || '')
-          rendered = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(raw) : raw
-        } else {
-          rendered = escapeHtml(msg.content || '')
-        }
-      } catch { rendered = escapeHtml(msg.content || '') }
-      contentHtml = `<div class="history-msg-content">${rendered}</div>`
-    }
-
-    let toolsHtml = ''
-    if (msg.toolCalls && msg.toolCalls.length > 0) {
-      toolsHtml = msg.toolCalls.map(tc => {
-        const truncated = tc.input.length > 500 ? tc.input.slice(0, 500) + '...' : tc.input
-        return `<div class="history-tool-summary collapsed">
-          <div class="history-tool-header" onclick="this.parentElement.classList.toggle('collapsed')">
-            <span>\u26A1</span>
-            <span>${escapeHtml(tc.name)}</span>
-            <span style="margin-left:auto;font-size:7px">\u25B8</span>
-          </div>
-          <div class="history-tool-detail"><pre>${escapeHtml(truncated)}</pre></div>
-        </div>`
-      }).join('')
-    }
-
-    transcriptHtml += `
-      <div class="history-msg ${roleClass}">
-        <div class="history-msg-label">${label}${time ? ` <span style="opacity:0.5;margin-left:8px">${time}</span>` : ''}</div>
-        ${contentHtml}
-        ${toolsHtml}
-      </div>`
-  }
-  transcriptHtml += '</div>'
-
-  detailEl.innerHTML = headerHtml + transcriptHtml
-  detailEl.scrollTop = 0
-}
-
-function debounceHistorySearch() {
-  let timer
-  return () => {
-    clearTimeout(timer)
-    timer = setTimeout(async () => {
-      const query = document.getElementById('history-search').value.trim()
-      if (!query) {
-        const data = await window.ace.history.list(historyActiveProject, 0, 50)
-        if (!data.error) {
-          historySessionsList = data.sessions
-          historyTotal = data.total
-          historyOffset = 50
-          renderHistoryList()
-        }
-        return
-      }
-      const results = await window.ace.history.search(query, historyActiveProject)
-      if (!results.error) {
-        historySessionsList = Array.isArray(results) ? results : results.sessions || []
-        historyTotal = historySessionsList.length
-        historyOffset = historyTotal
-        renderHistoryList()
-      }
-    }, 300)
-  }
-}
-
-async function initHistory() {
-  if (historyInitialized) return
-  historyInitialized = true
-
-  const listEl = document.getElementById('history-list')
-  listEl.innerHTML = '<div class="vault-empty">Scanning sessions...</div>'
-
-  // Derive current project from vault path
-  const cfg = await window.ace.setup.getConfig()
-  const vaultPath = cfg?.vaultPath || ''
-  const defaultProject = '-' + vaultPath.replace(/\//g, '-')
-
-  const data = await window.ace.history.list(null, 0, 50)
-  if (data.error) {
-    listEl.innerHTML = `<div class="vault-empty">${escapeHtml(data.error)}</div>`
-    return
-  }
-
-  historySessionsList = data.sessions
-  historyProjects = data.projects
-  historyTotal = data.total
-  historyOffset = 50
-
-  // Populate project dropdown
-  const select = document.getElementById('history-project-select')
-  select.innerHTML = `<option value="">All Projects (${data.total})</option>` +
-    data.projects.map(p => {
-      const label = p.replace(/-/g, '/').replace(/^\//, '').split('/').slice(-2).join('/')
-      const selected = p === defaultProject ? ' selected' : ''
-      return `<option value="${escapeHtml(p)}"${selected}>${escapeHtml(label)}</option>`
-    }).join('')
-
-  // Auto-filter to current vault's project
-  if (data.projects.includes(defaultProject)) {
-    select.value = defaultProject
-    historyActiveProject = defaultProject
-    const filtered = await window.ace.history.list(defaultProject, 0, 50)
-    if (!filtered.error) {
-      historySessionsList = filtered.sessions
-      historyTotal = filtered.total
-      historyOffset = 50
-    }
-  }
-
-  renderHistoryList()
-
-  select.addEventListener('change', async () => {
-    const project = select.value || null
-    historyActiveProject = project
-    historyOffset = 0
-    const d = await window.ace.history.list(project, 0, 50)
-    if (d.error) return
-    historySessionsList = d.sessions
-    historyTotal = d.total
-    historyOffset = 50
-    renderHistoryList()
-    document.getElementById('history-detail').innerHTML = '<div class="vault-empty">Select a session</div>'
-  })
-
-  document.getElementById('history-search').addEventListener('input', debounceHistorySearch())
 }
 
 // ─── Vault View ───────────────────────────────────────────────────────────────
@@ -7395,7 +6897,10 @@ async function openSessionDetail(project, sessionId) {
   const duration = meta.duration ? formatHistoryDuration(meta.duration) : ''
 
   let headerHtml = '<div class="history-detail-header">' +
-    '<div class="history-detail-title">' + escapeHistoryHtml(title) + '</div>' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">' +
+      '<div class="history-detail-title">' + escapeHistoryHtml(title) + '</div>' +
+      '<button class="history-resume-btn" id="history-resume-btn" data-session-id="' + escapeHistoryHtml(sessionId) + '" data-project="' + escapeHistoryHtml(project) + '">&#9654; Resume</button>' +
+    '</div>' +
     '<div class="history-detail-meta">' +
       (meta.model ? '<span>Model: ' + escapeHistoryHtml(meta.model.replace('claude-', '')) + '</span>' : '') +
       (meta.slug ? '<span>Slug: ' + escapeHistoryHtml(meta.slug) + '</span>' : '') +
@@ -7452,6 +6957,17 @@ async function openSessionDetail(project, sessionId) {
   detailEl.querySelectorAll('.history-tool-header').forEach(header => {
     header.addEventListener('click', () => header.parentElement.classList.toggle('collapsed'))
   })
+
+  // Wire resume button
+  const resumeBtn = document.getElementById('history-resume-btn')
+  if (resumeBtn) {
+    resumeBtn.addEventListener('click', () => {
+      const sid = resumeBtn.dataset.sessionId
+      const projectDir = resumeBtn.dataset.project.replace(/-/g, '/')
+      document.querySelector('.nav-item[data-view="terminal"]').click()
+      setTimeout(() => spawnSession({ resumeId: sid, resumeCwd: projectDir }), 150)
+    })
+  }
 }
 </script>
   <script type="module">

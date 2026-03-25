@@ -146,6 +146,9 @@ ipcMain.handle('pty-create', (_, id, cwd, cols, rows) => {
 ipcMain.on('pty-write',  (_, id, data)       => require('./src/pty-manager').write(id, data))
 ipcMain.on('pty-resize', (_, id, cols, rows) => require('./src/pty-manager').resize(id, cols, rows))
 ipcMain.on('pty-kill',   (_, id)             => require('./src/pty-manager').kill(id))
+ipcMain.handle(ch.PTY_RESUME, (_, id, cwd, cols, rows, sessionId) => {
+  return require('./src/pty-manager').resume(mainWindow, id, cwd || global.VAULT_PATH, global.CLAUDE_BIN, cols, rows, sessionId)
+})
 
 // ─── Chat IPC Handlers (stream-json mode) ────────────────────────────────────
 
