@@ -68,4 +68,13 @@ module.exports = {
 
   // PTY Resume
   PTY_RESUME:             'pty-resume',
+
+  // Artifacts
+  ARTIFACTS_LIST:         'artifacts-list',
+  ARTIFACTS_DETAIL:       'artifacts-detail',
+  ARTIFACTS_SET_STATUS:   'artifacts-set-status',
+
+  // Shell
+  SHELL_OPEN_PATH:        'shell-open-path',
+  SHELL_OPEN_EXTERNAL:    'shell-open-external',
 }

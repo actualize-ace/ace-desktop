@@ -377,4 +377,110 @@ function parsePeople(vaultPath) {
   return { people, categories, entities }
 }
 
-module.exports = { parseState, parseFollowUps, listDir, parseExecutionLog, parseRitualRhythm, parsePeople }
+function parseArtifacts(vaultPath) {
+  const artDir = path.join(vaultPath, '11-Artifacts')
+  const artifacts = []
+  const categories = {}
+
+  try {
+    const entries = fs.readdirSync(artDir, { withFileTypes: true })
+    for (const e of entries) {
+      if (!e.isFile() || !e.name.endsWith('.md') || e.name === 'README.md') continue
+      const filePath = path.join(artDir, e.name)
+      try {
+        const text = fs.readFileSync(filePath, 'utf8')
+        const fm = parseFrontmatter(text)
+        if (!fm) continue
+        const body = text.replace(/^---[\s\S]*?---\s*/, '').trim()
+        const slug = e.name.replace('.md', '')
+        // Check if source file/dir still exists
+        const fp = fm.file_path || ''
+        let missing = false
+        if (fp) {
+          const resolved = path.join(vaultPath, fp)
+          missing = !fs.existsSync(resolved)
+        }
+        const artifact = {
+          slug,
+          title: fm.title || slug.replace(/-/g, ' '),
+          category: fm.category || 'other',
+          tags: fm.tags || [],
+          status: fm.status || 'shipped',
+          created: fm.created || '',
+          url: fm.url || '',
+          file_path: fp,
+          domain: fm.domain || '',
+          client: fm.client || '',
+          body: body.slice(0, 500),
+          path: filePath,
+          missing,
+        }
+        artifacts.push(artifact)
+        categories[artifact.category] = (categories[artifact.category] || 0) + 1
+      } catch {}
+    }
+  } catch { return { artifacts: [], categories: {} } }
+
+  artifacts.sort((a, b) => (b.created || '').localeCompare(a.created || ''))
+  return { artifacts, categories }
+}
+
+function parseFrontmatter(text) {
+  const match = text.match(/^---\n([\s\S]*?)\n---/)
+  if (!match) return null
+  const fm = {}
+  const lines = match[1].split('\n')
+  for (const line of lines) {
+    const kv = line.match(/^(\w[\w_]*)\s*:\s*(.*)$/)
+    if (!kv) continue
+    let val = kv[2].trim()
+    // Handle arrays: [tag1, tag2]
+    if (val.startsWith('[') && val.endsWith(']')) {
+      val = val.slice(1, -1).split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean)
+    } else {
+      // Strip quotes
+      val = val.replace(/^["']|["']$/g, '')
+    }
+    fm[kv[1]] = val
+  }
+  return fm
+}
+
+function getArtifactDetail(vaultPath, slug) {
+  const filePath = path.join(vaultPath, '11-Artifacts', slug + '.md')
+  try {
+    const text = fs.readFileSync(filePath, 'utf8')
+    const fm = parseFrontmatter(text)
+    const body = text.replace(/^---[\s\S]*?---\s*/, '').trim()
+    // Check if file_path resolves to a previewable target
+    const fp = fm.file_path || ''
+    const fullPath = fp ? path.join(vaultPath, fp) : ''
+    let previewable = false
+    if (fp.endsWith('.html') && fs.existsSync(fullPath)) previewable = true
+    else if (fp.endsWith('.pdf') && fs.existsSync(fullPath)) previewable = true
+    else if (fp.endsWith('/') && fs.existsSync(path.join(fullPath, 'index.html'))) previewable = true
+    // Check if source file/dir still exists
+    let missing = false
+    if (fp) {
+      missing = !fs.existsSync(fullPath)
+    }
+    return { ...fm, slug, body, path: filePath, previewable, missing }
+  } catch (e) { return { error: e.message } }
+}
+
+function updateArtifactStatus(vaultPath, slug, newStatus) {
+  const filePath = path.join(vaultPath, '11-Artifacts', slug + '.md')
+  try {
+    let text = fs.readFileSync(filePath, 'utf8')
+    if (text.match(/^status:\s*.+$/m)) {
+      text = text.replace(/^status:\s*.+$/m, `status: ${newStatus}`)
+    } else {
+      // Insert status after the first --- line
+      text = text.replace(/^(---\n)/, `$1status: ${newStatus}\n`)
+    }
+    fs.writeFileSync(filePath, text, 'utf8')
+    return { ok: true }
+  } catch (e) { return { error: e.message } }
+}
+
+module.exports = { parseState, parseFollowUps, listDir, parseExecutionLog, parseRitualRhythm, parsePeople, parseArtifacts, getArtifactDetail, updateArtifactStatus }

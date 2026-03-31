@@ -94,4 +94,17 @@ contextBridge.exposeInMainWorld('ace', {
     read:   (project, sessionId)     => ipcRenderer.invoke(ch.HISTORY_READ, project, sessionId),
     search: (query, project)         => ipcRenderer.invoke(ch.HISTORY_SEARCH, query, project),
   },
+
+  // ─── Artifacts ──────────────────────────────────────────────────────────────
+  artifacts: {
+    list:      ()             => ipcRenderer.invoke(ch.ARTIFACTS_LIST),
+    detail:    (slug)         => ipcRenderer.invoke(ch.ARTIFACTS_DETAIL, slug),
+    setStatus: (slug, status) => ipcRenderer.invoke(ch.ARTIFACTS_SET_STATUS, slug, status),
+  },
+
+  // ─── Shell ──────────────────────────────────────────────────────────────────
+  shell: {
+    openPath:     (p)   => ipcRenderer.invoke(ch.SHELL_OPEN_PATH, p),
+    openExternal: (url) => ipcRenderer.invoke(ch.SHELL_OPEN_EXTERNAL, url),
+  },
 })

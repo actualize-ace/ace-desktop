@@ -30,12 +30,8 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   } else if (opts.permissions === 'plan') {
     args.push('--permission-mode', 'plan')
   } else {
-    // Normal mode — pre-approve standard tools since we can't prompt interactively
-    args.push('--allowedTools',
-      'Bash', 'Edit', 'Write', 'Read', 'Glob', 'Grep',
-      'WebFetch', 'WebSearch', 'NotebookEdit',
-      'TodoWrite', 'Agent', 'Skill', 'ToolSearch', 'SendMessage',
-      'EnterPlanMode', 'ExitPlanMode')
+    // Normal mode — let project settings.json handle permissions (defaultMode: acceptEdits)
+    // Don't pass any flag — claude -p will read the project config automatically
   }
 
   // Reasoning effort — always pass explicitly

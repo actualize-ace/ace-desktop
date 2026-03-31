@@ -312,6 +312,28 @@ ipcMain.handle(ch.HISTORY_SEARCH, (_, query, projectFilter) => {
   catch (e) { return { error: e.message } }
 })
 
+// ─── Shell IPC Handlers ──────────────────────────────────────────────────────
+ipcMain.handle(ch.SHELL_OPEN_PATH, (_, filePath) => {
+  return shell.openPath(filePath)
+})
+ipcMain.handle(ch.SHELL_OPEN_EXTERNAL, (_, url) => {
+  return shell.openExternal(url)
+})
+
+// ─── Artifacts IPC Handlers ──────────────────────────────────────────────────
+ipcMain.handle(ch.ARTIFACTS_LIST, () => {
+  try { return require('./src/vault-reader').parseArtifacts(global.VAULT_PATH) }
+  catch (e) { return { artifacts: [], categories: {}, error: e.message } }
+})
+ipcMain.handle(ch.ARTIFACTS_DETAIL, (_, slug) => {
+  try { return require('./src/vault-reader').getArtifactDetail(global.VAULT_PATH, slug) }
+  catch (e) { return { error: e.message } }
+})
+ipcMain.handle(ch.ARTIFACTS_SET_STATUS, (_, slug, status) => {
+  try { return require('./src/vault-reader').updateArtifactStatus(global.VAULT_PATH, slug, status) }
+  catch (e) { return { error: e.message } }
+})
+
 ipcMain.handle(ch.VAULT_BUILD_GRAPH, () => {
   try { return require('./src/vault-scanner').buildGraph(global.VAULT_PATH) }
   catch (e) { return { error: e.message } }
