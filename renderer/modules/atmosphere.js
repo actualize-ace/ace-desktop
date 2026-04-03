@@ -419,8 +419,10 @@ function tick() {
   a.timeOfDay = getTimeOfDay()
   a.intensity = computeIntensity(a.sessionCount, a.totalMinutesToday / 60, a.elapsed)
 
-  // Persist
-  localStorage.setItem('ace-atm-total', String(a.totalMinutesToday))
+  // Persist to config (throttled — every 5 min)
+  if (a.elapsed % 5 === 0) {
+    window.ace?.patchConfig({ atmosphere: { sessions: a.sessionCount, total: a.totalMinutesToday, date: new Date().toDateString() } })
+  }
 
   renderIntensityBar()
   writeAtmosphereVars()
@@ -428,22 +430,22 @@ function tick() {
 }
 
 // ── Init ──
-export function initAtmosphere() {
-  // Increment session count
-  const count = parseInt(localStorage.getItem('ace-atm-sessions') || '0') + 1
-  localStorage.setItem('ace-atm-sessions', String(count))
-  state.atmosphere.sessionCount = count
-
-  // Reset daily counters at midnight
-  const lastDate = localStorage.getItem('ace-atm-date')
+export async function initAtmosphere() {
+  // Load persisted atmosphere from ace-config.json
+  const config = await window.ace?.getConfig() || {}
+  const saved = config.atmosphere || {}
   const today = new Date().toDateString()
-  if (lastDate !== today) {
-    localStorage.setItem('ace-atm-date', today)
-    localStorage.setItem('ace-atm-sessions', '1')
-    localStorage.setItem('ace-atm-total', '0')
+
+  if (saved.date === today) {
+    state.atmosphere.sessionCount = (saved.sessions || 0) + 1
+    state.atmosphere.totalMinutesToday = saved.total || 0
+  } else {
     state.atmosphere.sessionCount = 1
     state.atmosphere.totalMinutesToday = 0
   }
+
+  // Persist immediately
+  window.ace?.patchConfig({ atmosphere: { sessions: state.atmosphere.sessionCount, total: state.atmosphere.totalMinutesToday, date: today } })
 
   // Initial state
   state.atmosphere.timeOfDay = getTimeOfDay()

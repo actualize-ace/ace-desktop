@@ -708,8 +708,7 @@ initOracle()
 // Imports above make init functions available to the nav handler.
 
 // ─── Somatic Atmosphere ──
-initAtmosphere()
-initBreath()
+initAtmosphere().then(() => initBreath())
 
 </script>
   <script type="module">
