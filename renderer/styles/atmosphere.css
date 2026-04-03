@@ -57,9 +57,23 @@ body.light .atm-tooltip {
   opacity: 0; pointer-events: none;
   transition: opacity 1.5s ease, background 1.5s ease;
 }
+/* Soft pulse for 75%+ — barely noticeable breathing */
+@keyframes atm-bar-pulse-soft {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.15); }
+}
+/* Strong pulse for 90%+ overextended — visible but not alarming */
 @keyframes atm-bar-pulse {
   0%, 100% { filter: brightness(1); }
-  50%      { filter: brightness(1.4) drop-shadow(0 0 6px currentColor); }
+  50%      { filter: brightness(1.25) drop-shadow(0 0 3px currentColor); }
+}
+
+/* Light mode: darken bar fill and glow for visibility */
+body.light .atm-intensity-fill {
+  filter: saturate(1.2) brightness(0.85);
+}
+body.light .atm-intensity-glow {
+  filter: blur(6px) brightness(0.7);
 }
 
 /* ── Nudge Strip ── */

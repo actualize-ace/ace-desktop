@@ -71,21 +71,25 @@ function renderIntensityBar() {
 
   if (glow) {
     glow.style.background = hsl
-    glow.style.opacity = intensity > 0.5 ? 0.15 + (intensity - 0.5) * 0.5 : intensity * 0.15
+    glow.style.opacity = intensity > 0.5 ? 0.08 + (intensity - 0.5) * 0.2 : intensity * 0.08
   }
 
   // Icon color tracks intensity
+  const isLight = state.theme === 'light'
   const icon = document.querySelector('.atm-intensity-icon')
   if (icon) {
-    icon.style.color = intensity > 0.05 ? hsl : ''
-    icon.style.opacity = intensity > 0.05 ? 0.7 + intensity * 0.3 : 0.5
+    const iconColor = isLight ? `hsl(${c.h}, ${c.s - 10}%, ${c.l - 15}%)` : hsl
+    icon.style.color = intensity > 0.05 ? iconColor : ''
+    icon.style.opacity = intensity > 0.05 ? 0.6 + intensity * 0.3 : 0.4
   }
 
-  // Pulsing glow at high intensity — draws the eye
+  // Gentle pulse at high intensity — subtle at 75%, noticeable at 90%+
   const wrap = document.getElementById('atm-intensity-wrap')
   if (wrap) {
-    if (intensity >= 0.6) {
-      wrap.style.animation = `atm-bar-pulse ${2.5 - intensity}s ease-in-out infinite`
+    if (intensity >= 0.9) {
+      wrap.style.animation = 'atm-bar-pulse 1.8s ease-in-out infinite'
+    } else if (intensity >= 0.75) {
+      wrap.style.animation = 'atm-bar-pulse-soft 3s ease-in-out infinite'
     } else {
       wrap.style.animation = ''
     }
