@@ -1,0 +1,107 @@
+/* renderer/styles/views/breath.css
+   Full-screen breath view — orb, protocols, controls */
+
+#view-breath {
+  flex-direction: column;
+  align-items: center;
+  padding-top: 40px;
+  background: var(--bg-deep);
+  position: relative;
+}
+
+.breath-exit {
+  position: absolute; top: 12px; right: 16px;
+  font-size: 20px; cursor: pointer;
+  background: none; border: none;
+  color: var(--text-dim); padding: 4px 8px;
+  border-radius: 6px; transition: all 0.2s;
+}
+.breath-exit:hover { background: rgba(140,120,255,0.08); color: var(--text-secondary); }
+
+/* Orb area */
+.breath-orb-area {
+  position: relative;
+  width: 240px; height: 240px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.breath-orb {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 38%, rgba(96,216,168,0.7), rgba(96,216,168,0.3) 50%, rgba(96,216,168,0.08) 80%);
+  box-shadow: 0 0 30px rgba(96,216,168,0.1), 0 0 60px rgba(96,216,168,0.03);
+  position: absolute;
+  transition: width 0.1s, height 0.1s;
+}
+.breath-ring-inner {
+  position: absolute; width: 160px; height: 160px;
+  border-radius: 50%; border: 1px solid rgba(140,120,255,0.08);
+}
+.breath-ring-outer {
+  position: absolute; width: 220px; height: 220px;
+  border-radius: 50%; border: 1px solid rgba(140,120,255,0.04);
+}
+
+/* Phase + cycles */
+.breath-phase {
+  margin-top: 8px; height: 24px;
+  font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 300;
+  letter-spacing: 4px; text-transform: uppercase; color: var(--text-dim);
+}
+.breath-cycles {
+  margin-top: 4px; height: 16px;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim);
+}
+
+/* Controls */
+.breath-controls {
+  margin-top: 32px;
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+}
+.breath-protocols { display: flex; gap: 6px; }
+.breath-proto-btn {
+  padding: 8px 14px;
+  background: rgba(140,120,255,0.04);
+  border: 1px solid rgba(140,120,255,0.1);
+  border-radius: 8px; color: var(--text-dim);
+  font-family: 'Space Grotesk', sans-serif; font-size: 11px;
+  cursor: pointer; transition: all 0.3s; text-align: center;
+}
+.breath-proto-btn:hover { background: rgba(140,120,255,0.08); color: var(--text-secondary); }
+.breath-proto-btn.active { background: rgba(140,120,255,0.1); border-color: rgba(140,120,255,0.25); color: var(--gold); }
+.proto-name { font-weight: 500; margin-bottom: 2px; }
+.proto-detail { font-size: 9px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+
+.breath-duration { display: flex; gap: 4px; }
+.breath-dur-btn {
+  padding: 5px 12px;
+  background: rgba(140,120,255,0.04);
+  border: 1px solid rgba(140,120,255,0.08);
+  border-radius: 5px; color: var(--text-dim);
+  font-family: 'Space Grotesk', sans-serif; font-size: 10px;
+  cursor: pointer; text-transform: uppercase;
+}
+.breath-dur-btn:hover { background: rgba(140,120,255,0.08); }
+.breath-dur-btn.active { background: rgba(140,120,255,0.1); border-color: rgba(140,120,255,0.2); color: var(--gold); }
+
+.breath-start {
+  padding: 10px 36px;
+  background: rgba(96,216,168,0.08);
+  border: 1px solid rgba(96,216,168,0.2);
+  border-radius: 8px; color: var(--green);
+  font-family: 'Space Grotesk', sans-serif; font-size: 12px;
+  letter-spacing: 2px; text-transform: uppercase;
+  cursor: pointer; transition: all 0.3s;
+}
+.breath-start:hover { background: rgba(96,216,168,0.15); }
+.breath-start.running {
+  background: rgba(224,112,128,0.08);
+  border-color: rgba(224,112,128,0.2);
+  color: var(--red);
+}
+
+.breath-cite {
+  position: absolute; bottom: 16px;
+  font-family: 'JetBrains Mono', monospace; font-size: 8px;
+  color: var(--text-dim); opacity: 0.4;
+}
