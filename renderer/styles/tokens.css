@@ -55,7 +55,6 @@ body.light {
 }
 body.light .titlebar     { background: rgba(240,238,246,0.95); backdrop-filter: var(--glass-blur); }
 body.light .sidebar      { background: rgba(236,234,244,0.92); backdrop-filter: var(--glass-blur); }
-body.light .triad-bar    { background: rgba(236,234,244,0.95); }
 body.light .view-header  { background: rgba(236,234,244,0.7); backdrop-filter: var(--glass-blur); }
 body.light .session-tabs { background: rgba(232,230,240,0.9); }
 body.light .term-hdr     { background: rgba(232,230,240,0.95); }

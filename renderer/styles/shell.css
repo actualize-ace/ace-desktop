@@ -190,9 +190,6 @@ body.streaming .sidebar::after {
 body.streaming .stab.active .stab-dot {
   box-shadow: 0 0 6px var(--green); animation: breathe 1.2s ease-in-out infinite;
 }
-body.streaming .triad-bar {
-  border-top-color: rgba(136,120,255,0.12);
-}
 /* sidebarEdgeGlow in animation.css */
 
 /* orbPulseRing removed — replaced by clubPulse for SVG club logo */
