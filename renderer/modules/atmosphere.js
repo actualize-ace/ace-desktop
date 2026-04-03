@@ -361,22 +361,34 @@ const TIME_HUE = { morning: 228, afternoon: 205, evening: 340, late: 265 }
 
 function writeAtmosphereVars() {
   const a = state.atmosphere
-  const energy = clamp(a.elapsed <= 10 ? a.elapsed / 10 * 0.3 : a.elapsed <= 30 ? 0.3 + (a.elapsed - 10) / 20 * 0.7 : 1, 0, 1)
+  // Energy curve: 0-10min ramp to 0.3, 10-30min ramp to 1.0, plateau at 1.0
+  // For simulation: also factor in totalMinutesToday so reloads show the effect
+  const sessionMin = a.elapsed
+  const totalEnergy = clamp(a.totalMinutesToday / 60 / 4, 0, 1) // 4 hours = full
+  const currentEnergy = clamp(sessionMin <= 10 ? sessionMin / 10 * 0.3 : sessionMin <= 30 ? 0.3 + (sessionMin - 10) / 20 * 0.7 : 1, 0, 1)
+  const energy = clamp(Math.max(currentEnergy, totalEnergy), 0, 1)
   const sessionHeat = clamp((a.sessionCount - 1) / 3, 0, 1)
   const warmth = clamp(energy * 0.6 + sessionHeat * 0.4, 0, 1)
 
   const hue = TIME_HUE[a.timeOfDay] || 228
   const isEvening = a.timeOfDay === 'evening' || a.timeOfDay === 'late'
   const brightness = isEvening ? 1 - warmth * 0.12 : 1
+  const edgeGlow = energy > 0.3 ? (energy - 0.3) / 0.7 : 0
+
+  // Compute actual colors in JS (color-mix + calc in CSS is unreliable)
+  const borderH = hue + (35 - hue) * warmth // shift toward amber (hue 35)
+  const borderAlpha = 0.12 + warmth * 0.15
+  const shadowAlpha = warmth * 0.06
+  const shadowPx = warmth * 16
+  const edgeAlpha = edgeGlow * 0.3
 
   const r = document.documentElement.style
-  r.setProperty('--atm-warmth', warmth.toFixed(3))
-  r.setProperty('--atm-border-glow', (warmth * 0.8).toFixed(3))
-  r.setProperty('--atm-shadow-spread', warmth.toFixed(3))
+  r.setProperty('--atm-border-color', `hsla(${borderH}, 50%, 50%, ${borderAlpha})`)
+  r.setProperty('--atm-shadow', `0 0 ${shadowPx}px hsla(${hue}, 40%, 50%, ${shadowAlpha})`)
   r.setProperty('--atm-brightness', brightness.toFixed(3))
   r.setProperty('--atm-breath-speed', (3.5 - warmth * 2) + 's')
-  r.setProperty('--atm-edge-glow', (energy > 0.3 ? (energy - 0.3) / 0.7 : 0).toFixed(3))
-  r.setProperty('--atm-hue', String(Math.round(hue)))
+  r.setProperty('--atm-edge-color', `hsla(${hue}, 50%, 60%, ${edgeAlpha})`)
+  r.setProperty('--atm-edge-mid', `hsla(${hue}, 50%, 60%, ${edgeAlpha * 0.5})`)
 }
 
 // ── Tick ──
