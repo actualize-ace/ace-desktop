@@ -421,7 +421,7 @@ function tick() {
 
   // Persist to config (throttled — every 5 min)
   if (a.elapsed % 5 === 0) {
-    window.ace?.patchConfig({ atmosphere: { sessions: a.sessionCount, total: a.totalMinutesToday, date: new Date().toDateString() } })
+    window.ace?.setup?.patchConfig({ atmosphere: { sessions: a.sessionCount, total: a.totalMinutesToday, date: new Date().toDateString() } })
   }
 
   renderIntensityBar()
@@ -432,7 +432,7 @@ function tick() {
 // ── Init ──
 export async function initAtmosphere() {
   // Load persisted atmosphere from ace-config.json
-  const config = await window.ace?.getConfig() || {}
+  const config = await window.ace?.setup?.getConfig() || {}
   const saved = config.atmosphere || {}
   const today = new Date().toDateString()
 
@@ -445,7 +445,7 @@ export async function initAtmosphere() {
   }
 
   // Persist immediately
-  window.ace?.patchConfig({ atmosphere: { sessions: state.atmosphere.sessionCount, total: state.atmosphere.totalMinutesToday, date: today } })
+  window.ace?.setup?.patchConfig({ atmosphere: { sessions: state.atmosphere.sessionCount, total: state.atmosphere.totalMinutesToday, date: today } })
 
   // Initial state
   state.atmosphere.timeOfDay = getTimeOfDay()
