@@ -7,7 +7,7 @@ import { state } from '../state.js'
 // ── Constants ──
 const TICK_MS = 60_000  // update every minute
 const NUDGE_MINUTES = 45
-const NUDGE_SESSIONS = 5
+const NUDGE_SESSIONS = 8
 const NUDGE_HOUR = 22   // 10pm
 const CROSSFADE_MS = 30_000  // 30s frequency transitions
 
@@ -101,12 +101,12 @@ function renderSomaticBar() {
   if (!bar || !breathBg) return
 
   const { intensity } = state.atmosphere
-  const c = intensityColor(intensity)
   const isLight = state.theme === 'light'
-  const la = isLight ? -15 : 0
 
-  // Set breathing tint color
-  breathBg.style.background = `hsla(${c.h}, ${c.s}%, ${c.l + la}%, 0.15)`
+  // Violet accent — radial gradient for soft bloom edges
+  breathBg.style.background = isLight
+    ? 'radial-gradient(circle, rgba(90, 72, 192, 0.7) 0%, rgba(90, 72, 192, 0) 65%)'
+    : 'radial-gradient(circle, rgba(140, 120, 255, 0.35) 0%, rgba(140, 120, 255, 0) 70%)'
 
   // Check for band crossing
   const band = getBand(intensity)
@@ -150,7 +150,7 @@ function getTimeOfDay() {
 
 function computeIntensity(sessions, totalHours, currentMin) {
   return clamp(
-    (sessions / 8) * 0.4 + (totalHours / 6) * 0.35 + (currentMin / 60) * 0.25,
+    (sessions / 14) * 0.4 + (totalHours / 6) * 0.35 + (currentMin / 60) * 0.25,
     0, 1
   )
 }
@@ -243,9 +243,11 @@ function checkNudge() {
 
   // Two-beat reveal: glow first, then word
   const glowEl = document.getElementById('somatic-bar-glow')
-  const c = intensityColor(state.atmosphere.intensity)
+  const isLight = state.theme === 'light'
   if (glowEl) {
-    glowEl.style.background = `linear-gradient(0deg, hsla(${c.h}, ${c.s}%, ${c.l}%, 0.12) 0%, transparent 100%)`
+    glowEl.style.background = isLight
+      ? 'radial-gradient(circle, rgba(90, 72, 192, 0.8) 0%, rgba(90, 72, 192, 0) 65%)'
+      : 'radial-gradient(circle, rgba(140, 120, 255, 0.45) 0%, rgba(140, 120, 255, 0) 70%)'
   }
   bar.classList.add('nudge-active')
 

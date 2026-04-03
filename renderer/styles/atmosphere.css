@@ -92,30 +92,94 @@ body.light .atm-intensity-glow {
   transition: opacity 0.5s ease;
 }
 
-/* Breathing background tint — resonance rhythm 5s in / 5s out */
+/* Breathing background — center bloom using radial gradient + scale */
 .somatic-bar-breath {
   position: absolute;
-  inset: 0;
-  opacity: 0;
+  top: -50%;
+  left: 50%;
+  width: 200px;
+  height: 200px;
+  transform: translate(-50%, -25%);
   pointer-events: none;
-  animation: somatic-breathe 10s ease-in-out infinite;
+  border-radius: 50%;
+  animation: somatic-bloom 10s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
-@keyframes somatic-breathe {
-  0%, 100% { opacity: 0.02; }
-  50%      { opacity: 0.06; }
+@keyframes somatic-bloom {
+  0%       { transform: translate(-50%, -25%) scale(0);   opacity: 0; }
+  15%      { opacity: 0.7; }
+  50%      { transform: translate(-50%, -25%) scale(3.5); opacity: 1; }
+  85%      { opacity: 0.7; }
+  100%     { transform: translate(-50%, -25%) scale(0);   opacity: 0; }
 }
 
 /* Nudge glow overlay — hidden by default, activated by JS */
 .somatic-bar-glow {
   position: absolute;
-  inset: 0;
-  opacity: 0;
+  top: -50%;
+  left: 50%;
+  width: 200px;
+  height: 200px;
+  transform: translate(-50%, -25%);
   pointer-events: none;
+  border-radius: 50%;
+  opacity: 0;
   transition: opacity 1s ease;
 }
 .somatic-bar.nudge-active .somatic-bar-glow {
-  opacity: 1;
-  animation: somatic-breathe 10s ease-in-out infinite;
+  animation: somatic-nudge-bloom 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes somatic-nudge-bloom {
+  0%       { transform: translate(-50%, -25%) scale(0);   opacity: 0; }
+  15%      { opacity: 0.9; }
+  50%      { transform: translate(-50%, -25%) scale(4); opacity: 1; }
+  85%      { opacity: 0.9; }
+  100%     { transform: translate(-50%, -25%) scale(0);   opacity: 0; }
+}
+
+/* Pulse dot — bloom anchor point */
+.somatic-bar-pulse {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  animation: somatic-pulse 10s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+body:not(.light) .somatic-bar-pulse {
+  background: rgba(140, 120, 255, 0.5);
+  box-shadow: 0 0 6px rgba(140, 120, 255, 0.3);
+}
+body.light .somatic-bar-pulse {
+  background: rgba(90, 72, 192, 0.5);
+  box-shadow: 0 0 6px rgba(90, 72, 192, 0.3);
+}
+@keyframes somatic-pulse {
+  0%       { transform: translate(-50%, -50%) scale(0.6); opacity: 0.3; }
+  15%      { opacity: 0.8; }
+  50%      { transform: translate(-50%, -50%) scale(1.8); opacity: 1; }
+  85%      { opacity: 0.8; }
+  100%     { transform: translate(-50%, -50%) scale(0.6); opacity: 0.3; }
+}
+.somatic-bar.nudge-active .somatic-bar-pulse {
+  animation: somatic-pulse-nudge 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+body:not(.light) .somatic-bar.nudge-active .somatic-bar-pulse {
+  background: rgba(140, 120, 255, 0.8);
+  box-shadow: 0 0 10px rgba(140, 120, 255, 0.5);
+}
+body.light .somatic-bar.nudge-active .somatic-bar-pulse {
+  background: rgba(90, 72, 192, 0.8);
+  box-shadow: 0 0 10px rgba(90, 72, 192, 0.5);
+}
+@keyframes somatic-pulse-nudge {
+  0%       { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; }
+  15%      { opacity: 1; }
+  50%      { transform: translate(-50%, -50%) scale(2.2); opacity: 1; }
+  85%      { opacity: 1; }
+  100%     { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; }
 }
 
 /* Micro-invitation text */
@@ -126,15 +190,33 @@ body.light .atm-intensity-glow {
   font-size: 10px;
   letter-spacing: 1.5px;
   color: var(--text-dim);
-  opacity: 0.45;
+  opacity: 0.7;
   transition: opacity 1.5s ease, color 1.5s ease, letter-spacing 1.5s ease;
 }
 
 /* Nudge mode — text becomes the invitation word */
 .somatic-bar.nudge-active .somatic-bar-text {
-  opacity: 0.8;
+  opacity: 1;
   letter-spacing: 4px;
   text-transform: uppercase;
+  color: rgba(140, 120, 255, 0.9);
+  animation: somatic-text-glow 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+body.light .somatic-bar.nudge-active .somatic-bar-text {
+  color: rgba(90, 72, 192, 0.9);
+}
+@keyframes somatic-text-glow {
+  0%       { text-shadow: 0 0 4px rgba(140, 120, 255, 0.2); opacity: 0.6; }
+  50%      { text-shadow: 0 0 12px rgba(140, 120, 255, 0.5), 0 0 24px rgba(140, 120, 255, 0.15); opacity: 1; }
+  100%     { text-shadow: 0 0 4px rgba(140, 120, 255, 0.2); opacity: 0.6; }
+}
+body.light .somatic-bar.nudge-active .somatic-bar-text {
+  animation-name: somatic-text-glow-light;
+}
+@keyframes somatic-text-glow-light {
+  0%       { text-shadow: 0 0 4px rgba(90, 72, 192, 0.2); opacity: 0.6; }
+  50%      { text-shadow: 0 0 12px rgba(90, 72, 192, 0.5), 0 0 24px rgba(90, 72, 192, 0.15); opacity: 1; }
+  100%     { text-shadow: 0 0 4px rgba(90, 72, 192, 0.2); opacity: 0.6; }
 }
 .somatic-bar.nudge-active {
   cursor: pointer;
