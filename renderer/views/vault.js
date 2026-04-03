@@ -155,14 +155,39 @@ async function openVaultFile(filePath, fileName) {
   cancelBtn.style.display = 'none'
 }
 
-document.getElementById('vault-open-term-btn').addEventListener('click', () => {
-  const dirPath = activeVaultFile
-    ? activeVaultFile.split('/').slice(0, -1).join('/')
-    : (vaultRootPath || '')
+// Rename button on load
+const openBtn = document.getElementById('vault-open-term-btn')
+if (openBtn) openBtn.textContent = 'Open in Chat'
+
+openBtn?.addEventListener('click', async () => {
+  if (!activeVaultFile) return
+  const fileName = activeVaultFile.split('/').pop()
+  // Read file content for context
+  let fileContent = ''
+  try {
+    fileContent = await window.ace.vault.readFile(activeVaultFile)
+    if (typeof fileContent === 'object' && fileContent.error) fileContent = ''
+  } catch(e) { fileContent = '' }
+
+  // Navigate to terminal and open chat with file context
   document.querySelector('.nav-item[data-view="terminal"]').click()
   setTimeout(() => {
-    if (state.activeId && dirPath) window.ace.pty.write(state.activeId, `cd "${dirPath}"\r`)
-  }, 200)
+    if (window.spawnSession) window.spawnSession()
+    setTimeout(() => {
+      if (state.activeId) {
+        // Set tab name to filename
+        const tab = state.sessions[state.activeId]?.tab
+        if (tab) {
+          const span = tab.querySelector('span:not(.stab-close)')
+          if (span) span.textContent = fileName
+        }
+        // Send file content as context prompt
+        const truncated = fileContent.length > 4000 ? fileContent.slice(0, 4000) + '\n\n[...truncated]' : fileContent
+        const prompt = `I'm looking at the file "${fileName}" from my vault. Here's its content:\n\n\`\`\`markdown\n${truncated}\n\`\`\`\n\nHelp me work with this file. What stands out?`
+        if (window.sendChatMessage) window.sendChatMessage(state.activeId, prompt)
+      }
+    }, 200)
+  }, 150)
 })
 
 // ─── Vault Edit Mode ─────────────────────────────────────────────────────────

@@ -2,6 +2,9 @@
 import { state } from '../state.js'
 import { escapeHtml, processWikilinks, postProcessCodeBlocks, SANITIZE_CONFIG } from '../modules/chat-renderer.js'
 
+let currentPersonName = null
+let currentPersonPath = null
+
 async function initPeople() {
   if (state.peopleInitialized) return
   state.peopleInitialized = true
@@ -152,6 +155,8 @@ function renderPeopleList(data, followUps, search, catFilter) {
 }
 
 async function openPersonProfile(filePath, personName) {
+  currentPersonName = personName
+  currentPersonPath = filePath
   const profileEl = document.getElementById('people-profile')
   profileEl.innerHTML = '<div class="vault-empty">Loading...</div>'
 
@@ -547,25 +552,23 @@ function highlightGraphCategory(catName) {
 }
 
 document.getElementById('people-ask-btn').addEventListener('click', () => {
-  const overlay = document.getElementById('oracle-overlay')
-  const fab = document.getElementById('oracle-fab')
-  overlay.classList.add('open')
-  fab.classList.add('open')
-  // Replace Oracle presets with people-specific ones
-  const summary = state.peopleData ? `My network: ${state.peopleData.people.length} people across ${state.peopleData.categories.length} categories (${state.peopleData.categories.map(c => c.name + ': ' + c.members.length).join(', ')}).` : ''
-  const presetsEl = document.getElementById('oracle-presets')
-  presetsEl.innerHTML = [
-    { label: 'Who needs follow-up?', query: 'Check my follow-ups. Who has overdue commitments? Who am I most behind with? Prioritize by urgency.' },
-    { label: 'Gone quiet', query: 'Which people in my network haven\'t had any interaction recently? Check follow-ups and execution logs for people who may need re-engagement.' },
-    { label: 'ACE pipeline', query: 'Give me a status on all ACE members and prospects. Who\'s paid, who\'s pending, who needs a nudge? What\'s the total revenue collected and pipeline value?' },
-    { label: 'Relationship health', query: `${summary} Analyze my network health. Am I over-indexed on any group? Under-investing in key relationships? What patterns do you see?` },
-  ].map(p => `<div class="oracle-preset" data-query="${escapeHtml(p.query)}">${p.label}</div>`).join('')
-  presetsEl.querySelectorAll('.oracle-preset').forEach(p => {
-    p.addEventListener('click', () => {
-      if (window.sendOracleQuery) window.sendOracleQuery(p.dataset.query)
-    })
-  })
-  setTimeout(() => document.getElementById('oracle-input').focus(), 200)
+  const personName = currentPersonName || 'this person'
+  const prompt = `Tell me about ${personName} — their current status, open follow-ups, and what I should focus on next.`
+
+  document.querySelector('.nav-item[data-view="terminal"]').click()
+  setTimeout(() => {
+    if (window.spawnSession) window.spawnSession()
+    setTimeout(() => {
+      if (state.activeId) {
+        const tab = state.sessions[state.activeId]?.tab
+        if (tab) {
+          const span = tab.querySelector('span:not(.stab-close)')
+          if (span) span.textContent = personName
+        }
+        if (window.sendChatMessage) window.sendChatMessage(state.activeId, prompt)
+      }
+    }, 200)
+  }, 150)
 })
 
 export {
