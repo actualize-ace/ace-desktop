@@ -14,10 +14,7 @@ export function formatHistoryDuration(ms) {
   return Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm'
 }
 
-export function escapeHistoryHtml(str) {
-  if (!str) return ''
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
-}
+// escapeHistoryHtml removed — use escapeHtml from chat-renderer.js
 
 export async function initHistory() {
   if (state.historyInitialized) return
@@ -33,7 +30,7 @@ export async function initHistory() {
 
   const data = await window.ace.history.list(null, 0, 50)
   if (data.error) {
-    listEl.innerHTML = '<div class="vault-empty">' + escapeHistoryHtml(data.error) + '</div>'
+    listEl.innerHTML = '<div class="vault-empty">' + escapeHtml(data.error) + '</div>'
     return
   }
 
@@ -48,7 +45,7 @@ export async function initHistory() {
     data.projects.map(p => {
       const label = p.replace(/-/g, '/').replace(/^\//, '').split('/').slice(-2).join('/')
       const selected = p === defaultProject ? ' selected' : ''
-      return '<option value="' + escapeHistoryHtml(p) + '"' + selected + '>' + escapeHistoryHtml(label) + '</option>'
+      return '<option value="' + escapeHtml(p) + '"' + selected + '>' + escapeHtml(label) + '</option>'
     }).join('')
 
   // Auto-filter to current vault's project
@@ -128,17 +125,17 @@ export function renderHistoryList() {
 
     if (group !== currentGroup) {
       currentGroup = group
-      html += '<div class="history-date-group">' + escapeHistoryHtml(group) + '</div>'
+      html += '<div class="history-date-group">' + escapeHtml(group) + '</div>'
     }
 
     const time = new Date(s.mtime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
     const title = s.title || s.slug || 'Untitled session'
-    const modelTag = s.model ? '<span class="history-item-tag">' + escapeHistoryHtml(s.model.replace('claude-', '')) + '</span>' : ''
-    const branchTag = s.gitBranch ? '<span class="history-item-tag">' + escapeHistoryHtml(s.gitBranch) + '</span>' : ''
+    const modelTag = s.model ? '<span class="history-item-tag">' + escapeHtml(s.model.replace('claude-', '')) + '</span>' : ''
+    const branchTag = s.gitBranch ? '<span class="history-item-tag">' + escapeHtml(s.gitBranch) + '</span>' : ''
     const tokens = s.tokenCount ? formatHistoryTokens(s.tokenCount) : ''
 
-    html += '<div class="history-item" data-project="' + escapeHistoryHtml(s.project) + '" data-id="' + escapeHistoryHtml(s.id) + '">' +
-      '<div class="history-item-title">' + escapeHistoryHtml(title) + '</div>' +
+    html += '<div class="history-item" data-project="' + escapeHtml(s.project) + '" data-id="' + escapeHtml(s.id) + '">' +
+      '<div class="history-item-title">' + escapeHtml(title) + '</div>' +
       '<div class="history-item-meta">' +
         '<span>' + time + '</span>' +
         modelTag + branchTag +
@@ -180,7 +177,7 @@ export async function openSessionDetail(project, sessionId) {
 
   const data = await window.ace.history.read(project, sessionId)
   if (data.error) {
-    detailEl.innerHTML = '<div class="vault-empty">' + escapeHistoryHtml(data.error) + '</div>'
+    detailEl.innerHTML = '<div class="vault-empty">' + escapeHtml(data.error) + '</div>'
     return
   }
 
@@ -191,13 +188,13 @@ export async function openSessionDetail(project, sessionId) {
 
   let headerHtml = '<div class="history-detail-header">' +
     '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">' +
-      '<div class="history-detail-title">' + escapeHistoryHtml(title) + '</div>' +
-      '<button class="history-resume-btn" id="history-resume-btn" data-session-id="' + escapeHistoryHtml(sessionId) + '" data-project="' + escapeHistoryHtml(project) + '">&#9654; Resume</button>' +
+      '<div class="history-detail-title">' + escapeHtml(title) + '</div>' +
+      '<button class="history-resume-btn" id="history-resume-btn" data-session-id="' + escapeHtml(sessionId) + '" data-project="' + escapeHtml(project) + '">&#9654; Resume</button>' +
     '</div>' +
     '<div class="history-detail-meta">' +
-      (meta.model ? '<span>Model: ' + escapeHistoryHtml(meta.model.replace('claude-', '')) + '</span>' : '') +
-      (meta.slug ? '<span>Slug: ' + escapeHistoryHtml(meta.slug) + '</span>' : '') +
-      (meta.gitBranch ? '<span>Branch: ' + escapeHistoryHtml(meta.gitBranch) + '</span>' : '') +
+      (meta.model ? '<span>Model: ' + escapeHtml(meta.model.replace('claude-', '')) + '</span>' : '') +
+      (meta.slug ? '<span>Slug: ' + escapeHtml(meta.slug) + '</span>' : '') +
+      (meta.gitBranch ? '<span>Branch: ' + escapeHtml(meta.gitBranch) + '</span>' : '') +
       (meta.tokens ? '<span>Tokens: ' + formatHistoryTokens(meta.tokens.input + meta.tokens.output) + '</span>' : '') +
       (duration ? '<span>Duration: ' + duration + '</span>' : '') +
       '<span>' + data.messages.length + ' messages</span>' +
@@ -212,10 +209,10 @@ export async function openSessionDetail(project, sessionId) {
 
     let contentHtml
     if (msg.role === 'user') {
-      contentHtml = '<div class="history-msg-content">' + escapeHistoryHtml(msg.content) + '</div>'
+      contentHtml = '<div class="history-msg-content">' + escapeHtml(msg.content) + '</div>'
     } else {
       // Render markdown for assistant messages
-      const raw = typeof marked !== 'undefined' && marked.parse ? marked.parse(msg.content || '') : escapeHistoryHtml(msg.content || '')
+      const raw = typeof marked !== 'undefined' && marked.parse ? marked.parse(msg.content || '') : escapeHtml(msg.content || '')
       const safe = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(raw) : raw
       contentHtml = '<div class="history-msg-content">' + safe + '</div>'
     }
@@ -227,10 +224,10 @@ export async function openSessionDetail(project, sessionId) {
         return '<div class="history-tool-summary collapsed">' +
           '<div class="history-tool-header">' +
             '<span style="font-size:10px">&#9889;</span>' +
-            '<span>' + escapeHistoryHtml(tc.name) + '</span>' +
+            '<span>' + escapeHtml(tc.name) + '</span>' +
             '<span style="margin-left:auto;font-size:7px">&#x25B8;</span>' +
           '</div>' +
-          '<div class="history-tool-detail"><pre>' + escapeHistoryHtml(tc.input) + '</pre></div>' +
+          '<div class="history-tool-detail"><pre>' + escapeHtml(tc.input) + '</pre></div>' +
         '</div>'
       }).join('')
     }

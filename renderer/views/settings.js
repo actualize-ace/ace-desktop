@@ -2,7 +2,7 @@
 import { state } from '../state.js'
 import { applyTheme, applyZoom } from '../modules/theme.js'
 import { toggleBuildMode, updateBuildModeUI } from '../modules/build-mode.js'
-import { fitActive } from '../modules/session-manager.js'
+import { fitActive, sendToActive } from '../modules/session-manager.js'
 
 let _settingsConfig = null
 
@@ -475,13 +475,4 @@ export function initSettings() {
   loadSettingsFromConfig().catch(() => {})
 }
 
-// Re-export sendToActive dependency for rebuildSidebarCommands
-// The caller must ensure sendToActive is available on window or passed in
-function sendToActive(data) {
-  // Delegate to the session-manager's sendToActive via the import
-  // Since sendToActive is imported from session-manager in the main script,
-  // we reference it through the module system
-  if (typeof window.sendToActive === 'function') {
-    window.sendToActive(data)
-  }
-}
+// sendToActive imported directly from session-manager.js

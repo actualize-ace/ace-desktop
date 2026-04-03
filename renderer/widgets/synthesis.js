@@ -1,9 +1,6 @@
 // renderer/widgets/synthesis.js
 // Command Center: coherence state + momentum/attention zones + view switcher
-
-function escapeHtml(str) {
-  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
-}
+import { escapeHtml } from '../modules/chat-renderer.js'
 
 const SIGNAL_NAMES = {
   A1: 'Truth', A2: 'Choice', A3: 'Expression',
