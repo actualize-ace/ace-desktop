@@ -6,9 +6,13 @@ import { state } from '../state.js'
 
 // ── Constants ──
 const TICK_MS = 60_000  // update every minute
-const NUDGE_MINUTES = 45
-const NUDGE_SESSIONS = 8
-const NUDGE_HOUR = 22   // 10pm
+const NUDGE_ACTIVE_MIN = 45     // active minutes before "breathe" nudge
+const NUDGE_SESSIONS = 5        // real work blocks before "pause" nudge
+const NUDGE_HOUR = 22           // 10pm
+const IDLE_PAUSE_MS = 8 * 60_000    // 8 min — pause clock
+const IDLE_END_MS = 30 * 60_000     // 30 min — auto-close session
+const BREATH_REDUCTION = 0.05       // intensity reduction per completed protocol
+const BREATH_REDUCTION_CAP = 0.15   // max total breath reduction
 const CROSSFADE_MS = 30_000  // 30s frequency transitions
 
 // ── Somatic bar content pools ──
@@ -140,6 +144,63 @@ const AUTO_SOL_MAP = { morning: 'ground', afternoon: 'focus', evening: 'calm', l
 // ── Helpers ──
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)) }
 
+// ── Activity Detection ──
+const ACTIVITY_EVENTS = ['mousemove', 'keydown', 'click', 'scroll', 'wheel']
+
+function initActivityListeners() {
+  for (const evt of ACTIVITY_EVENTS) {
+    window.addEventListener(evt, onActivity, { passive: true })
+  }
+}
+
+function onActivity() {
+  const a = state.atmosphere
+  const wasEnded = a.activityState === 'ended'
+  a.lastActivity = Date.now()
+
+  if (wasEnded) {
+    // New session starting after auto-close or /close
+    a.sessionActiveMin = 0
+    a.nudgeFired = false
+    a.nudgeDismissed = false
+  }
+
+  a.activityState = 'active'
+}
+
+function checkIdleState() {
+  const a = state.atmosphere
+  if (a.activityState === 'ended') return
+
+  const idleMs = Date.now() - a.lastActivity
+
+  if (idleMs >= IDLE_END_MS) {
+    endSession()
+  } else if (idleMs >= IDLE_PAUSE_MS) {
+    a.activityState = 'paused'
+  }
+}
+
+function endSession() {
+  const a = state.atmosphere
+  if (a.activityState === 'ended') return
+  a.completedSessions += 1
+  a.activityState = 'ended'
+  persistAtmosphere()
+}
+
+function persistAtmosphere() {
+  const a = state.atmosphere
+  window.ace?.setup?.patchConfig({
+    atmosphere: {
+      sessions: a.completedSessions,
+      activeTotal: a.totalActiveMin,
+      breathCompleted: a.completedProtocols,
+      date: new Date().toDateString(),
+    }
+  })
+}
+
 function getTimeOfDay() {
   const h = new Date().getHours()
   if (h >= 5 && h < 12) return 'morning'
@@ -148,11 +209,15 @@ function getTimeOfDay() {
   return 'late'
 }
 
-function computeIntensity(sessions, totalHours, currentMin) {
-  return clamp(
-    (sessions / 14) * 0.4 + (totalHours / 6) * 0.35 + (currentMin / 60) * 0.25,
-    0, 1
-  )
+function computeIntensity() {
+  const a = state.atmosphere
+  const sessionCount = a.completedSessions + (a.activityState !== 'ended' ? 1 : 0)
+  const baseLoad =
+    (a.totalActiveMin / 360) * 0.45 +
+    (Math.min(a.sessionActiveMin, 60) / 60) * 0.35 +
+    (Math.min(sessionCount, 6) / 6) * 0.20
+  const breathReduction = Math.min(a.completedProtocols * BREATH_REDUCTION, BREATH_REDUCTION_CAP)
+  return clamp(baseLoad - breathReduction, 0, 1)
 }
 
 function intensityColor(t) {
@@ -209,14 +274,15 @@ function renderIntensityBar() {
   // Tooltip
   const tooltip = document.getElementById('atm-tooltip')
   if (tooltip && wrap) {
-    const s = state.atmosphere.sessionCount
-    const totalMin = state.atmosphere.totalMinutesToday
+    const a = state.atmosphere
+    const sessionCount = a.completedSessions + (a.activityState !== 'ended' ? 1 : 0)
+    const totalMin = a.totalActiveMin
     const h = Math.floor(totalMin / 60)
     const m = totalMin % 60
     const timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`
     const pct = Math.round(intensity * 100)
     const feel = pct < 20 ? 'Fresh' : pct < 45 ? 'Active' : pct < 70 ? 'Warm' : 'Heavy'
-    tooltip.innerHTML = `<strong>Day energy: ${feel}</strong><br>${s} session${s !== 1 ? 's' : ''} · ${timeStr} today`
+    tooltip.innerHTML = `<strong>Day energy: ${feel}</strong><br>${sessionCount} session${sessionCount !== 1 ? 's' : ''} · ${timeStr} active`
     // Position fixed tooltip under the bar
     const rect = wrap.getBoundingClientRect()
     tooltip.style.right = (window.innerWidth - rect.right) + 'px'
@@ -231,8 +297,9 @@ function checkNudge() {
   const hour = new Date().getHours()
   let word = null
 
-  if (a.elapsed >= NUDGE_MINUTES) word = 'breathe'
-  else if (a.sessionCount >= NUDGE_SESSIONS) word = 'pause'
+  const sessionCount = a.completedSessions + (a.activityState !== 'ended' ? 1 : 0)
+  if (a.sessionActiveMin >= NUDGE_ACTIVE_MIN) word = 'breathe'
+  else if (sessionCount >= NUDGE_SESSIONS) word = 'pause'
   else if (hour >= NUDGE_HOUR) word = 'rest'
 
   if (!word) return
@@ -500,12 +567,13 @@ const TIME_HUE = { morning: 228, afternoon: 205, evening: 340, late: 265 }
 function writeAtmosphereVars() {
   const a = state.atmosphere
   // Energy curve: 0-10min ramp to 0.3, 10-30min ramp to 1.0, plateau at 1.0
-  // For simulation: also factor in totalMinutesToday so reloads show the effect
-  const sessionMin = a.elapsed
-  const totalEnergy = clamp(a.totalMinutesToday / 60 / 7, 0, 1) // 7 hours = full
+  // For simulation: also factor in totalActiveMin so reloads show the effect
+  const sessionMin = a.sessionActiveMin
+  const totalEnergy = clamp(a.totalActiveMin / 60 / 7, 0, 1)
   const currentEnergy = clamp(sessionMin <= 10 ? sessionMin / 10 * 0.3 : sessionMin <= 30 ? 0.3 + (sessionMin - 10) / 20 * 0.7 : 1, 0, 1)
   const energy = clamp(Math.max(currentEnergy, totalEnergy), 0, 1)
-  const sessionHeat = clamp((a.sessionCount - 1) / 10, 0, 1) // 11 sessions = full
+  const sessionCount = a.completedSessions + (a.activityState !== 'ended' ? 1 : 0)
+  const sessionHeat = clamp((sessionCount - 1) / 6, 0, 1)
   const warmth = clamp(energy * 0.55 + sessionHeat * 0.45, 0, 1)
 
   const hue = TIME_HUE[a.timeOfDay] || 228
@@ -550,16 +618,40 @@ function writeAtmosphereVars() {
 }
 
 // ── Tick ──
+let tickCount = 0
+
 function tick() {
   const a = state.atmosphere
-  a.elapsed += 1
-  a.totalMinutesToday += 1
-  a.timeOfDay = getTimeOfDay()
-  a.intensity = computeIntensity(a.sessionCount, a.totalMinutesToday / 60, a.elapsed)
+  tickCount += 1
 
-  // Persist to config (throttled — every 5 min)
-  if (a.elapsed % 5 === 0) {
-    window.ace?.setup?.patchConfig({ atmosphere: { sessions: a.sessionCount, total: a.totalMinutesToday, date: new Date().toDateString() } })
+  // Check idle state transitions
+  checkIdleState()
+
+  // Only increment active time when ACTIVE
+  if (a.activityState === 'active') {
+    a.sessionActiveMin += 1
+    a.totalActiveMin += 1
+  }
+
+  // Midnight rollover
+  const today = new Date().toDateString()
+  if (a._lastDate && a._lastDate !== today) {
+    a.completedSessions = 0
+    a.totalActiveMin = 0
+    a.sessionActiveMin = 0
+    a.completedProtocols = 0
+    a.nudgeFired = false
+    a.nudgeDismissed = false
+    a._lastDate = today
+    persistAtmosphere()
+  }
+
+  a.timeOfDay = getTimeOfDay()
+  a.intensity = computeIntensity()
+
+  // Persist every 5 ticks (~5 min)
+  if (tickCount % 5 === 0) {
+    persistAtmosphere()
   }
 
   renderIntensityBar()
@@ -570,29 +662,33 @@ function tick() {
 
 // ── Init ──
 export async function initAtmosphere() {
-  // Load persisted atmosphere from ace-config.json
   const config = await window.ace?.setup?.getConfig() || {}
   const saved = config.atmosphere || {}
   const today = new Date().toDateString()
+  const a = state.atmosphere
 
   if (saved.date === today) {
-    state.atmosphere.sessionCount = (saved.sessions || 0) + 1
-    state.atmosphere.totalMinutesToday = saved.total || 0
+    a.completedSessions = saved.sessions || 0
+    a.totalActiveMin = saved.activeTotal || 0
+    a.completedProtocols = saved.breathCompleted || 0
   } else {
-    state.atmosphere.sessionCount = 1
-    state.atmosphere.totalMinutesToday = 0
+    a.completedSessions = 0
+    a.totalActiveMin = 0
+    a.completedProtocols = 0
   }
 
-  // Persist immediately
-  window.ace?.setup?.patchConfig({ atmosphere: { sessions: state.atmosphere.sessionCount, total: state.atmosphere.totalMinutesToday, date: today } })
+  // Track date for midnight rollover
+  a._lastDate = today
 
   // Initial state
-  state.atmosphere.timeOfDay = getTimeOfDay()
-  state.atmosphere.intensity = computeIntensity(
-    state.atmosphere.sessionCount,
-    state.atmosphere.totalMinutesToday / 60,
-    0
-  )
+  a.activityState = 'active'
+  a.lastActivity = Date.now()
+  a.sessionActiveMin = 0
+  a.timeOfDay = getTimeOfDay()
+  a.intensity = computeIntensity()
+
+  // Persist immediately
+  persistAtmosphere()
 
   renderIntensityBar()
   renderSomaticBar()
@@ -641,6 +737,7 @@ export async function initAtmosphere() {
     document.addEventListener('click', startSavedAudio, { once: true })
   }
 
-  // Start tick
+  // Start activity detection + tick
+  initActivityListeners()
   setInterval(tick, TICK_MS)
 }

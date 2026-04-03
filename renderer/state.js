@@ -54,9 +54,15 @@ export const state = {
 
   // Atmosphere (somatic layer)
   atmosphere: {
-    elapsed: 0,
-    sessionCount: 1,         // loaded from config in initAtmosphere
-    totalMinutesToday: 0,    // loaded from config in initAtmosphere
+    // Activity tracking
+    activityState: 'active',       // 'active' | 'paused' | 'ended'
+    lastActivity: Date.now(),
+    sessionActiveMin: 0,           // active minutes in current work block
+    totalActiveMin: 0,             // cumulative active minutes today (loaded from config)
+    completedSessions: 0,          // /close-bounded or auto-closed sessions (loaded from config)
+    completedProtocols: 0,         // breath protocols completed to target (loaded from config)
+
+    // Preserved
     timeOfDay: 'morning',
     intensity: 0,
     nudgeFired: false,
