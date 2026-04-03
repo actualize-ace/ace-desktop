@@ -9,6 +9,22 @@ const TICK_MS = 60_000  // update every minute
 const NUDGE_MINUTES = 45
 const NUDGE_SESSIONS = 5
 const NUDGE_HOUR = 22   // 10pm
+const CROSSFADE_MS = 30_000  // 30s frequency transitions
+
+// Solfeggio frequencies — research-backed (Akimoto et al. 2018)
+const SOLFEGGIO = {
+  calm:   { freq: 174, label: 'Calm · 174 Hz',   desc: 'Evening, before sleep, when activated' },
+  ground: { freq: 396, label: 'Ground · 396 Hz', desc: 'Morning start, after disruption, scattered' },
+  focus:  { freq: 528, label: 'Focus · 528 Hz',  desc: 'Deep work, writing, building' },
+}
+// Binaural offsets — Garcia-Argibay et al. 2019
+const BINAURAL = {
+  rest:    { offset: 4,  band: 'theta', label: 'Deep Rest · 4 Hz',      desc: 'Late night, deep relaxation' },
+  reflect: { offset: 6,  band: 'theta', label: 'Reflection · 6 Hz',     desc: 'Journaling, coaching, integration' },
+  relaxed: { offset: 10, band: 'alpha', label: 'Relaxed Focus · 10 Hz', desc: 'Reading, reviewing, calm attention' },
+  active:  { offset: 14, band: 'beta',  label: 'Active Focus · 14 Hz',  desc: 'Building, coding, problem solving' },
+}
+const AUTO_SOL_MAP = { morning: 'ground', afternoon: 'focus', evening: 'calm', late: 'calm' }
 
 // ── Helpers ──
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)) }
@@ -104,6 +120,7 @@ function checkNudge() {
 
   nudgeWord.textContent = word
   nudge.classList.add('visible')
+  audioNudgeShift()
 }
 
 function dismissNudge() {
@@ -117,6 +134,215 @@ function nudgeClick() {
   // Navigate to breath view
   const breathNav = document.querySelector('[data-view="breath"]')
   if (breathNav) breathNav.click()
+}
+
+// ── Audio Engine (Web Audio API — pure synthesis, no files) ──
+let audioCtx = null
+let solOsc = null, solGain = null           // solfeggio oscillator
+let binL = null, binR = null, binGain = null // binaural pair
+let panL = null, panR = null
+
+function ensureAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+  if (audioCtx.state === 'suspended') audioCtx.resume()
+  return audioCtx
+}
+
+function getTargetSolFreq() {
+  const sol = state.atmosphere.audio.solfeggio
+  if (sol === 'auto') return SOLFEGGIO[AUTO_SOL_MAP[state.atmosphere.timeOfDay]].freq
+  return SOLFEGGIO[sol]?.freq || 0
+}
+
+function startSolfeggio(freq) {
+  const ctx = ensureAudioCtx()
+  const vol = state.atmosphere.audio.volume
+  solGain = ctx.createGain()
+  solGain.gain.setValueAtTime(0, ctx.currentTime)
+  solGain.gain.linearRampToValueAtTime(vol, ctx.currentTime + 2)
+  solGain.connect(ctx.destination)
+  solOsc = ctx.createOscillator()
+  solOsc.type = 'sine'
+  solOsc.frequency.setValueAtTime(freq, ctx.currentTime)
+  solOsc.connect(solGain)
+  solOsc.start()
+}
+
+function stopSolfeggio() {
+  if (!solOsc) return
+  const ctx = audioCtx
+  solGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 2)
+  const osc = solOsc, gain = solGain
+  setTimeout(() => { osc.stop(); osc.disconnect(); gain.disconnect() }, 2500)
+  solOsc = null; solGain = null
+}
+
+function crossfadeSolTo(freq, durationMs) {
+  if (!solOsc || !audioCtx) return
+  solOsc.frequency.linearRampToValueAtTime(freq, audioCtx.currentTime + durationMs / 1000)
+}
+
+function startBinaural(baseFreq, offset) {
+  const ctx = ensureAudioCtx()
+  const vol = state.atmosphere.audio.volume * 0.7
+  binGain = ctx.createGain()
+  binGain.gain.setValueAtTime(0, ctx.currentTime)
+  binGain.gain.linearRampToValueAtTime(vol, ctx.currentTime + 2)
+  binGain.connect(ctx.destination)
+
+  panL = ctx.createStereoPanner(); panL.pan.value = -1
+  panR = ctx.createStereoPanner(); panR.pan.value = 1
+  panL.connect(binGain); panR.connect(binGain)
+
+  binL = ctx.createOscillator(); binL.type = 'sine'
+  binL.frequency.setValueAtTime(baseFreq - offset / 2, ctx.currentTime)
+  binL.connect(panL); binL.start()
+
+  binR = ctx.createOscillator(); binR.type = 'sine'
+  binR.frequency.setValueAtTime(baseFreq + offset / 2, ctx.currentTime)
+  binR.connect(panR); binR.start()
+}
+
+function stopBinaural() {
+  if (!binL) return
+  const ctx = audioCtx
+  binGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 2)
+  const l = binL, r = binR, g = binGain, pl = panL, pr = panR
+  setTimeout(() => { l.stop(); r.stop(); l.disconnect(); r.disconnect(); pl.disconnect(); pr.disconnect(); g.disconnect() }, 2500)
+  binL = null; binR = null; binGain = null; panL = null; panR = null
+}
+
+function crossfadeBinTo(baseFreq, offset, durationMs) {
+  if (!binL || !audioCtx) return
+  const t = audioCtx.currentTime + durationMs / 1000
+  binL.frequency.linearRampToValueAtTime(baseFreq - offset / 2, t)
+  binR.frequency.linearRampToValueAtTime(baseFreq + offset / 2, t)
+}
+
+export function setSolfeggio(key) {
+  const audio = state.atmosphere.audio
+  const wasSol = audio.solfeggio
+  audio.solfeggio = key
+  localStorage.setItem('ace-atm-audio-sol', key)
+
+  if (key === 'off') {
+    stopSolfeggio()
+  } else {
+    const freq = getTargetSolFreq()
+    if (!solOsc) startSolfeggio(freq)
+    else crossfadeSolTo(freq, CROSSFADE_MS)
+  }
+  updateAudioMode()
+  renderAudioIndicator()
+}
+
+export function setBinaural(key) {
+  const audio = state.atmosphere.audio
+  audio.binaural = key
+  localStorage.setItem('ace-atm-audio-bin', key)
+
+  if (key === 'off') {
+    stopBinaural()
+  } else {
+    const baseFreq = getTargetSolFreq() || 396
+    const offset = BINAURAL[key].offset
+    if (!binL) startBinaural(baseFreq, offset)
+    else crossfadeBinTo(baseFreq, offset, CROSSFADE_MS)
+  }
+  updateAudioMode()
+  renderAudioIndicator()
+}
+
+function updateAudioMode() {
+  const a = state.atmosphere.audio
+  if (a.solfeggio !== 'off' || a.binaural !== 'off') a.mode = 'on'
+  else a.mode = 'off'
+  localStorage.setItem('ace-atm-audio-mode', a.mode)
+}
+
+function renderAudioIndicator() {
+  const el = document.getElementById('atm-audio-label')
+  if (!el) return
+  const a = state.atmosphere.audio
+  if (a.solfeggio === 'off' && a.binaural === 'off') {
+    el.textContent = '♪ Off'
+    el.parentElement.classList.remove('active')
+    return
+  }
+  el.parentElement.classList.add('active')
+  let label = ''
+  if (a.solfeggio === 'auto') label = 'Auto'
+  else if (a.solfeggio !== 'off') label = SOLFEGGIO[a.solfeggio].label.split(' · ')[0]
+  if (a.binaural !== 'off') {
+    const hz = BINAURAL[a.binaural].offset + 'Hz'
+    label = label ? `${label} + ${hz} 🎧` : `${hz} 🎧`
+  }
+  el.textContent = label
+}
+
+// Audio responds to nudge — shift toward calm
+export function audioNudgeShift() {
+  if (!solOsc) return
+  crossfadeSolTo(174, CROSSFADE_MS)
+}
+
+// Audio responds to breath view
+export function audioBreathEnter() {
+  if (!solOsc) return
+  crossfadeSolTo(174, 5000)
+  if (binL) crossfadeBinTo(174, 4, 5000) // theta for calming
+}
+
+export function audioBreathExit() {
+  if (!solOsc) return
+  const freq = getTargetSolFreq()
+  crossfadeSolTo(freq, 5000)
+  if (binL) {
+    const binKey = state.atmosphere.audio.binaural
+    if (binKey !== 'off') {
+      crossfadeBinTo(freq, BINAURAL[binKey].offset, 5000)
+    }
+  }
+}
+
+// Popover toggle
+export function toggleAudioPopover() {
+  const pop = document.getElementById('atm-audio-popover')
+  if (pop) pop.classList.toggle('open')
+}
+
+function closeAudioPopover() {
+  const pop = document.getElementById('atm-audio-popover')
+  if (pop) pop.classList.remove('open')
+}
+
+function wireAudioPopover() {
+  const indicator = document.getElementById('atm-audio-indicator')
+  if (indicator) indicator.addEventListener('click', toggleAudioPopover)
+
+  // Solfeggio buttons
+  document.querySelectorAll('[data-sol]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setSolfeggio(btn.dataset.sol)
+      closeAudioPopover()
+    })
+  })
+  // Binaural buttons
+  document.querySelectorAll('[data-bin]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setBinaural(btn.dataset.bin)
+      closeAudioPopover()
+    })
+  })
+
+  // Close on outside click
+  document.addEventListener('click', (e) => {
+    const pop = document.getElementById('atm-audio-popover')
+    const ind = document.getElementById('atm-audio-indicator')
+    if (pop?.classList.contains('open') && !pop.contains(e.target) && !ind?.contains(e.target)) {
+      closeAudioPopover()
+    }
+  })
 }
 
 // ── Tick ──
@@ -183,6 +409,23 @@ export function initAtmosphere() {
 
   // Check nudge immediately (for 5+ sessions or late night)
   checkNudge()
+
+  // Wire audio popover + restore saved audio state
+  wireAudioPopover()
+  renderAudioIndicator()
+  const audio = state.atmosphere.audio
+  if (audio.solfeggio !== 'off') {
+    // Defer audio start — requires user gesture in Chromium
+    const startSavedAudio = () => {
+      const freq = getTargetSolFreq()
+      if (freq) startSolfeggio(freq)
+      if (audio.binaural !== 'off') {
+        startBinaural(freq || 396, BINAURAL[audio.binaural].offset)
+      }
+      document.removeEventListener('click', startSavedAudio)
+    }
+    document.addEventListener('click', startSavedAudio, { once: true })
+  }
 
   // Start tick
   setInterval(tick, TICK_MS)

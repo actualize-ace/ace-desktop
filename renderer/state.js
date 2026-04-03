@@ -61,6 +61,12 @@ export const state = {
     intensity: 0,
     nudgeFired: false,
     nudgeDismissed: false,
+    audio: {
+      mode: localStorage.getItem('ace-atm-audio-mode') || 'off',
+      solfeggio: localStorage.getItem('ace-atm-audio-sol') || 'off',
+      binaural: localStorage.getItem('ace-atm-audio-bin') || 'off',
+      volume: 0.03,
+    },
   },
 
   // Breath view
