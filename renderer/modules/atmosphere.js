@@ -166,6 +166,21 @@ export function initAtmosphere() {
   const nudge = document.getElementById('atmosphere-nudge')
   if (nudge) nudge.addEventListener('click', nudgeClick)
 
+  // Wire tooltip hover (tooltip is body-level, not a CSS child)
+  const wrap = document.getElementById('atm-intensity-wrap')
+  const tooltip = document.getElementById('atm-tooltip')
+  if (wrap && tooltip) {
+    wrap.addEventListener('mouseenter', () => {
+      const rect = wrap.getBoundingClientRect()
+      tooltip.style.top = (rect.bottom + 6) + 'px'
+      tooltip.style.right = (window.innerWidth - rect.right) + 'px'
+      tooltip.classList.add('visible')
+    })
+    wrap.addEventListener('mouseleave', () => {
+      tooltip.classList.remove('visible')
+    })
+  }
+
   // Check nudge immediately (for 5+ sessions or late night)
   checkNudge()
 

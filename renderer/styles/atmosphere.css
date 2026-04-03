@@ -46,7 +46,7 @@ body.light .atm-tooltip {
   background: #fff;
   box-shadow: 0 4px 16px rgba(0,0,0,0.1);
 }
-.atm-intensity-wrap:hover .atm-tooltip {
+.atm-tooltip.visible {
   opacity: 1;
   transform: translateY(0);
 }

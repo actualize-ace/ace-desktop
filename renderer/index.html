@@ -50,7 +50,6 @@
         <div class="atm-intensity-bar">
           <div class="atm-intensity-fill" id="atm-intensity-fill"></div>
         </div>
-        <div class="atm-tooltip" id="atm-tooltip"></div>
       </div>
       <div class="attention-badge" id="attention-badge" title="Sessions need attention">0</div>
       <div class="coherence-chip">
@@ -798,6 +797,9 @@ initBreath()
       loadDashboard()
     })
   </script>
+
+  <!-- Somatic intensity tooltip (body-level to escape titlebar backdrop-filter stacking context) -->
+  <div class="atm-tooltip" id="atm-tooltip"></div>
 
   <!-- Somatic nudge strip -->
   <div class="atmosphere-nudge" id="atmosphere-nudge">
