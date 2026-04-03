@@ -231,11 +231,9 @@ body.light .atm-audio-popover {
   transition: background 3s ease;
 }
 
-/* ACE mark — glow ring matches atmosphere color */
+/* ACE mark — breathing syncs to atmosphere, glow set by JS on #sidebarMark */
 .sidebar-mark {
   animation: markPulseAtm var(--atm-breath-speed) ease-in-out infinite;
-  box-shadow: 0 0 12px var(--atm-edge-color), 0 0 4px var(--atm-edge-mid);
-  border-radius: 50%;
   transition: box-shadow 3s ease;
 }
 @keyframes markPulseAtm {

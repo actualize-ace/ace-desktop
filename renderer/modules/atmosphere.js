@@ -364,11 +364,11 @@ function writeAtmosphereVars() {
   // Energy curve: 0-10min ramp to 0.3, 10-30min ramp to 1.0, plateau at 1.0
   // For simulation: also factor in totalMinutesToday so reloads show the effect
   const sessionMin = a.elapsed
-  const totalEnergy = clamp(a.totalMinutesToday / 60 / 4, 0, 1) // 4 hours = full
+  const totalEnergy = clamp(a.totalMinutesToday / 60 / 7, 0, 1) // 7 hours = full
   const currentEnergy = clamp(sessionMin <= 10 ? sessionMin / 10 * 0.3 : sessionMin <= 30 ? 0.3 + (sessionMin - 10) / 20 * 0.7 : 1, 0, 1)
   const energy = clamp(Math.max(currentEnergy, totalEnergy), 0, 1)
-  const sessionHeat = clamp((a.sessionCount - 1) / 3, 0, 1)
-  const warmth = clamp(energy * 0.6 + sessionHeat * 0.4, 0, 1)
+  const sessionHeat = clamp((a.sessionCount - 1) / 10, 0, 1) // 11 sessions = full
+  const warmth = clamp(energy * 0.55 + sessionHeat * 0.45, 0, 1)
 
   const hue = TIME_HUE[a.timeOfDay] || 228
   const isEvening = a.timeOfDay === 'evening' || a.timeOfDay === 'late'
@@ -376,7 +376,13 @@ function writeAtmosphereVars() {
   const edgeGlow = energy > 0.3 ? (energy - 0.3) / 0.7 : 0
 
   // Compute actual colors in JS (color-mix + calc in CSS is unreliable)
-  const borderH = hue + (35 - hue) * warmth // shift toward amber (hue 35)
+  // Hue shifts: low warmth = cool (hue), mid = amber (35), high = rose (345)
+  let borderH
+  if (warmth < 0.5) {
+    borderH = hue + (35 - hue) * (warmth / 0.5)
+  } else {
+    borderH = 35 + (345 - 35) * ((warmth - 0.5) / 0.5)
+  }
   const borderAlpha = 0.1 + warmth * 0.35
   const shadowAlpha = warmth * 0.15
   const shadowPx = warmth * 24
@@ -388,9 +394,19 @@ function writeAtmosphereVars() {
   r.setProperty('--atm-shadow', `0 0 ${shadowPx}px hsla(${borderH}, 50%, 50%, ${shadowAlpha})`)
   r.setProperty('--atm-brightness', brightness.toFixed(3))
   r.setProperty('--atm-breath-speed', (3.5 - warmth * 2) + 's')
-  r.setProperty('--atm-edge-color', `hsla(${hue}, 55%, 55%, ${edgeAlpha})`)
-  r.setProperty('--atm-edge-mid', `hsla(${hue}, 55%, 55%, ${edgeAlpha * 0.5})`)
+  r.setProperty('--atm-edge-color', `hsla(${borderH}, 55%, 55%, ${edgeAlpha})`)
+  r.setProperty('--atm-edge-mid', `hsla(${borderH}, 55%, 55%, ${edgeAlpha * 0.5})`)
   r.setProperty('--atm-ambient', `hsla(${borderH}, 50%, 45%, ${ambientAlpha})`)
+
+  // ACE mark glow — set directly to override shell.css box-shadow
+  const mark = document.getElementById('sidebarMark')
+  if (mark && warmth > 0.05) {
+    const glowColor = `hsla(${borderH}, 55%, 55%, ${0.3 + warmth * 0.4})`
+    const outerColor = `hsla(${borderH}, 50%, 50%, ${warmth * 0.15})`
+    mark.style.boxShadow = `0 0 ${10 + warmth * 20}px ${glowColor}, 0 0 ${30 + warmth * 30}px ${outerColor}`
+  } else if (mark) {
+    mark.style.boxShadow = ''
+  }
 }
 
 // ── Tick ──
