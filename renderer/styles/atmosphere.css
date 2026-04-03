@@ -4,8 +4,12 @@
 /* ── Intensity Bar (titlebar) ── */
 .atm-intensity-wrap {
   position: relative;
-  display: flex; align-items: center;
-  margin-right: 4px;
+  display: flex; align-items: center; gap: 4px;
+  margin: 0 2px;
+}
+.atm-intensity-icon {
+  color: var(--text-dim); opacity: 0.5;
+  flex-shrink: 0;
 }
 .atm-intensity-bar {
   width: 64px; height: 6px;
