@@ -668,8 +668,8 @@ function tick() {
   // Check idle state transitions
   checkIdleState()
 
-  // Only increment active time when ACTIVE
-  if (a.activityState === 'active') {
+  // Only increment active time when ACTIVE and app is visible
+  if (a.activityState === 'active' && !document.hidden) {
     a.sessionActiveMin += 1
     a.totalActiveMin += 1
   }
