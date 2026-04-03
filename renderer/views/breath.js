@@ -182,6 +182,9 @@ export function onBreathEnter() {
   const sidebar = document.getElementById('sidebar')
   if (sidebar) sidebar.classList.add('collapsed')
   audioBreathEnter()
+  // Fade out somatic bar for full immersion
+  const somaticBar = document.getElementById('somatic-bar')
+  if (somaticBar) somaticBar.classList.add('breath-hidden')
 }
 
 export function onBreathExit() {
@@ -190,6 +193,9 @@ export function onBreathExit() {
   const sidebar = document.getElementById('sidebar')
   if (sidebar) sidebar.classList.remove('collapsed')
   audioBreathExit()
+  // Fade somatic bar back in
+  const somaticBar = document.getElementById('somatic-bar')
+  if (somaticBar) somaticBar.classList.remove('breath-hidden')
 }
 
 export function initBreath() {
