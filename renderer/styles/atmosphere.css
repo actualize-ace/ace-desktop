@@ -201,6 +201,7 @@ body.light .atm-audio-popover {
 
 /* Body brightness dims in evening */
 .main-content {
+  position: relative;
   filter: brightness(var(--atm-brightness));
   transition: filter 3s ease;
 }

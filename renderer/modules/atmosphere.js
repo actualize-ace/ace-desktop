@@ -376,18 +376,22 @@ function writeAtmosphereVars() {
   const edgeGlow = energy > 0.3 ? (energy - 0.3) / 0.7 : 0
 
   // Compute actual colors in JS (color-mix + calc in CSS is unreliable)
-  // Hue shifts: low warmth = cool (hue), mid = amber (35), high = rose (345)
+  // Hue shifts: low warmth = cool violet (260), mid = amber (35), high = hot rose (350)
+  // Going amber→rose means going 35→0→350 (wrapping around), not 35→350 through blues
   let borderH
   if (warmth < 0.5) {
-    borderH = hue + (35 - hue) * (warmth / 0.5)
+    borderH = 260 - (260 - 35) * (warmth / 0.5) // 260 → 35 (violet to amber)
   } else {
-    borderH = 35 + (345 - 35) * ((warmth - 0.5) / 0.5)
+    borderH = 35 - (35 + 10) * ((warmth - 0.5) / 0.5) // 35 → -10 → wraps to 350 (amber to rose)
+    if (borderH < 0) borderH += 360
   }
   const borderAlpha = 0.1 + warmth * 0.35
   const shadowAlpha = warmth * 0.15
   const shadowPx = warmth * 24
   const edgeAlpha = edgeGlow * 0.6
   const ambientAlpha = warmth * 0.12
+
+  console.log(`[atm] warmth=${warmth.toFixed(2)} hue=${Math.round(borderH)} energy=${energy.toFixed(2)} sessions=${a.sessionCount}`)
 
   const r = document.documentElement.style
   r.setProperty('--atm-border-color', `hsla(${borderH}, 55%, 50%, ${borderAlpha})`)
