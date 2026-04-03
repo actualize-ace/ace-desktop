@@ -42,7 +42,7 @@ export function applyZoom(z) {
   document.getElementById('zoom-label').textContent = Math.round(state.uiZoom * 100) + '%'
   localStorage.setItem('ace-zoom', state.uiZoom)
   // fitActive is defined in session-manager — use window bridge during migration
-  setTimeout(() => { if (typeof fitActive === 'function') fitActive(); else if (window.fitActive) window.fitActive() }, 100)
+  setTimeout(() => { if (window.fitActive) window.fitActive() }, 100)
 }
 
 export function updateTime() {

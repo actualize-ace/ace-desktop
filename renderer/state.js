@@ -52,6 +52,9 @@ export const state = {
   // Build mode
   buildModeOn: false,
 
+  // Cost guardrail (loaded from config in initSessions)
+  _costGuardrail: null,
+
   // Timers (stored for cleanup)
   timeTimer: null,
   agentTimer: null,

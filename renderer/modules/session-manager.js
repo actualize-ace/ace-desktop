@@ -389,13 +389,10 @@ export function updateChatStatus(id, event, sessionsObj) {
   updateContextBar(id, totalTok)
 
   // Cost guardrail: warn if session cost exceeds threshold
-  if (typeof _settingsConfig !== 'undefined' && _settingsConfig?.defaults?.guardrails?.sessionCostWarning) {
-    const warn = _settingsConfig.defaults.guardrails.sessionCostWarning
-    if (s.totalCost > warn && !s._costWarned) {
-      s._costWarned = true
-      const costEl = document.getElementById('chat-status-' + id)?.querySelector('.chat-cost-label')
-      if (costEl) costEl.style.color = 'var(--red)'
-    }
+  if (state._costGuardrail && s.totalCost > state._costGuardrail && !s._costWarned) {
+    s._costWarned = true
+    const costEl = document.getElementById('chat-status-' + id)?.querySelector('.chat-cost-label')
+    if (costEl) costEl.style.color = 'var(--red)'
   }
 }
 
@@ -922,10 +919,11 @@ function onWindowRegainFocus() {
 // ─── Init ────────────────────────────────────────────────────────────────────
 
 export function initSessions() {
-  // Load chatDefaults from config
+  // Load chatDefaults and cost guardrail from config
   ;(async () => {
     const cfg = await window.ace.setup.getConfig()
     if (cfg?.defaults?.chat) state.chatDefaults = cfg.defaults.chat
+    if (cfg?.defaults?.guardrails?.sessionCostWarning) state._costGuardrail = cfg.defaults.guardrails.sessionCostWarning
   })()
 
   // New session button

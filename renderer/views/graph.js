@@ -1,6 +1,7 @@
 // renderer/views/graph.js
 import { state } from '../state.js'
 import { escapeHtml } from '../modules/chat-renderer.js'
+import { initVault, openVaultFile } from './vault.js'
 
 let graphSimulation = null
 
@@ -148,12 +149,9 @@ async function renderGraph() {
     document.querySelector('.nav-item[data-view="vault"]').click()
     setTimeout(() => {
       if (!state.vaultInitialized) {
-        // Import dynamically or rely on global initVault/openVaultFile
-        if (typeof initVault === 'function') {
-          initVault().then(() => openVaultFile(d.path, d.label + '.md'))
-        }
+        initVault().then(() => openVaultFile(d.path, d.label + '.md'))
       } else {
-        if (typeof openVaultFile === 'function') openVaultFile(d.path, d.label + '.md')
+        openVaultFile(d.path, d.label + '.md')
         document.querySelectorAll('#vault-tree .tree-item').forEach(el => {
           if (el.querySelector('.tree-name')?.textContent === d.label) {
             el.classList.add('active')
