@@ -52,6 +52,24 @@ export const state = {
   // Build mode
   buildModeOn: false,
 
+  // Atmosphere (somatic layer)
+  atmosphere: {
+    elapsed: 0,
+    sessionCount: parseInt(sessionStorage.getItem('ace-atm-sessions') || '1'),
+    totalMinutesToday: parseInt(sessionStorage.getItem('ace-atm-total') || '0'),
+    timeOfDay: 'morning',
+    intensity: 0,
+    nudgeFired: false,
+    nudgeDismissed: false,
+  },
+
+  // Breath view
+  breathActive: false,
+  breathRunning: false,
+  breathProtocol: 'sighing',
+  breathCycles: 0,
+  breathTargetCycles: 6,
+
   // Cost guardrail (loaded from config in initSessions)
   _costGuardrail: null,
 
