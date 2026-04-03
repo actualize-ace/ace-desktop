@@ -4,6 +4,7 @@ import { xtermTheme } from './theme.js'
 import { escapeHtml, syntaxHighlight, findSettledBoundary, renderTail, postProcessCodeBlocks, processWikilinks, SANITIZE_CONFIG } from './chat-renderer.js'
 import { updateOrbState } from './ace-mark.js'
 import { setAttention, clearAttention, updateAttentionBadge } from './attention.js'
+import { onSessionClose } from './atmosphere.js'
 
 // ─── Chat System ─────────────────────────────────────────────────────────────
 
@@ -512,6 +513,13 @@ export function wireChatListeners(id, sessionsObj) {
       }
       if (e.type === 'content_block_stop') {
         if (s._currentToolBlock) {
+          // Detect /close skill invocation
+          if (s._toolGroup?.name === 'Skill' || (!s._toolGroup && s._currentToolBlock.querySelector?.('.chat-tool-name')?.textContent?.includes('Skill'))) {
+            try {
+              const parsed = JSON.parse(s.currentToolInput)
+              if (parsed.skill === 'close') onSessionClose()
+            } catch {}
+          }
           s._hadToolBlocks = true
           s._currentToolBlock = null
           s._questionBlockEl = null

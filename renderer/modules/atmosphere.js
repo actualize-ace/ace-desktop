@@ -189,6 +189,11 @@ function endSession() {
   persistAtmosphere()
 }
 
+// Called by session-manager when /close skill is detected in chat stream
+export function onSessionClose() {
+  endSession()
+}
+
 function persistAtmosphere() {
   const a = state.atmosphere
   window.ace?.setup?.patchConfig({
