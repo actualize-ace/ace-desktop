@@ -570,6 +570,8 @@ import { initOracle } from './views/oracle.js'
 import { initSettings } from './views/settings.js'
 import { initHistory } from './views/history.js'
 import { initArtifacts, renderArtifactsList } from './views/artifacts.js'
+import { initAtmosphere } from './modules/atmosphere.js'
+import { initBreath, onBreathEnter, onBreathExit } from './views/breath.js'
 
 // ─── Theme, Zoom, Time, Sidebar (from module) ──────────────────────────────
 initTheme()
@@ -593,15 +595,19 @@ const navItems = document.querySelectorAll('.nav-item[data-view]')
 navItems.forEach(item => {
   item.addEventListener('click', () => {
     const view = item.dataset.view
+    const prevView = document.querySelector('.nav-item.active')?.dataset.view
     // Stop graph simulation when leaving graph view
-    if (document.querySelector('.nav-item.active')?.dataset.view === 'graph' && view !== 'graph') {
+    if (prevView === 'graph' && view !== 'graph') {
       // graphSimulation is module-local in views/graph.js — handled internally
     }
+    // Breath view enter/exit hooks
+    if (prevView === 'breath' && view !== 'breath') onBreathExit()
     navItems.forEach(n => n.classList.remove('active'))
     item.classList.add('active')
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'))
     document.getElementById('view-' + view).classList.add('active')
-    if (view === 'terminal' && Object.keys(state.sessions).length === 0) spawnSession()
+    if (view === 'breath') onBreathEnter()
+    else if (view === 'terminal' && Object.keys(state.sessions).length === 0) spawnSession()
     else if (view === 'terminal') fitActive()
     else if (view === 'vault' && !state.vaultInitialized) initVault()
     else if (view === 'graph' && !state.graphInitialized) initGraph()
@@ -698,6 +704,10 @@ initOracle()
 // ─── Views (from modules) ──
 // Views are lazy-initialized via nav.js when their tab is clicked.
 // Imports above make init functions available to the nav handler.
+
+// ─── Somatic Atmosphere ──
+initAtmosphere()
+initBreath()
 
 </script>
   <script type="module">
