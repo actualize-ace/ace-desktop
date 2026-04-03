@@ -1,0 +1,77 @@
+/* ── MARKDOWN BODY ── */
+.md-body {
+  max-width: 740px; margin: 0 auto;
+  line-height: 1.75; color: var(--text-primary);
+  font-size: 13px; font-family: 'DM Sans', sans-serif;
+}
+.md-body h1 {
+  font-family: 'Space Grotesk', sans-serif; font-size: 21px; font-weight: 500;
+  margin: 0 0 18px; padding-bottom: 9px; border-bottom: 1px solid var(--border);
+}
+.md-body h2 {
+  font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600;
+  margin: 26px 0 10px; color: var(--text-primary);
+}
+.md-body h3 {
+  font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600;
+  margin: 20px 0 8px; color: var(--gold);
+}
+.md-body h4 {
+  font-family: 'JetBrains Mono', monospace; font-size: 8.5px; font-weight: 600;
+  margin: 16px 0 6px; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 1.2px;
+}
+.md-body h5, .md-body h6 { font-size: 12px; margin: 14px 0 6px; color: var(--text-secondary); }
+.md-body p { margin: 0 0 12px; }
+.md-body strong { font-weight: 600; color: var(--text-primary); }
+.md-body em { font-style: italic; color: var(--text-secondary); }
+.md-body del { opacity: 0.45; }
+.md-body code {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  border-radius: 3px; padding: 1px 5px; color: var(--gold);
+}
+.md-body pre {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 6px; padding: 14px 16px; overflow-x: auto; margin: 12px 0;
+}
+.md-body pre code {
+  background: none; border: none; padding: 0;
+  color: var(--text-secondary); font-size: 11px;
+}
+.md-body ul, .md-body ol { padding-left: 20px; margin: 0 0 12px; }
+.md-body li { margin: 4px 0; }
+.md-body li input[type=checkbox] { margin-right: 6px; accent-color: var(--gold); }
+.md-body blockquote {
+  margin: 12px 0; padding: 10px 16px;
+  border-left: 2px solid var(--gold-dim);
+  background: var(--bg-elevated); border-radius: 0 6px 6px 0;
+  color: var(--text-secondary); font-style: italic;
+}
+.md-body blockquote p { margin: 0; }
+.md-body hr { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
+.md-body a { color: var(--gold); text-decoration: none; border-bottom: 1px solid rgba(212,165,116,0.2); }
+.md-body a:hover { border-bottom-color: var(--gold); }
+.md-body table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 11.5px; }
+.md-body th {
+  padding: 6px 10px; background: var(--bg-elevated);
+  border: 1px solid var(--border); text-align: left;
+  font-family: 'JetBrains Mono', monospace; font-size: 8px;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--text-secondary);
+}
+.md-body td { padding: 6px 10px; border: 1px solid var(--border); color: var(--text-secondary); }
+.md-body tr:hover td { background: rgba(212,165,116,0.02); }
+.md-body mark { background: rgba(212,165,116,0.18); color: var(--text-primary); border-radius: 2px; padding: 0 2px; }
+.md-body details { border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; margin: 10px 0; }
+.md-body summary { cursor: pointer; color: var(--text-secondary); font-size: 12px; }
+
+.wikilink {
+  display: inline-flex; align-items: center;
+  padding: 1px 6px; margin: 0 1px;
+  background: rgba(155,116,196,0.08); border: 1px solid rgba(155,116,196,0.22);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  color: var(--ark); cursor: default; transition: all 0.12s;
+}
+.wikilink.clickable { cursor: pointer; }
+.wikilink.clickable:hover { background: rgba(155,116,196,0.14); border-color: rgba(155,116,196,0.4); }

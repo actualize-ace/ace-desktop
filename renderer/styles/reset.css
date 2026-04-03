@@ -1,0 +1,16 @@
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  overflow: hidden;
+  height: 100vh; width: 100vw;
+  user-select: none;
+}
+body::before {
+  content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(136,120,255,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(96,216,168,0.05) 0%, transparent 40%),
+    radial-gradient(ellipse at 60% 80%, rgba(224,112,160,0.04) 0%, transparent 40%);
+}

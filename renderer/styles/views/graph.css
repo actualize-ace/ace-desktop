@@ -1,0 +1,16 @@
+/* ── GRAPH VIEW ── */
+.graph-body {
+  flex: 1; overflow: hidden; position: relative;
+  background: var(--bg-deep);
+}
+.graph-body svg {
+  width: 100%; height: 100%;
+  cursor: grab;
+}
+.graph-body svg:active { cursor: grabbing; }
+.graph-node { cursor: pointer; }
+.graph-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  fill: var(--text-secondary); pointer-events: none;
+  opacity: 0;
+}

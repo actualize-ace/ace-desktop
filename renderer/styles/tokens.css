@@ -1,0 +1,78 @@
+:root {
+  --bg-deep:    #080a12;
+  --bg-surface: #0c0e18;
+  --bg-elevated:#141828;
+  --bg-card:    #101420;
+  --border:      rgba(140,120,255,0.10);
+  --border-hover:rgba(140,120,255,0.22);
+  --gold:       #c8a0f0;
+  --gold-dim:   #7a60b0;
+  --green:      #60d8a8;
+  --ark:        #b080e0;
+  --blue-grey:  #70b0e0;
+  --red:        #e07080;
+  --text-primary:   #e8e4f0;
+  --text-secondary: #9898b8;
+  --text-dim:       #606080;
+  --authority: #c8a0f0;
+  --capacity:  #60d8a8;
+  --expansion: #e080a0;
+  --sidebar-w: 216px;
+  --ui-zoom: 1;
+  --chat-font-size: 12.5px;
+  /* Neo-Glassmorphic tokens */
+  --glow-primary: rgba(140,120,255,0.15);
+  --glow-accent:  rgba(200,160,240,0.2);
+  --glass-bg:     rgba(16,20,36,0.6);
+  --glass-border: rgba(140,120,255,0.08);
+  --glass-blur:   blur(12px);
+  --gradient-accent: linear-gradient(135deg, #8878ff, #c8a0f0, #60d8a8);
+  --gradient-glow: linear-gradient(135deg, rgba(136,120,255,0.15), rgba(200,160,240,0.1), rgba(96,216,168,0.08));
+}
+
+/* ── Light mode — cool lavender/silver ── */
+body.light {
+  --bg-deep:    #f0eef6;
+  --bg-surface: #e8e6f0;
+  --bg-elevated:#dddae8;
+  --bg-card:    #e2e0ec;
+  --border:      rgba(100,90,160,0.12);
+  --border-hover:rgba(100,90,160,0.24);
+  --gold:       #5a48c0;
+  --gold-dim:   #7a68d0;
+  --green:      #1a8a60;
+  --ark:        #7048b8;
+  --blue-grey:  #3060a8;
+  --red:        #c04858;
+  --text-primary:   #18162a;
+  --text-secondary: #48466a;
+  --text-dim:       #8886a0;
+  --authority: #5a48c0;
+  --capacity:  #1a8a60;
+  --expansion: #c04878;
+  --glass-bg:  rgba(240,238,246,0.7);
+  --glass-border: rgba(100,90,160,0.08);
+}
+body.light .titlebar     { background: rgba(240,238,246,0.95); backdrop-filter: var(--glass-blur); }
+body.light .sidebar      { background: rgba(236,234,244,0.92); backdrop-filter: var(--glass-blur); }
+body.light .triad-bar    { background: rgba(236,234,244,0.95); }
+body.light .view-header  { background: rgba(236,234,244,0.7); backdrop-filter: var(--glass-blur); }
+body.light .session-tabs { background: rgba(232,230,240,0.9); }
+body.light .term-hdr     { background: rgba(232,230,240,0.95); }
+body.light .term-xterm   { background: #eceaf4; }
+body.light .agents-roster { background: rgba(236,234,244,0.95); }
+body.light .apane-tab    { background: rgba(232,230,240,0.95); }
+body.light .term-xterm .xterm-viewport::-webkit-scrollbar-thumb { background: rgba(90,72,192,0.12); }
+body.light .term-xterm .xterm-viewport::-webkit-scrollbar-thumb:hover { background: rgba(90,72,192,0.25); }
+body.light .scroll-to-bottom { background: rgba(90,72,192,0.08); border-color: rgba(90,72,192,0.15); color: var(--gold); }
+body.light .scroll-to-bottom:hover { background: rgba(90,72,192,0.15); }
+/* light mode mark handled via inline SVG gradient fills */
+body.light .chat-msg-user .chat-msg-content { background:linear-gradient(135deg, rgba(90,72,192,0.08), rgba(90,72,192,0.03)); border-color:rgba(90,72,192,0.12); }
+body.light .chat-input { background:rgba(240,238,246,0.8); border-color:rgba(90,72,192,0.12); }
+body.light .chat-input:focus { border-color:rgba(90,72,192,0.3); box-shadow:0 0 0 3px rgba(90,72,192,0.08); }
+body.light::before {
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(90,72,192,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(26,138,96,0.04) 0%, transparent 40%),
+    radial-gradient(ellipse at 60% 80%, rgba(192,72,120,0.03) 0%, transparent 40%);
+}
