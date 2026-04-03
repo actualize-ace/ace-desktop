@@ -27,7 +27,7 @@ export default {
       qcmd.addEventListener('click', () => {
         document.querySelector('.nav-item[data-view="terminal"]').click()
         setTimeout(() => {
-          if (typeof sendToActive === 'function') sendToActive(qcmd.dataset.cmd + '\r')
+          if (window.sendToActive) window.sendToActive(qcmd.dataset.cmd + '\r')
         }, 120)
       })
     })

@@ -317,20 +317,21 @@ export default {
 
         document.querySelector('.nav-item[data-view="terminal"]').click()
         setTimeout(() => {
-          if (typeof spawnSession === 'function') spawnSession()
+          if (window.spawnSession) window.spawnSession()
           setTimeout(() => {
-            if (typeof activeId !== 'undefined' && activeId && typeof sessions !== 'undefined') {
-              const modelEl = document.getElementById('chat-model-' + activeId)
-              const permsEl = document.getElementById('chat-perms-' + activeId)
+            const st = window.__aceState
+            if (st?.activeId && st?.sessions) {
+              const modelEl = document.getElementById('chat-model-' + st.activeId)
+              const permsEl = document.getElementById('chat-perms-' + st.activeId)
               if (modelEl) modelEl.value = 'sonnet'
               if (permsEl) permsEl.value = 'auto'
-              const tab = sessions[activeId]?.tab
+              const tab = st.sessions[st.activeId]?.tab
               if (tab) {
                 const span = tab.querySelector('span:not(.stab-close)')
                 if (span) span.textContent = `${key}: ${name}`
               }
-              if (typeof sendChatMessage === 'function') {
-                sendChatMessage(activeId, `My ${key} signal (${name}, under ${leg}) is currently ${status}. Help me understand what's driving this signal and what I can do to strengthen it. Reference the ACE Coherence Triad — ${leg} leg.`)
+              if (window.sendChatMessage) {
+                window.sendChatMessage(st.activeId, `My ${key} signal (${name}, under ${leg}) is currently ${status}. Help me understand what's driving this signal and what I can do to strengthen it. Reference the ACE Coherence Triad — ${leg} leg.`)
               }
             }
           }, 200)
@@ -641,20 +642,21 @@ export default {
   _openTerminalWithPrompt(p) {
     document.querySelector('.nav-item[data-view="terminal"]')?.click()
     setTimeout(() => {
-      if (typeof spawnSession === 'function') spawnSession()
+      if (window.spawnSession) window.spawnSession()
       setTimeout(() => {
-        if (typeof activeId !== 'undefined' && activeId && typeof sessions !== 'undefined') {
-          const modelEl = document.getElementById('chat-model-' + activeId)
-          const permsEl = document.getElementById('chat-perms-' + activeId)
+        const st = window.__aceState
+        if (st?.activeId && st?.sessions) {
+          const modelEl = document.getElementById('chat-model-' + st.activeId)
+          const permsEl = document.getElementById('chat-perms-' + st.activeId)
           if (modelEl) modelEl.value = 'sonnet'
           if (permsEl) permsEl.value = 'auto'
-          const tab = sessions[activeId]?.tab
+          const tab = st.sessions[st.activeId]?.tab
           if (tab) {
             const span = tab.querySelector('span:not(.stab-close)')
             if (span) span.textContent = p.tabLabel || 'ACE'
           }
-          if (typeof sendChatMessage === 'function') {
-            sendChatMessage(activeId, p.prompt)
+          if (window.sendChatMessage) {
+            window.sendChatMessage(st.activeId, p.prompt)
           }
         }
       }, 200)

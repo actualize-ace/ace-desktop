@@ -161,7 +161,7 @@ document.getElementById('vault-open-term-btn').addEventListener('click', () => {
     : (vaultRootPath || '')
   document.querySelector('.nav-item[data-view="terminal"]').click()
   setTimeout(() => {
-    if (activeId && dirPath) window.ace.pty.write(activeId, `cd "${dirPath}"\r`)
+    if (state.activeId && dirPath) window.ace.pty.write(state.activeId, `cd "${dirPath}"\r`)
   }, 200)
 })
 

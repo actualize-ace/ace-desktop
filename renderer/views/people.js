@@ -198,19 +198,19 @@ async function openPersonProfile(filePath, personName) {
     row.addEventListener('click', () => {
       document.querySelector('.nav-item[data-view="terminal"]').click()
       setTimeout(() => {
-        if (typeof spawnSession === 'function') spawnSession()
+        if (window.spawnSession) window.spawnSession()
         setTimeout(() => {
-          if (typeof activeId !== 'undefined' && activeId && typeof sessions !== 'undefined') {
-            const modelEl = document.getElementById('chat-model-' + activeId)
-            const permsEl = document.getElementById('chat-perms-' + activeId)
+          if (state.activeId && state.sessions) {
+            const modelEl = document.getElementById('chat-model-' + state.activeId)
+            const permsEl = document.getElementById('chat-perms-' + state.activeId)
             if (modelEl) modelEl.value = 'sonnet'
             if (permsEl) permsEl.value = 'auto'
-            const tab = sessions[activeId]?.tab
+            const tab = state.sessions[state.activeId]?.tab
             if (tab) {
               const span = tab.querySelector('span:not(.stab-close)')
               if (span) span.textContent = personName
             }
-            if (typeof sendChatMessage === 'function') sendChatMessage(activeId, row.dataset.prompt)
+            if (window.sendChatMessage) window.sendChatMessage(state.activeId, row.dataset.prompt)
           }
         }, 200)
       }, 150)
@@ -562,7 +562,7 @@ document.getElementById('people-ask-btn').addEventListener('click', () => {
   ].map(p => `<div class="oracle-preset" data-query="${escapeHtml(p.query)}">${p.label}</div>`).join('')
   presetsEl.querySelectorAll('.oracle-preset').forEach(p => {
     p.addEventListener('click', () => {
-      if (typeof sendOracleQuery === 'function') sendOracleQuery(p.dataset.query)
+      if (window.sendOracleQuery) window.sendOracleQuery(p.dataset.query)
     })
   })
   setTimeout(() => document.getElementById('oracle-input').focus(), 200)

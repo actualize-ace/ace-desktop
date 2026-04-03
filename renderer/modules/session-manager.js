@@ -944,6 +944,9 @@ export function initSessions() {
   })
   window.addEventListener('focus', () => setTimeout(onWindowRegainFocus, 50))
 
-  // Make fitActive available globally (called from theme.js during migration)
+  // Make key functions available globally (called from view modules during migration)
   window.fitActive = fitActive
+  window.sendToActive = sendToActive
+  window.spawnSession = spawnSession
+  window.sendChatMessage = sendChatMessage
 }

@@ -207,7 +207,7 @@ document.getElementById('graph-ask-btn').addEventListener('click', () => {
   // Re-wire preset clicks
   presetsEl.querySelectorAll('.oracle-preset').forEach(p => {
     p.addEventListener('click', () => {
-      if (typeof sendOracleQuery === 'function') sendOracleQuery(p.dataset.query)
+      if (window.sendOracleQuery) window.sendOracleQuery(p.dataset.query)
     })
   })
   setTimeout(() => document.getElementById('oracle-input').focus(), 200)
