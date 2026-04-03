@@ -308,7 +308,18 @@ export function audioBreathExit() {
 // Popover toggle
 export function toggleAudioPopover() {
   const pop = document.getElementById('atm-audio-popover')
-  if (pop) pop.classList.toggle('open')
+  const ind = document.getElementById('atm-audio-indicator')
+  if (!pop) return
+  if (pop.classList.contains('open')) {
+    pop.classList.remove('open')
+  } else {
+    // Position under the indicator
+    if (ind) {
+      const rect = ind.getBoundingClientRect()
+      pop.style.right = (window.innerWidth - rect.right) + 'px'
+    }
+    pop.classList.add('open')
+  }
 }
 
 function closeAudioPopover() {

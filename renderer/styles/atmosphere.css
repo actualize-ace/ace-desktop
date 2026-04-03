@@ -92,3 +92,77 @@ body.light .atm-tooltip {
   0%, 100% { opacity: 0.3; }
   50%      { opacity: 1; }
 }
+
+/* ── Audio Indicator (titlebar) ── */
+.atm-audio-indicator {
+  display: flex; align-items: center;
+  padding: 2px 8px; border-radius: 4px;
+  cursor: pointer; transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.atm-audio-indicator:hover { background: rgba(140,120,255,0.08); }
+.atm-audio-indicator.active {
+  border-color: rgba(96,216,168,0.2);
+  background: rgba(96,216,168,0.06);
+}
+.atm-audio-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 8px;
+  color: var(--text-dim); white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+.atm-audio-indicator.active .atm-audio-label { color: var(--green, #60d8a8); }
+
+/* ── Audio Popover (body-level) ── */
+.atm-audio-popover {
+  position: fixed; top: 42px;
+  width: 240px; max-height: 70vh; overflow-y: auto;
+  background: var(--bg-card, #14162a);
+  border: 1px solid var(--border, rgba(140,120,255,0.12));
+  border-radius: 10px;
+  padding: 10px 0;
+  z-index: 99999;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  opacity: 0; pointer-events: none;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+body.light .atm-audio-popover {
+  background: #fff;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+.atm-audio-popover.open {
+  opacity: 1; pointer-events: auto;
+  transform: translateY(0);
+}
+.audio-pop-section {
+  padding: 8px 14px 4px;
+  font-family: 'JetBrains Mono', monospace; font-size: 8px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--text-dim);
+}
+.audio-pop-note {
+  font-size: 8px; letter-spacing: 0; text-transform: none;
+  opacity: 0.6;
+}
+.audio-pop-btn {
+  display: block; width: 100%;
+  padding: 7px 14px; text-align: left;
+  background: none; border: none; cursor: pointer;
+  transition: background 0.15s;
+}
+.audio-pop-btn:hover { background: rgba(140,120,255,0.06); }
+.audio-pop-name {
+  font-family: 'Space Grotesk', sans-serif; font-size: 11px;
+  color: var(--text-secondary, #b0a8c8);
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.audio-pop-hz {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  color: var(--text-dim); opacity: 0.7;
+}
+.audio-pop-desc {
+  font-family: 'Space Grotesk', sans-serif; font-size: 9px;
+  color: var(--text-dim); margin-top: 1px;
+  line-height: 1.3;
+}
+.audio-pop-off .audio-pop-name { color: var(--text-dim); font-size: 10px; }
