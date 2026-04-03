@@ -51,6 +51,9 @@
           <div class="atm-intensity-fill" id="atm-intensity-fill"></div>
         </div>
       </div>
+      <div class="atm-audio-indicator" id="atm-audio-indicator">
+        <span class="atm-audio-label" id="atm-audio-label">♪ Off</span>
+      </div>
       <div class="attention-badge" id="attention-badge" title="Sessions need attention">0</div>
       <div class="coherence-chip">
         <div class="coherence-dot"></div>
@@ -799,6 +802,50 @@ initBreath()
 
   <!-- Somatic intensity tooltip (body-level to escape titlebar backdrop-filter stacking context) -->
   <div class="atm-tooltip" id="atm-tooltip"></div>
+
+  <!-- Audio popover (body-level) -->
+  <div class="atm-audio-popover" id="atm-audio-popover">
+    <div class="audio-pop-section">Solfeggio Tone</div>
+    <button class="audio-pop-btn" data-sol="calm">
+      <div class="audio-pop-name">Calm<span class="audio-pop-hz">174 Hz</span></div>
+      <div class="audio-pop-desc">Evening, before sleep, when activated</div>
+    </button>
+    <button class="audio-pop-btn" data-sol="ground">
+      <div class="audio-pop-name">Ground<span class="audio-pop-hz">396 Hz</span></div>
+      <div class="audio-pop-desc">Morning start, after disruption, scattered</div>
+    </button>
+    <button class="audio-pop-btn" data-sol="focus">
+      <div class="audio-pop-name">Focus<span class="audio-pop-hz">528 Hz</span></div>
+      <div class="audio-pop-desc">Deep work, writing, building</div>
+    </button>
+    <button class="audio-pop-btn" data-sol="auto">
+      <div class="audio-pop-name">Auto<span class="audio-pop-hz">follows time</span></div>
+      <div class="audio-pop-desc">Morning → Ground, Afternoon → Focus, Evening → Calm</div>
+    </button>
+    <button class="audio-pop-btn audio-pop-off" data-sol="off">
+      <div class="audio-pop-name">Off</div>
+    </button>
+    <div class="audio-pop-section">Binaural Beat <span class="audio-pop-note">🎧 headphones</span></div>
+    <button class="audio-pop-btn" data-bin="rest">
+      <div class="audio-pop-name">Deep Rest<span class="audio-pop-hz">4 Hz · theta</span></div>
+      <div class="audio-pop-desc">Late night, deep relaxation</div>
+    </button>
+    <button class="audio-pop-btn" data-bin="reflect">
+      <div class="audio-pop-name">Reflection<span class="audio-pop-hz">6 Hz · theta</span></div>
+      <div class="audio-pop-desc">Journaling, coaching, integration</div>
+    </button>
+    <button class="audio-pop-btn" data-bin="relaxed">
+      <div class="audio-pop-name">Relaxed Focus<span class="audio-pop-hz">10 Hz · alpha</span></div>
+      <div class="audio-pop-desc">Reading, reviewing, calm attention</div>
+    </button>
+    <button class="audio-pop-btn" data-bin="active">
+      <div class="audio-pop-name">Active Focus<span class="audio-pop-hz">14 Hz · beta</span></div>
+      <div class="audio-pop-desc">Building, coding, problem solving</div>
+    </button>
+    <button class="audio-pop-btn audio-pop-off" data-bin="off">
+      <div class="audio-pop-name">Off</div>
+    </button>
+  </div>
 
   <!-- Somatic nudge strip -->
   <div class="atmosphere-nudge" id="atmosphere-nudge">
