@@ -23,10 +23,10 @@ body.light .atm-intensity-bar { background: rgba(90,72,192,0.08); }
   border-radius: 3px;
   transition: width 0.8s ease, background 1.5s ease, box-shadow 1.5s ease;
 }
-/* Tooltip */
+/* Tooltip — fixed positioning to escape titlebar clipping */
 .atm-tooltip {
-  position: absolute;
-  top: calc(100% + 8px); right: 0;
+  position: fixed;
+  top: 42px; /* below titlebar */
   padding: 8px 12px;
   background: var(--bg-card, #1a1a2e);
   border: 1px solid var(--border, rgba(140,120,255,0.12));
@@ -38,7 +38,7 @@ body.light .atm-intensity-bar { background: rgba(90,72,192,0.08); }
   opacity: 0;
   transform: translateY(-4px);
   transition: opacity 0.2s ease, transform 0.2s ease;
-  z-index: 9999;
+  z-index: 99999;
   box-shadow: 0 4px 16px rgba(0,0,0,0.3);
   line-height: 1.5;
 }
