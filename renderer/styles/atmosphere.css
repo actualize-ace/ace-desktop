@@ -76,41 +76,6 @@ body.light .atm-intensity-glow {
   filter: blur(6px) brightness(0.7);
 }
 
-/* ── Nudge Strip ── */
-.atmosphere-nudge {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  z-index: 10000; pointer-events: none;
-  height: 0; opacity: 0;
-  transition: height 2s ease, opacity 2s ease;
-  overflow: visible;
-}
-.atmosphere-nudge.visible {
-  pointer-events: auto; cursor: pointer;
-  height: 52px; opacity: 1;
-}
-.nudge-glow {
-  position: absolute; bottom: 0; left: 0; right: 0; height: 52px;
-  background: linear-gradient(0deg, rgba(96,216,168,0.12) 0%, transparent 100%);
-  animation: nudge-breathe 5s ease-in-out infinite;
-}
-.nudge-line {
-  position: absolute; bottom: 8px; left: 20%; right: 20%;
-  height: 2px; border-radius: 1px;
-  background: linear-gradient(90deg, transparent, rgba(96,216,168,0.7) 50%, transparent);
-  animation: nudge-breathe 5s ease-in-out infinite;
-}
-.nudge-word {
-  position: absolute; bottom: 20px; width: 100%; text-align: center;
-  font-family: 'Space Grotesk', sans-serif; font-size: 11px;
-  letter-spacing: 4px; text-transform: uppercase;
-  color: rgba(96,216,168,0.7);
-  animation: nudge-breathe 5s ease-in-out infinite;
-}
-@keyframes nudge-breathe {
-  0%, 100% { opacity: 0.3; }
-  50%      { opacity: 1; }
-}
-
 /* ── Audio Indicator (titlebar) ── */
 .atm-audio-indicator {
   display: flex; align-items: center;
