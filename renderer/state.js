@@ -55,8 +55,8 @@ export const state = {
   // Atmosphere (somatic layer)
   atmosphere: {
     elapsed: 0,
-    sessionCount: parseInt(sessionStorage.getItem('ace-atm-sessions') || '1'),
-    totalMinutesToday: parseInt(sessionStorage.getItem('ace-atm-total') || '0'),
+    sessionCount: parseInt(localStorage.getItem('ace-atm-sessions') || '1'),
+    totalMinutesToday: parseInt(localStorage.getItem('ace-atm-total') || '0'),
     timeOfDay: 'morning',
     intensity: 0,
     nudgeFired: false,

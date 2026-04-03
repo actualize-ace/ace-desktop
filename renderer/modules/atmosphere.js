@@ -391,8 +391,6 @@ function writeAtmosphereVars() {
   const edgeAlpha = edgeGlow * 0.6
   const ambientAlpha = warmth * 0.12
 
-  console.log(`[atm] warmth=${warmth.toFixed(2)} hue=${Math.round(borderH)} energy=${energy.toFixed(2)} sessions=${a.sessionCount}`)
-
   const r = document.documentElement.style
   r.setProperty('--atm-border-color', `hsla(${borderH}, 55%, 50%, ${borderAlpha})`)
   r.setProperty('--atm-shadow', `0 0 ${shadowPx}px hsla(${borderH}, 50%, 50%, ${shadowAlpha})`)
@@ -422,7 +420,7 @@ function tick() {
   a.intensity = computeIntensity(a.sessionCount, a.totalMinutesToday / 60, a.elapsed)
 
   // Persist
-  sessionStorage.setItem('ace-atm-total', String(a.totalMinutesToday))
+  localStorage.setItem('ace-atm-total', String(a.totalMinutesToday))
 
   renderIntensityBar()
   writeAtmosphereVars()
@@ -432,17 +430,17 @@ function tick() {
 // ── Init ──
 export function initAtmosphere() {
   // Increment session count
-  const count = parseInt(sessionStorage.getItem('ace-atm-sessions') || '0') + 1
-  sessionStorage.setItem('ace-atm-sessions', String(count))
+  const count = parseInt(localStorage.getItem('ace-atm-sessions') || '0') + 1
+  localStorage.setItem('ace-atm-sessions', String(count))
   state.atmosphere.sessionCount = count
 
   // Reset daily counters at midnight
-  const lastDate = sessionStorage.getItem('ace-atm-date')
+  const lastDate = localStorage.getItem('ace-atm-date')
   const today = new Date().toDateString()
   if (lastDate !== today) {
-    sessionStorage.setItem('ace-atm-date', today)
-    sessionStorage.setItem('ace-atm-sessions', '1')
-    sessionStorage.setItem('ace-atm-total', '0')
+    localStorage.setItem('ace-atm-date', today)
+    localStorage.setItem('ace-atm-sessions', '1')
+    localStorage.setItem('ace-atm-total', '0')
     state.atmosphere.sessionCount = 1
     state.atmosphere.totalMinutesToday = 0
   }
