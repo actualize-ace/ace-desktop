@@ -93,7 +93,6 @@ function renderIntensityBar() {
 
   // Tooltip
   const tooltip = document.getElementById('atm-tooltip')
-  const wrap = document.getElementById('atm-intensity-wrap')
   if (tooltip && wrap) {
     const s = state.atmosphere.sessionCount
     const totalMin = state.atmosphere.totalMinutesToday
