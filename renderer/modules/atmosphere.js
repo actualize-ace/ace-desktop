@@ -58,6 +58,13 @@ function renderIntensityBar() {
     glow.style.opacity = intensity * 0.15
   }
 
+  // Icon color tracks intensity
+  const icon = document.querySelector('.atm-intensity-icon')
+  if (icon) {
+    icon.style.color = intensity > 0.05 ? hsl : ''
+    icon.style.opacity = intensity > 0.05 ? 0.7 + intensity * 0.3 : 0.5
+  }
+
   // Tooltip
   const wrap = document.getElementById('atm-intensity-wrap')
   if (wrap) {
@@ -66,7 +73,9 @@ function renderIntensityBar() {
     const h = Math.floor(totalMin / 60)
     const m = totalMin % 60
     const timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`
-    wrap.title = `${s} session${s !== 1 ? 's' : ''} · ${timeStr} today`
+    const pct = Math.round(intensity * 100)
+    const feel = pct < 20 ? 'Fresh' : pct < 45 ? 'Active' : pct < 70 ? 'Warm' : 'Heavy'
+    wrap.title = `Day energy: ${feel} (${pct}%)\n${s} session${s !== 1 ? 's' : ''} · ${timeStr} today\nHow much you've used the app today`
   }
 }
 
