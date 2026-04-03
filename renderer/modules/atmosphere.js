@@ -377,18 +377,20 @@ function writeAtmosphereVars() {
 
   // Compute actual colors in JS (color-mix + calc in CSS is unreliable)
   const borderH = hue + (35 - hue) * warmth // shift toward amber (hue 35)
-  const borderAlpha = 0.12 + warmth * 0.15
-  const shadowAlpha = warmth * 0.06
-  const shadowPx = warmth * 16
-  const edgeAlpha = edgeGlow * 0.3
+  const borderAlpha = 0.1 + warmth * 0.35
+  const shadowAlpha = warmth * 0.15
+  const shadowPx = warmth * 24
+  const edgeAlpha = edgeGlow * 0.6
+  const ambientAlpha = warmth * 0.12
 
   const r = document.documentElement.style
-  r.setProperty('--atm-border-color', `hsla(${borderH}, 50%, 50%, ${borderAlpha})`)
-  r.setProperty('--atm-shadow', `0 0 ${shadowPx}px hsla(${hue}, 40%, 50%, ${shadowAlpha})`)
+  r.setProperty('--atm-border-color', `hsla(${borderH}, 55%, 50%, ${borderAlpha})`)
+  r.setProperty('--atm-shadow', `0 0 ${shadowPx}px hsla(${borderH}, 50%, 50%, ${shadowAlpha})`)
   r.setProperty('--atm-brightness', brightness.toFixed(3))
   r.setProperty('--atm-breath-speed', (3.5 - warmth * 2) + 's')
-  r.setProperty('--atm-edge-color', `hsla(${hue}, 50%, 60%, ${edgeAlpha})`)
-  r.setProperty('--atm-edge-mid', `hsla(${hue}, 50%, 60%, ${edgeAlpha * 0.5})`)
+  r.setProperty('--atm-edge-color', `hsla(${hue}, 55%, 55%, ${edgeAlpha})`)
+  r.setProperty('--atm-edge-mid', `hsla(${hue}, 55%, 55%, ${edgeAlpha * 0.5})`)
+  r.setProperty('--atm-ambient', `hsla(${borderH}, 50%, 45%, ${ambientAlpha})`)
 }
 
 // ── Tick ──

@@ -179,6 +179,7 @@ body.light .atm-audio-popover {
   --atm-breath-speed: 3.5s;
   --atm-edge-color: transparent;
   --atm-edge-mid: transparent;
+  --atm-ambient: transparent;
 }
 
 /* Card/widget borders warm from cool violet → amber */
@@ -204,26 +205,40 @@ body.light .atm-audio-popover {
   transition: filter 3s ease;
 }
 
+/* Ambient glow along the bottom of viewport — the "room temperature" */
+.main-content::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 120px;
+  background: linear-gradient(0deg, var(--atm-ambient), transparent);
+  pointer-events: none;
+  z-index: 1;
+  transition: background 3s ease;
+}
+
 /* Sidebar right edge — living glow line */
 .sidebar::after {
   content: '';
-  position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
+  position: absolute; top: 0; right: -1px; bottom: 0; width: 3px;
   background: linear-gradient(
     180deg,
-    transparent 10%,
-    var(--atm-edge-color) 40%,
+    transparent 5%,
+    var(--atm-edge-color) 30%,
     var(--atm-edge-mid) 70%,
     transparent 95%
   );
   pointer-events: none;
+  filter: blur(1px);
   transition: background 3s ease;
 }
 
-/* ACE mark breathing syncs to atmosphere speed */
-@keyframes markPulseAtm {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50%      { opacity: 0.8; transform: scale(1.04); }
-}
+/* ACE mark — glow ring matches atmosphere color */
 .sidebar-mark {
   animation: markPulseAtm var(--atm-breath-speed) ease-in-out infinite;
+  box-shadow: 0 0 12px var(--atm-edge-color), 0 0 4px var(--atm-edge-mid);
+  border-radius: 50%;
+  transition: box-shadow 3s ease;
+}
+@keyframes markPulseAtm {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.06); }
 }
