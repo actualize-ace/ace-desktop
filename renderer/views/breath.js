@@ -3,7 +3,7 @@
 // Design doc: docs/plans/2026-04-03-somatic-atmosphere-infusion-design.md §5.4
 
 import { state } from '../state.js'
-import { audioBreathEnter, audioBreathExit } from '../modules/atmosphere.js'
+import { audioBreathEnter, audioBreathExit, onBreathComplete } from '../modules/atmosphere.js'
 
 const PROTOCOLS = {
   sighing: {
@@ -67,6 +67,7 @@ function animate() {
     cycleCount = currentCycle
     state.breathCycles = cycleCount
     if (state.breathTargetCycles > 0 && cycleCount >= state.breathTargetCycles) {
+      onBreathComplete()
       stopBreath()
       return
     }

@@ -194,6 +194,16 @@ export function onSessionClose() {
   endSession()
 }
 
+// Called by breath.js when a protocol reaches its target cycle count
+export function onBreathComplete() {
+  const a = state.atmosphere
+  a.completedProtocols += 1
+  a.intensity = computeIntensity()
+  renderIntensityBar()
+  renderSomaticBar()
+  persistAtmosphere()
+}
+
 function persistAtmosphere() {
   const a = state.atmosphere
   window.ace?.setup?.patchConfig({
