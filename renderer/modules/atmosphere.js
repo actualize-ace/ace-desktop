@@ -11,6 +11,117 @@ const NUDGE_SESSIONS = 5
 const NUDGE_HOUR = 22   // 10pm
 const CROSSFADE_MS = 30_000  // 30s frequency transitions
 
+// ── Somatic bar content pools ──
+const POOL_LOW = [
+  'what wants to move through you today?',
+  'the space between thoughts is where clarity lives',
+  'you don\'t need to know the whole path \u2014 just the next step',
+  'creation begins before the first keystroke',
+  'what would you build if nothing was urgent?',
+  'settle in \u2014 the work will meet you where you are',
+  'the quieter you become, the more you can hear',
+  'presence is the first act of authority',
+  'what are you choosing right now?',
+  'start from stillness, not from speed',
+  'your attention is the most valuable thing in this room',
+  'depth over velocity',
+  'the container shapes what can emerge',
+  'begin before you\'re ready \u2014 readiness is a myth',
+  'what\'s the simplest true thing right now?',
+]
+const POOL_MID = [
+  'the body remembers what the mind skips over',
+  'notice where you\'re holding tension right now',
+  'you\'ve been building \u2014 check in with your shoulders',
+  'the rhythm you set now carries you through the afternoon',
+  'you don\'t have to finish everything today',
+  'a pause is not a stop',
+  'how\'s your breathing?',
+  'sustainable pace is a form of self-respect',
+  'the work isn\'t going anywhere \u2014 but your energy is',
+  'unclench your jaw',
+  'good work comes from a regulated body',
+  'you\'re already further than you think',
+  'what can you release right now?',
+  'depth requires rest between sets',
+  'the signal is in your body, not your inbox',
+]
+const POOL_HIGH = [
+  'you\'ve been here a while \u2014 how\'s your breathing?',
+  'diminishing returns are silent \u2014 they just feel like effort',
+  'the most productive thing you can do right now might be stopping',
+  'your body has been asking for something \u2014 what is it?',
+  'rest is not the absence of work \u2014 it\'s the completion of it',
+  'what would closing this session make space for?',
+  'you\'ve done enough to call this a good day',
+  'the screen will be here tomorrow \u2014 will your energy?',
+  'sovereignty means knowing when to stop',
+  'this is the part where you choose yourself',
+  'one breath can reset more than you think',
+  'the work you do after exhaustion isn\'t your best work',
+  'you\'ve earned the right to step away',
+  'let the last hour be for you, not the machine',
+  'the body keeps the score \u2014 and it\'s been counting',
+]
+const BAND_THRESHOLDS = [0.33, 0.66]
+const FALLBACK_REFRESH_MS = 30 * 60_000  // 30 minutes
+
+// ── Somatic Bar State ──
+let currentBand = -1       // 0=low, 1=mid, 2=high
+let lastRefreshTime = 0    // timestamp of last text change
+
+function getBand(intensity) {
+  if (intensity < BAND_THRESHOLDS[0]) return 0
+  if (intensity < BAND_THRESHOLDS[1]) return 1
+  return 2
+}
+
+function getPool(band) {
+  return [POOL_LOW, POOL_MID, POOL_HIGH][band]
+}
+
+function pickRandom(pool) {
+  return pool[Math.floor(Math.random() * pool.length)]
+}
+
+function updateSomaticBarText(text) {
+  const el = document.getElementById('somatic-bar-text')
+  if (!el) return
+  // Crossfade: fade out, swap, fade in
+  el.style.opacity = '0'
+  setTimeout(() => {
+    el.textContent = text
+    el.style.opacity = ''  // returns to CSS default (0.45)
+  }, 750)
+}
+
+function renderSomaticBar() {
+  const bar = document.getElementById('somatic-bar')
+  const breathBg = document.getElementById('somatic-bar-breath')
+  if (!bar || !breathBg) return
+
+  const { intensity } = state.atmosphere
+  const c = intensityColor(intensity)
+  const isLight = state.theme === 'light'
+  const la = isLight ? -15 : 0
+
+  // Set breathing tint color
+  breathBg.style.background = `hsla(${c.h}, ${c.s}%, ${c.l + la}%, 0.15)`
+
+  // Check for band crossing
+  const band = getBand(intensity)
+  const now = Date.now()
+
+  if (band !== currentBand) {
+    currentBand = band
+    lastRefreshTime = now
+    updateSomaticBarText(pickRandom(getPool(band)))
+  } else if (now - lastRefreshTime >= FALLBACK_REFRESH_MS) {
+    lastRefreshTime = now
+    updateSomaticBarText(pickRandom(getPool(band)))
+  }
+}
+
 // Solfeggio frequencies — research-backed (Akimoto et al. 2018)
 const SOLFEGGIO = {
   calm:   { freq: 174, label: 'Calm · 174 Hz',   desc: 'Evening, before sleep, when activated' },
@@ -112,7 +223,7 @@ function renderIntensityBar() {
   }
 }
 
-// ── Nudge Strip ──
+// ── Somatic Bar Nudge ──
 function checkNudge() {
   const a = state.atmosphere
   if (a.nudgeFired || a.nudgeDismissed) return
@@ -127,24 +238,36 @@ function checkNudge() {
   if (!word) return
 
   a.nudgeFired = true
-  const nudge = document.getElementById('atmosphere-nudge')
-  const nudgeWord = document.getElementById('nudge-word')
-  if (!nudge || !nudgeWord) return
+  const bar = document.getElementById('somatic-bar')
+  if (!bar) return
 
-  nudgeWord.textContent = word
-  nudge.classList.add('visible')
+  // Two-beat reveal: glow first, then word
+  const glowEl = document.getElementById('somatic-bar-glow')
+  const c = intensityColor(state.atmosphere.intensity)
+  if (glowEl) {
+    glowEl.style.background = `linear-gradient(0deg, hsla(${c.h}, ${c.s}%, ${c.l}%, 0.12) 0%, transparent 100%)`
+  }
+  bar.classList.add('nudge-active')
+
+  // After 1s, crossfade text to nudge word
+  setTimeout(() => {
+    updateSomaticBarText(word)
+  }, 1000)
+
   audioNudgeShift()
 }
 
 function dismissNudge() {
   state.atmosphere.nudgeDismissed = true
-  const nudge = document.getElementById('atmosphere-nudge')
-  if (nudge) nudge.classList.remove('visible')
+  const bar = document.getElementById('somatic-bar')
+  if (bar) bar.classList.remove('nudge-active')
+  // Restore ambient text
+  const band = getBand(state.atmosphere.intensity)
+  updateSomaticBarText(pickRandom(getPool(band)))
 }
 
 function nudgeClick() {
   dismissNudge()
-  // Navigate to breath view
   const breathNav = document.querySelector('[data-view="breath"]')
   if (breathNav) breathNav.click()
 }
@@ -439,6 +562,7 @@ function tick() {
 
   renderIntensityBar()
   writeAtmosphereVars()
+  renderSomaticBar()
   checkNudge()
 }
 
@@ -469,11 +593,16 @@ export async function initAtmosphere() {
   )
 
   renderIntensityBar()
+  renderSomaticBar()
   writeAtmosphereVars()
 
-  // Wire nudge
-  const nudge = document.getElementById('atmosphere-nudge')
-  if (nudge) nudge.addEventListener('click', nudgeClick)
+  // Wire somatic bar nudge click
+  const somaticBar = document.getElementById('somatic-bar')
+  if (somaticBar) {
+    somaticBar.addEventListener('click', () => {
+      if (state.atmosphere.nudgeFired && !state.atmosphere.nudgeDismissed) nudgeClick()
+    })
+  }
 
   // Wire tooltip hover (tooltip is body-level, not a CSS child)
   const wrap = document.getElementById('atm-intensity-wrap')
