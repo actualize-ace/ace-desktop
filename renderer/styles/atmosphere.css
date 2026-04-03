@@ -166,3 +166,66 @@ body.light .atm-audio-popover {
   line-height: 1.3;
 }
 .audio-pop-off .audio-pop-name { color: var(--text-dim); font-size: 10px; }
+
+/* ── Phase 1C: CSS Atmosphere Modulation ──
+   Existing UI elements consume --atm-* variables written by atmosphere.js.
+   These overrides layer on top of existing styles — additive, not replacing. */
+
+/* Default values (before first tick) */
+:root {
+  --atm-warmth: 0;
+  --atm-border-glow: 0;
+  --atm-shadow-spread: 0;
+  --atm-brightness: 1;
+  --atm-breath-speed: 3.5s;
+  --atm-edge-glow: 0;
+  --atm-hue: 228;
+}
+
+/* Card/widget borders warm from cool violet → amber */
+.widget-card,
+.view-header,
+.dash-widget {
+  border-color: color-mix(in oklch,
+    var(--border) calc((1 - var(--atm-warmth)) * 100%),
+    hsl(var(--atm-hue), 50%, 50%) calc(var(--atm-warmth) * 100%)
+  );
+  transition: border-color 2s ease, box-shadow 2s ease;
+}
+
+/* Card shadows become visible and spread as energy rises */
+.widget-card,
+.dash-widget {
+  box-shadow: 0 0 calc(var(--atm-shadow-spread) * 16px)
+    hsla(var(--atm-hue), 40%, 50%, calc(var(--atm-shadow-spread) * 0.06));
+}
+
+/* Body brightness dims in evening */
+.main-content {
+  filter: brightness(var(--atm-brightness));
+  transition: filter 3s ease;
+}
+
+/* Sidebar right edge — living glow line after 10 min */
+.sidebar::after {
+  content: '';
+  position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
+  background: linear-gradient(
+    180deg,
+    transparent 10%,
+    hsla(var(--atm-hue), 50%, 60%, calc(var(--atm-edge-glow) * 0.3)) 40%,
+    hsla(var(--atm-hue), 50%, 60%, calc(var(--atm-edge-glow) * 0.15)) 70%,
+    transparent 95%
+  );
+  pointer-events: none;
+  transition: opacity 3s ease;
+}
+
+/* ACE mark breathing syncs to atmosphere speed */
+@keyframes markPulseAtm {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 0.8; transform: scale(1.04); }
+}
+.sidebar-mark {
+  animation: markPulseAtm var(--atm-breath-speed) ease-in-out infinite;
+}
