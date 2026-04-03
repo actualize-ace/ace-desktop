@@ -23,6 +23,34 @@ body.light .atm-intensity-bar { background: rgba(90,72,192,0.08); }
   border-radius: 3px;
   transition: width 0.8s ease, background 1.5s ease, box-shadow 1.5s ease;
 }
+/* Tooltip */
+.atm-tooltip {
+  position: absolute;
+  top: calc(100% + 8px); right: 0;
+  padding: 8px 12px;
+  background: var(--bg-card, #1a1a2e);
+  border: 1px solid var(--border, rgba(140,120,255,0.12));
+  border-radius: 8px;
+  font-family: 'Space Grotesk', sans-serif; font-size: 11px;
+  color: var(--text-secondary, #b0a8c8);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 9999;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  line-height: 1.5;
+}
+body.light .atm-tooltip {
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+.atm-intensity-wrap:hover .atm-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .atm-intensity-glow {
   position: absolute; inset: -4px -2px;
   border-radius: 6px; filter: blur(6px);

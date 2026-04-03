@@ -66,8 +66,8 @@ function renderIntensityBar() {
   }
 
   // Tooltip
-  const wrap = document.getElementById('atm-intensity-wrap')
-  if (wrap) {
+  const tooltip = document.getElementById('atm-tooltip')
+  if (tooltip) {
     const s = state.atmosphere.sessionCount
     const totalMin = state.atmosphere.totalMinutesToday
     const h = Math.floor(totalMin / 60)
@@ -75,7 +75,7 @@ function renderIntensityBar() {
     const timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`
     const pct = Math.round(intensity * 100)
     const feel = pct < 20 ? 'Fresh' : pct < 45 ? 'Active' : pct < 70 ? 'Warm' : 'Heavy'
-    wrap.title = `Day energy: ${feel} (${pct}%)\n${s} session${s !== 1 ? 's' : ''} · ${timeStr} today\nHow much you've used the app today`
+    tooltip.innerHTML = `<strong>Day energy: ${feel}</strong><br>${s} session${s !== 1 ? 's' : ''} · ${timeStr} today`
   }
 }
 
