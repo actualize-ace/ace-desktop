@@ -151,18 +151,44 @@ function initActivityListeners() {
   for (const evt of ACTIVITY_EVENTS) {
     window.addEventListener(evt, onActivity, { passive: true })
   }
+  // Catch app returning from background (setInterval may be throttled while hidden)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      // App just became visible — check idle gap before resuming
+      checkIdleState()
+    }
+  })
 }
 
 function onActivity() {
   const a = state.atmosphere
+  const now = Date.now()
   const wasEnded = a.activityState === 'ended'
-  a.lastActivity = Date.now()
+  const wasPaused = a.activityState === 'paused'
 
-  if (wasEnded) {
+  // Before resetting lastActivity, check if we were idle long enough to auto-close
+  // (covers case where setInterval was throttled while app was backgrounded)
+  if (!wasEnded && !wasPaused) {
+    const idleMs = now - a.lastActivity
+    if (idleMs >= IDLE_END_MS) {
+      endSession()
+      // Now we're ended, fall through to fresh session start below
+      return onActivity()
+    } else if (idleMs >= IDLE_PAUSE_MS) {
+      a.activityState = 'paused'
+      // Fall through to resume below
+    }
+  }
+
+  a.lastActivity = now
+
+  if (wasEnded || a.activityState === 'ended') {
     // New session starting after auto-close or /close
     a.sessionActiveMin = 0
     a.nudgeFired = false
     a.nudgeDismissed = false
+    a.activityState = 'active'
+    return
   }
 
   a.activityState = 'active'
@@ -682,7 +708,9 @@ export async function initAtmosphere() {
   const today = new Date().toDateString()
   const a = state.atmosphere
 
-  if (saved.date === today) {
+  // Detect old config format (used 'total' not 'activeTotal') and reset
+  const isNewFormat = saved.activeTotal !== undefined || saved.breathCompleted !== undefined
+  if (saved.date === today && isNewFormat) {
     a.completedSessions = saved.sessions || 0
     a.totalActiveMin = saved.activeTotal || 0
     a.completedProtocols = saved.breathCompleted || 0
