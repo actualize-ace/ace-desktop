@@ -182,16 +182,19 @@ body.light .atm-audio-popover {
 }
 
 /* Card/widget borders warm from cool violet → amber */
-.widget-card,
-.view-header,
-.dash-widget {
-  border-color: var(--atm-border-color);
+.stats-strip,
+.triad-col,
+.oc-card,
+.qcmd,
+.view-header {
+  border-color: var(--atm-border-color) !important;
   transition: border-color 2s ease, box-shadow 2s ease;
 }
 
 /* Card shadows become visible and spread as energy rises */
-.widget-card,
-.dash-widget {
+.stats-strip,
+.triad-col,
+.oc-card {
   box-shadow: var(--atm-shadow);
 }
 
