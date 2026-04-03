@@ -23,6 +23,8 @@
   <link rel="stylesheet" href="styles/views/history.css">
   <link rel="stylesheet" href="styles/views/artifacts.css">
   <link rel="stylesheet" href="styles/views/agents.css">
+  <link rel="stylesheet" href="styles/atmosphere.css">
+  <link rel="stylesheet" href="styles/views/breath.css">
 </head>
 <body>
 <div class="app-shell">
@@ -31,6 +33,12 @@
   <div class="titlebar">
     <div class="titlebar-center">Actualize Coherence Engine</div>
     <div class="titlebar-right">
+      <div class="atm-intensity-wrap" id="atm-intensity-wrap" title="">
+        <div class="atm-intensity-glow" id="atm-intensity-glow"></div>
+        <div class="atm-intensity-bar">
+          <div class="atm-intensity-fill" id="atm-intensity-fill"></div>
+        </div>
+      </div>
       <div class="titlebar-nextmove" id="titlebar-nextmove" title="Click to execute">
         <div class="titlebar-nm-dot" id="titlebar-nm-dot"></div>
         <span class="titlebar-nm-label" id="titlebar-nm-label"></span>
@@ -133,6 +141,11 @@
       <div class="nav-item" data-view="pipeline">
         <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         Pipeline
+      </div>
+      <div class="sidebar-div"></div>
+      <div class="nav-item" data-view="breath">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
+        Breath
       </div>
       <div class="sidebar-div"></div>
       <div class="nav-section">Commands</div>
@@ -408,6 +421,46 @@
 
 
     </div>
+  </div>
+
+  <!-- BREATH VIEW -->
+  <div class="view" id="view-breath">
+    <button class="breath-exit" id="breath-exit" title="Exit breath">&#x2715;</button>
+    <div class="breath-orb-area">
+      <div class="breath-ring-outer"></div>
+      <div class="breath-ring-inner"></div>
+      <div class="breath-orb" id="breath-orb"></div>
+    </div>
+    <div class="breath-phase" id="breath-phase"></div>
+    <div class="breath-cycles" id="breath-cycles"></div>
+    <div class="breath-controls">
+      <div class="breath-protocols" id="breath-protocols">
+        <button class="breath-proto-btn active" data-proto="sighing">
+          <div class="proto-name">Cyclic Sighing</div>
+          <div class="proto-detail">2+1s in · 5.5s out</div>
+        </button>
+        <button class="breath-proto-btn" data-proto="resonance">
+          <div class="proto-name">Resonance</div>
+          <div class="proto-detail">5s in · 5s out</div>
+        </button>
+        <button class="breath-proto-btn" data-proto="box">
+          <div class="proto-name">Box</div>
+          <div class="proto-detail">4s all phases</div>
+        </button>
+        <button class="breath-proto-btn" data-proto="478">
+          <div class="proto-name">4-7-8</div>
+          <div class="proto-detail">4s · 7s · 8s</div>
+        </button>
+      </div>
+      <div class="breath-duration" id="breath-duration">
+        <button class="breath-dur-btn" data-dur="3">3 cycles</button>
+        <button class="breath-dur-btn active" data-dur="6">6 cycles</button>
+        <button class="breath-dur-btn" data-dur="12">12 cycles</button>
+        <button class="breath-dur-btn" data-dur="0">&#x221E;</button>
+      </div>
+      <button class="breath-start" id="breath-start">Begin</button>
+    </div>
+    <div class="breath-cite" id="breath-cite">Balban et al. 2023 — cyclic sighing outperformed meditation for stress reduction</div>
   </div>
 
   <!-- Graph Tooltip -->
@@ -734,5 +787,12 @@ initOracle()
       loadDashboard()
     })
   </script>
+
+  <!-- Somatic nudge strip -->
+  <div class="atmosphere-nudge" id="atmosphere-nudge">
+    <div class="nudge-glow"></div>
+    <div class="nudge-line"></div>
+    <div class="nudge-word" id="nudge-word">breathe</div>
+  </div>
 </body>
 </html>
