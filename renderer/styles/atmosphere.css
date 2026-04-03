@@ -57,6 +57,10 @@ body.light .atm-tooltip {
   opacity: 0; pointer-events: none;
   transition: opacity 1.5s ease, background 1.5s ease;
 }
+@keyframes atm-bar-pulse {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.4) drop-shadow(0 0 6px currentColor); }
+}
 
 /* ── Nudge Strip ── */
 .atmosphere-nudge {

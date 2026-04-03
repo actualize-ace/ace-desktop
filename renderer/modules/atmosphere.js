@@ -71,7 +71,7 @@ function renderIntensityBar() {
 
   if (glow) {
     glow.style.background = hsl
-    glow.style.opacity = intensity * 0.15
+    glow.style.opacity = intensity > 0.5 ? 0.15 + (intensity - 0.5) * 0.5 : intensity * 0.15
   }
 
   // Icon color tracks intensity
@@ -79,6 +79,16 @@ function renderIntensityBar() {
   if (icon) {
     icon.style.color = intensity > 0.05 ? hsl : ''
     icon.style.opacity = intensity > 0.05 ? 0.7 + intensity * 0.3 : 0.5
+  }
+
+  // Pulsing glow at high intensity — draws the eye
+  const wrap = document.getElementById('atm-intensity-wrap')
+  if (wrap) {
+    if (intensity >= 0.6) {
+      wrap.style.animation = `atm-bar-pulse ${2.5 - intensity}s ease-in-out infinite`
+    } else {
+      wrap.style.animation = ''
+    }
   }
 
   // Tooltip
