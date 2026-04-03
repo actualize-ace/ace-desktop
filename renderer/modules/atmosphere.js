@@ -356,6 +356,29 @@ function wireAudioPopover() {
   })
 }
 
+// ── CSS Atmosphere Variables (Phase 1C) ──
+const TIME_HUE = { morning: 228, afternoon: 205, evening: 340, late: 265 }
+
+function writeAtmosphereVars() {
+  const a = state.atmosphere
+  const energy = clamp(a.elapsed <= 10 ? a.elapsed / 10 * 0.3 : a.elapsed <= 30 ? 0.3 + (a.elapsed - 10) / 20 * 0.7 : 1, 0, 1)
+  const sessionHeat = clamp((a.sessionCount - 1) / 3, 0, 1)
+  const warmth = clamp(energy * 0.6 + sessionHeat * 0.4, 0, 1)
+
+  const hue = TIME_HUE[a.timeOfDay] || 228
+  const isEvening = a.timeOfDay === 'evening' || a.timeOfDay === 'late'
+  const brightness = isEvening ? 1 - warmth * 0.12 : 1
+
+  const r = document.documentElement.style
+  r.setProperty('--atm-warmth', warmth.toFixed(3))
+  r.setProperty('--atm-border-glow', (warmth * 0.8).toFixed(3))
+  r.setProperty('--atm-shadow-spread', warmth.toFixed(3))
+  r.setProperty('--atm-brightness', brightness.toFixed(3))
+  r.setProperty('--atm-breath-speed', (3.5 - warmth * 2) + 's')
+  r.setProperty('--atm-edge-glow', (energy > 0.3 ? (energy - 0.3) / 0.7 : 0).toFixed(3))
+  r.setProperty('--atm-hue', String(Math.round(hue)))
+}
+
 // ── Tick ──
 function tick() {
   const a = state.atmosphere
@@ -368,6 +391,7 @@ function tick() {
   sessionStorage.setItem('ace-atm-total', String(a.totalMinutesToday))
 
   renderIntensityBar()
+  writeAtmosphereVars()
   checkNudge()
 }
 
@@ -398,6 +422,7 @@ export function initAtmosphere() {
   )
 
   renderIntensityBar()
+  writeAtmosphereVars()
 
   // Wire nudge
   const nudge = document.getElementById('atmosphere-nudge')
