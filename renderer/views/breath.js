@@ -3,6 +3,7 @@
 // Design doc: docs/plans/2026-04-03-somatic-atmosphere-infusion-design.md §5.4
 
 import { state } from '../state.js'
+import { audioBreathEnter, audioBreathExit } from '../modules/atmosphere.js'
 
 const PROTOCOLS = {
   sighing: {
@@ -180,6 +181,7 @@ export function onBreathEnter() {
   state.breathActive = true
   const sidebar = document.getElementById('sidebar')
   if (sidebar) sidebar.classList.add('collapsed')
+  audioBreathEnter()
 }
 
 export function onBreathExit() {
@@ -187,6 +189,7 @@ export function onBreathExit() {
   if (state.breathRunning) stopBreath()
   const sidebar = document.getElementById('sidebar')
   if (sidebar) sidebar.classList.remove('collapsed')
+  audioBreathExit()
 }
 
 export function initBreath() {
