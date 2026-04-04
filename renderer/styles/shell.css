@@ -11,8 +11,8 @@
 }
 .titlebar-center {
   position: absolute; left: 50%; transform: translateX(-50%);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim);
+  display: flex; align-items: center; justify-content: center;
+  -webkit-app-region: no-drag;
 }
 .titlebar-right {
   margin-left: auto; display: flex; align-items: center; gap: 9px;

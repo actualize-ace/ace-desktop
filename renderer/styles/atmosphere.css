@@ -12,15 +12,15 @@
   flex-shrink: 0;
 }
 .atm-intensity-bar {
-  width: 64px; height: 6px;
-  border-radius: 3px;
+  width: 160px; height: 8px;
+  border-radius: 4px;
   background: rgba(140,120,255,0.08);
   overflow: hidden;
 }
 body.light .atm-intensity-bar { background: rgba(90,72,192,0.08); }
 .atm-intensity-fill {
   height: 100%; width: 0%;
-  border-radius: 3px;
+  border-radius: 4px;
   transition: width 0.8s ease, background 1.5s ease, box-shadow 1.5s ease;
 }
 /* Tooltip — fixed positioning to escape titlebar clipping */

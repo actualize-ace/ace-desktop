@@ -31,7 +31,15 @@
 
   <!-- Titlebar -->
   <div class="titlebar">
-    <div class="titlebar-center"></div>
+    <div class="titlebar-center">
+      <div class="atm-intensity-wrap" id="atm-intensity-wrap">
+        <svg class="atm-intensity-icon" width="12" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,8 9,3 12,13 15,6 18,8 22,8"/></svg>
+        <div class="atm-intensity-glow" id="atm-intensity-glow"></div>
+        <div class="atm-intensity-bar">
+          <div class="atm-intensity-fill" id="atm-intensity-fill"></div>
+        </div>
+      </div>
+    </div>
     <div class="titlebar-right">
       <div class="titlebar-nextmove" id="titlebar-nextmove" title="Click to execute">
         <div class="titlebar-nm-dot" id="titlebar-nm-dot"></div>
@@ -44,13 +52,6 @@
       <button class="theme-btn" id="zoom-in-btn" title="Zoom in">+</button>
       <button class="theme-btn" id="theme-btn" title="Toggle theme">◑</button>
       <div class="mode-chip" id="mode-chip">—</div>
-      <div class="atm-intensity-wrap" id="atm-intensity-wrap">
-        <svg class="atm-intensity-icon" width="12" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,8 9,3 12,13 15,6 18,8 22,8"/></svg>
-        <div class="atm-intensity-glow" id="atm-intensity-glow"></div>
-        <div class="atm-intensity-bar">
-          <div class="atm-intensity-fill" id="atm-intensity-fill"></div>
-        </div>
-      </div>
       <div class="atm-audio-indicator" id="atm-audio-indicator">
         <span class="atm-audio-label" id="atm-audio-label">♪ Off</span>
       </div>
