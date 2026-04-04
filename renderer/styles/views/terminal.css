@@ -26,7 +26,10 @@
 .stab-close:hover { background: rgba(212,165,116,0.15); color: var(--text-primary); }
 .stab-add { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; color: var(--text-dim); font-size: 14px; transition: all 0.12s; border: 1px solid transparent; background: none; margin-left: 3px; }
 .stab-add:hover { border-color: var(--border); color: var(--text-secondary); }
-.term-panes { flex: 1; overflow: hidden; position: relative; }
+/* Split layout */
+.split-layout { display: flex; flex: 1; overflow: hidden; }
+.pane-group { display: flex; flex-direction: column; flex: 1; overflow: hidden; min-width: 300px; }
+.pane-group-content { flex: 1; overflow: hidden; position: relative; }
 .term-pane { position: absolute; inset: 0; display: none; flex-direction: column; overflow: hidden; }
 .term-pane.active { display: flex; }
 .term-hdr { display: flex; align-items: center; gap: 9px; padding: 9px 16px; background: rgba(10,12,22,0.85); backdrop-filter: var(--glass-blur); border-bottom: 1px solid var(--border); flex-shrink: 0; }

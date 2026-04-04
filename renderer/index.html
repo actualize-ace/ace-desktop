@@ -291,11 +291,15 @@
       <!-- TERMINAL VIEW -->
       <div class="view" id="view-terminal">
         <div class="term-container">
-          <div class="session-tabs" id="session-tabs">
-            <button class="stab-add" id="new-session-btn" title="New session">+</button>
-            <button class="stab-split" id="split-btn" title="Split view">⫻</button>
+          <div class="split-layout" id="split-layout">
+            <div class="pane-group" id="pane-group-left">
+              <div class="session-tabs" id="session-tabs-left">
+                <button class="stab-add" id="new-session-btn" title="New session">+</button>
+                <button class="stab-split" id="split-btn" title="Split view">⫻</button>
+              </div>
+              <div class="pane-group-content" id="pane-content-left"></div>
+            </div>
           </div>
-          <div class="term-panes" id="term-panes"></div>
         </div>
       </div>
 
