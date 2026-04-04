@@ -787,13 +787,16 @@ export function spawnSession(opts) {
     </div>
     <div class="term-xterm" id="xterm-${id}" style="display:none"></div>
     <button class="scroll-to-bottom" id="scroll-btn-${id}" title="Scroll to bottom" style="display:none">↓</button>`
-  document.getElementById('term-panes').appendChild(pane)
+  const targetContainer = opts?.container || document.getElementById('pane-content-left')
+  targetContainer.appendChild(pane)
 
   const tab = document.createElement('div')
   tab.className = 'stab'; tab.id = 'tab-' + id
-  tab.innerHTML = `<div class="stab-dot"></div><span>ACE</span><span class="stab-close" id="stab-close-${id}" title="Close session">×</span>`
-  tab.addEventListener('click', (e) => { if (!e.target.classList.contains('stab-close')) activateSession(id) })
-  document.getElementById('session-tabs').insertBefore(tab, document.getElementById('new-session-btn'))
+  tab.innerHTML = `<div class="stab-dot"></div><span>ACE</span><span class="stab-move" id="stab-move-${id}" title="Move to other pane">→</span><span class="stab-close" id="stab-close-${id}" title="Close session">×</span>`
+  tab.addEventListener('click', (e) => { if (!e.target.classList.contains('stab-close') && !e.target.classList.contains('stab-move')) activateSession(id) })
+  const targetTabBar = opts?.tabBar || document.getElementById('session-tabs-left')
+  const addBtn = targetTabBar.querySelector('.stab-add')
+  targetTabBar.insertBefore(tab, addBtn)
 
   state.sessions[id] = {
     term: null, fitAddon: null, pane, tab,
@@ -950,18 +953,38 @@ export function closeSession(id) {
   if (s.term) window.ace.pty.kill(id)
   if (s.isStreaming) window.ace.chat.cancel(id)
   if (s._cleanupListeners) s._cleanupListeners()
+  // Determine which group this session is in before removing
+  const group = s.pane.parentElement
   s.pane.remove()
   s.tab.remove()
   delete state.sessions[id]
-  state.activeId = null
-  const remaining = Object.keys(state.sessions)
-  if (remaining.length > 0) activateSession(remaining[remaining.length - 1])
+  // Activate next session in the same group
+  const groupSessions = Object.entries(state.sessions).filter(([, v]) => v.pane.parentElement === group)
+  if (groupSessions.length > 0) {
+    activateSession(groupSessions[groupSessions.length - 1][0])
+  } else {
+    // No sessions left in this group — trigger collapse check
+    if (typeof window.splitPaneManager !== 'undefined') {
+      window.splitPaneManager.checkCollapse(group)
+    }
+  }
 }
 
 export function activateSession(id) {
   if (!state.sessions[id]) return
-  Object.values(state.sessions).forEach(s => { s.pane.classList.remove('active'); s.tab.classList.remove('active') })
-  state.sessions[id].pane.classList.add('active'); state.sessions[id].tab.classList.add('active')
+  // Only deactivate sessions in the SAME pane group
+  const pane = state.sessions[id].pane
+  const group = pane.parentElement  // .pane-group-content
+  group.querySelectorAll('.term-pane').forEach(p => p.classList.remove('active'))
+  const groupTabBar = group.parentElement.querySelector('.session-tabs')
+  groupTabBar.querySelectorAll('.stab').forEach(t => t.classList.remove('active'))
+  // Activate this session
+  pane.classList.add('active')
+  state.sessions[id].tab.classList.add('active')
+  // Track active per group
+  const groupId = group.id === 'pane-content-left' ? 'left' : 'right'
+  state.splitActiveIds = state.splitActiveIds || { left: null, right: null }
+  state.splitActiveIds[groupId] = id
   state.activeId = id
   clearAttention(id)
   if (state.sessions[id].mode === 'terminal' && state.sessions[id].fitAddon) {
@@ -972,9 +995,11 @@ export function activateSession(id) {
 }
 
 export function fitActive() {
-  if (state.activeId && state.sessions[state.activeId] && state.sessions[state.activeId].mode === 'terminal' && state.sessions[state.activeId].fitAddon) {
-    state.sessions[state.activeId].fitAddon.fit()
-  }
+  Object.entries(state.splitActiveIds || {}).forEach(([, sid]) => {
+    if (sid && state.sessions[sid] && state.sessions[sid].mode === 'terminal' && state.sessions[sid].fitAddon) {
+      state.sessions[sid].fitAddon.fit()
+    }
+  })
 }
 
 export function sendToActive(t) {
@@ -1017,10 +1042,7 @@ export function initSessions() {
 
   // ResizeObserver for fitActive
   const ro = new ResizeObserver(() => fitActive())
-  ro.observe(document.getElementById('term-panes'))
-
-  // Split pane — disabled for now, will be reimplemented
-  document.getElementById('split-btn').style.display = 'none'
+  ro.observe(document.getElementById('pane-content-left'))
 
   // Window focus / visibility handlers
   document.addEventListener('visibilitychange', () => {
@@ -1033,4 +1055,5 @@ export function initSessions() {
   window.sendToActive = sendToActive
   window.spawnSession = spawnSession
   window.sendChatMessage = sendChatMessage
+  window.activateSession = activateSession
 }
