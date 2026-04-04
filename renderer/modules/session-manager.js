@@ -5,6 +5,7 @@ import { escapeHtml, syntaxHighlight, findSettledBoundary, renderTail, postProce
 import { updateOrbState } from './ace-mark.js'
 import { setAttention, clearAttention, updateAttentionBadge } from './attention.js'
 import { onSessionClose } from './atmosphere.js'
+import { initSplitPane, moveToOtherGroup } from './split-pane-manager.js'
 
 // ─── Chat System ─────────────────────────────────────────────────────────────
 
@@ -820,6 +821,12 @@ export function spawnSession(opts) {
     closeSession(id)
   })
 
+  // Move to other pane button
+  document.getElementById('stab-move-' + id).addEventListener('click', (e) => {
+    e.stopPropagation()
+    moveToOtherGroup(id)
+  })
+
   // Chat input handling
   const inputEl = document.getElementById('chat-input-' + id)
   const sendBtn = document.getElementById('chat-send-' + id)
@@ -1056,4 +1063,6 @@ export function initSessions() {
   window.spawnSession = spawnSession
   window.sendChatMessage = sendChatMessage
   window.activateSession = activateSession
+
+  initSplitPane()
 }
