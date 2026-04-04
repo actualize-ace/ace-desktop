@@ -422,6 +422,105 @@ function renderDetailCard() {
   if (breatheBtn) breatheBtn.style.borderColor = `hsla(${c.h}, ${c.s}%, ${c.l}%, 0.25)`
 }
 
+// ── AI Energy Analysis ──
+function runAnalysis() {
+  const loading = document.getElementById('atm-detail-loading')
+  const textEl = document.getElementById('atm-detail-analysis-text')
+  if (!textEl || !loading) return
+  textEl.innerHTML = ''
+  loading.style.display = 'flex'
+
+  // Fallback: templated analysis with simulated streaming
+  setTimeout(() => {
+    loading.style.display = 'none'
+    const analysis = generateFallbackAnalysis()
+    let i = 0
+    function streamNext() {
+      if (i >= analysis.length || !detailPinned) return
+      const chunk = Math.min(Math.floor(Math.random() * 3) + 2, analysis.length - i)
+      textEl.innerHTML = analysis.slice(0, i + chunk) + '<span class="cursor"></span>'
+      i += chunk
+      if (i >= analysis.length) {
+        textEl.innerHTML = analysis
+      } else {
+        streamTimeout = setTimeout(streamNext, 18 + Math.random() * 12)
+      }
+    }
+    streamNext()
+  }, 600)
+}
+
+function generateFallbackAnalysis() {
+  const a = state.atmosphere
+  const intensity = a.intensity
+  const pct = Math.round(intensity * 100)
+  const sessionCount = a.completedSessions + (a.activityState !== 'ended' ? 1 : 0)
+  const breathReduction = Math.min(a.completedProtocols * BREATH_REDUCTION, BREATH_REDUCTION_CAP)
+
+  const dayRaw = a.totalActiveMin / 360
+  const sessionRaw = Math.min(a.sessionActiveMin, 60) / 60
+  const countRaw = Math.min(sessionCount, 6) / 6
+
+  const drivers = [
+    { name: 'day total', val: dayRaw * 0.45 },
+    { name: 'session depth', val: sessionRaw * 0.35 },
+    { name: 'session count', val: countRaw * 0.20 }
+  ].sort((a, b) => b.val - a.val)
+  const top = drivers[0]
+
+  let text = ''
+
+  if (pct < 15) {
+    text += "You're starting fresh. Your system is rested and ready for deep work. "
+    text += "This is your highest-leverage window \u2014 use it for the thing that matters most today."
+  } else if (pct < 35) {
+    text += "You're in a good rhythm. "
+    if (top.name === 'session depth') {
+      text += `Your current session (${a.sessionActiveMin}m) is the primary driver. `
+      text += "You've got runway \u2014 this is the zone where deep focus happens."
+    } else {
+      text += `${sessionCount} session${sessionCount !== 1 ? 's' : ''} across ${a.totalActiveMin} minutes \u2014 `
+      text += "building momentum without burning reserves."
+    }
+  } else if (pct < 60) {
+    text += `Your energy is warm \u2014 ${top.name} is carrying most of the load. `
+    if (top.name === 'session depth') {
+      text += `${a.sessionActiveMin} minutes without a break. `
+      text += "A 5-minute pause would extend your afternoon capacity."
+    } else if (top.name === 'day total') {
+      text += `${Math.floor(a.totalActiveMin / 60)}+ hours active. `
+      text += "Save harder thinking for earlier in the window."
+    } else {
+      text += `${sessionCount} sessions is a lot of context-switching. `
+      text += "Make the next one longer and uninterrupted."
+    }
+  } else if (pct < 80) {
+    text += "You're running heavy. "
+    if (top.name === 'session depth') {
+      text += `${a.sessionActiveMin} minutes in one session \u2014 your body is likely holding tension. `
+      text += "A breath protocol would drop your intensity right now."
+    } else if (top.name === 'day total') {
+      text += `${Math.floor(a.totalActiveMin / 60)} hours cumulative. `
+      text += "Your remaining capacity is finite \u2014 make it count."
+    } else {
+      text += `${sessionCount} sessions \u2014 attention fragmented. `
+      text += "Close something. Next session should be a single thread."
+    }
+  } else {
+    text += "You're overextended. "
+    text += `${Math.floor(a.totalActiveMin / 60)} hours, ${sessionCount} sessions, ${a.sessionActiveMin}m in this one. `
+    text += "Your system is telling you to stop. Not pause \u2014 stop."
+  }
+
+  if (breathReduction > 0) {
+    text += ` Your ${a.completedProtocols} breath protocol${a.completedProtocols > 1 ? 's' : ''} bought back ${Math.round(breathReduction * 100)}% \u2014 that's regulation working.`
+  } else if (pct > 40) {
+    text += " No breath work today \u2014 even one protocol would take the edge off."
+  }
+
+  return text
+}
+
 // ── Somatic Bar Nudge ──
 function checkNudge() {
   const a = state.atmosphere
