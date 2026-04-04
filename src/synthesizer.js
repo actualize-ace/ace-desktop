@@ -37,10 +37,18 @@ function parseSignalDetails(vaultPath) {
     const text = fs.readFileSync(
       path.join(vaultPath, '00-System', 'system-metrics.md'), 'utf8'
     )
-    // Find the last "- Details:" line (most recent pulse snapshot)
+    // Find the Details line under the most recent date heading (entries may be out of order)
     const lines = text.split('\n')
+    let maxDate = ''
+    let maxDateIdx = -1
+    for (let i = 0; i < lines.length; i++) {
+      const m = lines[i].match(/^## (\d{4}-\d{2}-\d{2})/)
+      if (m && m[1] > maxDate) { maxDate = m[1]; maxDateIdx = i }
+    }
+    if (maxDateIdx < 0) return Array(9).fill('dim')
     let detailsLine = ''
-    for (let i = lines.length - 1; i >= 0; i--) {
+    for (let i = maxDateIdx + 1; i < lines.length; i++) {
+      if (lines[i].startsWith('## ')) break
       if (lines[i].trim().startsWith('- Details:')) { detailsLine = lines[i]; break }
     }
     if (!detailsLine) return Array(9).fill('dim')

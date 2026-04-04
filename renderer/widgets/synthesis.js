@@ -371,6 +371,8 @@ export default {
 
     const today = new Date(); today.setHours(0, 0, 0, 0)
     const byDay = velocity?.byDay || {}
+    const todayKey = today.toISOString().slice(0, 10)
+    const todaySessions = byDay[todayKey] || 0
     let daysSinceExecution = 0
     for (let i = 0; i < 14; i++) {
       const d = new Date(); d.setDate(d.getDate() - i)
@@ -381,7 +383,9 @@ export default {
     const fuArr = Array.isArray(followUps) ? followUps : []
     const overdueFu = fuArr.filter(f => {
       if (!f.due) return false
-      const d = new Date(f.due); d.setHours(0, 0, 0, 0)
+      const d = new Date(f.due)
+      if (isNaN(d.getTime())) return false
+      d.setHours(0, 0, 0, 0)
       return d < today && (f.status || '').toLowerCase() !== 'done'
     }).length
 
@@ -405,6 +409,7 @@ export default {
       },
       overdueFu,
       daysSinceExecution,
+      todaySessions,
     }
   },
 
@@ -418,7 +423,8 @@ export default {
     if (red.length)                  parts.push(`${red.join(', ')} RED.`)
     if (yellow.length)               parts.push(`${yellow.slice(0, 2).join(', ')} YELLOW.`)
     if (ctx.overdueFu > 0)           parts.push(`${ctx.overdueFu} overdue follow-up${ctx.overdueFu > 1 ? 's' : ''}.`)
-    if (ctx.daysSinceExecution >= 2) parts.push(`${ctx.daysSinceExecution}d execution gap.`)
+    if (ctx.todaySessions > 0)       parts.push(`${ctx.todaySessions} session${ctx.todaySessions > 1 ? 's' : ''} today.`)
+    else if (ctx.daysSinceExecution >= 2) parts.push(`${ctx.daysSinceExecution}d execution gap.`)
 
     return parts.join(' ')
   },
@@ -429,10 +435,12 @@ export default {
     const fuArr = Array.isArray(allData?.followUps) ? allData.followUps : []
     const pipeline = Array.isArray(allData?.pipeline) ? allData.pipeline : []
 
-    // 1. Overdue follow-ups
+    // 1. Overdue follow-ups (skip non-date due values like "Next paycheck", "—", "TBD")
     fuArr.filter(f => {
       if (!f.due) return false
-      const d = new Date(f.due); d.setHours(0, 0, 0, 0)
+      const d = new Date(f.due)
+      if (isNaN(d.getTime())) return false
+      d.setHours(0, 0, 0, 0)
       return d < today && (f.status || '').toLowerCase() !== 'done'
     }).sort((a, b) => new Date(a.due) - new Date(b.due))
       .forEach(f => {

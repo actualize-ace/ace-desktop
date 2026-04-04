@@ -110,10 +110,13 @@ function parseFollowUps(vaultPath) {
   try {
     const text = fs.readFileSync(path.join(vaultPath, '04-Network', 'follow-ups.md'), 'utf8')
 
-    const activeSection = text.match(/## Active\s*\n([\s\S]*?)(?=\n## |$)/)
+    const activeSection = text.match(/## Active\s*\n([\s\S]*?)(?=\n---|\n## |$)/)
     if (!activeSection) return []
 
-    const tableLines = activeSection[1].split('\n').filter(l => l.trim().startsWith('|'))
+    // Neutralize wikilink pipes before splitting table columns
+    // [[path|Display Name]] → [[path∥Display Name]] so | split works
+    const neutralized = activeSection[1].replace(/\[\[([^\]]*?)\|([^\]]*?)\]\]/g, '[[$1∥$2]]')
+    const tableLines = neutralized.split('\n').filter(l => l.trim().startsWith('|'))
     if (tableLines.length < 3) return []
 
     const headers = tableLines[0].split('|').map(h => h.trim().toLowerCase()).filter(Boolean)
@@ -124,7 +127,10 @@ function parseFollowUps(vaultPath) {
       if (cells.length < 2) continue
       const row = {}
       headers.forEach((h, idx) => { row[h] = cells[idx] || '' })
-      row.person = (row.person || '').replace(/\[\[(?:[^\]|]+\|)?([^\]]+)\]\]/g, '$1').trim()
+      row.person = (row.person || '').replace(/\[\[(?:[^\]∥]+[∥|])?([^\]]+)\]\]/g, '$1').trim()
+      // Skip completed items still in the Active table
+      const status = (row.status || '').toLowerCase()
+      if (status === 'done' || status === 'completed') continue
       rows.push(row)
     }
 
@@ -152,9 +158,12 @@ function listDir(dirPath) {
 
 function parseExecutionLog(vaultPath, days = 14) {
   try {
-    const text = fs.readFileSync(
-      path.join(vaultPath, '00-System', 'execution-log.md'), 'utf8'
-    )
+    // Read both log files (recent entries may be in execution-log-recent.md)
+    let text = ''
+    for (const file of ['execution-log-recent.md', 'execution-log.md']) {
+      try { text += '\n' + fs.readFileSync(path.join(vaultPath, '00-System', file), 'utf8') } catch {}
+    }
+    if (!text.trim()) return { byDay: {}, totalThisWeek: 0, totalLastWeek: 0 }
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const byDay = {}
@@ -222,7 +231,9 @@ function daysSinceLastPulse(vaultPath) {
     const text = fs.readFileSync(path.join(vaultPath, '00-System', 'system-metrics.md'), 'utf8')
     const dates = [...text.matchAll(/^## (\d{4}-\d{2}-\d{2})/gm)]
     if (!dates.length) return -1
-    const last = new Date(dates[dates.length - 1][1])
+    // Use max date, not last-in-file (entries may be out of chronological order)
+    const maxDateStr = dates.map(m => m[1]).sort().pop()
+    const last = new Date(maxDateStr)
     last.setHours(0, 0, 0, 0)
     const today = new Date(); today.setHours(0, 0, 0, 0)
     return Math.round((today - last) / (1000 * 60 * 60 * 24))
@@ -257,18 +268,57 @@ function parseRitualRhythm(vaultPath) {
   let currentDate = null
   for (const line of text.split('\n')) {
     const headingMatch = line.match(/^#{1,3}\s+(\d{4}-\d{2}-\d{2})/)
-    if (headingMatch) { currentDate = headingMatch[1]; continue }
+    if (headingMatch) {
+      currentDate = headingMatch[1]
+      // Detect "Day Start" or "Session Close" or "EOD" from heading
+      const entry = dateSet.has(currentDate) && week.find(w => w.date === currentDate)
+      if (entry) {
+        const heading = line.toLowerCase()
+        if (heading.includes('day start')) entry.start = true
+        if (heading.includes('session close')) entry.active = true
+        if (heading.includes('eod')) entry.eod = true
+      }
+      continue
+    }
     if (!currentDate || !dateSet.has(currentDate)) continue
     const entry = week.find(w => w.date === currentDate)
     if (!entry) continue
-    // Match **Source:** or **Sources:** lines only — these are authoritative
+    // Match **Source:** or **Sources:** lines
     const sourceMatch = line.match(/^\s*-\s*\*\*Sources?:\*\*\s*(.+)/i)
     if (sourceMatch) {
       const source = sourceMatch[1].toLowerCase()
       if (source.includes('/start')) entry.start = true
-      if (source.includes('/close')) entry.active = true  // any /close = work happened
+      if (source.includes('/close')) entry.active = true
       if (source.includes('/eod')) entry.eod = true
     }
+    // Also detect from individual **Source:** lines (non-consolidated)
+    const singleSource = line.match(/^\s*-\s*\*\*Source:\*\*\s*(.+)/i)
+    if (singleSource) {
+      const source = singleSource[1].toLowerCase()
+      if (source.includes('/start')) entry.start = true
+      if (source.includes('/close')) entry.active = true
+      if (source.includes('/eod')) entry.eod = true
+    }
+  }
+
+  // Fallback: check daily notes when execution log entries are missing
+  for (const day of week) {
+    if (day.start && day.active && day.eod) continue
+    try {
+      const dailyNote = fs.readFileSync(path.join(vaultPath, '01-Journal', 'daily', day.date + '.md'), 'utf8')
+      // /start: filled morning journal (not empty template)
+      if (!day.start) {
+        const morningMatch = dailyNote.match(/\*\*What is true this morning:\*\*\s*(.+)/)
+        if (morningMatch && morningMatch[1].trim().length > 0) day.start = true
+      }
+      // /close: actual session log entries (not just template comment)
+      if (!day.active && /## Session Log[\s\S]*?- Shipped:/i.test(dailyNote)) day.active = true
+      // /eod: filled energy field inside EOD Closure (empty template = just "**Energy:**\n")
+      if (!day.eod) {
+        const eodEnergy = dailyNote.match(/## EOD Closure[\s\S]*?\*\*Energy:\*\*[ \t]*(.+)/)
+        if (eodEnergy && eodEnergy[1].trim().length > 0) day.eod = true
+      }
+    } catch {}
   }
 
   // Compute streaks (consecutive days back from today)
