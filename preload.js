@@ -107,4 +107,12 @@ contextBridge.exposeInMainWorld('ace', {
     openPath:     (p)   => ipcRenderer.invoke(ch.SHELL_OPEN_PATH, p),
     openExternal: (url) => ipcRenderer.invoke(ch.SHELL_OPEN_EXTERNAL, url),
   },
+
+  // ─── Vault Health ──────────────────────────────────────────────────────────
+  health: {
+    check:        ()        => ipcRenderer.invoke(ch.VAULT_HEALTH_CHECK),
+    scaffoldItem: (item)    => ipcRenderer.invoke(ch.VAULT_SCAFFOLD_ITEM, item),
+    scaffoldAll:  (missing) => ipcRenderer.invoke(ch.VAULT_SCAFFOLD_ALL, missing),
+    getColorMap:  ()        => ipcRenderer.invoke(ch.VAULT_GET_COLOR_MAP),
+  },
 })

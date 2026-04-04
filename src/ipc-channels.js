@@ -77,4 +77,10 @@ module.exports = {
   // Shell
   SHELL_OPEN_PATH:        'shell-open-path',
   SHELL_OPEN_EXTERNAL:    'shell-open-external',
+
+  // Vault Health
+  VAULT_HEALTH_CHECK:     'vault-health-check',
+  VAULT_SCAFFOLD_ITEM:    'vault-scaffold-item',
+  VAULT_SCAFFOLD_ALL:     'vault-scaffold-all',
+  VAULT_GET_COLOR_MAP:    'vault-get-color-map',
 }

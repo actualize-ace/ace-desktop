@@ -246,6 +246,24 @@ ipcMain.handle(ch.GET_USAGE, () => {
   catch (e) { return { session: null, weekly: null, error: e.message } }
 })
 
+// ─── Vault Health ──────────────────────────────────────────────────────────
+ipcMain.handle(ch.VAULT_HEALTH_CHECK, () => {
+  try { return require('./src/vault-health').checkVaultHealth(global.VAULT_PATH) }
+  catch (e) { return { ok: false, error: e.message, missing: [], score: 0 } }
+})
+ipcMain.handle(ch.VAULT_SCAFFOLD_ITEM, (_, item) => {
+  try { return require('./src/vault-health').scaffoldItem(global.VAULT_PATH, item) }
+  catch (e) { return { ok: false, error: e.message } }
+})
+ipcMain.handle(ch.VAULT_SCAFFOLD_ALL, (_, missing) => {
+  try { return require('./src/vault-health').scaffoldAll(global.VAULT_PATH, missing) }
+  catch (e) { return { ok: false, error: e.message } }
+})
+ipcMain.handle(ch.VAULT_GET_COLOR_MAP, () => {
+  try { return require('./src/vault-health').getColorMap(global.VAULT_PATH) }
+  catch (e) { return {} }
+})
+
 ipcMain.handle(ch.GET_SYNTHESIS_AI, async (_, context) => {
   const voicePath = require('path').join(global.VAULT_PATH, '00-System', 'core', 'voice-profile.md')
   try { return await require('./src/synthesizer').getAISynthesis(context, voicePath, global.CLAUDE_BIN) }
