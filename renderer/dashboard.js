@@ -69,7 +69,7 @@ async function loadDashboard() {
       if (!bannerEl) {
         bannerEl = document.createElement('div')
         bannerEl.id = 'vault-health-banner'
-        const grid = document.querySelector('.dashboard-grid') || document.querySelector('.widget-grid')
+        const grid = document.querySelector('.triad-grid') || document.querySelector('.dashboard-grid') || document.querySelector('.widget-grid')
         if (grid) grid.parentNode.insertBefore(bannerEl, grid)
       }
       renderHealthBanner(health, bannerEl)
