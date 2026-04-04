@@ -2,16 +2,16 @@
 // Single source of truth for all navigable items in ACE Desktop.
 
 export const VIEWS = [
-  { type: 'view', id: 'home',      label: 'Home',      keywords: ['dashboard', 'overview'] },
-  { type: 'view', id: 'terminal',  label: 'Terminal',   keywords: ['chat', 'session', 'cli'] },
-  { type: 'view', id: 'agents',    label: 'Agents',     keywords: ['parallel', 'subagent'] },
-  { type: 'view', id: 'vault',     label: 'Vault',      keywords: ['files', 'browser', 'editor'] },
-  { type: 'view', id: 'graph',     label: 'Graph',      keywords: ['connections', 'network', 'links'] },
-  { type: 'view', id: 'people',    label: 'People',     keywords: ['contacts', 'network', 'followups'] },
-  { type: 'view', id: 'history',   label: 'History',    keywords: ['sessions', 'past', 'search'] },
-  { type: 'view', id: 'artifacts', label: 'Artifacts',  keywords: ['creative', 'library', 'assets'] },
-  { type: 'view', id: 'pipeline',  label: 'Pipeline',   keywords: ['deals', 'sales', 'revenue'] },
-  { type: 'view', id: 'breath',    label: 'Breath',     keywords: ['breathing', 'regulate', 'somatic'] },
+  { type: 'view', id: 'home',      label: 'Home',      icon: '⌂', keywords: ['dashboard', 'overview'] },
+  { type: 'view', id: 'terminal',  label: 'Terminal',   icon: '▸', keywords: ['chat', 'session', 'cli'] },
+  { type: 'view', id: 'agents',    label: 'Agents',     icon: '◎', keywords: ['parallel', 'subagent'] },
+  { type: 'view', id: 'vault',     label: 'Vault',      icon: '☰', keywords: ['files', 'browser', 'editor'] },
+  { type: 'view', id: 'graph',     label: 'Graph',      icon: '⬡', keywords: ['connections', 'network', 'links'] },
+  { type: 'view', id: 'people',    label: 'People',     icon: '♟', keywords: ['contacts', 'network', 'followups'] },
+  { type: 'view', id: 'history',   label: 'History',    icon: '◷', keywords: ['sessions', 'past', 'search'] },
+  { type: 'view', id: 'artifacts', label: 'Artifacts',  icon: '▦', keywords: ['creative', 'library', 'assets'] },
+  { type: 'view', id: 'pipeline',  label: 'Pipeline',   icon: '→', keywords: ['deals', 'sales', 'revenue'] },
+  { type: 'view', id: 'breath',    label: 'Breath',     icon: '◉', keywords: ['breathing', 'regulate', 'somatic'] },
 ]
 
 export const COMMANDS = [

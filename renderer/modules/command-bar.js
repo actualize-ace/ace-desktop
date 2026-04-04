@@ -54,8 +54,9 @@ function render(query) {
     for (const v of views) {
       const idx = flatItems.length
       flatItems.push(v)
-      html += `<div class="cmdk-item${idx === activeIndex ? ' active' : ''}" data-idx="${idx}" role="option">
-        <span class="cmdk-item-icon">${viewIcon(v.id)}</span>
+      const itemId = `cmdk-item-${idx}`
+      html += `<div class="cmdk-item${idx === activeIndex ? ' active' : ''}" id="${itemId}" data-idx="${idx}" role="option">
+        <span class="cmdk-item-icon">${v.icon}</span>
         <span class="cmdk-item-label">${v.label}</span>
         <span class="cmdk-item-desc">${v.keywords[0] || ''}</span>
       </div>`
@@ -67,7 +68,8 @@ function render(query) {
     for (const c of commands) {
       const idx = flatItems.length
       flatItems.push(c)
-      html += `<div class="cmdk-item${idx === activeIndex ? ' active' : ''}" data-idx="${idx}" role="option">
+      const itemId = `cmdk-item-${idx}`
+      html += `<div class="cmdk-item${idx === activeIndex ? ' active' : ''}" id="${itemId}" data-idx="${idx}" role="option">
         <span class="cmdk-item-icon">/</span>
         <span class="cmdk-item-label">${c.cmd}</span>
         <span class="cmdk-item-desc">${c.description}</span>
@@ -80,15 +82,13 @@ function render(query) {
   }
 
   results.innerHTML = html
-}
 
-function viewIcon(id) {
-  const icons = {
-    home: '⌂', terminal: '▸', agents: '◎', vault: '☰',
-    graph: '⬡', people: '♟', history: '◷', artifacts: '▦',
-    pipeline: '→', breath: '◉',
+  // Update aria-activedescendant for screen readers
+  if (flatItems.length) {
+    input.setAttribute('aria-activedescendant', `cmdk-item-${activeIndex}`)
+  } else {
+    input.removeAttribute('aria-activedescendant')
   }
-  return icons[id] || '·'
 }
 
 // ─── Dispatch ────────────────────────────────────────────────
