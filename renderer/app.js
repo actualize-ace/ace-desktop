@@ -17,3 +17,7 @@ import { state } from './state.js'
 // This bridge lets it access state.sessions etc. via window.__aceState.
 // Will be removed once all JS is extracted into modules.
 window.__aceState = state
+
+// Command bar (Cmd+K)
+import { initCommandBar } from './modules/command-bar.js'
+initCommandBar()
