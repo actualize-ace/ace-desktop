@@ -402,9 +402,15 @@ body.light .hl-builtin  { color:#5a48c0; }
 /* ── SPLIT PANE ── */
 .split-v-resizer {
   width: 3px; background: var(--border); flex-shrink: 0;
-  cursor: col-resize; transition: background 0.15s;
+  cursor: col-resize; transition: background 0.15s; position: relative;
 }
 .split-v-resizer:hover, .split-v-resizer.dragging { background: var(--gold-dim); }
+.split-v-resizer::after {
+  content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 1px; height: 24px; background: var(--text-dim); border-radius: 1px; opacity: 0;
+  transition: opacity 0.15s;
+}
+.split-v-resizer:hover::after, .split-v-resizer.dragging::after { opacity: 0.5; }
 .stab-split {
   width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
   border-radius: 4px; cursor: pointer; color: var(--text-dim); font-size: 12px;
@@ -412,6 +418,7 @@ body.light .hl-builtin  { color:#5a48c0; }
 }
 .stab-split:hover { border-color: var(--border); color: var(--text-secondary); }
 .stab-split.active { color: var(--gold); border-color: var(--border); }
+#session-tabs-right { padding-right: 8px; }
 .stab-collapse {
   width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
   border-radius: 3px; cursor: pointer; color: var(--text-dim); font-size: 10px;

@@ -28,7 +28,8 @@
 .stab-add:hover { border-color: var(--border); color: var(--text-secondary); }
 /* Split layout */
 .split-layout { display: flex; flex: 1; overflow: hidden; }
-.pane-group { display: flex; flex-direction: column; flex: 1; overflow: hidden; min-width: 300px; }
+.pane-group { display: flex; flex-direction: column; flex: 1; overflow: hidden; min-width: 300px; transition: flex-basis 0.2s ease; }
+.pane-group.no-transition { transition: none; }
 .pane-group-content { flex: 1; overflow: hidden; position: relative; }
 .term-pane { position: absolute; inset: 0; display: none; flex-direction: column; overflow: hidden; }
 .term-pane.active { display: flex; }

@@ -212,6 +212,8 @@ function wireResizer(resizer, leftGroup, rightGroup) {
     startLeftWidth = leftGroup.getBoundingClientRect().width
     totalWidth = leftGroup.getBoundingClientRect().width + rightGroup.getBoundingClientRect().width
     resizer.classList.add('dragging')
+    leftGroup.classList.add('no-transition')
+    rightGroup.classList.add('no-transition')
     document.addEventListener('mousemove', onMouseMove)
     document.addEventListener('mouseup', onMouseUp)
   }
@@ -228,6 +230,8 @@ function wireResizer(resizer, leftGroup, rightGroup) {
 
   function onMouseUp() {
     resizer.classList.remove('dragging')
+    leftGroup.classList.remove('no-transition')
+    rightGroup.classList.remove('no-transition')
     document.removeEventListener('mousemove', onMouseMove)
     document.removeEventListener('mouseup', onMouseUp)
     // Persist ratio + active state
