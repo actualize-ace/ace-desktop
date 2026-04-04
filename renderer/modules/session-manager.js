@@ -793,7 +793,8 @@ export function spawnSession(opts) {
 
   const tab = document.createElement('div')
   tab.className = 'stab'; tab.id = 'tab-' + id
-  tab.innerHTML = `<div class="stab-dot"></div><span>ACE</span><span class="stab-move" id="stab-move-${id}" title="Move to other pane">→</span><span class="stab-close" id="stab-close-${id}" title="Close session">×</span>`
+  const moveArrow = targetContainer.id === 'pane-content-right' ? '←' : '→'
+  tab.innerHTML = `<div class="stab-dot"></div><span>ACE</span><span class="stab-move" id="stab-move-${id}" title="Move to other pane">${moveArrow}</span><span class="stab-close" id="stab-close-${id}" title="Close session">×</span>`
   tab.addEventListener('click', (e) => { if (!e.target.classList.contains('stab-close') && !e.target.classList.contains('stab-move')) activateSession(id) })
   const targetTabBar = opts?.tabBar || document.getElementById('session-tabs-left')
   const addBtn = targetTabBar.querySelector('.stab-add')
