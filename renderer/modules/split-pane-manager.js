@@ -6,6 +6,11 @@ const splitState = {
   ratio: parseFloat(localStorage.getItem('ace-split-ratio') || '0.5'),
 }
 
+function persistState() {
+  localStorage.setItem('ace-split-active', splitState.active ? '1' : '0')
+  localStorage.setItem('ace-split-ratio', splitState.ratio.toString())
+}
+
 // ─── Create / Destroy ────────────────────────────────────────────────────────
 
 export function initSplit() {
@@ -62,6 +67,8 @@ export function initSplit() {
 
   // Update split button
   document.getElementById('split-btn').classList.add('active')
+
+  persistState()
 }
 
 export function collapseSplit() {
@@ -119,6 +126,8 @@ export function collapseSplit() {
   if (state.splitActiveIds) {
     state.splitActiveIds.right = null
   }
+
+  persistState()
 }
 
 // Called by session-manager when a pane group becomes empty
@@ -221,8 +230,8 @@ function wireResizer(resizer, leftGroup, rightGroup) {
     resizer.classList.remove('dragging')
     document.removeEventListener('mousemove', onMouseMove)
     document.removeEventListener('mouseup', onMouseUp)
-    // Persist ratio
-    localStorage.setItem('ace-split-ratio', splitState.ratio.toString())
+    // Persist ratio + active state
+    persistState()
     // Refit terminals in both panes
     window.fitActive?.()
   }
@@ -261,6 +270,20 @@ export function initSplitPane() {
       })
     }
   })
+
+  // Restore split state from previous session
+  const wasSplit = localStorage.getItem('ace-split-active') === '1'
+  if (wasSplit) {
+    // Defer to after initial sessions are spawned
+    requestAnimationFrame(() => {
+      initSplit()
+      // Spawn a new session in the right pane
+      window.spawnSession({
+        container: document.getElementById('pane-content-right'),
+        tabBar: document.getElementById('session-tabs-right'),
+      })
+    })
+  }
 
   // Expose for session-manager
   window.splitPaneManager = { checkCollapse, moveToOtherGroup, isSplitActive }
