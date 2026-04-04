@@ -143,6 +143,37 @@
   color: var(--text-dim);
 }
 
+/* ─── Sidebar Hint ─── */
+.cmdk-hint-sidebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  margin: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+.cmdk-hint-sidebar:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.cmdk-hint-key {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 5px;
+  letter-spacing: 0.5px;
+}
+.cmdk-hint-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10.5px;
+  color: var(--text-dim);
+  letter-spacing: 0.3px;
+}
+
 /* ─── Scrollbar ─── */
 .cmdk-results::-webkit-scrollbar { width: 4px; }
 .cmdk-results::-webkit-scrollbar-track { background: transparent; }

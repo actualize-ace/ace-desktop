@@ -167,4 +167,7 @@ export function initCommandBar() {
 
   // Backdrop click to close
   backdrop.addEventListener('click', close)
+
+  // Sidebar hint click to open
+  document.getElementById('cmdk-hint-sidebar')?.addEventListener('click', open)
 }
