@@ -10,6 +10,7 @@ export const state = {
   // Terminal sessions
   sessions: {},
   activeId: null,
+  splitActiveIds: { left: null, right: null },
 
   // Agent sessions
   agentSessions: {},

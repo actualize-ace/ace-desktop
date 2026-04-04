@@ -970,6 +970,7 @@ export function closeSession(id) {
   if (groupSessions.length > 0) {
     activateSession(groupSessions[groupSessions.length - 1][0])
   } else {
+    state.activeId = null
     // No sessions left in this group — trigger collapse check
     if (typeof window.splitPaneManager !== 'undefined') {
       window.splitPaneManager.checkCollapse(group)
@@ -990,7 +991,6 @@ export function activateSession(id) {
   state.sessions[id].tab.classList.add('active')
   // Track active per group
   const groupId = group.id === 'pane-content-left' ? 'left' : 'right'
-  state.splitActiveIds = state.splitActiveIds || { left: null, right: null }
   state.splitActiveIds[groupId] = id
   state.activeId = id
   clearAttention(id)
@@ -1022,10 +1022,7 @@ export function sendToActive(t) {
 
 // ─── Window Focus / Visibility ────────────────────────────────────────────────
 function onWindowRegainFocus() {
-  if (state.activeId && state.sessions[state.activeId] && state.sessions[state.activeId].mode === 'terminal') {
-    state.sessions[state.activeId].fitAddon?.fit()
-    state.sessions[state.activeId].term?.scrollToBottom()
-  }
+  fitActive()
   if (state.focusedAgentId && typeof state.agentSessions !== 'undefined' && state.agentSessions[state.focusedAgentId]) {
     if (state.agentSessions[state.focusedAgentId].mode === 'terminal') {
       state.agentSessions[state.focusedAgentId].fitAddon?.fit()

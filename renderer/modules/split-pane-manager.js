@@ -95,6 +95,9 @@ export function collapseSplit() {
     })
   }
 
+  // Cleanup any in-progress drag listeners
+  if (splitState._cleanupDrag) { splitState._cleanupDrag(); splitState._cleanupDrag = null }
+
   // Remove right group and resizer
   document.getElementById('pane-group-right')?.remove()
   document.getElementById('split-resizer')?.remove()
@@ -136,19 +139,7 @@ export function checkCollapse(groupContentEl) {
   if (groupContentEl.id === 'pane-content-right') {
     collapseSplit()
   } else if (groupContentEl.id === 'pane-content-left') {
-    // Left is empty — move everything from right to left, then collapse
-    const rightContainer = document.getElementById('pane-content-right')
-    const leftContainer = document.getElementById('pane-content-left')
-    const rightTabBar = document.getElementById('session-tabs-right')
-    const leftTabBar = document.getElementById('session-tabs-left')
-    const addBtn = leftTabBar.querySelector('.stab-add')
-
-    Array.from(rightContainer.querySelectorAll('.term-pane')).forEach(p => leftContainer.appendChild(p))
-    Array.from(rightTabBar.querySelectorAll('.stab')).forEach(t => {
-      const moveIcon = t.querySelector('.stab-move')
-      if (moveIcon) moveIcon.textContent = '→'
-      leftTabBar.insertBefore(t, addBtn)
-    })
+    // Left is empty — collapseSplit will move everything from right to left
     collapseSplit()
   }
 }
@@ -241,6 +232,11 @@ function wireResizer(resizer, leftGroup, rightGroup) {
   }
 
   resizer.addEventListener('mousedown', onMouseDown)
+
+  splitState._cleanupDrag = () => {
+    document.removeEventListener('mousemove', onMouseMove)
+    document.removeEventListener('mouseup', onMouseUp)
+  }
 }
 
 function applyRatio() {
