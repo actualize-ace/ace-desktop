@@ -16,22 +16,20 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
                 '--verbose', '--include-partial-messages']
   if (claudeSessionId) args.push('--resume', claudeSessionId)
 
-  // Model selection — always pass explicitly (CLI default may differ)
-  if (opts.model) {
+  // Model selection — only pass Claude-native models (not ollama: prefixed sovereign models)
+  if (opts.model && !opts.model.startsWith('ollama:')) {
     args.push('--model', opts.model)
   }
 
-  // Permission mode — -p mode can't do interactive approvals, so:
-  // "Normal" = pre-approve all standard tools (Bash, Edit, Write, Read, etc.)
-  // "Plan" = read-only permission mode
-  // "Auto" = skip all permissions entirely
+  // Permission mode — -p mode can't do interactive approvals.
+  // .claude/ edits are denied by the CLI regardless of mode — the renderer
+  // catches permission_denials and shows an approval card (applied via fs).
   if (opts.permissions === 'auto') {
     args.push('--dangerously-skip-permissions')
   } else if (opts.permissions === 'plan') {
     args.push('--permission-mode', 'plan')
   } else {
-    // Normal mode — let project settings.json handle permissions (defaultMode: acceptEdits)
-    // Don't pass any flag — claude -p will read the project config automatically
+    args.push('--permission-mode', 'acceptEdits')
   }
 
   // Reasoning effort — always pass explicitly

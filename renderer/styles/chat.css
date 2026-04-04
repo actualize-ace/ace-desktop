@@ -283,6 +283,28 @@ body.light .mode-toggle-btn.glow-hint {
 }
 .chat-deny-btn:hover { background:rgba(196,116,116,0.18); }
 
+/* Permission approval card */
+.chat-permission-card {
+  padding:14px 16px; border:1px solid var(--gold-dim); border-radius:8px;
+  background:rgba(218,176,122,0.04); margin:8px 0;
+}
+.permission-card-header {
+  font-size:10px; font-weight:600; color:var(--gold); letter-spacing:0.5px;
+  text-transform:uppercase; margin-bottom:10px;
+}
+.permission-edit-item { margin-bottom:10px; }
+.permission-file-path {
+  font-size:9px; color:var(--text-dim); font-family:'JetBrains Mono',monospace;
+  margin-bottom:4px;
+}
+.permission-diff {
+  font-family:'JetBrains Mono',monospace; font-size:10px;
+  background:rgba(0,0,0,0.2); border-radius:4px; padding:6px 8px;
+  overflow-x:auto;
+}
+.permission-diff-old { color:var(--red); white-space:pre-wrap; }
+.permission-diff-new { color:var(--green); white-space:pre-wrap; margin-top:2px; }
+
 /* Question card (AskUserQuestion) */
 .chat-question-block {
   padding:14px 16px; border:1px solid var(--gold-dim); border-radius:8px;

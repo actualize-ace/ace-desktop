@@ -533,21 +533,14 @@ export function wireChatListeners(id, sessionsObj) {
     if (event.type === 'result') {
       updateChatStatus(id, event, sessionsObj)
       finalizeMessage(id, sessionsObj)
-      // Detect .claude/ permission denials and show guidance
+      // Detect .claude/ permission denials — show approval card instead of banner
       if (event.permission_denials?.length) {
-        const claudePathDenied = event.permission_denials.some(d =>
-          d.tool_input?.file_path?.includes('/.claude/') ||
-          d.tool_input?.command?.includes('/.claude/')
-        )
-        if (claudePathDenied) {
-          showChatBanner(id, 'Skill and settings edits require Terminal mode — use the Terminal toggle above.', sessionsObj)
-          const toggleBtn = document.getElementById('mode-toggle-' + id)
-          if (toggleBtn) {
-            toggleBtn.classList.remove('glow-hint')
-            void toggleBtn.offsetWidth
-            toggleBtn.classList.add('glow-hint')
-            toggleBtn.addEventListener('animationend', () => toggleBtn.classList.remove('glow-hint'), { once: true })
-          }
+        const claudeEdits = event.permission_denials.filter(d => {
+          const p = d.tool_input?.file_path || ''
+          return d.tool_name === 'Edit' && p.includes('/.claude/') && !p.includes('/.claude/projects/')
+        })
+        if (claudeEdits.length) {
+          renderPermissionApprovalCard(id, claudeEdits, sessionsObj)
         }
       }
     }
@@ -581,6 +574,91 @@ export function wireChatListeners(id, sessionsObj) {
   // Store cleanup functions on session so listeners are removed on close
   const s = sessionsObj[id]
   if (s) s._cleanupListeners = () => { cleanupStream(); cleanupError(); cleanupExit() }
+}
+
+// Render approval card for .claude/ permission denials
+function renderPermissionApprovalCard(chatId, denials, sessionsObj) {
+  const msgsEl = document.getElementById('chat-msgs-' + chatId)
+  if (!msgsEl) return
+
+  // Deduplicate retries (same file + same old_string)
+  const seen = new Set()
+  const unique = denials.filter(d => {
+    const key = d.tool_input.file_path + '|' + d.tool_input.old_string
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+
+  const esc = str => String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+
+  const card = document.createElement('div')
+  card.className = 'chat-permission-card'
+
+  let html = `<div class="permission-card-header">Edit requires approval</div>`
+  unique.forEach((d, i) => {
+    const inp = d.tool_input
+    const short = inp.file_path.replace(/^.*\/\.claude\//, '.claude/')
+    html += `
+      <div class="permission-edit-item">
+        <div class="permission-file-path">${esc(short)}</div>
+        <div class="permission-diff">
+          <div class="permission-diff-old">− ${esc(inp.old_string)}</div>
+          <div class="permission-diff-new">+ ${esc(inp.new_string)}</div>
+        </div>
+      </div>`
+  })
+  html += `
+    <div class="chat-tool-actions">
+      <button class="chat-approve-btn permission-approve">Approve</button>
+      <button class="chat-deny-btn permission-deny">Deny</button>
+    </div>`
+
+  card.innerHTML = html
+  msgsEl.appendChild(card)
+  msgsEl.scrollTop = msgsEl.scrollHeight
+
+  card.querySelector('.permission-approve').addEventListener('click', async () => {
+    const btn = card.querySelector('.permission-approve')
+    btn.disabled = true
+    btn.textContent = 'Applying...'
+    let allOk = true
+    for (const d of unique) {
+      const { file_path, old_string, new_string, replace_all } = d.tool_input
+      try {
+        const content = await window.ace.vault.readFile(file_path)
+        if (typeof content !== 'string') { allOk = false; continue }
+        let updated
+        if (replace_all) {
+          updated = content.split(old_string).join(new_string)
+        } else {
+          const idx = content.indexOf(old_string)
+          if (idx === -1) { allOk = false; continue }
+          updated = content.slice(0, idx) + new_string + content.slice(idx + old_string.length)
+        }
+        const res = await window.ace.vault.writeFile(file_path, updated)
+        if (res?.error) allOk = false
+      } catch { allOk = false }
+    }
+    btn.textContent = allOk ? 'Applied' : 'Partial — check files'
+    card.querySelector('.permission-deny').style.display = 'none'
+
+    // Inject confirmation message into chat
+    const msgsEl = document.getElementById('chat-msgs-' + chatId)
+    if (msgsEl) {
+      const confirm = document.createElement('div')
+      confirm.className = 'chat-msg assistant'
+      const paths = unique.map(d => d.tool_input.file_path.replace(/^.*\/\.claude\//, '.claude/')).join(', ')
+      confirm.innerHTML = `<div class="msg-content md-body">${allOk
+        ? `<strong>Done.</strong> Edited ${paths} directly (bypassed CLI permission).`
+        : `<strong>Partial.</strong> Some edits to ${paths} may not have applied — check the files.`
+      }</div>`
+      msgsEl.appendChild(confirm)
+      msgsEl.scrollTop = msgsEl.scrollHeight
+    }
+  })
+
+  card.querySelector('.permission-deny').addEventListener('click', () => card.remove())
 }
 
 // Render an interactive question card from AskUserQuestion tool input
