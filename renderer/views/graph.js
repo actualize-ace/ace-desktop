@@ -30,16 +30,30 @@ async function renderGraph() {
   const W = bodyEl.clientWidth
   const H = bodyEl.clientHeight
 
-  // Color fn
-  const GROUP_COLORS = {
-    '00-System':  '#70b0e0',
-    '01-Journal': '#c8a0f0',
-    '02-Rituals': '#e0c878',
-    '04-Network': '#60d8a8',
-    '05-Research':'#e080a0',
-    'Domains':    '#8878ff',
+  // Fallback colors — overridden by vault-manifest.json colorMap when available
+  let GROUP_COLORS = {
+    '00-System':    '#74a4c4',
+    '01-Journal':   '#d4a574',
+    '02-Rituals':   '#c4a07a',
+    '03-Calendar':  '#7ab8c4',
+    '04-Network':   '#6db88f',
+    '11-Artifacts': '#c47474',
+    'Domains':      '#9b74c4',
   }
-  const nodeColor = d => GROUP_COLORS[d.group] || '#606080'
+
+  // Deterministic color for unlisted folders (stable hash)
+  const OVERFLOW_PALETTE = ['#e080a0','#8878ff','#e0c878','#70b0e0','#c8a0f0','#a0d870','#f0a060','#60c8c8']
+  function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0; return Math.abs(h) }
+  function overflowColor(group) { return OVERFLOW_PALETTE[hashStr(group) % OVERFLOW_PALETTE.length] }
+
+  const nodeColor = d => GROUP_COLORS[d.group] || overflowColor(d.group)
+
+  // Load manifest colors asynchronously (non-blocking)
+  if (window.ace?.health?.getColorMap) {
+    window.ace.health.getColorMap().then(cm => {
+      if (cm && Object.keys(cm).length) GROUP_COLORS = cm
+    }).catch(() => {})
+  }
 
   // Degree map for radius scaling
   const degree = {}
