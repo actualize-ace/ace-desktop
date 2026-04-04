@@ -179,9 +179,10 @@ export function moveToOtherGroup(sessionId) {
   // Activate in new group
   window.activateSession(sessionId)
 
-  // Check if old group is now empty — if so, spawn a new session there
+  // Handle the source group after the move
   const oldGroupPanes = currentGroup.querySelectorAll('.term-pane')
   if (oldGroupPanes.length === 0) {
+    // Empty — spawn a new session there
     const oldTabBar = isInLeft
       ? document.getElementById('session-tabs-left')
       : document.getElementById('session-tabs-right')
@@ -189,6 +190,11 @@ export function moveToOtherGroup(sessionId) {
       container: currentGroup,
       tabBar: oldTabBar,
     })
+  } else {
+    // Still has tabs — activate the last one so the pane isn't blank
+    const lastPane = oldGroupPanes[oldGroupPanes.length - 1]
+    const lastId = lastPane.id.replace('pane-', '')
+    if (state.sessions[lastId]) window.activateSession(lastId)
   }
 }
 
