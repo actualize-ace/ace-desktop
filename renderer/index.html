@@ -790,8 +790,56 @@ initAtmosphere().then(() => initBreath())
     })
   </script>
 
-  <!-- Somatic intensity tooltip (body-level to escape titlebar backdrop-filter stacking context) -->
-  <div class="atm-tooltip" id="atm-tooltip"></div>
+  <!-- Intensity detail overlay + dropdown card -->
+  <div class="atm-detail-overlay" id="atm-detail-overlay"></div>
+  <div class="atm-detail-card" id="atm-detail-card">
+    <div class="atm-detail-header">
+      <div class="atm-detail-header-left">
+        <span class="atm-detail-feel" id="atm-detail-feel">Fresh</span>
+        <span class="atm-detail-pct" id="atm-detail-pct">0%</span>
+      </div>
+      <div class="atm-detail-header-right" id="atm-detail-summary">0 sessions &middot; 0m active</div>
+    </div>
+    <div class="atm-detail-accent" id="atm-detail-accent"></div>
+    <div class="atm-detail-breakdown">
+      <div class="atm-detail-row">
+        <span class="atm-detail-label">Day total</span>
+        <div class="atm-detail-minibar"><div class="atm-detail-minifill" id="atm-detail-day"></div></div>
+        <span class="atm-detail-weight">45%</span>
+      </div>
+      <div class="atm-detail-row">
+        <span class="atm-detail-label">Session depth</span>
+        <div class="atm-detail-minibar"><div class="atm-detail-minifill" id="atm-detail-session"></div></div>
+        <span class="atm-detail-weight">35%</span>
+      </div>
+      <div class="atm-detail-row">
+        <span class="atm-detail-label">Session count</span>
+        <div class="atm-detail-minibar"><div class="atm-detail-minifill" id="atm-detail-count"></div></div>
+        <span class="atm-detail-weight">20%</span>
+      </div>
+      <div class="atm-detail-row atm-detail-breath-row" id="atm-detail-breath-row">
+        <span class="atm-detail-label">Breath recovery</span>
+        <div class="atm-detail-minibar breath"><div class="atm-detail-minifill breath" id="atm-detail-breath"></div></div>
+        <span class="atm-detail-weight" id="atm-detail-breath-val">&minus;0%</span>
+      </div>
+    </div>
+    <div class="atm-detail-more-hint" id="atm-detail-more-hint">Click for more</div>
+    <div class="atm-detail-analysis" id="atm-detail-analysis">
+      <div class="atm-detail-loading" id="atm-detail-loading">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+      <div class="atm-detail-analysis-text" id="atm-detail-analysis-text"></div>
+      <div class="atm-detail-howlink">
+        <button class="atm-detail-howlink-toggle" id="atm-detail-howlink-toggle">How does this work?</button>
+        <div class="atm-detail-howlink-body" id="atm-detail-howlink-body">
+          Your day energy reflects how long you've been active, weighted by session depth and total time. Longer sessions carry more weight. Completing breath protocols lowers your intensity.
+        </div>
+      </div>
+    </div>
+    <div class="atm-detail-footer">
+      <button class="atm-detail-breathe-btn" id="atm-detail-breathe-btn">Breathe</button>
+    </div>
+  </div>
 
   <!-- Audio popover (body-level) -->
   <div class="atm-audio-popover" id="atm-audio-popover">
