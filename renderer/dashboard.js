@@ -61,6 +61,24 @@ async function loadDashboard() {
     rhythm:    data.getRhythm,
   }
 
+  // ─── Vault health banner ──────────────────────────────────
+  try {
+    const health = await window.ace.health?.check?.()
+    if (health && !health.ok && health.missing?.length) {
+      let bannerEl = document.getElementById('vault-health-banner')
+      if (!bannerEl) {
+        bannerEl = document.createElement('div')
+        bannerEl.id = 'vault-health-banner'
+        const grid = document.querySelector('.dashboard-grid') || document.querySelector('.widget-grid')
+        if (grid) grid.parentNode.insertBefore(bannerEl, grid)
+      }
+      renderHealthBanner(health, bannerEl)
+    } else {
+      const existing = document.getElementById('vault-health-banner')
+      if (existing) existing.remove()
+    }
+  } catch (_) { /* vault health is non-blocking */ }
+
   // Clear all widget containers first, then render only enabled ones
   for (const w of WIDGETS) {
     const container = document.getElementById(`widget-${w.id}`)
@@ -105,6 +123,44 @@ async function loadDashboard() {
     const greet = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
     const nameEl = document.getElementById('home-name')
     if (nameEl) nameEl.textContent = `Good ${greet}, ${userName}.`
+  }
+}
+
+function renderHealthBanner(health, el) {
+  const pageGroups = {}
+  for (const m of health.missing) {
+    const key = m.page || 'system'
+    if (!pageGroups[key]) pageGroups[key] = []
+    pageGroups[key].push(m)
+  }
+
+  const groupHtml = Object.entries(pageGroups).map(([page, items]) => {
+    const label = page === 'system' ? 'System' : page.charAt(0).toUpperCase() + page.slice(1)
+    const itemsHtml = items.map(i =>
+      `<span class="health-item health-${i.tier}">${i.path}</span>`
+    ).join('')
+    return `<div class="health-group"><strong>${label}</strong> ${itemsHtml}</div>`
+  }).join('')
+
+  el.innerHTML = `
+    <div class="vault-health-card">
+      <div class="health-header">
+        <span class="health-score">${health.score}%</span>
+        <span class="health-label">Vault Integrity</span>
+        <span class="health-count">${health.missing.length} item${health.missing.length === 1 ? '' : 's'} missing</span>
+        <button class="health-fix-all" onclick="window.__fixAllVault__()">Fix All</button>
+        <button class="health-dismiss" onclick="this.closest('.vault-health-card').remove()">\u00d7</button>
+      </div>
+      <div class="health-body">${groupHtml}</div>
+    </div>
+  `
+
+  window.__fixAllVault__ = async () => {
+    const btn = el.querySelector('.health-fix-all')
+    if (btn) { btn.textContent = 'Fixing...'; btn.disabled = true }
+    await window.ace.health.scaffoldAll(health.missing)
+    el.remove()
+    if (typeof loadDashboard === 'function') loadDashboard()
   }
 }
 

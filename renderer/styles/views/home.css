@@ -135,3 +135,57 @@
 .deal-amount { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-secondary); }
 .deal-due    { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--text-dim); margin-top: 1px; }
 .deal-due.overdue { color: var(--red); }
+
+/* Vault health banner */
+.vault-health-card {
+  background: rgba(196, 116, 116, 0.08);
+  border: 1px solid rgba(196, 116, 116, 0.25);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+.health-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.health-score {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--amber, #e0c878);
+}
+.health-label { opacity: 0.7; }
+.health-count { opacity: 0.5; flex: 1; }
+.health-fix-all {
+  background: rgba(109, 184, 143, 0.15);
+  color: var(--green, #6db88f);
+  border: 1px solid rgba(109, 184, 143, 0.3);
+  border-radius: 6px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.health-fix-all:hover { background: rgba(109, 184, 143, 0.25); }
+.health-dismiss {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.4;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 4px;
+}
+.health-body { display: flex; flex-wrap: wrap; gap: 8px; }
+.health-group { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.health-group strong { font-size: 11px; text-transform: uppercase; opacity: 0.5; margin-right: 4px; }
+.health-item {
+  background: rgba(255,255,255,0.05);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 11px;
+}
+.health-engine { border-left: 2px solid var(--red, #c47474); }
+.health-scaffolding { border-left: 2px solid var(--amber, #e0c878); }
