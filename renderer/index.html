@@ -25,9 +25,23 @@
   <link rel="stylesheet" href="styles/views/agents.css">
   <link rel="stylesheet" href="styles/atmosphere.css">
   <link rel="stylesheet" href="styles/views/breath.css">
+  <link rel="stylesheet" href="styles/command-bar.css">
 </head>
 <body>
 <div class="app-shell">
+
+  <!-- Cmd+K Command Bar -->
+  <div class="cmdk-overlay" id="cmdk-overlay">
+    <div class="cmdk-backdrop" id="cmdk-backdrop"></div>
+    <div class="cmdk-panel" role="dialog" aria-label="Command bar">
+      <div class="cmdk-input-wrap">
+        <span class="cmdk-icon">&#8984;</span>
+        <input class="cmdk-input" id="cmdk-input" placeholder="Type a command or view..." autocomplete="off" spellcheck="false">
+        <kbd class="cmdk-hint">ESC</kbd>
+      </div>
+      <div class="cmdk-results" id="cmdk-results" role="listbox"></div>
+    </div>
+  </div>
 
   <!-- Titlebar -->
   <div class="titlebar">
