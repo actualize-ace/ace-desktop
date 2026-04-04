@@ -3,10 +3,11 @@ import { state } from '../state.js'
 import { applyTheme, applyZoom } from '../modules/theme.js'
 import { toggleBuildMode, updateBuildModeUI } from '../modules/build-mode.js'
 import { fitActive, sendToActive } from '../modules/session-manager.js'
+import { ALL_COMMAND_NAMES } from '../modules/command-registry.js'
 
 let _settingsConfig = null
 
-const ALL_COMMANDS = ['/start','/brief','/pulse','/eod','/coach','/close','/prep','/triage','/weekly-review','/monthly-reflection','/edge','/regulate','/blind-spots','/audit-energy','/state','/followup','/pipeline','/revenue','/content','/emails','/intel','/sync','/commit','/release','/culturescan','/signal']
+const ALL_COMMANDS = ALL_COMMAND_NAMES
 const CMD_COLORS = [
   { name: 'Gold', css: 'var(--gold)' },
   { name: 'Green', css: 'var(--green)' },
