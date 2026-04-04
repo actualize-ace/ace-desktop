@@ -123,8 +123,8 @@ body.light .atm-detail-minibar.breath { background: rgba(60,160,110,0.08); }
 }
 .atm-detail-weight {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9px; color: var(--text-dim);
-  width: 30px; text-align: right; flex-shrink: 0;
+  font-size: 9px; color: var(--text-secondary, #b0a8c8);
+  min-width: 36px; text-align: right; flex-shrink: 0;
 }
 .atm-detail-breath-row { display: none; }
 .atm-detail-breath-row.visible { display: flex; }

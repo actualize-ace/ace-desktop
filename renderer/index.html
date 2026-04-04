@@ -803,19 +803,19 @@ initAtmosphere().then(() => initBreath())
     <div class="atm-detail-accent" id="atm-detail-accent"></div>
     <div class="atm-detail-breakdown">
       <div class="atm-detail-row">
-        <span class="atm-detail-label">Day total</span>
+        <span class="atm-detail-label">Time today</span>
         <div class="atm-detail-minibar"><div class="atm-detail-minifill" id="atm-detail-day"></div></div>
-        <span class="atm-detail-weight">45%</span>
+        <span class="atm-detail-weight" id="atm-detail-day-val">0m</span>
       </div>
       <div class="atm-detail-row">
-        <span class="atm-detail-label">Session depth</span>
+        <span class="atm-detail-label">This session</span>
         <div class="atm-detail-minibar"><div class="atm-detail-minifill" id="atm-detail-session"></div></div>
-        <span class="atm-detail-weight">35%</span>
+        <span class="atm-detail-weight" id="atm-detail-session-val">0m</span>
       </div>
       <div class="atm-detail-row">
-        <span class="atm-detail-label">Session count</span>
+        <span class="atm-detail-label">Sessions</span>
         <div class="atm-detail-minibar"><div class="atm-detail-minifill" id="atm-detail-count"></div></div>
-        <span class="atm-detail-weight">20%</span>
+        <span class="atm-detail-weight" id="atm-detail-count-val">0</span>
       </div>
       <div class="atm-detail-row atm-detail-breath-row" id="atm-detail-breath-row">
         <span class="atm-detail-label">Breath recovery</span>
@@ -823,7 +823,7 @@ initAtmosphere().then(() => initBreath())
         <span class="atm-detail-weight" id="atm-detail-breath-val">&minus;0%</span>
       </div>
     </div>
-    <div class="atm-detail-more-hint" id="atm-detail-more-hint">Click for more</div>
+    <div class="atm-detail-more-hint" id="atm-detail-more-hint">Read my state</div>
     <div class="atm-detail-analysis" id="atm-detail-analysis">
       <div class="atm-detail-loading" id="atm-detail-loading">
         <div class="dot"></div><div class="dot"></div><div class="dot"></div>

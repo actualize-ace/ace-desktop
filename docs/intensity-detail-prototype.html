@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACE — Intensity Detail Dropdown Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-app: #0a0b14;
+    --bg-titlebar: rgba(8,10,18,0.92);
+    --bg-card: #161828;
+    --border: rgba(140,120,255,0.12);
+    --text-primary: #e8e0f0;
+    --text-secondary: #b0a8c8;
+    --text-dim: rgba(180,170,210,0.4);
+    --glass-blur: blur(20px);
+  }
+
+  body {
+    background: var(--bg-app);
+    color: var(--text-primary);
+    font-family: 'Space Grotesk', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Simulated app content ── */
+  .app-content {
+    padding: 80px 40px 40px;
+    opacity: 0.4;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 2.2;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  .app-content .block {
+    height: 12px;
+    background: rgba(140,120,255,0.04);
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  .app-content .block:nth-child(2n) { width: 85%; }
+  .app-content .block:nth-child(3n) { width: 72%; }
+  .app-content .block:nth-child(5n) { width: 60%; }
+
+  /* ── Titlebar ── */
+  .titlebar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg-titlebar);
+    backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+  }
+
+  /* ── Intensity Bar (centered) ── */
+  .atm-intensity-wrap {
+    position: relative;
+    display: flex; align-items: center; gap: 5px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+  .atm-intensity-wrap:hover {
+    background: rgba(140,120,255,0.06);
+  }
+  .atm-intensity-icon {
+    opacity: 0.5;
+    flex-shrink: 0;
+    transition: color 0.8s, opacity 0.8s;
+  }
+  .atm-intensity-bar {
+    width: 160px; height: 8px;
+    border-radius: 4px;
+    background: rgba(140,120,255,0.08);
+    overflow: hidden;
+  }
+  .atm-intensity-fill {
+    height: 100%; width: 0%;
+    border-radius: 4px;
+    transition: width 0.8s ease, background 1.5s ease, box-shadow 1.5s ease;
+  }
+  .atm-intensity-glow {
+    position: absolute; inset: -4px -2px;
+    border-radius: 8px; filter: blur(6px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 1.5s ease, background 1.5s ease;
+  }
+
+  /* ── Overlay (pinned mode only) ── */
+  .atm-detail-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 9998;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .atm-detail-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* ── Detail Card ── */
+  .atm-detail-card {
+    position: fixed;
+    top: 46px;
+    left: 50%; transform: translateX(-50%) translateY(-8px);
+    width: 340px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    z-index: 9999;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(140,120,255,0.05);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .atm-detail-card.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Header */
+  .atm-detail-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .atm-detail-header-left {
+    display: flex; align-items: baseline; gap: 6px;
+  }
+  .atm-detail-feel {
+    font-size: 16px; font-weight: 600;
+    transition: color 1s ease;
+  }
+  .atm-detail-pct {
+    font-size: 13px; font-weight: 400;
+    opacity: 0.5;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .atm-detail-header-right {
+    font-size: 11px; color: var(--text-secondary);
+  }
+
+  /* Accent line */
+  .atm-detail-accent {
+    height: 2px; border-radius: 1px;
+    margin-bottom: 14px;
+    transition: background 1.5s ease;
+  }
+
+  /* Formula breakdown */
+  .atm-detail-breakdown {
+    display: flex; flex-direction: column; gap: 10px;
+    margin-bottom: 14px;
+  }
+  .atm-detail-row {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .atm-detail-label {
+    font-size: 11px; color: var(--text-secondary);
+    width: 92px; flex-shrink: 0;
+  }
+  .atm-detail-minibar {
+    flex: 1; height: 6px;
+    border-radius: 3px;
+    background: rgba(140,120,255,0.06);
+    overflow: hidden;
+  }
+  .atm-detail-minibar.breath {
+    background: rgba(80,200,140,0.06);
+  }
+  .atm-detail-minifill {
+    height: 100%; width: 0%;
+    border-radius: 3px;
+    transition: width 0.6s ease, background 1s ease;
+  }
+  .atm-detail-minifill.breath {
+    background: hsl(155, 55%, 48%);
+  }
+  .atm-detail-weight {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--text-secondary, #b0a8c8);
+    min-width: 36px; text-align: right; flex-shrink: 0;
+  }
+  .atm-detail-breath-row {
+    display: none;
+  }
+  .atm-detail-breath-row.visible {
+    display: flex;
+  }
+
+  /* ── Hover-only hint ── */
+  .atm-detail-more-hint {
+    font-size: 10px; color: var(--text-dim);
+    text-align: center;
+    opacity: 0.5;
+    padding-top: 2px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .atm-detail-more-hint:hover { opacity: 0.8; }
+  .atm-detail-card.pinned .atm-detail-more-hint { display: none; }
+
+  /* ── Pinned-only sections ── */
+  .atm-detail-analysis,
+  .atm-detail-footer {
+    display: none;
+  }
+  .atm-detail-card.pinned .atm-detail-analysis {
+    display: block;
+  }
+  .atm-detail-card.pinned .atm-detail-footer {
+    display: flex;
+  }
+
+  /* AI Analysis */
+  .atm-detail-analysis {
+    margin-bottom: 12px;
+    min-height: 40px;
+  }
+  .atm-detail-analysis-text {
+    font-size: 12px; color: var(--text-primary);
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+  }
+  .atm-detail-analysis-text .cursor {
+    display: inline-block;
+    width: 2px; height: 13px;
+    background: var(--text-secondary);
+    margin-left: 1px;
+    vertical-align: text-bottom;
+    animation: blink 0.8s step-end infinite;
+  }
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  /* Loading dots */
+  .atm-detail-loading {
+    display: flex; gap: 4px; padding: 8px 0;
+  }
+  .atm-detail-loading .dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    animation: loading-dot 1.2s ease-in-out infinite;
+  }
+  .atm-detail-loading .dot:nth-child(2) { animation-delay: 0.15s; }
+  .atm-detail-loading .dot:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes loading-dot {
+    0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1); }
+  }
+
+  /* How it works — small link under analysis */
+  .atm-detail-howlink {
+    display: none;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(140,120,255,0.06);
+  }
+  .atm-detail-card.pinned .atm-detail-howlink { display: block; }
+  .atm-detail-howlink-toggle {
+    background: none; border: none; padding: 0;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 10px; color: var(--text-dim);
+    cursor: pointer; opacity: 0.5;
+    transition: opacity 0.15s;
+  }
+  .atm-detail-howlink-toggle:hover { opacity: 0.8; }
+  .atm-detail-howlink-body {
+    display: none;
+    font-size: 10px; color: var(--text-dim);
+    line-height: 1.6;
+    margin-top: 6px;
+    opacity: 0.7;
+  }
+  .atm-detail-howlink-body.visible { display: block; }
+
+  /* Footer */
+  .atm-detail-footer {
+    justify-content: flex-end;
+  }
+  .atm-detail-breathe-btn {
+    background: none;
+    border: 1px solid rgba(140,120,255,0.2);
+    border-radius: 6px;
+    padding: 5px 14px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+  .atm-detail-breathe-btn:hover {
+    border-color: rgba(140,120,255,0.4);
+    color: var(--text-primary);
+    background: rgba(140,120,255,0.06);
+  }
+
+  /* ── Sim controls ── */
+  .sim-panel {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(8,10,18,0.95);
+    backdrop-filter: var(--glass-blur);
+    border-top: 1px solid var(--border);
+    padding: 16px 28px;
+    z-index: 200;
+    display: flex; align-items: center; gap: 24px;
+  }
+  .sim-panel label {
+    font-size: 11px; color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+  }
+  .sim-panel input[type="range"] {
+    flex: 1; max-width: 180px;
+    accent-color: hsl(155, 55%, 48%);
+    height: 4px;
+  }
+  .sim-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--text-dim);
+    width: 36px;
+  }
+  .sim-group {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sim-note {
+    font-size: 10px; color: var(--text-dim);
+    margin-left: auto;
+    font-style: italic;
+  }
+
+  /* Pulse animations */
+  @keyframes atm-bar-pulse-soft {
+    0%, 100% { filter: brightness(1); }
+    50%      { filter: brightness(1.15); }
+  }
+  @keyframes atm-bar-pulse {
+    0%, 100% { filter: brightness(1); }
+    50%      { filter: brightness(1.25) drop-shadow(0 0 3px currentColor); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Titlebar -->
+<div class="titlebar">
+  <div class="atm-intensity-wrap" id="atm-intensity-wrap">
+    <svg class="atm-intensity-icon" id="atm-icon" width="13" height="11" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,8 9,3 12,13 15,6 18,8 22,8"/></svg>
+    <div class="atm-intensity-glow" id="atm-intensity-glow"></div>
+    <div class="atm-intensity-bar">
+      <div class="atm-intensity-fill" id="atm-intensity-fill"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay -->
+<div class="atm-detail-overlay" id="atm-detail-overlay"></div>
+
+<!-- Detail Card -->
+<div class="atm-detail-card" id="atm-detail-card">
+  <div class="atm-detail-header">
+    <div class="atm-detail-header-left">
+      <span class="atm-detail-feel" id="atm-detail-feel">Fresh</span>
+      <span class="atm-detail-pct" id="atm-detail-pct">0%</span>
+    </div>
+    <div class="atm-detail-header-right" id="atm-detail-summary">0 sessions &middot; 0m active</div>
+  </div>
+  <div class="atm-detail-accent" id="atm-detail-accent"></div>
+  <div class="atm-detail-breakdown">
+    <div class="atm-detail-row">
+      <span class="atm-detail-label">Time today</span>
+      <div class="atm-detail-minibar"><div class="atm-detail-minifill" id="atm-detail-day"></div></div>
+      <span class="atm-detail-weight" id="atm-detail-day-val">0m</span>
+    </div>
+    <div class="atm-detail-row">
+      <span class="atm-detail-label">This session</span>
+      <div class="atm-detail-minibar"><div class="atm-detail-minifill" id="atm-detail-session"></div></div>
+      <span class="atm-detail-weight" id="atm-detail-session-val">0m</span>
+    </div>
+    <div class="atm-detail-row">
+      <span class="atm-detail-label">Sessions</span>
+      <div class="atm-detail-minibar"><div class="atm-detail-minifill" id="atm-detail-count"></div></div>
+      <span class="atm-detail-weight" id="atm-detail-count-val">0</span>
+    </div>
+    <div class="atm-detail-row atm-detail-breath-row" id="atm-detail-breath-row">
+      <span class="atm-detail-label">Breath recovery</span>
+      <div class="atm-detail-minibar breath"><div class="atm-detail-minifill breath" id="atm-detail-breath"></div></div>
+      <span class="atm-detail-weight" id="atm-detail-breath-val">&minus;0%</span>
+    </div>
+  </div>
+  <div class="atm-detail-more-hint" id="atm-detail-more-hint">Read my state</div>
+  <div class="atm-detail-analysis" id="atm-detail-analysis">
+    <div class="atm-detail-loading" id="atm-detail-loading">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+    <div class="atm-detail-analysis-text" id="atm-detail-analysis-text"></div>
+    <div class="atm-detail-howlink">
+      <button class="atm-detail-howlink-toggle" id="atm-detail-howlink-toggle">How does this work?</button>
+      <div class="atm-detail-howlink-body" id="atm-detail-howlink-body">
+        Your day energy reflects how long you've been active, weighted by session depth and total time. Longer sessions carry more weight. Completing breath protocols lowers your intensity.
+      </div>
+    </div>
+  </div>
+  <div class="atm-detail-footer">
+    <button class="atm-detail-breathe-btn" id="atm-detail-breathe-btn">Breathe</button>
+  </div>
+</div>
+
+<!-- Simulated app content -->
+<div class="app-content">
+  <div class="block" style="width:90%"></div>
+  <div class="block"></div>
+  <div class="block" style="width:78%"></div>
+  <div class="block" style="width:65%"></div>
+  <div class="block"></div>
+  <div class="block" style="width:55%"></div>
+  <div class="block" style="width:82%"></div>
+  <div class="block"></div>
+  <div class="block" style="width:70%"></div>
+  <div class="block" style="width:88%"></div>
+  <div class="block" style="width:50%"></div>
+  <div class="block"></div>
+  <div class="block" style="width:75%"></div>
+  <div class="block" style="width:60%"></div>
+  <div class="block"></div>
+</div>
+
+<!-- Simulation controls -->
+<div class="sim-panel">
+  <div class="sim-group">
+    <label>Day total (min)</label>
+    <input type="range" id="sim-day" min="0" max="360" value="135">
+    <span class="sim-val" id="sim-day-val">135</span>
+  </div>
+  <div class="sim-group">
+    <label>Session (min)</label>
+    <input type="range" id="sim-session" min="0" max="60" value="28">
+    <span class="sim-val" id="sim-session-val">28</span>
+  </div>
+  <div class="sim-group">
+    <label>Sessions</label>
+    <input type="range" id="sim-count" min="0" max="6" value="3">
+    <span class="sim-val" id="sim-count-val">3</span>
+  </div>
+  <div class="sim-group">
+    <label>Breaths</label>
+    <input type="range" id="sim-breath" min="0" max="3" value="0">
+    <span class="sim-val" id="sim-breath-val">0</span>
+  </div>
+  <span class="sim-note">Drag sliders to simulate different states &middot; Hover bar for glance &middot; Click to pin</span>
+</div>
+
+<script>
+  // ── State ──
+  const sim = {
+    totalActiveMin: 135,
+    sessionActiveMin: 28,
+    sessions: 3,
+    breaths: 0
+  }
+
+  let detailOpen = false
+  let detailPinned = false
+  let hoverTimeout = null
+
+  const BREATH_REDUCTION = 0.05
+  const BREATH_REDUCTION_CAP = 0.15
+
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)) }
+
+  // ── Algorithm (matches atmosphere.js exactly) ──
+  function computeIntensity() {
+    const sessionCount = sim.sessions
+    const baseLoad =
+      (sim.totalActiveMin / 360) * 0.45 +
+      (Math.min(sim.sessionActiveMin, 60) / 60) * 0.35 +
+      (Math.min(sessionCount, 6) / 6) * 0.20
+    const breathReduction = Math.min(sim.breaths * BREATH_REDUCTION, BREATH_REDUCTION_CAP)
+    return clamp(baseLoad - breathReduction, 0, 1)
+  }
+
+  function intensityColor(t) {
+    if (t < 0.5) {
+      const p = t / 0.5
+      return { h: 155 - p * 120, s: 55 + p * 10, l: 48 + p * 4 }
+    }
+    const p = (t - 0.5) / 0.5
+    return { h: 35 - p * 50, s: 65 - p * 5, l: 52 + p * 3 }
+  }
+
+  // ── Render ──
+  function render() {
+    const intensity = computeIntensity()
+    const c = intensityColor(intensity)
+    const hsl = `hsl(${c.h}, ${c.s}%, ${c.l}%)`
+    const hsla = (a) => `hsla(${c.h}, ${c.s}%, ${c.l}%, ${a})`
+    const pct = Math.round(intensity * 100)
+    const feel = pct < 20 ? 'Fresh' : pct < 45 ? 'Active' : pct < 70 ? 'Warm' : 'Heavy'
+
+    // Main bar
+    const bar = document.getElementById('atm-intensity-fill')
+    bar.style.width = (intensity * 100) + '%'
+    bar.style.background = `linear-gradient(90deg, ${hsla(0.6)}, ${hsl})`
+    bar.style.boxShadow = `0 0 ${4 + intensity * 8}px ${hsla(0.3)}`
+
+    // Glow
+    const glow = document.getElementById('atm-intensity-glow')
+    glow.style.background = hsl
+    glow.style.opacity = intensity > 0.5 ? 0.08 + (intensity - 0.5) * 0.2 : intensity * 0.08
+
+    // Icon
+    const icon = document.getElementById('atm-icon')
+    icon.style.color = intensity > 0.05 ? hsl : ''
+    icon.style.opacity = intensity > 0.05 ? 0.6 + intensity * 0.3 : 0.4
+
+    // Pulse
+    const wrap = document.getElementById('atm-intensity-wrap')
+    if (intensity >= 0.9) {
+      wrap.style.animation = 'atm-bar-pulse 1.8s ease-in-out infinite'
+    } else if (intensity >= 0.75) {
+      wrap.style.animation = 'atm-bar-pulse-soft 3s ease-in-out infinite'
+    } else {
+      wrap.style.animation = ''
+    }
+
+    // ── Detail card ──
+    const totalMin = sim.totalActiveMin
+    const h = Math.floor(totalMin / 60)
+    const m = totalMin % 60
+    const timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`
+
+    document.getElementById('atm-detail-feel').textContent = feel
+    document.getElementById('atm-detail-feel').style.color = hsl
+    document.getElementById('atm-detail-pct').textContent = pct + '%'
+    document.getElementById('atm-detail-summary').textContent =
+      `${sim.sessions} session${sim.sessions !== 1 ? 's' : ''} \u00b7 ${timeStr} active`
+
+    document.getElementById('atm-detail-accent').style.background =
+      `linear-gradient(90deg, ${hsl}, transparent)`
+
+    // Mini bars
+    const dayRaw = sim.totalActiveMin / 360
+    const sessionRaw = Math.min(sim.sessionActiveMin, 60) / 60
+    const countRaw = Math.min(sim.sessions, 6) / 6
+
+    const dayBar = document.getElementById('atm-detail-day')
+    dayBar.style.width = (clamp(dayRaw, 0, 1) * 100) + '%'
+    dayBar.style.background = hsl
+
+    const sessionBar = document.getElementById('atm-detail-session')
+    sessionBar.style.width = (clamp(sessionRaw, 0, 1) * 100) + '%'
+    sessionBar.style.background = hsl
+
+    const countBar = document.getElementById('atm-detail-count')
+    countBar.style.width = (clamp(countRaw, 0, 1) * 100) + '%'
+    countBar.style.background = hsl
+
+    // Populate actual values next to mini bars
+    const dayValEl = document.getElementById('atm-detail-day-val')
+    const sessionValEl = document.getElementById('atm-detail-session-val')
+    const countValEl = document.getElementById('atm-detail-count-val')
+    if (dayValEl) {
+      const dh = Math.floor(sim.totalActiveMin / 60)
+      const dm = sim.totalActiveMin % 60
+      dayValEl.textContent = dh > 0 ? `${dh}h ${dm}m` : `${dm}m`
+    }
+    if (sessionValEl) sessionValEl.textContent = `${sim.sessionActiveMin}m`
+    if (countValEl) countValEl.textContent = `${sim.sessions}`
+
+    // Breath row
+    const breathReduction = Math.min(sim.breaths * BREATH_REDUCTION, BREATH_REDUCTION_CAP)
+    const breathRow = document.getElementById('atm-detail-breath-row')
+    if (breathReduction > 0) {
+      breathRow.classList.add('visible')
+      document.getElementById('atm-detail-breath').style.width =
+        (breathReduction / BREATH_REDUCTION_CAP * 100) + '%'
+      document.getElementById('atm-detail-breath-val').textContent =
+        '\u2212' + Math.round(breathReduction * 100) + '%'
+    } else {
+      breathRow.classList.remove('visible')
+    }
+
+    // Breathe button color
+    document.getElementById('atm-detail-breathe-btn').style.borderColor =
+      `hsla(${c.h}, ${c.s}%, ${c.l}%, 0.25)`
+  }
+
+  // ── Interaction ──
+  function openCard() {
+    if (detailOpen) return
+    detailOpen = true
+    render()
+    const card = document.getElementById('atm-detail-card')
+    card.offsetHeight
+    card.classList.add('visible')
+  }
+
+  function pinCard() {
+    detailPinned = true
+    document.getElementById('atm-detail-overlay').classList.add('visible')
+    document.getElementById('atm-detail-card').classList.add('pinned')
+    runAnalysis()
+  }
+
+  function closeCard() {
+    detailOpen = false
+    detailPinned = false
+    document.getElementById('atm-detail-overlay').classList.remove('visible')
+    const card = document.getElementById('atm-detail-card')
+    card.classList.remove('visible', 'pinned')
+    // Reset analysis
+    document.getElementById('atm-detail-analysis-text').innerHTML = ''
+    document.getElementById('atm-detail-loading').style.display = 'flex'
+    document.getElementById('atm-detail-howlink-body').classList.remove('visible')
+    document.getElementById('atm-detail-howlink-toggle').textContent = 'How does this work?'
+    if (streamTimeout) { clearTimeout(streamTimeout); streamTimeout = null }
+  }
+
+  // ── AI Analysis (simulated streaming) ──
+  let streamTimeout = null
+
+  function generateAnalysis() {
+    const intensity = computeIntensity()
+    const pct = Math.round(intensity * 100)
+    const dayRaw = sim.totalActiveMin / 360
+    const sessionRaw = Math.min(sim.sessionActiveMin, 60) / 60
+    const countRaw = Math.min(sim.sessions, 6) / 6
+    const breathReduction = Math.min(sim.breaths * BREATH_REDUCTION, BREATH_REDUCTION_CAP)
+
+    // Find the dominant driver
+    const drivers = [
+      { name: 'day total', val: dayRaw * 0.45 },
+      { name: 'session depth', val: sessionRaw * 0.35 },
+      { name: 'session count', val: countRaw * 0.20 }
+    ].sort((a, b) => b.val - a.val)
+    const top = drivers[0]
+
+    let analysis = ''
+
+    // Opening line — state-aware
+    if (pct < 15) {
+      analysis += "You're starting fresh. Your system is rested and ready for deep work. "
+      analysis += "This is your highest-leverage window — use it for the thing that matters most today."
+    } else if (pct < 35) {
+      analysis += `You're in a good rhythm. `
+      if (top.name === 'session depth') {
+        analysis += `Your current session (${sim.sessionActiveMin}m) is the primary driver right now. `
+        analysis += `You've got runway — this is the zone where deep focus happens. No need to interrupt it.`
+      } else {
+        analysis += `${sim.sessions} session${sim.sessions !== 1 ? 's' : ''} across ${sim.totalActiveMin} minutes — `
+        analysis += `you're building momentum without burning through your reserves.`
+      }
+    } else if (pct < 60) {
+      analysis += `Your energy is warm — ${top.name} is carrying most of the load. `
+      if (top.name === 'session depth') {
+        analysis += `You've been in this session for ${sim.sessionActiveMin} minutes without a break. `
+        analysis += `Your focus is still sharp, but a 5-minute pause soon would extend your afternoon capacity.`
+      } else if (top.name === 'day total') {
+        const hrs = Math.floor(sim.totalActiveMin / 60)
+        analysis += `${hrs}+ hours of active time today. `
+        analysis += `The depth is sustainable, but consider whether your next session needs to be creative or administrative — save the harder thinking for earlier in the window.`
+      } else {
+        analysis += `${sim.sessions} sessions is a lot of context-switching. `
+        analysis += `Each transition costs energy. If you can, make your next session longer and uninterrupted.`
+      }
+    } else if (pct < 80) {
+      analysis += `You're running heavy. `
+      if (top.name === 'session depth') {
+        analysis += `${sim.sessionActiveMin} minutes in a single session is a deep pull — your body is likely holding tension you're not noticing. `
+        analysis += `A breath protocol would drop your intensity meaningfully right now.`
+      } else if (top.name === 'day total') {
+        analysis += `${Math.floor(sim.totalActiveMin / 60)} hours of cumulative work is doing most of the damage. `
+        analysis += `You've been at this a while. Whatever you do next, make it count — your remaining capacity is finite today.`
+      } else {
+        analysis += `${sim.sessions} sessions means your attention has been fragmented across too many contexts. `
+        analysis += `Close something. The next session should be a single thread.`
+      }
+    } else {
+      analysis += `You're in the overextended zone. `
+      analysis += `${Math.floor(sim.totalActiveMin / 60)} hours, ${sim.sessions} sessions, ${sim.sessionActiveMin}m in this one. `
+      analysis += `Your system is telling you to stop. Not pause — stop. `
+      analysis += `Whatever isn't done today will be done better tomorrow with a regulated body.`
+    }
+
+    // Breath mention
+    if (breathReduction > 0) {
+      analysis += ` Your ${sim.breaths} breath protocol${sim.breaths > 1 ? 's' : ''} bought you back ${Math.round(breathReduction * 100)}% — that's your regulation working.`
+    } else if (pct > 40) {
+      analysis += ` You haven't done any breath work today — even one protocol would take the edge off.`
+    }
+
+    return analysis
+  }
+
+  function runAnalysis() {
+    const loading = document.getElementById('atm-detail-loading')
+    const textEl = document.getElementById('atm-detail-analysis-text')
+    textEl.innerHTML = ''
+    loading.style.display = 'flex'
+
+    const analysis = generateAnalysis()
+    let i = 0
+
+    // Simulate loading delay (like waiting for AI)
+    setTimeout(() => {
+      loading.style.display = 'none'
+
+      // Stream characters
+      function streamNext() {
+        if (i >= analysis.length || !detailPinned) return
+        // Stream in chunks of 2-4 chars for natural feel
+        const chunk = Math.min(Math.floor(Math.random() * 3) + 2, analysis.length - i)
+        textEl.innerHTML = analysis.slice(0, i + chunk) + '<span class="cursor"></span>'
+        i += chunk
+        if (i >= analysis.length) {
+          textEl.innerHTML = analysis // remove cursor at end
+        } else {
+          streamTimeout = setTimeout(streamNext, 18 + Math.random() * 12)
+        }
+      }
+      streamNext()
+    }, 600) // initial "thinking" delay
+  }
+
+  function scheduleClose() {
+    if (detailPinned) return
+    hoverTimeout = setTimeout(closeCard, 150)
+  }
+  function cancelClose() {
+    if (hoverTimeout) { clearTimeout(hoverTimeout); hoverTimeout = null }
+  }
+
+  // Wire hover
+  const wrap = document.getElementById('atm-intensity-wrap')
+  const card = document.getElementById('atm-detail-card')
+  const overlay = document.getElementById('atm-detail-overlay')
+
+  wrap.addEventListener('mouseenter', () => { cancelClose(); openCard() })
+  wrap.addEventListener('mouseleave', scheduleClose)
+  wrap.addEventListener('click', () => {
+    if (detailPinned) { closeCard() }
+    else { if (!detailOpen) openCard(); pinCard() }
+  })
+
+  card.addEventListener('mouseenter', cancelClose)
+  card.addEventListener('mouseleave', scheduleClose)
+
+  overlay.addEventListener('click', closeCard)
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && detailOpen) closeCard()
+  })
+
+  // How it works toggle (small link under analysis)
+  document.getElementById('atm-detail-howlink-toggle').addEventListener('click', () => {
+    const body = document.getElementById('atm-detail-howlink-body')
+    const toggle = document.getElementById('atm-detail-howlink-toggle')
+    body.classList.toggle('visible')
+    toggle.textContent = body.classList.contains('visible') ? 'Got it' : 'How does this work?'
+  })
+
+  // "Click for more" hint also pins
+  document.getElementById('atm-detail-more-hint').addEventListener('click', () => {
+    if (!detailPinned) pinCard()
+  })
+
+  // Breathe button
+  document.getElementById('atm-detail-breathe-btn').addEventListener('click', () => {
+    closeCard()
+    // In real app this navigates to breath view
+  })
+
+  // ── Sim sliders ──
+  document.getElementById('sim-day').addEventListener('input', (e) => {
+    sim.totalActiveMin = +e.target.value
+    document.getElementById('sim-day-val').textContent = e.target.value
+    render()
+  })
+  document.getElementById('sim-session').addEventListener('input', (e) => {
+    sim.sessionActiveMin = +e.target.value
+    document.getElementById('sim-session-val').textContent = e.target.value
+    render()
+  })
+  document.getElementById('sim-count').addEventListener('input', (e) => {
+    sim.sessions = +e.target.value
+    document.getElementById('sim-count-val').textContent = e.target.value
+    render()
+  })
+  document.getElementById('sim-breath').addEventListener('input', (e) => {
+    sim.breaths = +e.target.value
+    document.getElementById('sim-breath-val').textContent = e.target.value
+    render()
+  })
+
+  // Initial render
+  render()
+</script>
+</body>
+</html>

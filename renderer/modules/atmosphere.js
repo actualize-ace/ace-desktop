@@ -404,6 +404,18 @@ function renderDetailCard() {
   if (sessionBar) { sessionBar.style.width = (clamp(sessionRaw, 0, 1) * 100) + '%'; sessionBar.style.background = hsl }
   if (countBar) { countBar.style.width = (clamp(countRaw, 0, 1) * 100) + '%'; countBar.style.background = hsl }
 
+  // Populate actual values next to mini bars
+  const dayValEl = document.getElementById('atm-detail-day-val')
+  const sessionValEl = document.getElementById('atm-detail-session-val')
+  const countValEl = document.getElementById('atm-detail-count-val')
+  if (dayValEl) {
+    const dh = Math.floor(a.totalActiveMin / 60)
+    const dm = a.totalActiveMin % 60
+    dayValEl.textContent = dh > 0 ? `${dh}h ${dm}m` : `${dm}m`
+  }
+  if (sessionValEl) sessionValEl.textContent = `${a.sessionActiveMin}m`
+  if (countValEl) countValEl.textContent = `${sessionCount}`
+
   const breathRow = document.getElementById('atm-detail-breath-row')
   const breathBar = document.getElementById('atm-detail-breath')
   const breathVal = document.getElementById('atm-detail-breath-val')
