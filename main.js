@@ -4,6 +4,16 @@ const fs = require('fs')
 const { execSync, spawn } = require('child_process')
 const ch = require('./src/ipc-channels')
 
+// ─── Global Error Handlers ───────────────────────────────────────────────────
+
+process.on('uncaughtException', (err) => {
+  console.error('[main] uncaughtException:', err)
+})
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[main] unhandledRejection:', reason)
+})
+
 // ─── Single Instance Lock ─────────────────────────────────────────────────────
 
 const gotLock = app.requestSingleInstanceLock()
@@ -284,21 +294,28 @@ ipcMain.handle(ch.SAVE_LAYOUT, (_, layout) => {
 
 // ─── Vault IPC Handlers ───────────────────────────────────────────────────────
 
+function resolveInsideVault(targetPath) {
+  const realVault = fs.realpathSync(global.VAULT_PATH)
+  const realTarget = fs.realpathSync(path.resolve(targetPath))
+  if (!realTarget.startsWith(realVault + path.sep) && realTarget !== realVault) return null
+  return realTarget
+}
+
 ipcMain.handle(ch.VAULT_LIST_DIR, (_, dirPath) => {
-  const resolved = path.resolve(dirPath || global.VAULT_PATH)
-  if (!resolved.startsWith(global.VAULT_PATH)) return { error: 'Access denied: path outside vault' }
+  const resolved = resolveInsideVault(dirPath || global.VAULT_PATH)
+  if (!resolved) return { error: 'Access denied: path outside vault' }
   try { return require('./src/vault-reader').listDir(resolved) } catch (e) { return { error: e.message } }
 })
 
 ipcMain.handle(ch.VAULT_READ_FILE, (_, filePath) => {
-  const resolved = path.resolve(filePath)
-  if (!resolved.startsWith(global.VAULT_PATH)) return { error: 'Access denied: path outside vault' }
+  const resolved = resolveInsideVault(filePath)
+  if (!resolved) return { error: 'Access denied: path outside vault' }
   try { return fs.readFileSync(resolved, 'utf8') } catch (e) { return { error: e.message } }
 })
 
 ipcMain.handle(ch.VAULT_WRITE_FILE, (_, filePath, content) => {
-  const resolved = path.resolve(filePath)
-  if (!resolved.startsWith(global.VAULT_PATH)) return { error: 'Access denied: path outside vault' }
+  const resolved = resolveInsideVault(filePath)
+  if (!resolved) return { error: 'Access denied: path outside vault' }
   try { fs.writeFileSync(resolved, content, 'utf8'); return { ok: true } }
   catch (e) { return { error: e.message } }
 })

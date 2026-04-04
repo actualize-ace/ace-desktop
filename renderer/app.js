@@ -2,6 +2,14 @@
 // Entry point — imports state and bridges it to the inline script during migration.
 // This file will grow as modules are extracted from the inline script.
 
+window.onerror = (msg, source, line, col, err) => {
+  console.error(`[renderer] error: ${msg} (${source}:${line}:${col})`, err)
+}
+
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('[renderer] unhandledRejection:', e.reason)
+})
+
 import { state } from './state.js'
 
 // Bridge: expose state to the inline script during migration.
