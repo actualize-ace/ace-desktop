@@ -12,6 +12,8 @@ export default {
 
   render(data, el) {
     const deals = Array.isArray(data) ? data : []
+    if (!deals.length) { el.innerHTML = ''; el.style.display = 'none'; return }
+    el.style.display = ''
     const total = deals.reduce((s, d) => s + (d.amount || 0), 0)
     const fmtMoney = n => n >= 1000 ? `$${Math.round(n/1000)}K` : `$${Math.round(n)}`
     const today = new Date(); today.setHours(0,0,0,0)
