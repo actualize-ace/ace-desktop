@@ -312,22 +312,114 @@ function renderIntensityBar() {
     }
   }
 
-  // Tooltip
-  const tooltip = document.getElementById('atm-tooltip')
-  if (tooltip && wrap) {
-    const a = state.atmosphere
-    const sessionCount = a.completedSessions + (a.activityState !== 'ended' ? 1 : 0)
-    const totalMin = a.totalActiveMin
-    const h = Math.floor(totalMin / 60)
-    const m = totalMin % 60
-    const timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`
-    const pct = Math.round(intensity * 100)
-    const feel = pct < 20 ? 'Fresh' : pct < 45 ? 'Active' : pct < 70 ? 'Warm' : 'Heavy'
-    tooltip.innerHTML = `<strong>Day energy: ${feel}</strong><br>${sessionCount} session${sessionCount !== 1 ? 's' : ''} · ${timeStr} active`
-    // Position fixed tooltip under the bar
-    const rect = wrap.getBoundingClientRect()
-    tooltip.style.right = (window.innerWidth - rect.right) + 'px'
+  renderDetailCard()
+}
+
+// ── Intensity Detail Card ──
+let detailOpen = false
+let detailPinned = false
+let hoverTimeout = null
+let streamTimeout = null
+
+function openDetailCard() {
+  if (detailOpen) return
+  detailOpen = true
+  renderDetailCard()
+  const card = document.getElementById('atm-detail-card')
+  if (!card) return
+  card.offsetHeight
+  card.classList.add('visible')
+}
+
+function pinDetailCard() {
+  detailPinned = true
+  const overlay = document.getElementById('atm-detail-overlay')
+  const card = document.getElementById('atm-detail-card')
+  if (overlay) overlay.classList.add('visible')
+  if (card) card.classList.add('pinned')
+  runAnalysis()
+}
+
+function closeDetailCard() {
+  detailOpen = false
+  detailPinned = false
+  const overlay = document.getElementById('atm-detail-overlay')
+  const card = document.getElementById('atm-detail-card')
+  if (overlay) overlay.classList.remove('visible')
+  if (card) card.classList.remove('visible', 'pinned')
+  const textEl = document.getElementById('atm-detail-analysis-text')
+  const loading = document.getElementById('atm-detail-loading')
+  const howBody = document.getElementById('atm-detail-howlink-body')
+  const howToggle = document.getElementById('atm-detail-howlink-toggle')
+  if (textEl) textEl.innerHTML = ''
+  if (loading) loading.style.display = 'flex'
+  if (howBody) howBody.classList.remove('visible')
+  if (howToggle) howToggle.textContent = 'How does this work?'
+  if (streamTimeout) { clearTimeout(streamTimeout); streamTimeout = null }
+}
+
+function scheduleClose() {
+  if (detailPinned) return
+  hoverTimeout = setTimeout(closeDetailCard, 150)
+}
+
+function cancelClose() {
+  if (hoverTimeout) { clearTimeout(hoverTimeout); hoverTimeout = null }
+}
+
+function renderDetailCard() {
+  if (!detailOpen) return
+  const a = state.atmosphere
+  const { intensity } = a
+  const c = intensityColor(intensity)
+  const hsl = `hsl(${c.h}, ${c.s}%, ${c.l}%)`
+  const pct = Math.round(intensity * 100)
+  const feel = pct < 20 ? 'Fresh' : pct < 45 ? 'Active' : pct < 70 ? 'Warm' : 'Heavy'
+
+  const sessionCount = a.completedSessions + (a.activityState !== 'ended' ? 1 : 0)
+  const totalMin = a.totalActiveMin
+  const h = Math.floor(totalMin / 60)
+  const m = totalMin % 60
+  const timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`
+
+  const feelEl = document.getElementById('atm-detail-feel')
+  const pctEl = document.getElementById('atm-detail-pct')
+  const summaryEl = document.getElementById('atm-detail-summary')
+  if (feelEl) { feelEl.textContent = feel; feelEl.style.color = hsl }
+  if (pctEl) pctEl.textContent = pct + '%'
+  if (summaryEl) summaryEl.textContent = `${sessionCount} session${sessionCount !== 1 ? 's' : ''} \u00b7 ${timeStr} active`
+
+  const accent = document.getElementById('atm-detail-accent')
+  if (accent) accent.style.background = `linear-gradient(90deg, ${hsl}, transparent)`
+
+  const dayRaw = a.totalActiveMin / 360
+  const sessionRaw = Math.min(a.sessionActiveMin, 60) / 60
+  const countRaw = Math.min(sessionCount, 6) / 6
+
+  const dayBar = document.getElementById('atm-detail-day')
+  const sessionBar = document.getElementById('atm-detail-session')
+  const countBar = document.getElementById('atm-detail-count')
+
+  if (dayBar) { dayBar.style.width = (clamp(dayRaw, 0, 1) * 100) + '%'; dayBar.style.background = hsl }
+  if (sessionBar) { sessionBar.style.width = (clamp(sessionRaw, 0, 1) * 100) + '%'; sessionBar.style.background = hsl }
+  if (countBar) { countBar.style.width = (clamp(countRaw, 0, 1) * 100) + '%'; countBar.style.background = hsl }
+
+  const breathRow = document.getElementById('atm-detail-breath-row')
+  const breathBar = document.getElementById('atm-detail-breath')
+  const breathVal = document.getElementById('atm-detail-breath-val')
+  const breathReduction = Math.min(a.completedProtocols * BREATH_REDUCTION, BREATH_REDUCTION_CAP)
+  if (breathRow) {
+    if (breathReduction > 0) {
+      breathRow.classList.add('visible')
+      if (breathBar) breathBar.style.width = (breathReduction / BREATH_REDUCTION_CAP * 100) + '%'
+      if (breathVal) breathVal.textContent = '\u2212' + Math.round(breathReduction * 100) + '%'
+    } else {
+      breathRow.classList.remove('visible')
+    }
   }
+
+  const breatheBtn = document.getElementById('atm-detail-breathe-btn')
+  if (breatheBtn) breatheBtn.style.borderColor = `hsla(${c.h}, ${c.s}%, ${c.l}%, 0.25)`
 }
 
 // ── Somatic Bar Nudge ──
@@ -745,18 +837,56 @@ export async function initAtmosphere() {
     })
   }
 
-  // Wire tooltip hover (tooltip is body-level, not a CSS child)
+  // Wire detail card — hover to open, click to pin
   const wrap = document.getElementById('atm-intensity-wrap')
-  const tooltip = document.getElementById('atm-tooltip')
-  if (wrap && tooltip) {
+  if (wrap) {
+    wrap.style.cursor = 'pointer'
     wrap.addEventListener('mouseenter', () => {
-      const rect = wrap.getBoundingClientRect()
-      tooltip.style.top = (rect.bottom + 6) + 'px'
-      tooltip.style.right = (window.innerWidth - rect.right) + 'px'
-      tooltip.classList.add('visible')
+      cancelClose()
+      if (!detailOpen) openDetailCard()
     })
-    wrap.addEventListener('mouseleave', () => {
-      tooltip.classList.remove('visible')
+    wrap.addEventListener('mouseleave', scheduleClose)
+    wrap.addEventListener('click', () => {
+      if (detailPinned) { closeDetailCard() }
+      else { if (!detailOpen) openDetailCard(); pinDetailCard() }
+    })
+  }
+  const detailCard = document.getElementById('atm-detail-card')
+  const detailOverlay = document.getElementById('atm-detail-overlay')
+  if (detailCard) {
+    detailCard.addEventListener('mouseenter', cancelClose)
+    detailCard.addEventListener('mouseleave', scheduleClose)
+  }
+  if (detailOverlay) {
+    detailOverlay.addEventListener('click', closeDetailCard)
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && detailOpen) closeDetailCard()
+  })
+
+  const moreHint = document.getElementById('atm-detail-more-hint')
+  if (moreHint) {
+    moreHint.addEventListener('click', () => {
+      if (!detailPinned) pinDetailCard()
+    })
+  }
+
+  const howToggle = document.getElementById('atm-detail-howlink-toggle')
+  const howBody = document.getElementById('atm-detail-howlink-body')
+  if (howToggle && howBody) {
+    howToggle.addEventListener('click', () => {
+      howBody.classList.toggle('visible')
+      howToggle.textContent = howBody.classList.contains('visible') ? 'Got it' : 'How does this work?'
+    })
+  }
+
+  const breatheBtn = document.getElementById('atm-detail-breathe-btn')
+  if (breatheBtn) {
+    breatheBtn.addEventListener('click', () => {
+      closeDetailCard()
+      const breathNav = document.querySelector('[data-view="breath"]')
+      if (breathNav) breathNav.click()
     })
   }
 
