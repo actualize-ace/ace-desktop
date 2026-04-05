@@ -204,6 +204,12 @@ function buildDOM () {
   orbArea.id = 'ins-orb-area'
   const mark = el('div', null)
   mark.id = 'ins-mark'
+  // Radiating pulse rings (visible when speaking)
+  for (let i = 0; i < 3; i++) {
+    const pr = el('div', 'ins-pulse-ring')
+    pr.style.animationDelay = (i * 0.7) + 's'
+    mark.appendChild(pr)
+  }
   const ring = el('div', null)
   ring.id = 'ins-ring'
   mark.appendChild(ring)

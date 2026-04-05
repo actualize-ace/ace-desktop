@@ -414,7 +414,7 @@ ipcMain.handle(ch.INSIGHT_SPEAK, async (_, text) => {
   const apiKey = config?.deepgramApiKey
   if (!apiKey) return { error: 'Deepgram API key not configured' }
   try {
-    const response = await fetch('https://api.deepgram.com/v1/speak?model=aura-asteria-en', {
+    const response = await fetch('https://api.deepgram.com/v1/speak?model=aura-2-athena-en', {
       method: 'POST',
       headers: { 'Authorization': `Token ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
