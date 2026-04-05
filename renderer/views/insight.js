@@ -18,11 +18,11 @@ let hasVoiceKey = false  // tracks whether Deepgram API key is configured
 // ─── TTS (Deepgram Aura) ────────────────────────────────────
 let ttsEnabled = true
 let ttsAudio = null  // current Audio element for cancellation
+let ttsSpeaking = false  // true while ACE voice is playing (drives orb pulse)
 
 async function speakText(text) {
   if (!ttsEnabled) return
   stopSpeaking()
-  // Strip markdown artifacts for cleaner speech
   const clean = text
     .replace(/[#*_`~\[\]()]/g, '')
     .replace(/\n+/g, '. ')
@@ -30,15 +30,25 @@ async function speakText(text) {
     .trim()
   if (!clean) return
   try {
+    // Keep orb in speaking state while fetching + playing
+    ttsSpeaking = true
+    setMode('responding')
     const result = await window.ace.insight.speak(clean)
-    if (result.error) { console.warn('[insight] TTS error:', result.error); return }
+    if (result.error) { console.warn('[insight] TTS error:', result.error); ttsSpeaking = false; setMode('ambient'); return }
     const blob = new Blob([new Uint8Array(result.audio)], { type: 'audio/mpeg' })
     const url = URL.createObjectURL(blob)
     ttsAudio = new Audio(url)
-    ttsAudio.onended = () => { URL.revokeObjectURL(url); ttsAudio = null }
+    ttsAudio.onended = () => {
+      URL.revokeObjectURL(url)
+      ttsAudio = null
+      ttsSpeaking = false
+      setMode('ambient')
+    }
     ttsAudio.play()
   } catch (e) {
     console.warn('[insight] TTS failed:', e)
+    ttsSpeaking = false
+    setMode('ambient')
   }
 }
 
@@ -48,6 +58,7 @@ function stopSpeaking() {
     ttsAudio.currentTime = 0
     ttsAudio = null
   }
+  ttsSpeaking = false
 }
 
 // Waveform tuning
@@ -489,11 +500,10 @@ function sendInsightChat (query) {
         })
       })
       chatEl.scrollTop = chatEl.scrollHeight
-      // Speak the response aloud
+      // Speak the response aloud (speakText manages mode → ambient when done)
       speakText(insStreamText)
       cleanupStream()
       cleanupExit()
-      setMode('ambient')
     }
   })
 
@@ -513,10 +523,11 @@ function sendInsightChat (query) {
         })
       })
       speakText(insStreamText)
+    } else {
+      setMode('ambient')  // no text to speak — go ambient immediately
     }
     cleanupStream()
     cleanupExit()
-    setMode('ambient')
   })
 
   // Build the query — prepend system prompt on first message only
@@ -789,11 +800,26 @@ function updateOrb (t) {
   sAmp += (targetAmp - sAmp) * 0.08
   const b = Math.sin(t * WAVE.breathHz)
   const mode = state.insight.mode
-  const respBoost = mode === 'responding' ? (Math.sin(t * 0.001 * 3) * 0.5 + 0.5) * 3 : 0
-  const gr = 14 + b * 2 + sAmp * 8 + respBoost
+  const isSpeaking = mode === 'responding' || ttsSpeaking
+
+  // Orb pulse — more pronounced when ACE is speaking
+  let respPulse = 0
+  if (isSpeaking) {
+    const rt = t * 0.001
+    respPulse = (Math.sin(rt * 4) * 0.5 + 0.5)  // faster, rhythmic pulse
+  }
+
+  const gr = 14 + b * 2 + sAmp * 8 + respPulse * 8
   svgGlow.setAttribute('r', gr.toFixed(1))
-  svgOrb.style.opacity = Math.min(1, 0.85 + b * 0.05 + sAmp * 0.1).toFixed(3)
-  const sc = 1 + b * WAVE.breathAmp + sAmp * 0.05
+
+  const orbOp = isSpeaking
+    ? Math.min(1, 0.80 + respPulse * 0.20)       // noticeable opacity pulse
+    : Math.min(1, 0.85 + b * 0.05 + sAmp * 0.1)
+  svgOrb.style.opacity = orbOp.toFixed(3)
+
+  const sc = isSpeaking
+    ? 1 + respPulse * 0.06 + Math.sin(t * 0.001 * 2.5) * 0.02  // visible scale pulse
+    : 1 + b * WAVE.breathAmp + sAmp * 0.05
   markEl.querySelector('svg').style.transform = `scale(${sc.toFixed(4)})`
 }
 
