@@ -165,6 +165,10 @@
         <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
         Breath
       </div>
+      <div class="nav-item" data-view="insight">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+        Insight
+      </div>
       <div class="sidebar-div"></div>
       <div class="nav-section">Commands</div>
       <div class="cmd-section">
@@ -483,6 +487,17 @@
           <button class="breath-start" id="breath-start">Begin</button>
         </div>
         <div class="breath-cite" id="breath-cite">Balban et al. 2023 — cyclic sighing outperformed meditation for stress reduction</div>
+      </div>
+
+      <!-- INSIGHT VIEW -->
+      <div class="view" id="view-insight">
+        <div class="view-header">
+          <div class="view-title">Insight</div>
+          <div class="view-actions">
+            <span id="insight-mode" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim)">ambient</span>
+          </div>
+        </div>
+        <div class="vbody" id="insight-body" style="flex:1;display:flex;overflow:hidden;"></div>
       </div>
 
     </div>
