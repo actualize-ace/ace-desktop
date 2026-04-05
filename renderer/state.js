@@ -94,6 +94,7 @@ export const state = {
     amp: 0,
     bars: null,
     chatSessionId: null,
+    chatHistory: [],   // persists across view switches: [{role, html}]
   },
 
   // Cost guardrail (loaded from config in initSessions)

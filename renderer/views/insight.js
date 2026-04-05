@@ -358,7 +358,7 @@ function chipHTML (n) {
   return `<span class="ins-chip" data-triad="${p.t}" data-pat="${n}"><span class="ins-chip-dot"></span>${n}<span class="ins-chip-trend">${TR[p.tr] || ''}</span></span>`
 }
 
-function addMsg (role, html) {
+function addMsg (role, html, skipHistory) {
   const d = el('div', `ins-msg ins-msg-${role}`)
   d.innerHTML = `<div class="ins-msg-label">${role === 'ace' ? 'ACE' : 'YOU'}</div><div class="ins-msg-body">${html}</div>`
   chatEl.appendChild(d)
@@ -370,6 +370,14 @@ function addMsg (role, html) {
       showChipPop(ch, ch.dataset.pat)
     })
   })
+  // Persist to state (survives view switch)
+  if (!skipHistory) {
+    state.insight.chatHistory.push({ role, html })
+  }
+}
+
+function replayHistory () {
+  state.insight.chatHistory.forEach(m => addMsg(m.role, m.html, true))
 }
 
 function addTyping () {
@@ -912,8 +920,12 @@ export async function initInsight () {
   // Check for Deepgram API key
   await checkVoiceKey()
 
-  // Seed chat
-  addMsg('ace', `What's present for you right now?`)
+  // Replay existing chat or seed fresh
+  if (state.insight.chatHistory.length > 0) {
+    replayHistory()
+  } else {
+    addMsg('ace', `What's present for you right now?`)
+  }
 
   t0 = performance.now()
   state.insightInitialized = true
