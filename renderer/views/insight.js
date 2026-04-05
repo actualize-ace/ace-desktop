@@ -13,6 +13,41 @@ const TRIAD_NAMES = { authority: 'Authority', capacity: 'Capacity', expansion: '
 const TRIAD_LETTERS = { authority: 'A', capacity: 'C', expansion: 'E' }
 const TRIADS = ['authority', 'capacity', 'expansion']
 
+// ─── TTS (text-to-speech) ───────────────────────────────────
+let ttsEnabled = true
+let currentUtterance = null
+
+function speakText(text) {
+  if (!ttsEnabled || !window.speechSynthesis) return
+  // Cancel any in-progress speech
+  window.speechSynthesis.cancel()
+  // Strip markdown artifacts for cleaner speech
+  const clean = text
+    .replace(/[#*_`~\[\]()]/g, '')
+    .replace(/\n+/g, '. ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!clean) return
+  const utt = new SpeechSynthesisUtterance(clean)
+  utt.rate = 1.0
+  utt.pitch = 1.0
+  utt.volume = 0.85
+  // Prefer a natural-sounding voice if available
+  const voices = window.speechSynthesis.getVoices()
+  const preferred = voices.find(v => v.name.includes('Samantha')) ||
+                    voices.find(v => v.name.includes('Daniel')) ||
+                    voices.find(v => v.lang.startsWith('en') && v.localService) ||
+                    voices[0]
+  if (preferred) utt.voice = preferred
+  currentUtterance = utt
+  window.speechSynthesis.speak(utt)
+}
+
+function stopSpeaking() {
+  if (window.speechSynthesis) window.speechSynthesis.cancel()
+  currentUtterance = null
+}
+
 // Waveform tuning
 const WAVE = {
   barCount: 48, barW: 2.5, barGap: 2, barMaxH: 12, barIdleH: 1,
@@ -335,6 +370,9 @@ Coaching guidelines:
 function sendInsightChat (query) {
   if (insStreaming || !query) return
 
+  // Stop any in-progress TTS when user sends a new message
+  stopSpeaking()
+
   // Show user message
   addMsg('user', escapeHtml(query))
 
@@ -392,6 +430,8 @@ function sendInsightChat (query) {
         })
       })
       chatEl.scrollTop = chatEl.scrollHeight
+      // Speak the response aloud
+      speakText(insStreamText)
       cleanupStream()
       cleanupExit()
       setMode('ambient')
@@ -413,6 +453,7 @@ function sendInsightChat (query) {
           showChipPop(ch, ch.dataset.pat)
         })
       })
+      speakText(insStreamText)
     }
     cleanupStream()
     cleanupExit()
@@ -698,6 +739,8 @@ export async function initInsight () {
 }
 
 export function onInsightExit () {
+  // Stop TTS
+  stopSpeaking()
   // Stop mic if active
   if (state.insight.stream) micOff()
   // Stop animation loop

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, shell, session } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const { execSync, spawn } = require('child_process')
@@ -111,6 +111,15 @@ app.whenReady().then(() => {
   if (process.platform === 'darwin' && app.dock) {
     app.dock.setIcon(path.join(__dirname, 'assets', 'ace.png'))
   }
+
+  // Allow microphone access for Insight voice coaching
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    if (permission === 'media') {
+      callback(true)
+    } else {
+      callback(true)  // allow all standard permissions
+    }
+  })
 
   const config = loadConfig()
   const vaultMissing = config && !fs.existsSync(config.vaultPath)
