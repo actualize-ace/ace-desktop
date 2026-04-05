@@ -240,6 +240,12 @@
   padding: 10px 20px 12px;
   border-top: 1px solid var(--border);
 }
+.ins-input-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
 #ins-mic {
   width: 34px;
   height: 34px;
@@ -258,16 +264,47 @@
   border-color: rgba(140,120,255,0.25);
   color: var(--text-secondary);
 }
-#ins-mic.on {
-  border-color: rgba(136,120,255,0.45);
-  background: rgba(136,120,255,0.06);
-  color: var(--gold);
-  box-shadow: 0 0 12px rgba(136,120,255,0.1);
-}
 #ins-mic svg {
   width: 14px;
   height: 14px;
   fill: currentColor;
+}
+#ins-mic.hidden { display: none; }
+
+/* Cancel / Send voice buttons */
+.ins-voice-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(140,120,255,0.15);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  color: var(--text-dim);
+}
+.ins-voice-btn.hidden { display: none; }
+.ins-voice-btn svg {
+  width: 14px;
+  height: 14px;
+}
+/* Cancel (X) */
+#ins-mic-cancel:hover {
+  border-color: rgba(224,112,128,0.4);
+  color: #e07080;
+  background: rgba(224,112,128,0.08);
+}
+/* Send (checkmark) */
+#ins-mic-send {
+  border-color: rgba(96,216,168,0.25);
+  color: var(--green);
+}
+#ins-mic-send:hover {
+  border-color: rgba(96,216,168,0.5);
+  background: rgba(96,216,168,0.08);
+  box-shadow: 0 0 10px rgba(96,216,168,0.12);
 }
 #ins-text {
   flex: 1;

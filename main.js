@@ -106,6 +106,7 @@ function createWindow(page) {
 
 app.setName('ACE')
 
+
 app.whenReady().then(() => {
   // Set dock icon explicitly (required on macOS in dev mode)
   if (process.platform === 'darwin' && app.dock) {
@@ -386,4 +387,26 @@ ipcMain.handle(ch.VAULT_BUILD_GRAPH, () => {
 ipcMain.handle(ch.VAULT_GRAPH_INVALIDATE, () => {
   try { require('./src/vault-scanner').invalidateCache(); return true }
   catch { return false }
+})
+
+// ─── Insight: Whisper transcription ──────────────────────────────────────────
+ipcMain.handle(ch.INSIGHT_TRANSCRIBE, async (_, audioBuffer) => {
+  const os = require('os')
+  const tmpAudio = path.join(os.tmpdir(), `ace-insight-${Date.now()}.webm`)
+  const tmpBase = tmpAudio.replace(/\.webm$/, '')
+  try {
+    fs.writeFileSync(tmpAudio, Buffer.from(audioBuffer))
+    execSync(`whisper "${tmpAudio}" --model tiny --language en --output_format txt --output_dir "${os.tmpdir()}"`, {
+      timeout: 30000,
+      stdio: 'pipe',
+    })
+    const txtPath = tmpBase + '.txt'
+    const text = fs.readFileSync(txtPath, 'utf8').trim()
+    try { fs.unlinkSync(tmpAudio) } catch {}
+    try { fs.unlinkSync(txtPath) } catch {}
+    return { text }
+  } catch (e) {
+    try { fs.unlinkSync(tmpAudio) } catch {}
+    return { error: e.message }
+  }
 })

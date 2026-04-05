@@ -102,6 +102,11 @@ contextBridge.exposeInMainWorld('ace', {
     setStatus: (slug, status) => ipcRenderer.invoke(ch.ARTIFACTS_SET_STATUS, slug, status),
   },
 
+  // ─── Insight voice ─────────────────────────────────────────────────────────
+  insight: {
+    transcribe: (audioBuffer) => ipcRenderer.invoke(ch.INSIGHT_TRANSCRIBE, audioBuffer),
+  },
+
   // ─── Shell ──────────────────────────────────────────────────────────────────
   shell: {
     openPath:     (p)   => ipcRenderer.invoke(ch.SHELL_OPEN_PATH, p),

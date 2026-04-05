@@ -163,7 +163,7 @@ function inferLifecycle (count, trend) {
 }
 
 // ─── DOM refs (set in init) ─────────────────────────────────
-let body, chatEl, textIn, micEl, modeTag
+let body, chatEl, textIn, micEl, micCancelEl, micSendEl, modeTag
 let waveBox, cv, ctx
 let markEl, ringEl, svgOrb, svgGlow
 let chipPop
@@ -226,20 +226,37 @@ function buildDOM () {
   chat.id = 'ins-chat'
   coaching.appendChild(chat)
 
-  // Input bar
+  // Input bar — text input + mic/cancel/send on right (ChatGPT pattern)
   const inputBar = el('div', null)
   inputBar.id = 'ins-input-bar'
-  const mic = document.createElement('button')
-  mic.id = 'ins-mic'
-  mic.setAttribute('aria-label', 'Mic')
-  mic.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`
-  inputBar.appendChild(mic)
   const input = document.createElement('input')
   input.id = 'ins-text'
   input.type = 'text'
   input.placeholder = 'Type or speak...'
   input.autocomplete = 'off'
   inputBar.appendChild(input)
+  const actionsWrap = el('div', 'ins-input-actions')
+  // Mic button (default state)
+  const mic = document.createElement('button')
+  mic.id = 'ins-mic'
+  mic.setAttribute('aria-label', 'Record')
+  mic.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`
+  actionsWrap.appendChild(mic)
+  // Cancel button (recording state)
+  const cancelBtn = document.createElement('button')
+  cancelBtn.id = 'ins-mic-cancel'
+  cancelBtn.className = 'ins-voice-btn hidden'
+  cancelBtn.setAttribute('aria-label', 'Cancel recording')
+  cancelBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+  actionsWrap.appendChild(cancelBtn)
+  // Send button (recording state)
+  const sendBtn = document.createElement('button')
+  sendBtn.id = 'ins-mic-send'
+  sendBtn.className = 'ins-voice-btn hidden'
+  sendBtn.setAttribute('aria-label', 'Send recording')
+  sendBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`
+  actionsWrap.appendChild(sendBtn)
+  inputBar.appendChild(actionsWrap)
   coaching.appendChild(inputBar)
 
   // Pattern panel
@@ -260,6 +277,8 @@ function buildDOM () {
   chatEl = document.getElementById('ins-chat')
   textIn = document.getElementById('ins-text')
   micEl = document.getElementById('ins-mic')
+  micCancelEl = document.getElementById('ins-mic-cancel')
+  micSendEl = document.getElementById('ins-mic-send')
   markEl = document.getElementById('ins-mark')
   ringEl = document.getElementById('ins-ring')
   svgOrb = document.getElementById('ins-svgOrb')
@@ -543,14 +562,13 @@ async function micOn () {
     src.connect(state.insight.analyser)
     state.insight.freqData = new Uint8Array(state.insight.analyser.frequencyBinCount)
     setMode('listening')
-    startRecognition()
+    startRecording()
   } catch (e) {
     console.warn('[insight] mic unavailable:', e)
   }
 }
 
 function micOff () {
-  stopRecognition()
   if (state.insight.stream) state.insight.stream.getTracks().forEach(t => t.stop())
   if (state.insight.audioCtx) state.insight.audioCtx.close()
   state.insight.audioCtx = null
@@ -573,67 +591,87 @@ function readAudio () {
   state.insight.amp = Math.sqrt(sum / state.insight.freqData.length)
 }
 
-// ─── Speech Recognition (voice-to-text) ─────────────────────
-let recognition = null
-let recognitionText = ''       // accumulated final transcript
-let recognitionInterim = ''    // current interim result
+// ─── Voice Recording (MediaRecorder + Whisper) ──────────────
+let mediaRecorder = null
+let audioChunks = []
 
-function startRecognition () {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-  if (!SR) { console.warn('[insight] SpeechRecognition not available'); return }
-
-  recognition = new SR()
-  recognition.continuous = true
-  recognition.interimResults = true
-  recognition.lang = 'en-US'
-  recognitionText = ''
-  recognitionInterim = ''
-
-  recognition.onresult = (e) => {
-    let interim = ''
-    let final = ''
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      const t = e.results[i][0].transcript
-      if (e.results[i].isFinal) {
-        final += t
-      } else {
-        interim += t
-      }
-    }
-    if (final) recognitionText += final
-    recognitionInterim = interim
-    // Show live transcription in the text input
-    if (textIn) {
-      textIn.value = (recognitionText + recognitionInterim).trim()
-      textIn.placeholder = 'Listening... tap mic to send'
-    }
+function startRecording () {
+  if (!state.insight.stream) return
+  audioChunks = []
+  try {
+    mediaRecorder = new MediaRecorder(state.insight.stream, { mimeType: 'audio/webm;codecs=opus' })
+  } catch {
+    mediaRecorder = new MediaRecorder(state.insight.stream)
   }
-
-  recognition.onerror = (e) => {
-    // 'no-speech' and 'aborted' are expected — user pausing or stopping
-    if (e.error !== 'no-speech' && e.error !== 'aborted') {
-      console.warn('[insight] speech recognition error:', e.error)
-    }
+  mediaRecorder.ondataavailable = (e) => {
+    if (e.data.size > 0) audioChunks.push(e.data)
   }
-
-  recognition.onend = () => {
-    // If still in listening mode, restart (browser stops after silence)
-    if (state.insight.mode === 'listening' && recognition) {
-      try { recognition.start() } catch (e) { /* already started */ }
-    }
-  }
-
-  try { recognition.start() } catch (e) { /* already started */ }
+  mediaRecorder.start(250) // collect chunks every 250ms
+  showRecordingUI()
 }
 
-function stopRecognition () {
-  if (recognition) {
-    recognition.onend = null  // prevent auto-restart
-    recognition.abort()
-    recognition = null
+function stopRecording () {
+  return new Promise(resolve => {
+    if (!mediaRecorder || mediaRecorder.state === 'inactive') { resolve(null); return }
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(audioChunks, { type: 'audio/webm' })
+      audioChunks = []
+      mediaRecorder = null
+      resolve(blob)
+    }
+    mediaRecorder.stop()
+  })
+}
+
+function cancelRecording () {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.onstop = null
+    mediaRecorder.stop()
   }
-  recognitionInterim = ''
-  if (textIn) textIn.placeholder = 'Type or speak...'
+  audioChunks = []
+  mediaRecorder = null
+  hideRecordingUI()
+  micOff()
+}
+
+async function sendRecording () {
+  const blob = await stopRecording()
+  hideRecordingUI()
+  micOff()
+  if (!blob || blob.size < 1000) return // too short, ignore
+
+  // Show transcribing state
+  if (textIn) { textIn.value = ''; textIn.placeholder = 'Transcribing...' }
+
+  try {
+    const arrayBuf = await blob.arrayBuffer()
+    const result = await window.ace.insight.transcribe(arrayBuf)
+    if (textIn) textIn.placeholder = 'Type or speak...'
+    if (result.error) {
+      console.error('[insight] transcription error:', result.error)
+      return
+    }
+    if (result.text && result.text.trim()) {
+      sendInsightChat(result.text.trim())
+    }
+  } catch (e) {
+    console.error('[insight] transcription failed:', e)
+    if (textIn) textIn.placeholder = 'Type or speak...'
+  }
+}
+
+function showRecordingUI () {
+  if (micEl) micEl.classList.add('hidden')
+  if (micCancelEl) micCancelEl.classList.remove('hidden')
+  if (micSendEl) micSendEl.classList.remove('hidden')
+  if (textIn) { textIn.value = ''; textIn.placeholder = 'Listening... press \u2713 to send'; textIn.disabled = true }
+}
+
+function hideRecordingUI () {
+  if (micEl) micEl.classList.remove('hidden')
+  if (micCancelEl) micCancelEl.classList.add('hidden')
+  if (micSendEl) micSendEl.classList.add('hidden')
+  if (textIn) { textIn.disabled = false; textIn.placeholder = 'Type or speak...' }
 }
 
 // ─── Mode ────────────────────────────────────────────────────
@@ -735,31 +773,23 @@ let _boundResize = null
 let _boundChipDismiss = null
 
 function wireEvents () {
-  // Text input — Enter sends via streaming IPC (works for typed or transcribed text)
+  // Text input — Enter sends typed text
   textIn.addEventListener('keydown', e => {
     if (e.key === 'Enter' && textIn.value.trim()) {
       const txt = textIn.value.trim()
       textIn.value = ''
-      // Stop mic if it was recording
-      if (state.insight.mode === 'listening') micOff()
       sendInsightChat(txt)
     }
   })
 
-  // Mic button — tap to start listening, tap again to send transcribed text
-  micEl.addEventListener('click', () => {
-    if (state.insight.mode === 'listening') {
-      // Stop listening — send whatever was transcribed
-      const text = (recognitionText + recognitionInterim).trim()
-      micOff()
-      if (text) {
-        textIn.value = ''
-        sendInsightChat(text)
-      }
-    } else {
-      micOn()
-    }
-  })
+  // Mic button — starts recording
+  micEl.addEventListener('click', () => micOn())
+
+  // Cancel button — discard recording
+  micCancelEl.addEventListener('click', () => cancelRecording())
+
+  // Send button — transcribe and send
+  micSendEl.addEventListener('click', () => sendRecording())
 
   // Chip popover dismiss (stored for removal on exit)
   _boundChipDismiss = hideChipPop
