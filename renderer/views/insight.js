@@ -261,7 +261,14 @@ function buildDOM () {
 
   // Pattern panel
   const panel = el('div', 'ins-pat-panel')
-  panel.innerHTML = `<div class="pp-label">Patterns</div>
+  panel.innerHTML = `
+    <div class="ins-modes" id="ins-modes">
+      <div class="ins-mode-btn" data-mode="coach"><span class="ins-mode-dot" style="background:var(--gold)"></span>Coach</div>
+      <div class="ins-mode-btn" data-mode="regulate"><span class="ins-mode-dot" style="background:var(--capacity)"></span>Regulate</div>
+      <div class="ins-mode-btn" data-mode="edge"><span class="ins-mode-dot" style="background:var(--expansion)"></span>Edge</div>
+      <div class="ins-mode-btn" data-mode="blind-spots"><span class="ins-mode-dot" style="background:var(--authority)"></span>Blind Spots</div>
+    </div>
+    <div class="pp-label">Patterns</div>
     <div class="pp-balance" id="ins-pp-bal"></div>
     <div class="pp-list" id="ins-pp-list"></div>`
 
@@ -368,6 +375,18 @@ function rmTyping () {
 
 function askAbout (p) {
   sendInsightChat('Tell me about my ' + p.n + ' pattern')
+}
+
+const COACHING_MODES = {
+  coach:        'I want a coaching conversation. What patterns do you notice in my system right now?',
+  regulate:     'I\u2019m feeling dysregulated. Help me check in with my nervous system and find ground.',
+  edge:         'I want to explore a growth edge. Help me work through what I\u2019m noticing.',
+  'blind-spots':'Surface what I might be missing \u2014 patterns I\u2019m avoiding, questions I should be asking.',
+}
+
+function startCoachingMode (mode) {
+  const question = COACHING_MODES[mode]
+  if (question) sendInsightChat(question)
 }
 
 // ─── Chat streaming ──────────────────────────────────────────
@@ -784,6 +803,11 @@ function wireEvents () {
 
   // Mic button — starts recording
   micEl.addEventListener('click', () => micOn())
+
+  // Coaching mode presets
+  document.querySelectorAll('.ins-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => startCoachingMode(btn.dataset.mode))
+  })
 
   // Cancel button — discard recording
   micCancelEl.addEventListener('click', () => cancelRecording())

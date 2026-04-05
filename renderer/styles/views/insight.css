@@ -326,6 +326,40 @@
 }
 
 /* ─── Pattern panel ─── */
+/* Coaching mode presets */
+#insight-body .ins-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+#insight-body .ins-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid var(--border);
+}
+#insight-body .ins-mode-btn:hover {
+  background: rgba(136,120,255,0.06);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+#insight-body .ins-mode-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 #insight-body .pp-label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 8px;
