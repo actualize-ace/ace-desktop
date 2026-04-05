@@ -91,6 +91,7 @@ export const state = {
     analyser: null,
     stream: null,
     freqData: null,
+    amp: 0,
     bars: null,
     chatSessionId: null,
   },

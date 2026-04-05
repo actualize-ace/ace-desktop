@@ -395,6 +395,46 @@ function hideChipPop (e) {
   }
 }
 
+// ─── Audio ───────────────────────────────────────────────────
+async function micOn () {
+  try {
+    state.insight.audioCtx = new (AudioContext || webkitAudioContext)()
+    state.insight.stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    const src = state.insight.audioCtx.createMediaStreamSource(state.insight.stream)
+    state.insight.analyser = state.insight.audioCtx.createAnalyser()
+    state.insight.analyser.fftSize = 256
+    state.insight.analyser.smoothingTimeConstant = 0.7
+    src.connect(state.insight.analyser)
+    state.insight.freqData = new Uint8Array(state.insight.analyser.frequencyBinCount)
+    setMode('listening')
+  } catch (e) {
+    console.warn('[insight] mic unavailable:', e)
+  }
+}
+
+function micOff () {
+  if (state.insight.stream) state.insight.stream.getTracks().forEach(t => t.stop())
+  if (state.insight.audioCtx) state.insight.audioCtx.close()
+  state.insight.audioCtx = null
+  state.insight.analyser = null
+  state.insight.stream = null
+  state.insight.freqData = null
+  state.insight.amp = 0
+  sAmp = 0
+  setMode('ambient')
+}
+
+function readAudio () {
+  if (!state.insight.analyser) return
+  state.insight.analyser.getByteFrequencyData(state.insight.freqData)
+  let sum = 0
+  for (let i = 0; i < state.insight.freqData.length; i++) {
+    const v = state.insight.freqData[i] / 255
+    sum += v * v
+  }
+  state.insight.amp = Math.sqrt(sum / state.insight.freqData.length)
+}
+
 // ─── Mode ────────────────────────────────────────────────────
 function setMode (m) {
   state.insight.mode = m
@@ -466,7 +506,8 @@ function drawWave (t) {
 // ─── Orb animation ───────────────────────────────────────────
 function updateOrb (t) {
   if (!svgOrb || !svgGlow || !markEl) return
-  sAmp += (0 - sAmp) * 0.08  // no mic input yet — amp stays 0
+  const targetAmp = state.insight.mode !== 'ambient' ? (state.insight.amp || 0) : 0
+  sAmp += (targetAmp - sAmp) * 0.08
   const b = Math.sin(t * WAVE.breathHz)
   const mode = state.insight.mode
   const respBoost = mode === 'responding' ? (Math.sin(t * 0.001 * 3) * 0.5 + 0.5) * 3 : 0
@@ -481,6 +522,7 @@ function updateOrb (t) {
 function frame (ts) {
   if (!state.insightInitialized) return
   const t = ts - t0
+  if (state.insight.mode === 'listening') readAudio()
   drawWave(t)
   updateOrb(t)
   rafId = requestAnimationFrame(frame)
@@ -497,14 +539,9 @@ function wireEvents () {
     }
   })
 
-  // Mic button — placeholder (real mic in Task 6)
+  // Mic button — toggles real audio capture
   micEl.addEventListener('click', () => {
-    // Toggle visual state only for now
-    if (state.insight.mode === 'listening') {
-      setMode('ambient')
-    } else {
-      setMode('listening')
-    }
+    state.insight.mode === 'listening' ? micOff() : micOn()
   })
 
   // Chip popover dismiss
@@ -541,6 +578,8 @@ export function initInsight () {
 }
 
 export function onInsightExit () {
+  // Stop mic if active
+  if (state.insight.stream) micOff()
   // Stop animation loop
   if (rafId) {
     cancelAnimationFrame(rafId)
