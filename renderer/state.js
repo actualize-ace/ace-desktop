@@ -83,6 +83,18 @@ export const state = {
   breathCycles: 0,
   breathTargetCycles: 6,
 
+  // Insight view
+  insightInitialized: false,
+  insight: {
+    mode: 'ambient',
+    audioCtx: null,
+    analyser: null,
+    stream: null,
+    freqData: null,
+    bars: null,
+    chatSessionId: null,
+  },
+
   // Cost guardrail (loaded from config in initSessions)
   _costGuardrail: null,
 

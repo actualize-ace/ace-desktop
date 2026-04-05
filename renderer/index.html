@@ -599,6 +599,7 @@ import { initHistory } from './views/history.js'
 import { initArtifacts, renderArtifactsList } from './views/artifacts.js'
 import { initAtmosphere } from './modules/atmosphere.js'
 import { initBreath, onBreathEnter, onBreathExit } from './views/breath.js'
+import { initInsight, onInsightExit } from './views/insight.js'
 
 // ─── Theme, Zoom, Time, Sidebar (from module) ──────────────────────────────
 initTheme()
@@ -629,6 +630,8 @@ navItems.forEach(item => {
     }
     // Breath view enter/exit hooks
     if (prevView === 'breath' && view !== 'breath') onBreathExit()
+    // Insight view exit hook
+    if (prevView === 'insight' && view !== 'insight') onInsightExit()
     navItems.forEach(n => n.classList.remove('active'))
     item.classList.add('active')
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'))
@@ -639,6 +642,7 @@ navItems.forEach(item => {
     else if (view === 'vault' && !state.vaultInitialized) initVault()
     else if (view === 'graph' && !state.graphInitialized) initGraph()
     else if (view === 'people' && !state.peopleInitialized) initPeople()
+    else if (view === 'insight' && !state.insightInitialized) initInsight()
     else if (view === 'history' && !state.historyInitialized) initHistory()
     else if (view === 'artifacts') { if (!state.artifactsInitialized) initArtifacts(); else renderArtifactsList(); }
     else if (view === 'agents' && !state.agentsInitialized) {
