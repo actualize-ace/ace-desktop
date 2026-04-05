@@ -182,6 +182,7 @@ let insAssistantEl = null
 // ─── Build DOM ───────────────────────────────────────────────
 function buildDOM () {
   body = document.getElementById('insight-body')
+  body.innerHTML = ''  // clear previous DOM on re-entry
   modeTag = document.getElementById('insight-mode')
 
   // Coaching column
