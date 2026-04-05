@@ -4,6 +4,7 @@
 // Prototype: docs/insight-prototype.html
 
 import { state } from '../state.js'
+import { escapeHtml, postProcessCodeBlocks, SANITIZE_CONFIG } from '../modules/chat-renderer.js'
 
 // ─── Constants ───────────────────────────────────────────────
 const TC = { authority: '#c8a0f0', capacity: '#60d8a8', expansion: '#e080a0' }
@@ -40,6 +41,11 @@ let rafId = null
 let t0 = 0
 let bars = null
 let sAmp = 0   // smoothed amplitude
+
+// Chat streaming state
+let insStreaming = false
+let insStreamText = ''
+let insAssistantEl = null
 
 // ─── Build DOM ───────────────────────────────────────────────
 function buildDOM () {
@@ -212,27 +218,160 @@ function rmTyping () {
 }
 
 function askAbout (p) {
-  addMsg('user', `Tell me about my ${p.n} pattern`)
-  // Local display only — no streaming yet (Task 4)
-  addTyping()
-  setMode('responding')
-  const resp = PAT_RESP[p.n] || `${chipHTML(p.n)} is ${p.tr}. It's ${p.lc} and pairs with ${p.co}. What do you want to know?`
-  setTimeout(() => {
-    rmTyping()
-    addMsg('ace', resp)
-    setMode('ambient')
-  }, 1000 + Math.random() * 600)
+  sendInsightChat('Tell me about my ' + p.n + ' pattern')
 }
 
-// Hardcoded responses (real streaming in Task 4)
-const PAT_RESP = {
-  momentum: `${chipHTML('momentum')} has 42 backlinks \u2014 your most referenced pattern. It co-occurs with ${chipHTML('leverage')} 19 times. When one moves, the other follows. That's your signature build rhythm. What kicked this cycle off?`,
-  leverage: `${chipHTML('leverage')} is rising alongside momentum. You're not just doing \u2014 you're compounding. The question is whether you're leveraging deliberately or just riding the wave. Which is it?`,
-  sovereignty: `${chipHTML('sovereignty')} has been stable for weeks. That's rare \u2014 most people's authority patterns fluctuate. You're building from a grounded place. What's anchoring that right now?`,
-  'co-regulation': `${chipHTML('co-regulation')} is rising while deep-rest fades. You might be sourcing regulation from connection instead of solitude right now. That works, but notice if it becomes dependency. Who's regulating you?`,
-  'creative-spark': `${chipHTML('creative-spark')} is emerging \u2014 only 2 weeks old as a pattern. It pairs with ${chipHTML('aliveness')}. Something wants to be expressed that hasn't had a container yet. What is it?`,
-  flow: `${chipHTML('flow')} is stable \u2014 your body knows the rhythm. This pattern usually shows up when sovereignty and momentum are both present. You're in a good window. Don't waste it on busywork.`,
-  aliveness: `${chipHTML('aliveness')} is active and rising. It co-occurs with creative-spark. This is your expression signal \u2014 the felt sense that something wants to come through. When did you last feel it today?`,
+// ─── Chat streaming ──────────────────────────────────────────
+function buildSystemPrompt () {
+  const lines = PAT.map(p =>
+    `- ${p.n} (${p.tr}) — lifecycle: ${p.lc} — pairs with: ${p.co}`
+  ).join('\n')
+  return `You are ACE, a coherence coach. Here are the user's active patterns:
+${lines}
+
+Coaching guidelines:
+- Ask reflective questions. Don't lecture.
+- Surface patterns only when genuinely relevant (~30% of responses).
+- Most responses should be pure dialogue.
+- Keep responses concise (2-4 sentences).
+- When referencing a pattern, use its exact name.`
+}
+
+function sendInsightChat (query) {
+  if (insStreaming || !query) return
+
+  // Show user message
+  addMsg('user', escapeHtml(query))
+
+  // Add typing indicator
+  addTyping()
+  setMode('responding')
+
+  insStreaming = true
+  insStreamText = ''
+
+  // Create assistant message element (hidden until first delta)
+  insAssistantEl = el('div', 'ins-msg ins-msg-ace')
+  insAssistantEl.style.display = 'none'
+  insAssistantEl.innerHTML = `<div class="ins-msg-label">ACE</div><div class="ins-msg-body"></div>`
+  chatEl.appendChild(insAssistantEl)
+
+  const chatId = 'insight-' + Date.now()
+  const opts = { model: 'sonnet', permissions: 'auto', effort: 'high' }
+
+  // Wire stream listener before sending
+  const cleanupStream = window.ace.chat.onStream(chatId, event => {
+    // Capture session ID for follow-up messages
+    if (event.type === 'system' && event.session_id) {
+      state.insight.chatSessionId = event.session_id
+    }
+
+    // Streaming text deltas
+    if (event.type === 'stream_event' && event.event) {
+      const e = event.event
+      if (e.type === 'content_block_delta' && e.delta?.type === 'text_delta') {
+        insStreamText += e.delta.text
+        // Remove typing indicator on first delta, show assistant el
+        rmTyping()
+        insAssistantEl.style.display = ''
+        const bodyEl = insAssistantEl.querySelector('.ins-msg-body')
+        bodyEl.innerHTML = `<div class="md-body">${DOMPurify.sanitize(marked.parse(insStreamText), SANITIZE_CONFIG)}</div>`
+        chatEl.scrollTop = chatEl.scrollHeight
+      }
+    }
+
+    // Final result
+    if (event.type === 'result') {
+      insStreaming = false
+      rmTyping()
+      insAssistantEl.style.display = ''
+      const bodyEl = insAssistantEl.querySelector('.ins-msg-body')
+      bodyEl.innerHTML = `<div class="md-body">${DOMPurify.sanitize(marked.parse(insStreamText), SANITIZE_CONFIG)}</div>`
+      postProcessCodeBlocks(insAssistantEl)
+      processPatternChips(insAssistantEl)
+      // Wire chip click handlers on the new message
+      insAssistantEl.querySelectorAll('.ins-chip').forEach(ch => {
+        ch.addEventListener('click', e => {
+          e.stopPropagation()
+          showChipPop(ch, ch.dataset.pat)
+        })
+      })
+      chatEl.scrollTop = chatEl.scrollHeight
+      cleanupStream()
+      cleanupExit()
+      setMode('ambient')
+    }
+  })
+
+  const cleanupExit = window.ace.chat.onExit(chatId, () => {
+    insStreaming = false
+    rmTyping()
+    if (insStreamText && insAssistantEl) {
+      insAssistantEl.style.display = ''
+      const bodyEl = insAssistantEl.querySelector('.ins-msg-body')
+      bodyEl.innerHTML = `<div class="md-body">${DOMPurify.sanitize(marked.parse(insStreamText), SANITIZE_CONFIG)}</div>`
+      postProcessCodeBlocks(insAssistantEl)
+      processPatternChips(insAssistantEl)
+      insAssistantEl.querySelectorAll('.ins-chip').forEach(ch => {
+        ch.addEventListener('click', e => {
+          e.stopPropagation()
+          showChipPop(ch, ch.dataset.pat)
+        })
+      })
+    }
+    cleanupStream()
+    cleanupExit()
+    setMode('ambient')
+  })
+
+  // Build the query — prepend system prompt on first message only
+  const fullQuery = state.insight.chatSessionId
+    ? query
+    : buildSystemPrompt() + '\n\n' + query
+  window.ace.chat.send(chatId, fullQuery, state.insight.chatSessionId, opts)
+}
+
+function processPatternChips (msgEl) {
+  const bodyEl = msgEl.querySelector('.ins-msg-body')
+  if (!bodyEl) return
+  // Get all known pattern names, sorted longest-first to avoid partial matches
+  const names = PAT.map(p => p.n).sort((a, b) => b.length - a.length)
+  if (!names.length) return
+
+  // Walk text nodes only — avoid replacing inside HTML tags or existing chips
+  const walker = document.createTreeWalker(bodyEl, NodeFilter.SHOW_TEXT, null)
+  const replacements = []
+  let node
+  while ((node = walker.nextNode())) {
+    // Skip if already inside a chip
+    if (node.parentElement && node.parentElement.closest('.ins-chip')) continue
+    for (const name of names) {
+      const idx = node.textContent.indexOf(name)
+      if (idx >= 0) {
+        replacements.push({ node, name, idx })
+      }
+    }
+  }
+
+  // Apply replacements in reverse order to preserve indices
+  for (let i = replacements.length - 1; i >= 0; i--) {
+    const { node, name, idx } = replacements[i]
+    const p = PATMAP[name]
+    if (!p) continue
+    const before = node.textContent.slice(0, idx)
+    const after = node.textContent.slice(idx + name.length)
+
+    const chip = document.createElement('span')
+    chip.className = 'ins-chip'
+    chip.dataset.triad = p.t
+    chip.dataset.pat = name
+    chip.innerHTML = `<span class="ins-chip-dot"></span>${name}<span class="ins-chip-trend">${TR[p.tr] || ''}</span>`
+
+    const parent = node.parentNode
+    if (after) parent.insertBefore(document.createTextNode(after), node.nextSibling)
+    parent.insertBefore(chip, node.nextSibling)
+    node.textContent = before
+  }
 }
 
 // ─── Chip popover ────────────────────────────────────────────
@@ -349,20 +488,12 @@ function frame (ts) {
 
 // ─── Wire events ─────────────────────────────────────────────
 function wireEvents () {
-  // Text input — Enter sends (local display only, no streaming)
+  // Text input — Enter sends via streaming IPC
   textIn.addEventListener('keydown', e => {
     if (e.key === 'Enter' && textIn.value.trim()) {
       const txt = textIn.value.trim()
       textIn.value = ''
-      addMsg('user', escHTML(txt))
-      // Placeholder local echo — real streaming in Task 4
-      addTyping()
-      setMode('responding')
-      setTimeout(() => {
-        rmTyping()
-        addMsg('ace', `What's present for you right now?`)
-        setMode('ambient')
-      }, 1000 + Math.random() * 800)
+      sendInsightChat(txt)
     }
   })
 
@@ -383,11 +514,7 @@ function wireEvents () {
   window.addEventListener('resize', resizeCanvas)
 }
 
-function escHTML (s) {
-  const d = document.createElement('div')
-  d.textContent = s
-  return d.innerHTML
-}
+// escHTML removed — using imported escapeHtml from chat-renderer.js
 
 // ─── Public API ──────────────────────────────────────────────
 export function initInsight () {
