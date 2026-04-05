@@ -13,6 +13,8 @@ const TRIAD_NAMES = { authority: 'Authority', capacity: 'Capacity', expansion: '
 const TRIAD_LETTERS = { authority: 'A', capacity: 'C', expansion: 'E' }
 const TRIADS = ['authority', 'capacity', 'expansion']
 
+let hasVoiceKey = false  // tracks whether Deepgram API key is configured
+
 // ─── TTS (Deepgram Aura) ────────────────────────────────────
 let ttsEnabled = true
 let ttsAudio = null  // current Audio element for cancellation
@@ -262,6 +264,16 @@ function buildDOM () {
   // Pattern panel
   const panel = el('div', 'ins-pat-panel')
   panel.innerHTML = `
+    <div class="ins-voice-setup hidden" id="ins-voice-setup">
+      <div class="ins-vs-title">Set up Voice</div>
+      <div class="ins-vs-text">Voice coaching uses Deepgram for natural speech. Sign up for free ($200 credit) and paste your API key below.</div>
+      <a class="ins-vs-link" href="#" id="ins-vs-signup">deepgram.com/signup \u2192</a>
+      <div class="ins-vs-input-row">
+        <input type="password" id="ins-vs-key" placeholder="Paste API key..." autocomplete="off">
+        <button id="ins-vs-save">Save</button>
+      </div>
+      <div class="ins-vs-skip" id="ins-vs-skip">Skip \u2014 text chat works without voice</div>
+    </div>
     <div class="ins-modes" id="ins-modes">
       <div class="ins-mode-btn" data-mode="coach"><span class="ins-mode-dot" style="background:var(--gold)"></span>Coach</div>
       <div class="ins-mode-btn" data-mode="regulate"><span class="ins-mode-dot" style="background:var(--capacity)"></span>Regulate</div>
@@ -835,7 +847,44 @@ function unwireGlobalEvents () {
   }
 }
 
-// escHTML removed — using imported escapeHtml from chat-renderer.js
+// ─── Voice setup ─────────────────────────────────────────────
+async function checkVoiceKey () {
+  try {
+    const config = await window.ace.setup.getConfig()
+    hasVoiceKey = !!(config && config.deepgramApiKey)
+  } catch { hasVoiceKey = false }
+
+  const setupCard = document.getElementById('ins-voice-setup')
+  if (!hasVoiceKey && setupCard) {
+    setupCard.classList.remove('hidden')
+    // Hide mic button when no key
+    if (micEl) micEl.style.display = 'none'
+
+    // Signup link
+    document.getElementById('ins-vs-signup')?.addEventListener('click', e => {
+      e.preventDefault()
+      window.ace.shell.openExternal('https://deepgram.com/signup')
+    })
+
+    // Save key
+    document.getElementById('ins-vs-save')?.addEventListener('click', async () => {
+      const keyInput = document.getElementById('ins-vs-key')
+      const key = keyInput?.value?.trim()
+      if (!key) return
+      await window.ace.setup.patchConfig({ deepgramApiKey: key })
+      hasVoiceKey = true
+      setupCard.classList.add('hidden')
+      if (micEl) micEl.style.display = ''
+    })
+
+    // Skip
+    document.getElementById('ins-vs-skip')?.addEventListener('click', () => {
+      setupCard.classList.add('hidden')
+    })
+  } else {
+    if (micEl) micEl.style.display = ''
+  }
+}
 
 // ─── Public API ──────────────────────────────────────────────
 let insightLoading = false
@@ -859,6 +908,9 @@ export async function initInsight () {
 
   resizeCanvas()
   wireEvents()
+
+  // Check for Deepgram API key
+  await checkVoiceKey()
 
   // Seed chat
   addMsg('ace', `What's present for you right now?`)

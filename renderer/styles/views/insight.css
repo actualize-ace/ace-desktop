@@ -326,6 +326,81 @@
 }
 
 /* ─── Pattern panel ─── */
+/* Voice setup card */
+#insight-body .ins-voice-setup {
+  background: rgba(136,120,255,0.04);
+  border: 1px solid rgba(140,120,255,0.12);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+#insight-body .ins-voice-setup.hidden { display: none; }
+#insight-body .ins-vs-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+#insight-body .ins-vs-text {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+#insight-body .ins-vs-link {
+  display: inline-block;
+  font-size: 10px;
+  color: #8878ff;
+  text-decoration: none;
+  margin-bottom: 12px;
+  transition: color 0.15s;
+}
+#insight-body .ins-vs-link:hover { color: var(--gold); }
+#insight-body .ins-vs-input-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+#insight-body .ins-vs-input-row input {
+  flex: 1;
+  height: 30px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 8px;
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  outline: none;
+}
+#insight-body .ins-vs-input-row input:focus {
+  border-color: rgba(140,120,255,0.3);
+}
+#insight-body .ins-vs-input-row button {
+  height: 30px;
+  padding: 0 12px;
+  background: rgba(136,120,255,0.12);
+  border: 1px solid rgba(136,120,255,0.2);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+#insight-body .ins-vs-input-row button:hover {
+  background: rgba(136,120,255,0.2);
+  border-color: rgba(136,120,255,0.35);
+}
+#insight-body .ins-vs-skip {
+  font-size: 10px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+#insight-body .ins-vs-skip:hover { color: var(--text-secondary); }
+
 /* Coaching mode presets */
 #insight-body .ins-modes {
   display: flex;
