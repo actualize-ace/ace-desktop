@@ -389,24 +389,39 @@ ipcMain.handle(ch.VAULT_GRAPH_INVALIDATE, () => {
   catch { return false }
 })
 
-// ─── Insight: Whisper transcription ──────────────────────────────────────────
+// ─── Insight: Deepgram STT + TTS ─────────────────────────────────────────────
+
 ipcMain.handle(ch.INSIGHT_TRANSCRIBE, async (_, audioBuffer) => {
-  const os = require('os')
-  const tmpAudio = path.join(os.tmpdir(), `ace-insight-${Date.now()}.webm`)
-  const tmpBase = tmpAudio.replace(/\.webm$/, '')
+  const config = loadConfig()
+  const apiKey = config?.deepgramApiKey
+  if (!apiKey) return { error: 'Deepgram API key not configured' }
   try {
-    fs.writeFileSync(tmpAudio, Buffer.from(audioBuffer))
-    execSync(`whisper "${tmpAudio}" --model tiny --language en --output_format txt --output_dir "${os.tmpdir()}"`, {
-      timeout: 30000,
-      stdio: 'pipe',
+    const response = await fetch('https://api.deepgram.com/v1/listen?model=nova-2&language=en&smart_format=true', {
+      method: 'POST',
+      headers: { 'Authorization': `Token ${apiKey}`, 'Content-Type': 'audio/webm' },
+      body: Buffer.from(audioBuffer),
     })
-    const txtPath = tmpBase + '.txt'
-    const text = fs.readFileSync(txtPath, 'utf8').trim()
-    try { fs.unlinkSync(tmpAudio) } catch {}
-    try { fs.unlinkSync(txtPath) } catch {}
+    const data = await response.json()
+    const text = data.results?.channels?.[0]?.alternatives?.[0]?.transcript || ''
     return { text }
   } catch (e) {
-    try { fs.unlinkSync(tmpAudio) } catch {}
+    return { error: e.message }
+  }
+})
+
+ipcMain.handle(ch.INSIGHT_SPEAK, async (_, text) => {
+  const config = loadConfig()
+  const apiKey = config?.deepgramApiKey
+  if (!apiKey) return { error: 'Deepgram API key not configured' }
+  try {
+    const response = await fetch('https://api.deepgram.com/v1/speak?model=aura-asteria-en', {
+      method: 'POST',
+      headers: { 'Authorization': `Token ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    })
+    const arrayBuffer = await response.arrayBuffer()
+    return { audio: Array.from(new Uint8Array(arrayBuffer)) }
+  } catch (e) {
     return { error: e.message }
   }
 })

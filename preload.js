@@ -105,6 +105,7 @@ contextBridge.exposeInMainWorld('ace', {
   // ─── Insight voice ─────────────────────────────────────────────────────────
   insight: {
     transcribe: (audioBuffer) => ipcRenderer.invoke(ch.INSIGHT_TRANSCRIBE, audioBuffer),
+    speak:      (text)        => ipcRenderer.invoke(ch.INSIGHT_SPEAK, text),
   },
 
   // ─── Shell ──────────────────────────────────────────────────────────────────

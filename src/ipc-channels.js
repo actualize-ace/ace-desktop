@@ -86,4 +86,6 @@ module.exports = {
 
   // Insight voice
   INSIGHT_TRANSCRIBE:     'insight-transcribe',
+  INSIGHT_SPEAK:          'insight-speak',
+  INSIGHT_STOP_SPEAKING:  'insight-stop-speaking',
 }

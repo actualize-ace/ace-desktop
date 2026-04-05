@@ -13,14 +13,13 @@ const TRIAD_NAMES = { authority: 'Authority', capacity: 'Capacity', expansion: '
 const TRIAD_LETTERS = { authority: 'A', capacity: 'C', expansion: 'E' }
 const TRIADS = ['authority', 'capacity', 'expansion']
 
-// ─── TTS (text-to-speech) ───────────────────────────────────
+// ─── TTS (Deepgram Aura) ────────────────────────────────────
 let ttsEnabled = true
-let currentUtterance = null
+let ttsAudio = null  // current Audio element for cancellation
 
-function speakText(text) {
-  if (!ttsEnabled || !window.speechSynthesis) return
-  // Cancel any in-progress speech
-  window.speechSynthesis.cancel()
+async function speakText(text) {
+  if (!ttsEnabled) return
+  stopSpeaking()
   // Strip markdown artifacts for cleaner speech
   const clean = text
     .replace(/[#*_`~\[\]()]/g, '')
@@ -28,24 +27,25 @@ function speakText(text) {
     .replace(/\s+/g, ' ')
     .trim()
   if (!clean) return
-  const utt = new SpeechSynthesisUtterance(clean)
-  utt.rate = 1.0
-  utt.pitch = 1.0
-  utt.volume = 0.85
-  // Prefer a natural-sounding voice if available
-  const voices = window.speechSynthesis.getVoices()
-  const preferred = voices.find(v => v.name.includes('Samantha')) ||
-                    voices.find(v => v.name.includes('Daniel')) ||
-                    voices.find(v => v.lang.startsWith('en') && v.localService) ||
-                    voices[0]
-  if (preferred) utt.voice = preferred
-  currentUtterance = utt
-  window.speechSynthesis.speak(utt)
+  try {
+    const result = await window.ace.insight.speak(clean)
+    if (result.error) { console.warn('[insight] TTS error:', result.error); return }
+    const blob = new Blob([new Uint8Array(result.audio)], { type: 'audio/mpeg' })
+    const url = URL.createObjectURL(blob)
+    ttsAudio = new Audio(url)
+    ttsAudio.onended = () => { URL.revokeObjectURL(url); ttsAudio = null }
+    ttsAudio.play()
+  } catch (e) {
+    console.warn('[insight] TTS failed:', e)
+  }
 }
 
 function stopSpeaking() {
-  if (window.speechSynthesis) window.speechSynthesis.cancel()
-  currentUtterance = null
+  if (ttsAudio) {
+    ttsAudio.pause()
+    ttsAudio.currentTime = 0
+    ttsAudio = null
+  }
 }
 
 // Waveform tuning
