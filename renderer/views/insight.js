@@ -543,12 +543,14 @@ async function micOn () {
     src.connect(state.insight.analyser)
     state.insight.freqData = new Uint8Array(state.insight.analyser.frequencyBinCount)
     setMode('listening')
+    startRecognition()
   } catch (e) {
     console.warn('[insight] mic unavailable:', e)
   }
 }
 
 function micOff () {
+  stopRecognition()
   if (state.insight.stream) state.insight.stream.getTracks().forEach(t => t.stop())
   if (state.insight.audioCtx) state.insight.audioCtx.close()
   state.insight.audioCtx = null
@@ -569,6 +571,69 @@ function readAudio () {
     sum += v * v
   }
   state.insight.amp = Math.sqrt(sum / state.insight.freqData.length)
+}
+
+// ─── Speech Recognition (voice-to-text) ─────────────────────
+let recognition = null
+let recognitionText = ''       // accumulated final transcript
+let recognitionInterim = ''    // current interim result
+
+function startRecognition () {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+  if (!SR) { console.warn('[insight] SpeechRecognition not available'); return }
+
+  recognition = new SR()
+  recognition.continuous = true
+  recognition.interimResults = true
+  recognition.lang = 'en-US'
+  recognitionText = ''
+  recognitionInterim = ''
+
+  recognition.onresult = (e) => {
+    let interim = ''
+    let final = ''
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript
+      if (e.results[i].isFinal) {
+        final += t
+      } else {
+        interim += t
+      }
+    }
+    if (final) recognitionText += final
+    recognitionInterim = interim
+    // Show live transcription in the text input
+    if (textIn) {
+      textIn.value = (recognitionText + recognitionInterim).trim()
+      textIn.placeholder = 'Listening... tap mic to send'
+    }
+  }
+
+  recognition.onerror = (e) => {
+    // 'no-speech' and 'aborted' are expected — user pausing or stopping
+    if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      console.warn('[insight] speech recognition error:', e.error)
+    }
+  }
+
+  recognition.onend = () => {
+    // If still in listening mode, restart (browser stops after silence)
+    if (state.insight.mode === 'listening' && recognition) {
+      try { recognition.start() } catch (e) { /* already started */ }
+    }
+  }
+
+  try { recognition.start() } catch (e) { /* already started */ }
+}
+
+function stopRecognition () {
+  if (recognition) {
+    recognition.onend = null  // prevent auto-restart
+    recognition.abort()
+    recognition = null
+  }
+  recognitionInterim = ''
+  if (textIn) textIn.placeholder = 'Type or speak...'
 }
 
 // ─── Mode ────────────────────────────────────────────────────
@@ -670,18 +735,30 @@ let _boundResize = null
 let _boundChipDismiss = null
 
 function wireEvents () {
-  // Text input — Enter sends via streaming IPC
+  // Text input — Enter sends via streaming IPC (works for typed or transcribed text)
   textIn.addEventListener('keydown', e => {
     if (e.key === 'Enter' && textIn.value.trim()) {
       const txt = textIn.value.trim()
       textIn.value = ''
+      // Stop mic if it was recording
+      if (state.insight.mode === 'listening') micOff()
       sendInsightChat(txt)
     }
   })
 
-  // Mic button — toggles real audio capture
+  // Mic button — tap to start listening, tap again to send transcribed text
   micEl.addEventListener('click', () => {
-    state.insight.mode === 'listening' ? micOff() : micOn()
+    if (state.insight.mode === 'listening') {
+      // Stop listening — send whatever was transcribed
+      const text = (recognitionText + recognitionInterim).trim()
+      micOff()
+      if (text) {
+        textIn.value = ''
+        sendInsightChat(text)
+      }
+    } else {
+      micOn()
+    }
   })
 
   // Chip popover dismiss (stored for removal on exit)
