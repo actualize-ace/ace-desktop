@@ -19,8 +19,8 @@ const WAVE = {
   barSmooth: 0.12, breathHz: 0.0003, breathAmp: 0.03,
 }
 
-// Hardcoded pattern data (real data loaded in Task 5)
-const PAT = [
+// Hardcoded fallback pattern data
+const FALLBACK_PAT = [
   { n: 'sovereignty',    t: 'authority',  s: 0.80, tr: 'stable', lc: 'established', co: 'authorship' },
   { n: 'aliveness',      t: 'authority',  s: 0.75, tr: 'rising', lc: 'active',      co: 'creative-spark' },
   { n: 'creative-spark', t: 'authority',  s: 0.50, tr: 'rising', lc: 'emerging',    co: 'aliveness' },
@@ -29,8 +29,103 @@ const PAT = [
   { n: 'leverage',       t: 'expansion',  s: 0.72, tr: 'rising', lc: 'active',      co: 'momentum' },
   { n: 'flow',           t: 'expansion',  s: 0.65, tr: 'stable', lc: 'active',      co: 'momentum' },
 ]
-const PATMAP = {}
+
+// Live data — populated by loadPatternData(), falls back to FALLBACK_PAT
+let PAT = FALLBACK_PAT
+let PATMAP = {}
 PAT.forEach(p => PATMAP[p.n] = p)
+
+// ─── Load pattern data from vault ────────────────────────────
+async function loadPatternData () {
+  try {
+    const md = await window.ace.vault.readFile('01-Journal/patterns/index.md')
+    if (!md) return FALLBACK_PAT
+
+    // 1) Parse backlink counts: "- name: 42 ^" → { name, count, trend }
+    const countMap = {}   // name → { count, trend }
+    const countRe = /^- ([\w-]+):\s*(\d+)\s*([~^v])/gm
+    let m
+    while ((m = countRe.exec(md))) {
+      const trendChar = m[3]
+      const trend = trendChar === '^' ? 'rising' : trendChar === 'v' ? 'fading' : 'stable'
+      countMap[m[1]] = { count: parseInt(m[2], 10), trend }
+    }
+
+    // 2) Parse emerged patterns for triad + lifecycle
+    //    Format: [[path|name]] — Triad / description `lifecycle`
+    //    Or:     [[name]] — Triad / description `lifecycle`
+    const emergedMap = {}  // name → { triad, lifecycle }
+    const emergedRe = /\[\[(?:[^\]|]*\|)?([\w-]+)\]\]\s*—\s*(Authority|Capacity|Expansion|Relational)\s*\/[^`]*`(\w+)`/gi
+    while ((m = emergedRe.exec(md))) {
+      const name = m[1]
+      let triad = m[2].toLowerCase()
+      // Map Relational → capacity (closest triad leg)
+      if (triad === 'relational') triad = 'capacity'
+      emergedMap[name] = { triad, lifecycle: m[3].toLowerCase() }
+    }
+
+    // 3) Parse co-occurrence table for top partner per pattern
+    //    Format: | pattern1 + pattern2 | count | signal |
+    const coMap = {}  // name → best co-occurrence partner
+    const coRe = /\|\s*([\w-]+)\s*\+\s*([\w-]+)\s*\|\s*(\d+)/g
+    while ((m = coRe.exec(md))) {
+      const a = m[1], b = m[2], count = parseInt(m[3], 10)
+      if (!coMap[a] || coMap[a].count < count) coMap[a] = { partner: b, count }
+      if (!coMap[b] || coMap[b].count < count) coMap[b] = { partner: a, count }
+    }
+
+    // 4) Infer triad from seed pattern sections for patterns not in emerged
+    const seedTriadMap = {}
+    const capNames = ['flow', 'aliveness', 'deep-rest', 'regulated', 'resourced',
+      'activation', 'freeze', 'depletion', 'scattered']
+    capNames.forEach(n => seedTriadMap[n] = 'capacity')
+    const authNames = ['creative-spark', 'voice-clear', 'authorship', 'insight',
+      'mythopoetic', 'vision-pull', 'drift', 'performing']
+    authNames.forEach(n => seedTriadMap[n] = 'authority')
+    const expNames = ['momentum', 'rhythm-locked', 'container-held', 'clean-close',
+      'leverage', 'friction', 'overcommitment', 'avoidance', 'open-loop-anxiety']
+    expNames.forEach(n => seedTriadMap[n] = 'expansion')
+    const relNames = ['resonance', 'collaboration-alive', 'trust-deepened',
+      'boundary-held', 'boundary-breached', 'primary-rupture', 'co-regulation']
+    relNames.forEach(n => seedTriadMap[n] = 'capacity')
+
+    // 5) Build the result array — only include patterns with count >= 1
+    const maxCount = Math.max(1, ...Object.values(countMap).map(c => c.count))
+    const results = []
+
+    for (const [name, { count, trend }] of Object.entries(countMap)) {
+      if (count < 1) continue
+      const emerged = emergedMap[name]
+      const triad = emerged?.triad || seedTriadMap[name] || 'expansion'
+      const lifecycle = emerged?.lifecycle || inferLifecycle(count, trend)
+      const co = coMap[name]?.partner || ''
+      results.push({
+        n: name,
+        t: triad,
+        s: Math.round((count / maxCount) * 100) / 100,
+        tr: trend,
+        lc: lifecycle,
+        co,
+      })
+    }
+
+    // Sort by strength descending
+    results.sort((a, b) => b.s - a.s)
+
+    return results.length ? results : FALLBACK_PAT
+  } catch (err) {
+    console.warn('[insight] Failed to load pattern data from vault, using fallback:', err)
+    return FALLBACK_PAT
+  }
+}
+
+function inferLifecycle (count, trend) {
+  if (count >= 9 && trend === 'fading') return 'integrated'
+  if (count >= 9) return 'established'
+  if (count >= 3 && trend === 'rising') return 'active'
+  if (count >= 3) return 'active'
+  return 'emerging'
+}
 
 // ─── DOM refs (set in init) ─────────────────────────────────
 let body, chatEl, textIn, micEl, modeTag
@@ -554,8 +649,15 @@ function wireEvents () {
 // escHTML removed — using imported escapeHtml from chat-renderer.js
 
 // ─── Public API ──────────────────────────────────────────────
-export function initInsight () {
-  if (state.insightInitialized) return
+let insightLoading = false
+export async function initInsight () {
+  if (state.insightInitialized || insightLoading) return
+  insightLoading = true
+
+  // Load live pattern data from vault (falls back to FALLBACK_PAT)
+  PAT = await loadPatternData()
+  PATMAP = {}
+  PAT.forEach(p => PATMAP[p.n] = p)
 
   buildDOM()
   buildPatPanel()
@@ -574,6 +676,7 @@ export function initInsight () {
 
   t0 = performance.now()
   state.insightInitialized = true
+  insightLoading = false
   rafId = requestAnimationFrame(frame)
 }
 
@@ -586,4 +689,5 @@ export function onInsightExit () {
     rafId = null
   }
   state.insightInitialized = false
+  insightLoading = false
 }
