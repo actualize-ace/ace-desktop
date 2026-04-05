@@ -12,6 +12,7 @@ export const VIEWS = [
   { type: 'view', id: 'artifacts', label: 'Artifacts',  icon: '▦', keywords: ['creative', 'library', 'assets'] },
   { type: 'view', id: 'pipeline',  label: 'Pipeline',   icon: '→', keywords: ['deals', 'sales', 'revenue'] },
   { type: 'view', id: 'breath',    label: 'Breath',     icon: '◉', keywords: ['breathing', 'regulate', 'somatic'] },
+  { type: 'view', id: 'insight',   label: 'Insight',    icon: '✦', keywords: ['coaching', 'patterns', 'chat', 'voice'] },
 ]
 
 export const COMMANDS = [

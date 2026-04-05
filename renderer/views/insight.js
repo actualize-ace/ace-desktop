@@ -624,6 +624,10 @@ function frame (ts) {
 }
 
 // ─── Wire events ─────────────────────────────────────────────
+// Store bound handlers for cleanup on exit
+let _boundResize = null
+let _boundChipDismiss = null
+
 function wireEvents () {
   // Text input — Enter sends via streaming IPC
   textIn.addEventListener('keydown', e => {
@@ -639,11 +643,24 @@ function wireEvents () {
     state.insight.mode === 'listening' ? micOff() : micOn()
   })
 
-  // Chip popover dismiss
-  document.addEventListener('click', hideChipPop)
+  // Chip popover dismiss (stored for removal on exit)
+  _boundChipDismiss = hideChipPop
+  document.addEventListener('click', _boundChipDismiss)
 
-  // Canvas resize
-  window.addEventListener('resize', resizeCanvas)
+  // Canvas resize (stored for removal on exit)
+  _boundResize = resizeCanvas
+  window.addEventListener('resize', _boundResize)
+}
+
+function unwireGlobalEvents () {
+  if (_boundResize) {
+    window.removeEventListener('resize', _boundResize)
+    _boundResize = null
+  }
+  if (_boundChipDismiss) {
+    document.removeEventListener('click', _boundChipDismiss)
+    _boundChipDismiss = null
+  }
 }
 
 // escHTML removed — using imported escapeHtml from chat-renderer.js
@@ -687,6 +704,13 @@ export function onInsightExit () {
   if (rafId) {
     cancelAnimationFrame(rafId)
     rafId = null
+  }
+  // Remove global listeners (window resize, document click) to prevent leaks
+  unwireGlobalEvents()
+  // Remove chip popover from document.body
+  if (chipPop && chipPop.parentNode) {
+    chipPop.parentNode.removeChild(chipPop)
+    chipPop = null
   }
   state.insightInitialized = false
   insightLoading = false
