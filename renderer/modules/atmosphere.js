@@ -612,7 +612,7 @@ function initCoherenceBar() {
 
   onCoherenceUpdate(handleCoherenceUpdate)
   onCoherenceUpdate(handleHrvIcon)
-  coherenceAnimLoop()
+  // Loop starts on-demand when sensor connects — no idle CPU burn
 
   // HRV sidebar icon — click to show tooltip
   // HRV status panel — open/close
@@ -670,6 +670,8 @@ function handleCoherenceUpdate(cs) {
     strip.classList.add('active')
     if (hrEl) hrEl.classList.add('visible')
     if (barText) barText.classList.add('coherence-hidden')
+    // Start waveform loop only when connected
+    if (!coherenceAnimFrame) coherenceAnimLoop()
     if (hrVal) { hrVal.textContent = cs.hr || '—'; hrVal.classList.remove('somatic-bar-hr-connecting') }
     // Coherence level word
     const LEVEL_WORDS = { low: 'low', med: 'coherent', high: 'deep' }
@@ -703,6 +705,8 @@ function handleCoherenceUpdate(cs) {
     if (barText) barText.classList.remove('coherence-hidden')
     // Hand glow back to atmosphere
     if (glowEl) glowEl.style.background = ''
+    // Stop waveform loop — no sensor, no CPU burn
+    if (coherenceAnimFrame) { cancelAnimationFrame(coherenceAnimFrame); coherenceAnimFrame = null }
   }
 }
 

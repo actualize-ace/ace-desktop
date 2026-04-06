@@ -300,7 +300,8 @@ export function onBreathEnter() {
   // Fade out somatic bar for full immersion — but keep it when sensor connected (waveform is biofeedback)
   const somaticBar = document.getElementById('somatic-bar')
   if (somaticBar && !state.coherenceConnected) somaticBar.classList.add('breath-hidden')
-  // Restart coherence field animation
+  // Restart coherence field animation (cancel first to prevent stacking)
+  if (cfAnimFrame) cancelAnimationFrame(cfAnimFrame)
   coherenceFieldLoop(0)
 }
 
@@ -356,5 +357,5 @@ export function initBreath() {
     cfCtx.scale(2, 2)
   }
   onCoherenceUpdate(handleBreathCoherence)
-  coherenceFieldLoop(0)
+  // Loop starts in onBreathEnter, not here — prevents orphaned rAF
 }
