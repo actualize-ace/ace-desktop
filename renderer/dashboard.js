@@ -29,6 +29,7 @@ async function loadDashboard() {
     getMetrics:   () => window.ace.dash.getMetrics(),
     getVelocity:  () => window.ace.dash.getVelocity(),
     getRhythm:    () => window.ace.dash.getRhythm(),
+    getPatterns:  () => window.ace.dash.getPatterns(),
   }
 
   // Collect unique data sources needed by enabled widgets
@@ -59,6 +60,7 @@ async function loadDashboard() {
     followUps: data.getFollowUps,
     velocity:  data.getVelocity,
     rhythm:    data.getRhythm,
+    patterns:  data.getPatterns,
   }
 
   // ─── Vault health banner ──────────────────────────────────

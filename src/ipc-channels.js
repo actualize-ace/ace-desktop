@@ -48,6 +48,7 @@ module.exports = {
   GET_RHYTHM:             'get-rhythm',
   GET_PEOPLE:             'get-people',
   GET_USAGE:              'get-usage',
+  GET_PATTERNS:           'get-patterns',
 
   // Chat (stream-json mode)
   CHAT_SEND:              'chat-send',

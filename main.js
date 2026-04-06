@@ -261,6 +261,11 @@ ipcMain.handle(ch.GET_PEOPLE, () => {
   catch (e) { return { people: [], categories: [], error: e.message } }
 })
 
+ipcMain.handle(ch.GET_PATTERNS, () => {
+  try { return require('./src/vault-reader').parsePatterns(global.VAULT_PATH) }
+  catch (e) { return { counts: [], tensions: [], coOccurrences: [], descriptions: {}, error: e.message } }
+})
+
 ipcMain.handle(ch.GET_USAGE, () => {
   try { return require('./src/usage-probe').probe() }
   catch (e) { return { session: null, weekly: null, error: e.message } }

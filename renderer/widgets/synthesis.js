@@ -201,16 +201,23 @@ export default {
       nextMoveHtml = `<div class="cc-nextup"><div class="cc-nextup-empty">No urgent items \u2014 your system is clean.${dismissed.length > 0 ? ' <span class="cc-nextmove-reset">Reset skipped</span>' : ''}</div></div>`
     }
 
-    // Inner Move zone — coaching prompt from signal-priority router
+    // Inner Move zone — pattern-aware coaching prompt
     const coaching = this._buildCoachingPrompt ? this._buildCoachingPrompt(this._lastCtx) : null
     let innerMoveHtml = ''
     if (coaching) {
+      const pat = coaching.pattern
+      const ten = coaching.tension
       innerMoveHtml = `<div class="cc-innermove-featured" style="--innermove-accent: ${coaching.accent}">
         <div class="cc-innermove-header">
           <span class="cc-innermove-badge">Inner Move</span>
           <span class="cc-innermove-skill">${escapeHtml(coaching.skill)}</span>
         </div>
+        ${pat ? `<div class="cc-innermove-pattern">
+          <span class="cc-innermove-pattern-name">${escapeHtml(pat.name)}</span>
+          <span class="cc-innermove-pattern-count">${pat.count}<span class="cc-innermove-trend">${pat.trend === '^' ? '\u2191' : pat.trend === 'v' ? '\u2193' : '\u2022'}</span></span>
+        </div>` : ''}
         <div class="cc-innermove-prompt">${escapeHtml(coaching.prompt)}</div>
+        ${ten ? `<div class="cc-innermove-tension">tension: ${escapeHtml(ten.label)} \u2014 day ${ten.days}</div>` : ''}
         <div class="cc-innermove-actions">
           <button class="cc-innermove-open">Open ${escapeHtml(coaching.skill)}</button>
         </div>
@@ -388,7 +395,7 @@ export default {
   },
 
   _buildContext(allData) {
-    const { state, metrics, pipeline, followUps, velocity } = allData || {}
+    const { state, metrics, pipeline, followUps, velocity, patterns } = allData || {}
     const signals = metrics?._signals || Array(9).fill('dim')
     const scoreMap = { green: 2, yellow: 1, red: 0, dim: 0 }
     const coherenceScore = signals.reduce((sum, c) => sum + (scoreMap[c] || 0), 0)
@@ -434,6 +441,7 @@ export default {
       overdueFu,
       daysSinceExecution,
       todaySessions,
+      patterns: patterns || { counts: [], tensions: [], coOccurrences: [], descriptions: {} },
     }
   },
 
@@ -568,67 +576,121 @@ export default {
     const signals = ctx.signals || []
     const keys = ['A1','A2','A3','C1','C2','C3','E1','E2','E3']
     const energy = (ctx.energy || '').toLowerCase()
+    const { counts, tensions, descriptions } = ctx.patterns || {}
+
+    // Helper: find the top rising or active pattern matching a filter
+    const topPattern = (filter) => {
+      const matches = (counts || []).filter(filter).sort((a, b) => {
+        // Rising (^) first, then by count descending
+        if (a.trend === '^' && b.trend !== '^') return -1
+        if (b.trend === '^' && a.trend !== '^') return 1
+        return b.count - a.count
+      })
+      return matches[0] || null
+    }
+
+    // Helper: find active tension
+    const activeTension = (tensions || [])[0] || null
+
+    // Helper: build the card object with pattern context
+    const card = (skill, prompt, terminalPrompt, accent, pattern, tension) => {
+      const result = { skill, prompt, terminalPrompt, accent }
+      if (pattern) {
+        result.pattern = {
+          name: pattern.name,
+          count: pattern.count,
+          trend: pattern.trend,
+          description: (descriptions || {})[pattern.name] || '',
+        }
+      }
+      if (tension) {
+        result.tension = { label: tension.label, days: tension.days }
+      }
+      return result
+    }
 
     // Priority 1: Dysregulation or C1 (Regulation) RED
     if (energy.includes('dysregulated') || signals[3] === 'red') {
-      return {
-        skill: '/regulate',
-        prompt: 'Your system is signaling dysregulation. Ground first \u2014 execution can wait.',
-        terminalPrompt: 'I\u2019m feeling dysregulated. Help me check in with my nervous system and find ground.',
-        accent: 'var(--capacity)',
-      }
+      const p = topPattern(c => c.pole === 'Negative' && (c.triadLeg || '').includes('Capacity'))
+      return card('/regulate',
+        p ? `${p.name} is active (${p.count}${p.trend}). Your body is asking to ground first.`
+          : 'Your system is signaling dysregulation. Ground first \u2014 execution can wait.',
+        'I\u2019m feeling dysregulated. Help me check in with my nervous system and find ground.',
+        'var(--capacity)', p, null)
     }
 
     // Priority 2: Any Authority signal (A1-A3) RED
     const redAuthIdx = [0, 1, 2].find(i => signals[i] === 'red')
     if (redAuthIdx != null) {
       const name = SIGNAL_NAMES[keys[redAuthIdx]]
-      return {
-        skill: '/edge',
-        prompt: `${name} is flagged \u2014 where are you deferring something that needs to be faced?`,
-        terminalPrompt: `My ${name} signal is RED. Help me explore what edge I\u2019m avoiding.`,
-        accent: 'var(--authority)',
-      }
+      const p = topPattern(c => c.pole === 'Negative' && (c.triadLeg || '').includes('Authority'))
+        || topPattern(c => (c.triadLeg || '').includes('Authority'))
+      return card('/edge',
+        p ? `${p.name} pattern (${p.count}${p.trend}) \u2014 ${name} is flagged. What edge are you avoiding?`
+          : `${name} is flagged \u2014 where are you deferring something that needs to be faced?`,
+        `My ${name} signal is RED. Help me explore what edge I\u2019m avoiding.`,
+        'var(--authority)', p, null)
     }
 
     // Priority 3: 2+ Capacity signals RED or yellow
     const capStressed = [3, 4, 5].filter(i => signals[i] === 'red' || signals[i] === 'yellow').length
     if (capStressed >= 2) {
-      return {
-        skill: '/coach',
-        prompt: 'Capacity is under pressure. What\u2019s draining you right now?',
-        terminalPrompt: 'My Capacity signals are stressed. Help me figure out what\u2019s draining me and what to do about it.',
-        accent: 'var(--capacity)',
-      }
+      const p = topPattern(c => c.pole === 'Negative' && (c.triadLeg || '').includes('Capacity'))
+      return card('/coach',
+        p ? `${p.name} (${p.count}${p.trend}) \u2014 Capacity is under pressure. What\u2019s draining you?`
+          : 'Capacity is under pressure. What\u2019s draining you right now?',
+        'My Capacity signals are stressed. Help me figure out what\u2019s draining me and what to do about it.',
+        'var(--capacity)', p, null)
     }
 
     // Priority 4: Execution gap >= 3 days
     if (ctx.daysSinceExecution >= 3) {
-      return {
-        skill: '/blind-spots',
-        prompt: `${ctx.daysSinceExecution} days without execution. What\u2019s blocking isn\u2019t always what it looks like.`,
-        terminalPrompt: `I haven\u2019t executed in ${ctx.daysSinceExecution} days. Help me surface what I might be missing or avoiding.`,
-        accent: 'var(--expansion)',
-      }
+      const p = topPattern(c => c.name === 'activation-gap' || c.name === 'avoidance' || c.name === 'drift')
+      return card('/blind-spots',
+        p ? `${p.name} (${p.count}${p.trend}) \u2014 ${ctx.daysSinceExecution}d without execution. What\u2019s hiding?`
+          : `${ctx.daysSinceExecution} days without execution. What\u2019s blocking isn\u2019t always what it looks like.`,
+        `I haven\u2019t executed in ${ctx.daysSinceExecution} days. Help me surface what I might be missing or avoiding.`,
+        'var(--expansion)', p, null)
     }
 
-    // Priority 5: Stable + active today — go deeper
+    // Priority 5: Active tension exists
+    if (activeTension && activeTension.days >= 7) {
+      const p = topPattern(c => activeTension.label.includes(c.name))
+      return card('/edge',
+        `tension: ${activeTension.label} \u2014 day ${activeTension.days}. This one keeps showing up.`,
+        `I have an active tension: "${activeTension.label}" that\u2019s persisted for ${activeTension.days} days. Help me explore this edge.`,
+        'var(--authority)', p, activeTension)
+    }
+
+    // Priority 6: Rising pattern — celebrate or explore
+    const rising = topPattern(c => c.trend === '^' && c.count >= 5)
+    if (rising) {
+      const isPositive = rising.pole === 'Positive'
+      return card(isPositive ? '/coach' : '/edge',
+        `${rising.name} is rising (${rising.count}^). ${isPositive ? 'What\u2019s fueling this?' : 'What\u2019s underneath this?'}`,
+        isPositive
+          ? `My "${rising.name}" pattern is rising (${rising.count} occurrences, trending up). Help me explore what\u2019s fueling it so I can sustain it.`
+          : `My "${rising.name}" pattern is rising (${rising.count} occurrences, trending up). Help me explore what\u2019s underneath it.`,
+        isPositive ? 'var(--capacity)' : 'var(--expansion)', rising, null)
+    }
+
+    // Priority 7: Stable + active today — go deeper
     if (ctx.coherenceScore >= 11 && ctx.todaySessions > 0) {
-      return {
-        skill: '/coach',
-        prompt: 'System is stable. Good day to go deeper \u2014 what\u2019s the thing you\u2019ve been avoiding?',
-        terminalPrompt: 'My system is stable today. Help me explore something I\u2019ve been putting off or avoiding.',
-        accent: 'var(--gold)',
-      }
+      const p = topPattern(c => c.trend === '^' || c.count >= 10)
+      return card('/coach',
+        p ? `System is stable. ${p.name} (${p.count}${p.trend}) \u2014 good day to go deeper.`
+          : 'System is stable. Good day to go deeper \u2014 what\u2019s the thing you\u2019ve been avoiding?',
+        'My system is stable today. Help me explore something I\u2019ve been putting off or avoiding.',
+        'var(--gold)', p, null)
     }
 
-    // Priority 6: Fallback
-    return {
-      skill: '/coach',
-      prompt: 'What would make today feel like it mattered?',
-      terminalPrompt: 'Help me check in. What\u2019s most alive for me right now, and what would make today feel like it mattered?',
-      accent: 'var(--gold)',
-    }
+    // Priority 8: Fallback
+    const p = topPattern(c => c.count >= 5)
+    return card('/coach',
+      p ? `${p.name} (${p.count}${p.trend}) \u2014 what would make today feel like it mattered?`
+        : 'What would make today feel like it mattered?',
+      'Help me check in. What\u2019s most alive for me right now, and what would make today feel like it mattered?',
+      'var(--gold)', p, null)
   },
 
   _wireNextMoveActions(el, priorities, allData, ctx, viewIdx) {

@@ -533,4 +533,56 @@ function updateArtifactStatus(vaultPath, slug, newStatus) {
   } catch (e) { return { error: e.message } }
 }
 
-module.exports = { parseState, parseFollowUps, listDir, parseExecutionLog, parseRitualRhythm, parsePeople, parseArtifacts, getArtifactDetail, updateArtifactStatus }
+function parsePatterns(vaultPath) {
+  const indexPath = path.join(vaultPath, '01-Journal', 'patterns', 'index.md')
+  try {
+    const text = fs.readFileSync(indexPath, 'utf8')
+
+    // Parse backlink counts: "- pattern-name: 43 ^"
+    const counts = []
+    const countRe = /^- ([\w-]+): (\d+) ([~^v])/gm
+    let m
+    while ((m = countRe.exec(text)) !== null) {
+      counts.push({ name: m[1], count: parseInt(m[2]), trend: m[3] })
+    }
+
+    // Parse active tensions
+    const tensions = []
+    const tensionRe = /^\- \[\[tension: (.+?)\]\] — first surfaced ([\d-]+), last seen ([\d-]+)\. (.+)/gm
+    while ((m = tensionRe.exec(text)) !== null) {
+      const firstSurfaced = new Date(m[2])
+      const lastSeen = new Date(m[3])
+      const days = Math.round((lastSeen - firstSurfaced) / (1000 * 60 * 60 * 24))
+      tensions.push({ label: m[1], firstSurfaced: m[2], lastSeen: m[3], days, note: m[4] })
+    }
+
+    // Parse co-occurrences from the table
+    const coOccurrences = []
+    const coRe = /^\| ([\w-]+ \+ [\w-]+) \| (\d+) \| (.+?) \|/gm
+    while ((m = coRe.exec(text)) !== null) {
+      coOccurrences.push({ pair: m[1], count: parseInt(m[2]), signal: m[3].trim() })
+    }
+
+    // Read first line of each pattern file for description
+    const patternsDir = path.join(vaultPath, '01-Journal', 'patterns')
+    const descriptions = {}
+    for (const c of counts) {
+      try {
+        const pText = fs.readFileSync(path.join(patternsDir, c.name + '.md'), 'utf8')
+        // First paragraph after the heading
+        const lines = pText.split('\n').filter(l => l.trim() && !l.startsWith('#'))
+        if (lines[0]) descriptions[c.name] = lines[0].trim()
+        // Triad leg
+        const legMatch = pText.match(/\*\*Triad leg:\*\*\s*(.+)/)
+        if (legMatch) c.triadLeg = legMatch[1].trim()
+        // Pole
+        const poleMatch = pText.match(/\*\*Pole:\*\*\s*(.+)/)
+        if (poleMatch) c.pole = poleMatch[1].trim()
+      } catch (_) { /* pattern file may not exist */ }
+    }
+
+    return { counts, tensions, coOccurrences, descriptions }
+  } catch (e) { return { counts: [], tensions: [], coOccurrences: [], descriptions: {}, error: e.message } }
+}
+
+module.exports = { parseState, parseFollowUps, listDir, parseExecutionLog, parseRitualRhythm, parsePeople, parseArtifacts, getArtifactDetail, updateArtifactStatus, parsePatterns }

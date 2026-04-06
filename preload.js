@@ -46,6 +46,7 @@ contextBridge.exposeInMainWorld('ace', {
     getRhythm:            ()        => ipcRenderer.invoke(ch.GET_RHYTHM),
     getUsage:             ()        => ipcRenderer.invoke(ch.GET_USAGE),
     getPeople:            ()        => ipcRenderer.invoke(ch.GET_PEOPLE),
+    getPatterns:          ()        => ipcRenderer.invoke(ch.GET_PATTERNS),
     getSynthesisAI:       (context) => ipcRenderer.invoke(ch.GET_SYNTHESIS_AI, context),
     getLayout:            ()        => ipcRenderer.invoke(ch.GET_LAYOUT),
     saveLayout:           (layout)  => ipcRenderer.invoke(ch.SAVE_LAYOUT, layout),
