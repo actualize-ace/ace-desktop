@@ -610,7 +610,26 @@ function initCoherenceBar() {
   window.addEventListener('resize', sizeRhythmCanvas)
 
   onCoherenceUpdate(handleCoherenceUpdate)
+  onCoherenceUpdate(handleHrvIcon)
   coherenceAnimLoop()
+
+  // HRV sidebar icon — click to show tooltip
+  const hrvBtn = document.getElementById('hrv-btn')
+  const hrvTooltip = document.getElementById('hrv-tooltip')
+  if (hrvBtn && hrvTooltip) {
+    let tooltipTimer = null
+    hrvBtn.addEventListener('click', () => {
+      hrvTooltip.classList.add('visible')
+      clearTimeout(tooltipTimer)
+      tooltipTimer = setTimeout(() => hrvTooltip.classList.remove('visible'), 3000)
+    })
+    // Hide on click elsewhere
+    document.addEventListener('click', (e) => {
+      if (!hrvBtn.contains(e.target) && !hrvTooltip.contains(e.target)) {
+        hrvTooltip.classList.remove('visible')
+      }
+    })
+  }
 }
 
 function sizeRhythmCanvas() {
@@ -680,6 +699,29 @@ function handleCoherenceUpdate(cs) {
     if (barText) barText.classList.remove('coherence-hidden')
     // Hand glow back to atmosphere
     if (glowEl) glowEl.style.background = ''
+  }
+}
+
+function handleHrvIcon(cs) {
+  const btn = document.getElementById('hrv-btn')
+  const tooltipText = document.getElementById('hrv-tooltip-text')
+  const tooltipSub = document.getElementById('hrv-tooltip-sub')
+  if (!btn) return
+
+  btn.classList.remove('scanning', 'connected', 'low', 'med', 'high')
+
+  if (cs.connected) {
+    btn.classList.add('connected')
+    if (cs.coherenceLevel) btn.classList.add(cs.coherenceLevel)
+    if (tooltipText) tooltipText.textContent = 'Inner Balance'
+    if (tooltipSub) tooltipSub.textContent = `${cs.hr || '—'} bpm · ${cs.battery || '—'}% battery`
+  } else if (cs.scanning) {
+    btn.classList.add('scanning')
+    if (tooltipText) tooltipText.textContent = 'Searching for sensor...'
+    if (tooltipSub) tooltipSub.textContent = 'Clip Inner Balance to your ear'
+  } else {
+    if (tooltipText) tooltipText.textContent = 'Heart rhythm sensor'
+    if (tooltipSub) tooltipSub.textContent = 'Connect a HeartMath Inner Balance'
   }
 }
 
