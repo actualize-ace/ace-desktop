@@ -154,8 +154,6 @@
   .cc-nextmove-card {
     flex: 1;
     min-width: 0;
-    display: flex;
-    flex-direction: column;
   }
   .cc-nextmove-featured {
     padding: 10px 14px;
@@ -163,7 +161,7 @@
     border: 1px solid var(--glass-border);
     background: color-mix(in srgb, var(--bg-deep, #080a14), transparent 40%);
     box-shadow: inset 0 1px 4px rgba(0,0,0,0.12);
-    flex: 1;
+    height: 100%;
     display: flex;
     flex-direction: column;
   }
@@ -242,9 +240,11 @@
     background: color-mix(in srgb, var(--authority), transparent 90%);
   }
 
-  /* Queue rows under left card */
+  /* Queue rows inside left card */
   .cc-nextmove-queue {
-    padding: 4px 4px 0;
+    padding: 6px 0 0;
+    margin-top: 6px;
+    border-top: 1px solid var(--glass-border);
   }
   .cc-nextmove-queue-row {
     display: flex; align-items: center; gap: 6px;
@@ -440,8 +440,8 @@
           <button class="cc-nextmove-ask">Ask Oracle</button>
           <button class="cc-nextmove-skip">Skip</button>
         </div>
+        <div class="cc-nextmove-queue" id="nm-queue"></div>
       </div>
-      <div class="cc-nextmove-queue" id="nm-queue"></div>
     </div>
 
     <!-- RIGHT: Inner Move -->

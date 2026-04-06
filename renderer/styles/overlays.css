@@ -513,7 +513,12 @@ body.light .cc-nextmove-featured {
   background: color-mix(in srgb, var(--authority), transparent 90%);
 }
 .cc-nextmove-queue {
-  padding: 0 4px;
+  padding: 6px 0 0;
+  margin-top: 6px;
+  border-top: 1px solid var(--glass-border);
+}
+.cc-nextmove:not(.cc-cards-row *) .cc-nextmove-queue {
+  padding: 0 4px; margin-top: 0; border-top: none;
 }
 .cc-nextmove-queue-row {
   display: flex; align-items: center; gap: 6px;
@@ -578,19 +583,13 @@ body.light .cc-nextmove-featured {
 }
 .cc-cards-row .cc-nextmove-card {
   flex: 1; min-width: 0;
+}
+.cc-cards-row .cc-nextmove-card .cc-nextmove { padding: 0; }
+.cc-cards-row .cc-nextmove-card .cc-nextmove-featured {
+  height: 100%;
   display: flex; flex-direction: column;
 }
-.cc-cards-row .cc-nextmove-card .cc-nextmove {
-  padding: 0;
-  flex: 1; display: flex; flex-direction: column;
-}
-.cc-cards-row .cc-nextmove-card .cc-nextmove-featured {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
 .cc-cards-row .cc-nextmove-card .cc-nextmove-actions { margin-top: auto; }
-.cc-cards-row .cc-nextmove-card .cc-nextmove-queue { margin-top: auto; }
 
 /* ─── Inner Move Card ───────────────────────── */
 .cc-innermove-featured {

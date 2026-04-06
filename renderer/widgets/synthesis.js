@@ -185,17 +185,17 @@ export default {
             <button class="cc-nextmove-ask">Ask Oracle</button>
             <button class="cc-nextmove-skip">Skip</button>
           </div>
+          ${queue.length > 0 ? `<div class="cc-nextmove-queue">
+            ${queue.map((q, qi) => {
+              const tip = this._buildQueueTooltip(q)
+              return `
+              <div class="cc-nextmove-queue-row" data-queue-idx="${qi}" ${tip ? `title="${escapeHtml(tip)}"` : ''}>
+                <div class="cc-nextup-dot small ${q.urgency}"></div>
+                <span class="cc-nextmove-queue-label">${escapeHtml(q.label)}</span>
+                <span class="cc-nextmove-queue-context">${escapeHtml(q.context)}</span>
+              </div>`}).join('')}
+          </div>` : ''}
         </div>
-        ${queue.length > 0 ? `<div class="cc-nextmove-queue">
-          ${queue.map((q, qi) => {
-            const tip = this._buildQueueTooltip(q)
-            return `
-            <div class="cc-nextmove-queue-row" data-queue-idx="${qi}" ${tip ? `title="${escapeHtml(tip)}"` : ''}>
-              <div class="cc-nextup-dot small ${q.urgency}"></div>
-              <span class="cc-nextmove-queue-label">${escapeHtml(q.label)}</span>
-              <span class="cc-nextmove-queue-context">${escapeHtml(q.context)}</span>
-            </div>`}).join('')}
-        </div>` : ''}
       </div>`
     } else {
       nextMoveHtml = `<div class="cc-nextup"><div class="cc-nextup-empty">No urgent items \u2014 your system is clean.${dismissed.length > 0 ? ' <span class="cc-nextmove-reset">Reset skipped</span>' : ''}</div></div>`
