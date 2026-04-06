@@ -25,6 +25,7 @@ const COHERENCE_COLORS = {
 let coherenceCurrentColor = { r: 140, g: 120, b: 255 }  // default purple
 let coherenceTargetColor = { r: 140, g: 120, b: 255 }
 let coherenceAnimFrame = null
+let sensorEverConnected = false  // tracks if sensor was seen this session
 
 // ── Somatic bar content pools ──
 const POOL_LOW = [
@@ -756,6 +757,7 @@ function updateHrvPanel() {
   // Metrics — only when connected
   if (metricsRow) metricsRow.classList.toggle('visible', cs.connected)
   if (cs.connected) {
+    sensorEverConnected = true
     if (panelHR) panelHR.textContent = cs.hr || '—'
     if (panelBattery) panelBattery.textContent = cs.battery ? cs.battery + '%' : '—'
     if (panelLevel) {
@@ -765,12 +767,22 @@ function updateHrvPanel() {
     }
   }
 
-  // Help section — show when not connected
+  // Help section — context-aware message
+  const cmdEl = document.querySelector('.hrv-panel-cmd')
   if (helpSection) helpSection.style.display = cs.connected ? 'none' : ''
   if (helpText) {
-    helpText.textContent = bridgeUp
-      ? 'Clip the Inner Balance sensor to your ear'
-      : 'Start the bridge to connect your sensor:'
+    if (cs.connected) {
+      // noop — help hidden
+    } else if (cs.scanning) {
+      helpText.textContent = 'Clip your Inner Balance to your ear'
+      if (cmdEl) cmdEl.style.display = 'none'
+    } else if (sensorEverConnected) {
+      helpText.textContent = 'Turn on your Inner Balance and clip it to your ear'
+      if (cmdEl) cmdEl.style.display = 'none'
+    } else {
+      helpText.textContent = 'Track your heart rhythm with a HeartMath Inner Balance sensor'
+      if (cmdEl) cmdEl.style.display = 'none'
+    }
   }
 }
 
