@@ -242,48 +242,6 @@
       <button class="hrv-btn" id="hrv-btn" title="Heart rhythm sensor">
         <svg class="hrv-icon" id="hrv-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
       </button>
-      <!-- HRV Status Panel -->
-      <div class="hrv-panel-backdrop" id="hrv-panel-backdrop"></div>
-      <div class="hrv-panel" id="hrv-panel">
-        <div class="hrv-panel-header">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          <span>Heart Rhythm</span>
-          <button class="hrv-panel-close" id="hrv-panel-close">&times;</button>
-        </div>
-        <div class="hrv-panel-body">
-          <div class="hrv-panel-row">
-            <span class="hrv-panel-label">Bridge</span>
-            <span class="hrv-panel-status" id="hrv-bridge-status">
-              <span class="hrv-panel-dot hrv-dot-off"></span>
-              <span id="hrv-bridge-text">Not running</span>
-            </span>
-          </div>
-          <div class="hrv-panel-row">
-            <span class="hrv-panel-label">Sensor</span>
-            <span class="hrv-panel-status" id="hrv-sensor-status">
-              <span class="hrv-panel-dot hrv-dot-off"></span>
-              <span id="hrv-sensor-text">Not detected</span>
-            </span>
-          </div>
-          <div class="hrv-panel-row hrv-panel-metrics" id="hrv-panel-metrics">
-            <div class="hrv-panel-metric">
-              <span class="hrv-panel-metric-value" id="hrv-panel-hr">—</span>
-              <span class="hrv-panel-metric-label">bpm</span>
-            </div>
-            <div class="hrv-panel-metric">
-              <span class="hrv-panel-metric-value" id="hrv-panel-battery">—</span>
-              <span class="hrv-panel-metric-label">battery</span>
-            </div>
-            <div class="hrv-panel-metric">
-              <span class="hrv-panel-metric-value hrv-panel-level" id="hrv-panel-level">—</span>
-              <span class="hrv-panel-metric-label">coherence</span>
-            </div>
-          </div>
-          <div class="hrv-panel-help" id="hrv-panel-help">
-            <div class="hrv-panel-help-text" id="hrv-panel-help-text">Track your heart rhythm with a HeartMath Inner Balance sensor</div>
-          </div>
-        </div>
-      </div>
       <button class="settings-btn" id="settings-btn" title="Settings">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
@@ -650,6 +608,49 @@
     <span class="somatic-bar-text" id="somatic-bar-text"></span>
     <div class="somatic-bar-pulse" id="somatic-bar-pulse"></div>
     <span class="live-time" id="live-time"></span>
+  </div>
+</div>
+
+<!-- HRV Status Panel (body level — no sidebar clipping) -->
+<div class="hrv-panel-backdrop" id="hrv-panel-backdrop"></div>
+<div class="hrv-panel" id="hrv-panel">
+  <div class="hrv-panel-header">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    <span>Heart Rhythm</span>
+    <button class="hrv-panel-close" id="hrv-panel-close">&times;</button>
+  </div>
+  <div class="hrv-panel-body">
+    <div class="hrv-panel-row">
+      <span class="hrv-panel-label">Bridge</span>
+      <span class="hrv-panel-status" id="hrv-bridge-status">
+        <span class="hrv-panel-dot hrv-dot-off"></span>
+        <span id="hrv-bridge-text">Not running</span>
+      </span>
+    </div>
+    <div class="hrv-panel-row">
+      <span class="hrv-panel-label">Sensor</span>
+      <span class="hrv-panel-status" id="hrv-sensor-status">
+        <span class="hrv-panel-dot hrv-dot-off"></span>
+        <span id="hrv-sensor-text">Not detected</span>
+      </span>
+    </div>
+    <div class="hrv-panel-row hrv-panel-metrics" id="hrv-panel-metrics">
+      <div class="hrv-panel-metric">
+        <span class="hrv-panel-metric-value" id="hrv-panel-hr">—</span>
+        <span class="hrv-panel-metric-label">bpm</span>
+      </div>
+      <div class="hrv-panel-metric">
+        <span class="hrv-panel-metric-value" id="hrv-panel-battery">—</span>
+        <span class="hrv-panel-metric-label">battery</span>
+      </div>
+      <div class="hrv-panel-metric">
+        <span class="hrv-panel-metric-value hrv-panel-level" id="hrv-panel-level">—</span>
+        <span class="hrv-panel-metric-label">coherence</span>
+      </div>
+    </div>
+    <div class="hrv-panel-help" id="hrv-panel-help">
+      <div class="hrv-panel-help-text" id="hrv-panel-help-text">Track your heart rhythm with a HeartMath Inner Balance sensor</div>
+    </div>
   </div>
 </div>
 
