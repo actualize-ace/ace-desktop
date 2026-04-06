@@ -570,6 +570,88 @@ body.light .cc-nextmove-featured {
 }
 .cc-nextmove-reset:hover { opacity: 0.8; }
 
+/* ─── Dual Card Row ─────────────────────────── */
+.cc-cards-row {
+  display: flex;
+  gap: 10px;
+  padding: 2px 10px 0;
+}
+.cc-cards-row .cc-nextmove-card {
+  flex: 1; min-width: 0;
+}
+.cc-cards-row .cc-nextmove-card .cc-nextmove { padding: 0; }
+.cc-cards-row .cc-nextmove-card .cc-nextmove-featured {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.cc-cards-row .cc-nextmove-card .cc-nextmove-actions { margin-top: auto; }
+
+/* ─── Inner Move Card ───────────────────────── */
+.cc-innermove-featured {
+  flex: 1; min-width: 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--bg-deep, #080a14), transparent 40%);
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.12);
+  display: flex; flex-direction: column;
+  position: relative; overflow: hidden;
+}
+body.light .cc-innermove-featured {
+  background: color-mix(in srgb, var(--bg-deep), transparent 50%);
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.05);
+}
+.cc-innermove-featured::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 8px; bottom: 8px;
+  width: 2px; border-radius: 1px;
+  background: var(--innermove-accent, var(--capacity));
+  opacity: 0.6;
+}
+.cc-innermove-header {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 8px;
+}
+.cc-innermove-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--innermove-accent, var(--capacity));
+  opacity: 0.75;
+}
+.cc-innermove-skill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px; letter-spacing: 0.6px; text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 1px 5px; border-radius: 3px;
+  border: 1px solid var(--glass-border);
+}
+.cc-innermove-prompt {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  line-height: 1.55;
+  flex: 1;
+  font-style: italic;
+}
+.cc-innermove-actions {
+  display: flex; gap: 6px;
+  margin-top: auto; padding-top: 10px;
+}
+.cc-innermove-open {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.4px;
+  padding: 4px 12px; border-radius: 5px;
+  border: 1px solid color-mix(in srgb, var(--innermove-accent, var(--capacity)), transparent 65%);
+  background: color-mix(in srgb, var(--innermove-accent, var(--capacity)), transparent 92%);
+  color: var(--innermove-accent, var(--capacity));
+  cursor: pointer; transition: all 0.15s ease;
+}
+.cc-innermove-open:hover {
+  background: color-mix(in srgb, var(--innermove-accent, var(--capacity)), transparent 82%);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--innermove-accent, var(--capacity)), transparent 80%);
+}
+
 .oracle-overlay {
   display: none; position: fixed; inset: 0; z-index: 200;
 }

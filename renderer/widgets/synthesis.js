@@ -17,6 +17,7 @@ export default {
 
   render(allData, el) {
     const ctx = this._buildContext(allData)
+    this._lastCtx = ctx // stash for _renderNowView → _buildCoachingPrompt
     const structural = this._buildStructural(ctx)
     const priorities = this._buildPriorities(allData, ctx)
     const momentum = this._buildMomentum(ctx)
@@ -200,6 +201,29 @@ export default {
       nextMoveHtml = `<div class="cc-nextup"><div class="cc-nextup-empty">No urgent items \u2014 your system is clean.${dismissed.length > 0 ? ' <span class="cc-nextmove-reset">Reset skipped</span>' : ''}</div></div>`
     }
 
+    // Inner Move zone — coaching prompt from signal-priority router
+    const coaching = this._buildCoachingPrompt ? this._buildCoachingPrompt(this._lastCtx) : null
+    let innerMoveHtml = ''
+    if (coaching) {
+      innerMoveHtml = `<div class="cc-innermove-featured" style="--innermove-accent: ${coaching.accent}">
+        <div class="cc-innermove-header">
+          <span class="cc-innermove-badge">Inner Move</span>
+          <span class="cc-innermove-skill">${escapeHtml(coaching.skill)}</span>
+        </div>
+        <div class="cc-innermove-prompt">${escapeHtml(coaching.prompt)}</div>
+        <div class="cc-innermove-actions">
+          <button class="cc-innermove-open">Open ${escapeHtml(coaching.skill)}</button>
+        </div>
+      </div>`
+    }
+
+    // Wrap both cards in a row if we have an inner move
+    if (innerMoveHtml) {
+      return momentumHtml + `<div class="cc-cards-row">
+        <div class="cc-nextmove-card">${nextMoveHtml}</div>
+        ${innerMoveHtml}
+      </div>`
+    }
     return momentumHtml + nextMoveHtml
   },
 
@@ -539,6 +563,74 @@ export default {
     return priorities
   },
 
+  _buildCoachingPrompt(ctx) {
+    if (!ctx) return null
+    const signals = ctx.signals || []
+    const keys = ['A1','A2','A3','C1','C2','C3','E1','E2','E3']
+    const energy = (ctx.energy || '').toLowerCase()
+
+    // Priority 1: Dysregulation or C1 (Regulation) RED
+    if (energy.includes('dysregulated') || signals[3] === 'red') {
+      return {
+        skill: '/regulate',
+        prompt: 'Your system is signaling dysregulation. Ground first \u2014 execution can wait.',
+        terminalPrompt: 'I\u2019m feeling dysregulated. Help me check in with my nervous system and find ground.',
+        accent: 'var(--capacity)',
+      }
+    }
+
+    // Priority 2: Any Authority signal (A1-A3) RED
+    const redAuthIdx = [0, 1, 2].find(i => signals[i] === 'red')
+    if (redAuthIdx != null) {
+      const name = SIGNAL_NAMES[keys[redAuthIdx]]
+      return {
+        skill: '/edge',
+        prompt: `${name} is flagged \u2014 where are you deferring something that needs to be faced?`,
+        terminalPrompt: `My ${name} signal is RED. Help me explore what edge I\u2019m avoiding.`,
+        accent: 'var(--authority)',
+      }
+    }
+
+    // Priority 3: 2+ Capacity signals RED or yellow
+    const capStressed = [3, 4, 5].filter(i => signals[i] === 'red' || signals[i] === 'yellow').length
+    if (capStressed >= 2) {
+      return {
+        skill: '/coach',
+        prompt: 'Capacity is under pressure. What\u2019s draining you right now?',
+        terminalPrompt: 'My Capacity signals are stressed. Help me figure out what\u2019s draining me and what to do about it.',
+        accent: 'var(--capacity)',
+      }
+    }
+
+    // Priority 4: Execution gap >= 3 days
+    if (ctx.daysSinceExecution >= 3) {
+      return {
+        skill: '/blind-spots',
+        prompt: `${ctx.daysSinceExecution} days without execution. What\u2019s blocking isn\u2019t always what it looks like.`,
+        terminalPrompt: `I haven\u2019t executed in ${ctx.daysSinceExecution} days. Help me surface what I might be missing or avoiding.`,
+        accent: 'var(--expansion)',
+      }
+    }
+
+    // Priority 5: Stable + active today — go deeper
+    if (ctx.coherenceScore >= 11 && ctx.todaySessions > 0) {
+      return {
+        skill: '/coach',
+        prompt: 'System is stable. Good day to go deeper \u2014 what\u2019s the thing you\u2019ve been avoiding?',
+        terminalPrompt: 'My system is stable today. Help me explore something I\u2019ve been putting off or avoiding.',
+        accent: 'var(--gold)',
+      }
+    }
+
+    // Priority 6: Fallback
+    return {
+      skill: '/coach',
+      prompt: 'What would make today feel like it mattered?',
+      terminalPrompt: 'Help me check in. What\u2019s most alive for me right now, and what would make today feel like it mattered?',
+      accent: 'var(--gold)',
+    }
+  },
+
   _wireNextMoveActions(el, priorities, allData, ctx, viewIdx) {
     const dismissed = this._getDismissed()
     const active = priorities.filter(p => !dismissed.includes(p.label))
@@ -641,6 +733,21 @@ export default {
         this._clearDismissed()
         rerender(0)
       })
+    }
+
+    // Inner Move — open coaching skill in terminal
+    const innerMoveBtn = el.querySelector('.cc-innermove-open')
+    if (innerMoveBtn) {
+      const coaching = this._buildCoachingPrompt(ctx)
+      if (coaching) {
+        innerMoveBtn.addEventListener('click', () => {
+          this._openTerminalWithPrompt({
+            label: 'Inner Move',
+            prompt: coaching.terminalPrompt,
+            tabLabel: coaching.skill,
+          })
+        })
+      }
     }
   },
 

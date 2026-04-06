@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACE — Dual Card Prototype</title>
+<style>
+  /* ── ACE Design Tokens (dark) ── */
+  :root {
+    --bg-deep:    #080a12;
+    --bg-surface: #0c0e18;
+    --bg-elevated:#141828;
+    --bg-card:    #101420;
+    --border:      rgba(140,120,255,0.10);
+    --border-hover:rgba(140,120,255,0.22);
+    --gold:       #c8a0f0;
+    --gold-dim:   #7a60b0;
+    --green:      #60d8a8;
+    --red:        #e07080;
+    --text-primary:   #e8e4f0;
+    --text-secondary: #9898b8;
+    --text-dim:       #606080;
+    --authority: #c8a0f0;
+    --capacity:  #60d8a8;
+    --expansion: #e080a0;
+    --glass-bg:     rgba(16,20,36,0.6);
+    --glass-border: rgba(140,120,255,0.08);
+    --glass-blur:   blur(12px);
+    --glow-primary: rgba(140,120,255,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(136,120,255,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(96,216,168,0.04) 0%, transparent 40%),
+      radial-gradient(ellipse at 60% 80%, rgba(224,128,160,0.03) 0%, transparent 40%);
+    pointer-events: none;
+  }
+
+  /* ── Simulated Command Center container ── */
+  .command-center {
+    width: 520px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── Coherence Orb (simplified) ── */
+  .cc-pulse {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px 10px;
+  }
+  .cc-orb {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, rgba(200,160,240,0.12), rgba(96,216,168,0.06), transparent 70%);
+    border: 1px solid rgba(140,120,255,0.12);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: relative;
+  }
+  .cc-orb-score {
+    font-size: 18px; font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+  .cc-orb-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 6.5px; letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--capacity);
+    margin-top: 2px;
+  }
+  .cc-structural {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    flex: 1;
+  }
+  .cc-structural-detail {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  /* ── View Tabs ── */
+  .cc-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .cc-tab {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 8px 14px 7px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .cc-tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+
+  /* ── Momentum Chips ── */
+  .cc-momentum {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    padding: 10px 16px 4px;
+  }
+  .cc-momentum-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--text-secondary);
+    background: color-mix(in srgb, var(--gold), transparent 92%);
+    border: 1px solid color-mix(in srgb, var(--gold), transparent 85%);
+    border-radius: 4px;
+    padding: 3px 8px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .chip-icon { font-size: 10px; }
+
+  /* ── DUAL CARD ROW — the new layout ── */
+  .cc-cards-row {
+    display: flex;
+    gap: 10px;
+    padding: 6px 10px 12px;
+  }
+
+  /* ── Next Move Card (left) ── */
+  .cc-nextmove-card {
+    flex: 1;
+    min-width: 0;
+  }
+  .cc-nextmove-featured {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background: color-mix(in srgb, var(--bg-deep, #080a14), transparent 40%);
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.12);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .cc-nextmove-header {
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 6px;
+  }
+  .cc-nextmove-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--gold); opacity: 0.75;
+  }
+  .cc-nextmove-type {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px; letter-spacing: 0.6px; text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 1px 5px; border-radius: 3px;
+    border: 1px solid var(--glass-border);
+  }
+  .cc-nextup-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-dim);
+    flex-shrink: 0;
+  }
+  .cc-nextup-dot.warning { background: var(--gold); box-shadow: 0 0 6px color-mix(in srgb, var(--gold), transparent 50%); }
+  .cc-nextup-dot.urgent { background: var(--red); box-shadow: 0 0 6px color-mix(in srgb, var(--red), transparent 50%); }
+  .cc-nextup-dot.critical { background: var(--red); box-shadow: 0 0 8px color-mix(in srgb, var(--red), transparent 30%); }
+  .cc-nextup-dot.normal { background: var(--text-dim); }
+  .cc-nextup-dot.small { width: 4px; height: 4px; }
+  .cc-nextmove-label {
+    font-size: 13px; font-weight: 500;
+    color: var(--text-primary); line-height: 1.35;
+  }
+  .cc-nextmove-context {
+    font-size: 10px; color: var(--text-dim);
+    margin-top: 2px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .cc-nextmove-expand-toggle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; color: var(--text-dim);
+    cursor: pointer; padding: 4px 0; margin-top: 4px;
+    display: flex; align-items: center; gap: 4px;
+    transition: color 0.12s; user-select: none;
+  }
+  .cc-nextmove-expand-toggle:hover { color: var(--text-secondary); }
+  .cc-nextmove-actions {
+    display: flex; gap: 6px; margin-top: auto; padding-top: 8px;
+  }
+  .cc-nextmove-actions button {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 0.4px;
+    padding: 4px 10px; border-radius: 5px;
+    border: 1px solid var(--glass-border);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer; transition: all 0.15s ease;
+  }
+  .cc-nextmove-agree {
+    color: var(--capacity) !important;
+    border-color: color-mix(in srgb, var(--capacity), transparent 75%) !important;
+  }
+  .cc-nextmove-agree:hover {
+    background: color-mix(in srgb, var(--capacity), transparent 88%) !important;
+    box-shadow: 0 0 8px color-mix(in srgb, var(--capacity), transparent 85%);
+  }
+  .cc-nextmove-ask {
+    color: var(--gold) !important;
+    border-color: color-mix(in srgb, var(--gold), transparent 75%) !important;
+  }
+  .cc-nextmove-ask:hover {
+    background: color-mix(in srgb, var(--gold), transparent 88%) !important;
+    box-shadow: 0 0 8px color-mix(in srgb, var(--gold), transparent 85%);
+  }
+  .cc-nextmove-skip:hover {
+    background: color-mix(in srgb, var(--authority), transparent 90%);
+  }
+
+  /* Queue rows under left card */
+  .cc-nextmove-queue {
+    padding: 4px 4px 0;
+  }
+  .cc-nextmove-queue-row {
+    display: flex; align-items: center; gap: 6px;
+    padding: 3px 6px; font-size: 10px;
+    color: var(--text-dim);
+    border-radius: 4px;
+    cursor: default;
+    transition: background 0.12s;
+  }
+  .cc-nextmove-queue-row:hover {
+    background: color-mix(in srgb, var(--gold), transparent 92%);
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+  .cc-nextmove-queue-label { flex: 1; }
+  .cc-nextmove-queue-context {
+    margin-left: auto; font-family: 'JetBrains Mono', monospace;
+    font-size: 8px; color: var(--text-dim);
+  }
+  .cc-nextmove-nav {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 2px;
+  }
+  .cc-nextmove-pos {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px; color: var(--text-dim);
+    min-width: 24px; text-align: center;
+  }
+  .cc-nextmove-prev, .cc-nextmove-next {
+    width: 18px; height: 18px; border-radius: 4px;
+    border: 1px solid var(--glass-border);
+    background: transparent; color: var(--text-dim);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; line-height: 1; padding: 0;
+    transition: all 0.12s;
+  }
+  .cc-nextmove-prev:hover, .cc-nextmove-next:hover {
+    border-color: var(--border-hover); color: var(--text-secondary);
+    background: color-mix(in srgb, var(--gold), transparent 92%);
+  }
+
+  /* ── Inner Move Card (right) ── */
+  .cc-innermove-featured {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background: color-mix(in srgb, var(--bg-deep, #080a14), transparent 40%);
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.12);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Accent border — left edge, colored by Triad leg */
+  .cc-innermove-featured::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 8px; bottom: 8px;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--innermove-accent, var(--capacity));
+    opacity: 0.6;
+  }
+
+  .cc-innermove-header {
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 8px;
+  }
+  .cc-innermove-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--innermove-accent, var(--capacity));
+    opacity: 0.75;
+  }
+  .cc-innermove-skill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px; letter-spacing: 0.6px; text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 1px 5px; border-radius: 3px;
+    border: 1px solid var(--glass-border);
+  }
+  .cc-innermove-prompt {
+    font-size: 11.5px;
+    color: var(--text-dim);
+    line-height: 1.55;
+    flex: 1;
+    font-style: italic;
+  }
+  .cc-innermove-actions {
+    display: flex; gap: 6px; margin-top: auto; padding-top: 10px;
+  }
+  .cc-innermove-open {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 0.4px;
+    padding: 4px 12px; border-radius: 5px;
+    border: 1px solid color-mix(in srgb, var(--innermove-accent, var(--capacity)), transparent 65%);
+    background: color-mix(in srgb, var(--innermove-accent, var(--capacity)), transparent 92%);
+    color: var(--innermove-accent, var(--capacity));
+    cursor: pointer; transition: all 0.15s ease;
+  }
+  .cc-innermove-open:hover {
+    background: color-mix(in srgb, var(--innermove-accent, var(--capacity)), transparent 82%);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--innermove-accent, var(--capacity)), transparent 80%);
+  }
+
+  /* ── Scenario switcher ── */
+  .scenario-bar {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    z-index: 100;
+  }
+  .scenario-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 0.4px;
+    padding: 5px 12px; border-radius: 5px;
+    border: 1px solid var(--glass-border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .scenario-btn:hover { color: var(--text-secondary); border-color: var(--border-hover); }
+  .scenario-btn.active {
+    color: var(--gold);
+    border-color: color-mix(in srgb, var(--gold), transparent 60%);
+    background: color-mix(in srgb, var(--gold), transparent 92%);
+  }
+
+  /* ── Transition ── */
+  .cc-innermove-featured, .cc-nextmove-featured {
+    transition: opacity 0.2s ease;
+  }
+</style>
+</head>
+<body>
+
+<div class="command-center">
+  <!-- Orb -->
+  <div class="cc-pulse">
+    <div class="cc-orb">
+      <div class="cc-orb-score" id="orb-score">11</div>
+      <div class="cc-orb-label" id="orb-label">stable</div>
+    </div>
+    <div>
+      <div class="cc-structural" id="structural">System stable. 1 overdue follow-up.</div>
+      <div class="cc-structural-detail" id="structural-detail">A: ●●● &nbsp; C: ●●○ &nbsp; E: ●●●</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="cc-tabs">
+    <div class="cc-tab active">Now</div>
+    <div class="cc-tab">This Week</div>
+    <div class="cc-tab">Signals</div>
+  </div>
+
+  <!-- Momentum -->
+  <div class="cc-momentum">
+    <div class="cc-momentum-chip"><span class="chip-icon">&#9889;</span> 2 sessions today</div>
+    <div class="cc-momentum-chip"><span class="chip-icon">&#9675;</span> 5/7 targets</div>
+  </div>
+
+  <!-- DUAL CARD ROW -->
+  <div class="cc-cards-row">
+    <!-- LEFT: Next Move -->
+    <div class="cc-nextmove-card">
+      <div class="cc-nextmove-featured">
+        <div class="cc-nextmove-header">
+          <div class="cc-nextup-dot" id="nm-dot"></div>
+          <span class="cc-nextmove-badge">Next Move</span>
+          <span class="cc-nextmove-type" id="nm-type"></span>
+          <div class="cc-nextmove-nav">
+            <button class="cc-nextmove-prev">&#8249;</button>
+            <span class="cc-nextmove-pos" id="nm-pos">1/3</span>
+            <button class="cc-nextmove-next">&#8250;</button>
+          </div>
+        </div>
+        <div class="cc-nextmove-label" id="nm-label"></div>
+        <div class="cc-nextmove-context" id="nm-context"></div>
+        <div class="cc-nextmove-expand-toggle"><span>&#9662;</span> Details</div>
+        <div class="cc-nextmove-actions">
+          <button class="cc-nextmove-agree">Agree</button>
+          <button class="cc-nextmove-ask">Ask Oracle</button>
+          <button class="cc-nextmove-skip">Skip</button>
+        </div>
+      </div>
+      <div class="cc-nextmove-queue" id="nm-queue"></div>
+    </div>
+
+    <!-- RIGHT: Inner Move -->
+    <div class="cc-innermove-featured" id="innermove-card">
+      <div class="cc-innermove-header">
+        <span class="cc-innermove-badge">Inner Move</span>
+        <span class="cc-innermove-skill" id="im-skill"></span>
+      </div>
+      <div class="cc-innermove-prompt" id="im-prompt"></div>
+      <div class="cc-innermove-actions">
+        <button class="cc-innermove-open" id="im-btn"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scenario Switcher -->
+<div class="scenario-bar">
+  <button class="scenario-btn active" data-scenario="capacity-red">C1 RED</button>
+  <button class="scenario-btn" data-scenario="authority-edge">Authority Edge</button>
+  <button class="scenario-btn" data-scenario="execution-gap">3d Gap</button>
+  <button class="scenario-btn" data-scenario="all-green">All Green</button>
+  <button class="scenario-btn" data-scenario="dysregulated">Dysregulated</button>
+</div>
+
+<script>
+const scenarios = {
+  'capacity-red': {
+    score: 11, label: 'stable',
+    structural: 'System stable. C1 Regulation flagged.',
+    detail: 'A: ●●● &nbsp; C: <span style="color:#e07080">●</span>●○ &nbsp; E: ●●●',
+    nextMove: { dot: 'warning', type: 'follow-up', label: 'Craig Young follow-up', context: '3d overdue', pos: '1/3' },
+    queue: [
+      { dot: 'normal', label: 'Ship desktop to Joe', context: 'target' },
+      { dot: 'normal', label: 'Write list email', context: 'Saturday' },
+    ],
+    innerMove: {
+      accent: 'var(--capacity)',
+      icon: '&#10087;',
+      skill: '/regulate',
+      prompt: 'Capacity is under pressure — Regulation is RED. Your body may need ground before you push into execution.',
+      source: 'Signal: C1 Regulation RED',
+      btn: 'Open /regulate',
+    },
+  },
+  'authority-edge': {
+    score: 13, label: 'stable',
+    structural: 'System stable. A2 Choice flagged.',
+    detail: 'A: ●<span style="color:#e07080">●</span>● &nbsp; C: ●●● &nbsp; E: ●●●',
+    nextMove: { dot: 'normal', type: 'outcome', label: 'ACE Desktop ship to clients', context: 'gate in 5d', pos: '1/2' },
+    queue: [
+      { dot: 'normal', label: 'Weekly review', context: 'Sunday' },
+    ],
+    innerMove: {
+      accent: 'var(--authority)',
+      icon: '&#9670;',
+      skill: '/edge',
+      prompt: 'Choice is flagged — where are you deferring a decision that needs to be made? There may be an edge worth sitting with.',
+      source: 'Signal: A2 Choice RED',
+      btn: 'Open /edge',
+    },
+  },
+  'execution-gap': {
+    score: 9, label: 'drifting',
+    structural: '3d execution gap. 2 overdue follow-ups.',
+    detail: 'A: ●●○ &nbsp; C: ●○○ &nbsp; E: ●<span style="color:#c8a0f0">●</span>○',
+    nextMove: { dot: 'urgent', type: 'follow-up', label: 'Rana — bookkeeping check', context: '5d overdue', pos: '1/4' },
+    queue: [
+      { dot: 'warning', label: 'Marc Cooper — proposal', context: '2d overdue' },
+      { dot: 'normal', label: 'Content engine build', context: 'target' },
+    ],
+    innerMove: {
+      accent: 'var(--expansion)',
+      icon: '&#9681;',
+      skill: '/blind-spots',
+      prompt: '3 days without execution. What\'s blocking isn\'t always what it looks like. Something may be hiding under the surface.',
+      source: 'Signal: 3d execution gap',
+      btn: 'Open /blind-spots',
+    },
+  },
+  'all-green': {
+    score: 16, label: 'coherent',
+    structural: 'System coherent. All signals green.',
+    detail: 'A: ●●● &nbsp; C: ●●● &nbsp; E: ●●●',
+    nextMove: { dot: 'normal', type: 'target', label: 'Finalize email sequence copy', context: 'target', pos: '1/2' },
+    queue: [
+      { dot: 'normal', label: 'Write list email', context: 'Saturday' },
+    ],
+    innerMove: {
+      accent: 'var(--gold)',
+      icon: '&#9673;',
+      skill: '/coach',
+      prompt: 'Everything\'s green. Good day to go deeper — what\'s the thing you\'ve been avoiding that actually matters?',
+      source: 'All signals green — coaching mode',
+      btn: 'Open /coach',
+    },
+  },
+  'dysregulated': {
+    score: 6, label: 'fragmented',
+    structural: 'System fragmented. Dysregulation detected.',
+    detail: 'A: ●○○ &nbsp; C: <span style="color:#e07080">●</span><span style="color:#e07080">●</span>○ &nbsp; E: ●○○',
+    nextMove: { dot: 'critical', type: 'outcome', label: 'ACE Masterclass 2 launch', context: '2d past gate', pos: '1/5' },
+    queue: [
+      { dot: 'urgent', label: 'Craig Young follow-up', context: '8d overdue' },
+      { dot: 'warning', label: 'Pipeline review', context: '3d overdue' },
+    ],
+    innerMove: {
+      accent: 'var(--capacity)',
+      icon: '&#10043;',
+      skill: '/regulate',
+      prompt: 'Your system is signaling dysregulation. Ground first — execution can wait. Nothing productive comes from a scattered nervous system.',
+      source: 'Energy: dysregulated — C1, C2 RED',
+      btn: 'Open /regulate',
+    },
+  },
+}
+
+function render(key) {
+  const s = scenarios[key]
+
+  // Orb
+  document.getElementById('orb-score').textContent = s.score
+  const orbLabel = document.getElementById('orb-label')
+  orbLabel.textContent = s.label
+  orbLabel.style.color = s.score >= 15 ? 'var(--capacity)' : s.score >= 11 ? 'var(--text-secondary)' : s.score >= 7 ? 'var(--gold)' : 'var(--red)'
+
+  // Structural
+  document.getElementById('structural').textContent = s.structural
+  document.getElementById('structural-detail').innerHTML = s.detail
+
+  // Next Move
+  const dot = document.getElementById('nm-dot')
+  dot.className = 'cc-nextup-dot ' + s.nextMove.dot
+  document.getElementById('nm-type').textContent = s.nextMove.type
+  document.getElementById('nm-label').textContent = s.nextMove.label
+  document.getElementById('nm-context').textContent = s.nextMove.context
+  document.getElementById('nm-pos').textContent = s.nextMove.pos
+
+  // Queue
+  const queueEl = document.getElementById('nm-queue')
+  queueEl.innerHTML = s.queue.map(q => `
+    <div class="cc-nextmove-queue-row">
+      <div class="cc-nextup-dot small ${q.dot}"></div>
+      <span class="cc-nextmove-queue-label">${q.label}</span>
+      <span class="cc-nextmove-queue-context">${q.context}</span>
+    </div>
+  `).join('')
+
+  // Inner Move
+  const card = document.getElementById('innermove-card')
+  card.style.setProperty('--innermove-accent', s.innerMove.accent)
+  document.getElementById('im-skill').textContent = s.innerMove.skill
+  document.getElementById('im-prompt').textContent = s.innerMove.prompt
+  const btn = document.getElementById('im-btn')
+  btn.textContent = s.innerMove.btn
+
+  // Active button
+  document.querySelectorAll('.scenario-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.scenario === key)
+  })
+}
+
+// Wire up scenario buttons
+document.querySelectorAll('.scenario-btn').forEach(btn => {
+  btn.addEventListener('click', () => render(btn.dataset.scenario))
+})
+
+// Init
+render('capacity-red')
+</script>
+</body>
+</html>
