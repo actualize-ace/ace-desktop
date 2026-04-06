@@ -4,6 +4,7 @@
 
 import { state } from '../state.js'
 import { audioBreathEnter, audioBreathExit, onBreathComplete } from '../modules/atmosphere.js'
+import { coherenceState, onCoherenceUpdate } from '../modules/coherence.js'
 
 const PROTOCOLS = {
   sighing: {
@@ -44,6 +45,16 @@ const PROTOCOLS = {
     color: { h: 270, s: 45, l: 55 },
   },
 }
+
+const COHERENCE_COLORS = {
+  low:  { r: 224, g: 112, b: 128 },
+  med:  { r: 96,  g: 216, b: 168 },
+  high: { r: 255, g: 209, b: 102 },
+}
+let cfCurrentColor = { r: 140, g: 120, b: 255 }
+let cfTargetColor = { r: 140, g: 120, b: 255 }
+let cfCanvas = null, cfCtx = null
+let cfAnimFrame = null
 
 let animFrame = null
 let startTime = 0
@@ -177,6 +188,109 @@ function selectDuration(dur) {
   document.querySelectorAll('.breath-dur-btn').forEach(b => b.classList.toggle('active', b.dataset.dur === dur))
 }
 
+// ── Coherence update handler ──
+function handleBreathCoherence(cs) {
+  const chip = document.getElementById('coherence-chip')
+  const chipLabel = document.getElementById('coherence-chip-label')
+  const chipBattery = document.getElementById('coherence-chip-battery')
+  const hudHR = document.getElementById('coherence-hud-hr')
+  const hudLevel = document.getElementById('coherence-hud-level')
+  const hrVal = document.getElementById('coherence-hr-value')
+  const levelText = document.getElementById('coherence-level-text')
+  const field = document.getElementById('coherence-field')
+
+  if (!chip) return
+
+  chip.classList.remove('scanning', 'connected')
+
+  if (cs.connected) {
+    chip.classList.add('visible', 'connected')
+    if (chipLabel) chipLabel.textContent = 'Inner Balance'
+    if (chipBattery) chipBattery.textContent = cs.battery + '%'
+    if (hudHR) hudHR.classList.add('visible')
+    if (hudLevel) hudLevel.classList.add('visible')
+    if (hrVal) hrVal.textContent = cs.hr || '—'
+    if (field) field.classList.add('active')
+    if (levelText && cs.coherenceLevel) {
+      levelText.textContent = cs.coherenceLevel.toUpperCase()
+      levelText.className = 'coherence-level-text ' + cs.coherenceLevel
+      cfTargetColor = { ...COHERENCE_COLORS[cs.coherenceLevel] }
+    } else if (levelText) {
+      levelText.textContent = '—'
+      levelText.className = 'coherence-level-text'
+    }
+    // Dim HUD during active breathing
+    const breathActive = state.breathRunning
+    if (hudHR) hudHR.classList.toggle('breath-active', breathActive)
+    if (hudLevel) hudLevel.classList.toggle('breath-active', breathActive)
+  } else if (cs.scanning) {
+    chip.classList.add('visible', 'scanning')
+    if (chipLabel) chipLabel.textContent = 'Scanning...'
+    if (hudHR) hudHR.classList.remove('visible')
+    if (hudLevel) hudLevel.classList.remove('visible')
+    if (field) field.classList.remove('active')
+  } else {
+    chip.classList.remove('visible')
+    if (hudHR) hudHR.classList.remove('visible')
+    if (hudLevel) hudLevel.classList.remove('visible')
+    if (field) field.classList.remove('active')
+    if (hrVal) hrVal.textContent = '—'
+    if (levelText) { levelText.textContent = '—'; levelText.className = 'coherence-level-text' }
+  }
+}
+
+// ── Coherence field canvas ──
+function drawCoherenceField(time) {
+  if (!cfCtx || !coherenceState.connected) {
+    if (cfCtx) cfCtx.clearRect(0, 0, 280, 280)
+    return
+  }
+
+  cfCtx.clearRect(0, 0, 280, 280)
+
+  cfCurrentColor.r += (cfTargetColor.r - cfCurrentColor.r) * 0.02
+  cfCurrentColor.g += (cfTargetColor.g - cfCurrentColor.g) * 0.02
+  cfCurrentColor.b += (cfTargetColor.b - cfCurrentColor.b) * 0.02
+
+  const cx = 140, cy = 140
+  const intensity = coherenceState.coherence || 0
+  const breathPhase = Math.sin(time * 0.001) * 0.5 + 0.5
+  const baseR = 60 + intensity * 40 + breathPhase * 10
+  const c = cfCurrentColor
+
+  // Outer glow
+  const grad1 = cfCtx.createRadialGradient(cx, cy, baseR * 0.3, cx, cy, baseR * 2)
+  grad1.addColorStop(0, `rgba(${c.r|0},${c.g|0},${c.b|0},${0.08 + intensity * 0.12})`)
+  grad1.addColorStop(0.5, `rgba(${c.r|0},${c.g|0},${c.b|0},${0.03 + intensity * 0.05})`)
+  grad1.addColorStop(1, 'rgba(0,0,0,0)')
+  cfCtx.fillStyle = grad1
+  cfCtx.fillRect(0, 0, 280, 280)
+
+  // Inner field
+  const grad2 = cfCtx.createRadialGradient(cx * 0.92, cy * 0.9, 0, cx, cy, baseR * 1.2)
+  grad2.addColorStop(0, `rgba(${Math.min(255,c.r+40)|0},${Math.min(255,c.g+40)|0},${Math.min(255,c.b+40)|0},${0.1 + intensity * 0.15})`)
+  grad2.addColorStop(0.6, `rgba(${c.r|0},${c.g|0},${c.b|0},${0.04 + intensity * 0.06})`)
+  grad2.addColorStop(1, 'rgba(0,0,0,0)')
+  cfCtx.fillStyle = grad2
+  cfCtx.fillRect(0, 0, 280, 280)
+
+  // Ring pulse at high coherence
+  if (intensity > 0.6) {
+    const ringPhase = (Math.sin(time * 0.002) * 0.5 + 0.5) * (intensity - 0.6) / 0.4
+    const ringR = baseR * 1.4 + ringPhase * 20
+    cfCtx.beginPath()
+    cfCtx.arc(cx, cy, ringR, 0, Math.PI * 2)
+    cfCtx.strokeStyle = `rgba(${c.r|0},${c.g|0},${c.b|0},${ringPhase * 0.08})`
+    cfCtx.lineWidth = 1.5
+    cfCtx.stroke()
+  }
+}
+
+function coherenceFieldLoop(time) {
+  drawCoherenceField(time)
+  cfAnimFrame = requestAnimationFrame(coherenceFieldLoop)
+}
+
 // ── Sidebar collapse on breath view ──
 export function onBreathEnter() {
   state.breathActive = true
@@ -186,6 +300,8 @@ export function onBreathEnter() {
   // Fade out somatic bar for full immersion
   const somaticBar = document.getElementById('somatic-bar')
   if (somaticBar) somaticBar.classList.add('breath-hidden')
+  // Restart coherence field animation
+  coherenceFieldLoop(0)
 }
 
 export function onBreathExit() {
@@ -197,6 +313,8 @@ export function onBreathExit() {
   // Fade somatic bar back in
   const somaticBar = document.getElementById('somatic-bar')
   if (somaticBar) somaticBar.classList.remove('breath-hidden')
+  // Stop coherence field animation
+  if (cfAnimFrame) cancelAnimationFrame(cfAnimFrame)
 }
 
 export function initBreath() {
@@ -228,4 +346,15 @@ export function initBreath() {
       if (homeNav) homeNav.click()
     })
   }
+
+  // Coherence field canvas
+  cfCanvas = document.getElementById('coherence-field')
+  if (cfCanvas) {
+    cfCanvas.width = 280 * 2  // retina
+    cfCanvas.height = 280 * 2
+    cfCtx = cfCanvas.getContext('2d')
+    cfCtx.scale(2, 2)
+  }
+  onCoherenceUpdate(handleBreathCoherence)
+  coherenceFieldLoop(0)
 }

@@ -467,7 +467,23 @@
       <!-- BREATH VIEW -->
       <div class="view" id="view-breath">
         <button class="breath-exit" id="breath-exit" title="Exit breath">&#x2715;</button>
+        <!-- Coherence: connection chip -->
+        <div class="coherence-chip" id="coherence-chip">
+          <div class="coherence-chip-dot" id="coherence-chip-dot"></div>
+          <span id="coherence-chip-label">Disconnected</span>
+          <span class="coherence-chip-battery" id="coherence-chip-battery"></span>
+        </div>
+        <!-- Coherence: HUD -->
+        <div class="coherence-hud coherence-hud-hr" id="coherence-hud-hr">
+          <div class="coherence-hud-label">Heart Rate</div>
+          <div class="coherence-hud-value"><span id="coherence-hr-value">—</span><span class="coherence-hud-unit">bpm</span></div>
+        </div>
+        <div class="coherence-hud coherence-hud-level" id="coherence-hud-level">
+          <div class="coherence-hud-label">Coherence</div>
+          <div class="coherence-level-text" id="coherence-level-text">—</div>
+        </div>
         <div class="breath-orb-area">
+          <canvas class="coherence-field" id="coherence-field" width="280" height="280"></canvas>
           <div class="breath-ring-outer"></div>
           <div class="breath-ring-inner"></div>
           <div class="breath-orb" id="breath-orb"></div>
