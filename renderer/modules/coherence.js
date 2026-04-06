@@ -51,7 +51,10 @@ function connect() {
       coherenceState.scanning = true
       emit('update')
     }
-    ws.onmessage = (e) => handleMessage(JSON.parse(e.data))
+    ws.onmessage = (e) => {
+      try { handleMessage(JSON.parse(e.data)) }
+      catch (_) { /* malformed frame, ignore */ }
+    }
     ws.onclose = () => {
       if (coherenceState.connected || coherenceState.scanning) {
         coherenceState.connected = false
@@ -119,7 +122,8 @@ function handleMessage(msg) {
 
       // Compute coherence
       coherenceState.coherence = computeCoherence(coherenceState.rrWindow)
-      if (coherenceState.coherence > 0.6) coherenceState.coherenceLevel = 'high'
+      if (coherenceState.coherence === 0) coherenceState.coherenceLevel = ''
+      else if (coherenceState.coherence > 0.6) coherenceState.coherenceLevel = 'high'
       else if (coherenceState.coherence > 0.3) coherenceState.coherenceLevel = 'med'
       else coherenceState.coherenceLevel = 'low'
 
