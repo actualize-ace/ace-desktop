@@ -627,12 +627,20 @@ function handleCoherenceUpdate(cs) {
   const strip = document.getElementById('somatic-bar-rhythm')
   const hrEl = document.getElementById('somatic-bar-hr')
   const hrVal = document.getElementById('somatic-bar-hr-value')
+  const hrDot = document.getElementById('somatic-bar-hr-dot')
   const barText = document.getElementById('somatic-bar-text')
   const glowEl = document.getElementById('somatic-bar-glow')
 
   if (!strip) return
 
   state.coherenceConnected = cs.connected
+
+  // Status dot state
+  if (hrDot) {
+    hrDot.classList.remove('scanning', 'connected')
+    if (cs.connected) hrDot.classList.add('connected')
+    else if (cs.scanning) hrDot.classList.add('scanning')
+  }
 
   if (cs.connected) {
     strip.classList.add('active')
@@ -649,6 +657,12 @@ function handleCoherenceUpdate(cs) {
       const intensity = cs.coherence || 0
       glowEl.style.background = `radial-gradient(ellipse at center, rgba(${c.r|0},${c.g|0},${c.b|0},${0.06 + intensity * 0.2}) 0%, rgba(${c.r|0},${c.g|0},${c.b|0},0.02) 50%, transparent 75%)`
     }
+  } else if (cs.scanning) {
+    // Bridge running, sensor not found yet — show scanning state
+    strip.classList.remove('active')
+    if (hrEl) hrEl.classList.add('visible')
+    if (hrVal) hrVal.textContent = '—'
+    if (barText) barText.classList.add('coherence-hidden')
   } else {
     strip.classList.remove('active')
     if (hrEl) hrEl.classList.remove('visible')

@@ -617,5 +617,28 @@ body.light .atm-audio-popover {
   font-weight: 500;
 }
 
+/* ── Coherence: status dot next to HR ── */
+.somatic-bar-hr-dot {
+  display: inline-block;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+  background: var(--text-dim);
+  transition: background 0.8s ease, box-shadow 0.8s ease;
+}
+.somatic-bar-hr-dot.scanning {
+  background: var(--gold);
+  animation: coherence-hr-scan 1.5s ease-in-out infinite;
+}
+@keyframes coherence-hr-scan {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+.somatic-bar-hr-dot.connected {
+  background: var(--green);
+  box-shadow: 0 0 4px rgba(96,216,168,0.4);
+}
+
 /* ── Coherence: hide quote when sensor active ── */
 .somatic-bar-text.coherence-hidden { opacity: 0 !important; pointer-events: none; }
