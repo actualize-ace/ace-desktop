@@ -578,14 +578,19 @@ body.light .cc-nextmove-featured {
 }
 .cc-cards-row .cc-nextmove-card {
   flex: 1; min-width: 0;
+  display: flex; flex-direction: column;
 }
-.cc-cards-row .cc-nextmove-card .cc-nextmove { padding: 0; }
+.cc-cards-row .cc-nextmove-card .cc-nextmove {
+  padding: 0;
+  flex: 1; display: flex; flex-direction: column;
+}
 .cc-cards-row .cc-nextmove-card .cc-nextmove-featured {
-  height: 100%;
+  flex: 1;
   display: flex;
   flex-direction: column;
 }
 .cc-cards-row .cc-nextmove-card .cc-nextmove-actions { margin-top: auto; }
+.cc-cards-row .cc-nextmove-card .cc-nextmove-queue { margin-top: auto; }
 
 /* ─── Inner Move Card ───────────────────────── */
 .cc-innermove-featured {
