@@ -297,9 +297,9 @@ export function onBreathEnter() {
   const sidebar = document.getElementById('sidebar')
   if (sidebar) sidebar.classList.add('collapsed')
   audioBreathEnter()
-  // Fade out somatic bar for full immersion
+  // Fade out somatic bar for full immersion — but keep it when sensor connected (waveform is biofeedback)
   const somaticBar = document.getElementById('somatic-bar')
-  if (somaticBar) somaticBar.classList.add('breath-hidden')
+  if (somaticBar && !state.coherenceConnected) somaticBar.classList.add('breath-hidden')
   // Restart coherence field animation
   coherenceFieldLoop(0)
 }
