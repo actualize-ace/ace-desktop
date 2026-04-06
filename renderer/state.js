@@ -83,6 +83,10 @@ export const state = {
   breathCycles: 0,
   breathTargetCycles: 6,
 
+  // Coherence (HeartMath sensor)
+  coherenceConnected: false,
+  coherenceLevel: '',   // 'low' | 'med' | 'high' | ''
+
   // Insight view
   insightInitialized: false,
   insight: {
