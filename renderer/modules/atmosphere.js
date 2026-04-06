@@ -700,12 +700,13 @@ function drawRhythmStrip() {
   const max = Math.max(...buf)
   const range = Math.max(max - min, 40)
   const padY = 6
-  const padX = 60
+  const padLeft = 150  // clear "● 72 bpm · coherent"
+  const padRight = 60  // match clock area
 
   // Build smooth curve points
   const points = []
   for (let i = 0; i < buf.length; i++) {
-    const x = padX + (i / 79) * (RS_W - padX * 2)  // 80 = max strip length
+    const x = padLeft + (i / 79) * (RS_W - padLeft - padRight)  // 80 = max strip length
     const normalized = (buf[i] - min) / range
     const y = RS_H - padY - normalized * (RS_H - padY * 2)
     points.push({ x, y })
