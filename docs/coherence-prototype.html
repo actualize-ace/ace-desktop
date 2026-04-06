@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACE Coherence — Live</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: rgba(255,255,255,0.03);
+    --border: rgba(255,255,255,0.06);
+    --text: rgba(255,255,255,0.85);
+    --text-dim: rgba(255,255,255,0.35);
+    --low-core: #e63946;
+    --low-glow: rgba(230,57,70,0.3);
+    --med-core: #06d6a0;
+    --med-glow: rgba(6,214,160,0.25);
+    --high-core: #ffd166;
+    --high-glow: rgba(255,209,102,0.35);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+  }
+
+  /* --- NOISE OVERLAY --- */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* --- STATUS BAR --- */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .status-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #e63946;
+    transition: background 0.6s;
+  }
+  .status-dot.connected { background: #06d6a0; }
+  .status-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .status-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .battery-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* --- MAIN LAYOUT --- */
+  .main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    gap: 0;
+    min-height: 0;
+  }
+
+  /* --- LEFT PANEL: METRICS --- */
+  .panel-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px 32px;
+    border-right: 1px solid var(--border);
+  }
+  .metric-block {
+    margin-bottom: 36px;
+  }
+  .metric-block:last-child { margin-bottom: 0; }
+  .metric-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .metric-value {
+    font-size: 36px;
+    font-weight: 300;
+    line-height: 1;
+    color: var(--text);
+    transition: color 0.8s;
+  }
+  .metric-unit {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-dim);
+    margin-left: 4px;
+  }
+  .metric-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+  .coherence-level {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-top: 8px;
+    transition: color 0.8s;
+  }
+
+  /* --- CENTER: ORB --- */
+  .orb-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  #orbCanvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* --- BREATH GUIDE --- */
+  .breath-guide {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    z-index: 10;
+    cursor: pointer;
+  }
+  .breath-ring {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 5s ease-in-out, border-color 0.8s;
+  }
+  .breath-ring.inhale {
+    transform: scale(1.6);
+    border-color: rgba(255,255,255,0.25);
+  }
+  .breath-ring.exhale {
+    transform: scale(1);
+    border-color: rgba(255,255,255,0.08);
+  }
+  .breath-inner-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transition: opacity 5s ease-in-out;
+  }
+  .breath-ring.inhale .breath-inner-dot { opacity: 1; }
+  .breath-ring.exhale .breath-inner-dot { opacity: 0.3; }
+  .breath-phase-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    transition: color 0.3s;
+  }
+  .breath-timer {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.2);
+  }
+  .breath-toggle {
+    font-family: 'Syne', sans-serif;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.15);
+    cursor: pointer;
+    padding: 4px 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 20px;
+    background: none;
+    transition: all 0.3s;
+  }
+  .breath-toggle:hover { color: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.15); }
+
+  /* --- RIGHT PANEL: R-R STRIP --- */
+  .panel-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px 32px;
+    border-left: 1px solid var(--border);
+  }
+  .rr-strip-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+  #rrCanvas {
+    width: 100%;
+    height: 180px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .rr-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  /* --- SPECTRUM BAR --- */
+  .spectrum-bar {
+    flex-shrink: 0;
+    padding: 16px 28px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .spectrum-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  #spectrumCanvas {
+    flex: 1;
+    height: 48px;
+  }
+  .spectrum-bands {
+    display: flex;
+    gap: 16px;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+  .spectrum-band-active {
+    color: var(--text);
+  }
+
+  /* --- WAITING STATE --- */
+  .waiting {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    z-index: 50;
+    transition: opacity 0.8s;
+  }
+  .waiting.hidden { opacity: 0; pointer-events: none; }
+  .waiting-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .waiting-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,0.2);
+    margin-top: 8px;
+  }
+  .waiting-pulse {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.1);
+    margin-bottom: 24px;
+    animation: waitPulse 2s ease-in-out infinite;
+  }
+  @keyframes waitPulse {
+    0%, 100% { transform: scale(0.8); opacity: 0.3; }
+    50% { transform: scale(1.2); opacity: 0.7; }
+  }
+</style>
+</head>
+<body>
+
+<div class="waiting" id="waitingScreen">
+  <div class="waiting-pulse"></div>
+  <div class="waiting-text">Connecting to Inner Balance</div>
+  <div class="waiting-sub">run: python3 heartmath-bridge.py</div>
+</div>
+
+<div class="status-bar">
+  <div class="status-left">
+    <div class="status-dot" id="statusDot"></div>
+    <span class="status-label" id="statusLabel">Disconnected</span>
+  </div>
+  <div class="status-right">
+    <span id="deviceName">—</span>
+    <span class="battery-icon" id="batteryDisplay">
+      <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
+        <rect x="0.5" y="0.5" width="13" height="9" rx="1.5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+        <rect x="14" y="3" width="2" height="4" rx="0.5" fill="rgba(255,255,255,0.2)"/>
+        <rect x="2" y="2" id="batteryFill" width="10" height="6" rx="0.5" fill="rgba(255,255,255,0.3)"/>
+      </svg>
+      <span id="batteryText">—</span>
+    </span>
+    <span id="sessionTime">00:00</span>
+  </div>
+</div>
+
+<div class="main">
+  <div class="panel-left">
+    <div class="metric-block">
+      <div class="metric-label">Heart Rate</div>
+      <div class="metric-value" id="hrValue">—<span class="metric-unit">bpm</span></div>
+    </div>
+    <div class="metric-block">
+      <div class="metric-label">Coherence</div>
+      <div class="metric-value" id="coherenceValue">—</div>
+      <div class="coherence-level" id="coherenceLevel">Waiting</div>
+    </div>
+    <div class="metric-block">
+      <div class="metric-label">RMSSD</div>
+      <div class="metric-value" id="rmssdValue">—<span class="metric-unit">ms</span></div>
+      <div class="metric-sub" id="rmssdLabel">HRV index</div>
+    </div>
+    <div class="metric-block">
+      <div class="metric-label">Session</div>
+      <div class="metric-value" id="sampleCount">0</div>
+      <div class="metric-sub">R-R intervals</div>
+    </div>
+  </div>
+
+  <div class="orb-container">
+    <canvas id="orbCanvas"></canvas>
+    <div class="breath-guide" id="breathGuide">
+      <div class="breath-ring" id="breathRing">
+        <div class="breath-inner-dot"></div>
+      </div>
+      <div class="breath-phase-label" id="breathPhaseLabel">Breathe</div>
+      <div class="breath-timer" id="breathTimer">5 : 5</div>
+      <button class="breath-toggle" id="breathToggle">Start</button>
+    </div>
+  </div>
+
+  <div class="panel-right">
+    <div class="rr-strip-label">R-R Intervals</div>
+    <canvas id="rrCanvas"></canvas>
+    <div class="rr-stats">
+      <span id="rrMin">Min: —</span>
+      <span id="rrMean">Mean: —</span>
+      <span id="rrMax">Max: —</span>
+    </div>
+
+    <div style="margin-top: 36px;">
+      <div class="rr-strip-label">Heart Rate</div>
+      <canvas id="hrCanvas" style="width:100%;height:120px;border-radius:8px;background:var(--surface);border:1px solid var(--border);"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="spectrum-bar">
+  <div class="spectrum-label">Power Spectrum</div>
+  <canvas id="spectrumCanvas"></canvas>
+  <div class="spectrum-bands">
+    <span>VLF</span>
+    <span id="lfBand">LF</span>
+    <span id="hfBand">HF</span>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  connected: false,
+  hr: 0,
+  hrSmooth: 0,         // Smoothed HR for display
+  rrBuffer: [],        // All clean R-R intervals this session
+  rrWindow: [],        // Last 64 seconds of clean R-R intervals for coherence
+  hrHistory: [],       // HR values over time
+  coherence: 0,        // 0-16 scale
+  coherenceSmooth: 0,  // Smoothed for display
+  rmssd: 0,
+  lastBeatTime: 0,
+  sessionStart: null,
+  orbPhase: 0,
+  orbTargetScale: 1,
+  orbCurrentScale: 1,
+  coreColor: { r: 230, g: 57, b: 70 },
+  targetColor: { r: 230, g: 57, b: 70 },
+  rejected: 0,         // Count of rejected artifacts
+};
+
+// ============================================================
+// R-R ARTIFACT REJECTION
+// ============================================================
+// Reject physiologically implausible intervals and sudden jumps.
+// Standard HRV analysis: remove intervals outside 300-2000ms
+// and those that differ >20% from local moving average.
+
+function filterRR(newRR, buffer) {
+  // Hard bounds: 300ms (200bpm) to 2000ms (30bpm)
+  if (newRR < 300 || newRR > 2000) {
+    state.rejected++;
+    return false;
+  }
+
+  // If we have history, check for sudden jumps (>25% from recent average)
+  if (buffer.length >= 3) {
+    const recent = buffer.slice(-5);
+    const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
+    const deviation = Math.abs(newRR - avg) / avg;
+    if (deviation > 0.25) {
+      state.rejected++;
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// ============================================================
+// COHERENCE ENGINE
+// ============================================================
+
+function computeCoherence(rrIntervals) {
+  if (rrIntervals.length < 16) return 0;
+
+  // Use last ~64 seconds of RR data
+  let windowMs = 0;
+  const window = [];
+  for (let i = rrIntervals.length - 1; i >= 0 && windowMs < 64000; i--) {
+    window.unshift(rrIntervals[i]);
+    windowMs += rrIntervals[i];
+  }
+
+  if (window.length < 12) return 0;
+
+  // Interpolate to 4Hz evenly-spaced signal
+  const fs = 4;
+  const totalTime = window.reduce((a, b) => a + b, 0) / 1000;
+  const numSamples = Math.floor(totalTime * fs);
+  if (numSamples < 8) return 0;
+
+  // Build cumulative time array and interpolate
+  const times = [0];
+  for (let i = 0; i < window.length; i++) {
+    times.push(times[i] + window[i] / 1000);
+  }
+
+  // RR values at each beat
+  const rrSignal = [];
+  const rrTimes = [];
+  for (let i = 0; i < window.length; i++) {
+    rrTimes.push((times[i] + times[i + 1]) / 2);
+    rrSignal.push(window[i]);
+  }
+
+  // Linear interpolation to even 4Hz grid
+  const evenSignal = [];
+  for (let i = 0; i < numSamples; i++) {
+    const t = i / fs;
+    // Find surrounding points
+    let j = 0;
+    while (j < rrTimes.length - 1 && rrTimes[j + 1] < t) j++;
+    if (j >= rrTimes.length - 1) {
+      evenSignal.push(rrSignal[rrSignal.length - 1]);
+    } else {
+      const frac = (t - rrTimes[j]) / (rrTimes[j + 1] - rrTimes[j]);
+      evenSignal.push(rrSignal[j] + frac * (rrSignal[j + 1] - rrSignal[j]));
+    }
+  }
+
+  // Remove mean (detrend)
+  const mean = evenSignal.reduce((a, b) => a + b, 0) / evenSignal.length;
+  const detrended = evenSignal.map(v => v - mean);
+
+  // Apply Hann window
+  const windowed = detrended.map((v, i) => {
+    const w = 0.5 * (1 - Math.cos(2 * Math.PI * i / (detrended.length - 1)));
+    return v * w;
+  });
+
+  // Zero-pad to next power of 2
+  let n = 1;
+  while (n < windowed.length) n *= 2;
+  n *= 2; // Extra padding for resolution
+  const padded = new Array(n).fill(0);
+  for (let i = 0; i < windowed.length; i++) padded[i] = windowed[i];
+
+  // FFT (Cooley-Tukey radix-2)
+  const real = padded.slice();
+  const imag = new Array(n).fill(0);
+  fft(real, imag, n);
+
+  // Power spectrum
+  const freqRes = fs / n;
+  const power = [];
+  for (let i = 0; i < n / 2; i++) {
+    power.push((real[i] * real[i] + imag[i] * imag[i]) / n);
+  }
+
+  // HeartMath published algorithm (2014):
+  // 1. Find max peak in 0.04–0.26 Hz
+  // 2. Integrate 0.030 Hz window centered on peak
+  // 3. Ratio = peak window integral / total spectrum power (all frequencies)
+
+  const loIdx = Math.ceil(0.04 / freqRes);
+  const hiIdx = Math.floor(0.26 / freqRes);
+
+  // Total power across ENTIRE spectrum (HeartMath spec: denominator = all frequencies)
+  let totalPower = 0;
+  for (let i = 1; i < power.length; i++) {
+    totalPower += power[i];
+  }
+
+  // Find peak in coherence band
+  let peakPower = 0;
+  let peakIdx = loIdx;
+  for (let i = loIdx; i <= hiIdx && i < power.length; i++) {
+    if (power[i] > peakPower) {
+      peakPower = power[i];
+      peakIdx = i;
+    }
+  }
+
+  if (totalPower === 0) return 0;
+
+  // 0.030 Hz window centered on peak (HeartMath spec)
+  const halfWindow = 0.015; // Hz
+  const winLo = Math.max(0, Math.ceil((peakIdx * freqRes - halfWindow) / freqRes));
+  const winHi = Math.min(power.length - 1, Math.floor((peakIdx * freqRes + halfWindow) / freqRes));
+
+  let peakRegionPower = 0;
+  for (let i = winLo; i <= winHi; i++) {
+    peakRegionPower += power[i];
+  }
+
+  const coherenceRatio = peakRegionPower / totalPower;
+
+  // Store spectrum for visualization
+  state.spectrum = { power, freqRes, loIdx, hiIdx, peakIdx, fs, n };
+
+  // Map ratio to 0–16 scale
+  // Empirical calibration: ratio ~0.05 = low(1), ~0.15 = medium(5), ~0.35+ = high(12+)
+  const score = Math.min(16, Math.max(0, coherenceRatio * 40));
+  return score;
+}
+
+// Cooley-Tukey FFT
+function fft(real, imag, n) {
+  // Bit-reversal permutation
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    while (j & bit) { j ^= bit; bit >>= 1; }
+    j ^= bit;
+    if (i < j) {
+      [real[i], real[j]] = [real[j], real[i]];
+      [imag[i], imag[j]] = [imag[j], imag[i]];
+    }
+  }
+
+  for (let len = 2; len <= n; len *= 2) {
+    const halfLen = len / 2;
+    const angle = -2 * Math.PI / len;
+    const wReal = Math.cos(angle);
+    const wImag = Math.sin(angle);
+
+    for (let i = 0; i < n; i += len) {
+      let curReal = 1, curImag = 0;
+      for (let j = 0; j < halfLen; j++) {
+        const tReal = curReal * real[i + j + halfLen] - curImag * imag[i + j + halfLen];
+        const tImag = curReal * imag[i + j + halfLen] + curImag * real[i + j + halfLen];
+        real[i + j + halfLen] = real[i + j] - tReal;
+        imag[i + j + halfLen] = imag[i + j] - tImag;
+        real[i + j] += tReal;
+        imag[i + j] += tImag;
+        const newReal = curReal * wReal - curImag * wImag;
+        curImag = curReal * wImag + curImag * wReal;
+        curReal = newReal;
+      }
+    }
+  }
+}
+
+function computeRMSSD(rrIntervals) {
+  if (rrIntervals.length < 2) return 0;
+  const recent = rrIntervals.slice(-30);
+  let sumSq = 0;
+  for (let i = 1; i < recent.length; i++) {
+    const diff = recent[i] - recent[i - 1];
+    sumSq += diff * diff;
+  }
+  return Math.sqrt(sumSq / (recent.length - 1));
+}
+
+
+// ============================================================
+// WEBSOCKET
+// ============================================================
+
+function connectWS() {
+  const ws = new WebSocket('ws://localhost:8765');
+
+  ws.onopen = () => {
+    console.log('[WS] Connected');
+  };
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+
+    if (msg.type === 'status') {
+      state.connected = msg.connected;
+      updateStatus(msg);
+      if (msg.connected) {
+        document.getElementById('waitingScreen').classList.add('hidden');
+        if (!state.sessionStart) state.sessionStart = Date.now();
+      }
+    }
+
+    if (msg.type === 'hr') {
+      state.connected = true;
+      document.getElementById('waitingScreen').classList.add('hidden');
+      if (!state.sessionStart) state.sessionStart = Date.now();
+
+      // Filter R-R intervals before ingesting
+      let accepted = 0;
+      for (const rr of msg.rr) {
+        if (filterRR(rr, state.rrBuffer)) {
+          state.rrBuffer.push(rr);
+          state.rrWindow.push(rr);
+          accepted++;
+        }
+      }
+
+      // Compute HR from clean R-R intervals (not raw sensor HR)
+      if (state.rrBuffer.length >= 3) {
+        const lastFew = state.rrBuffer.slice(-5);
+        const avgRR = lastFew.reduce((a, b) => a + b, 0) / lastFew.length;
+        state.hr = Math.round(60000 / avgRR);
+      } else {
+        state.hr = msg.hr;
+      }
+
+      // Exponential smoothing for display (α = 0.2 = gentle)
+      if (state.hrSmooth === 0) state.hrSmooth = state.hr;
+      state.hrSmooth += (state.hr - state.hrSmooth) * 0.2;
+
+      state.hrHistory.push({ hr: Math.round(state.hrSmooth), ts: Date.now() });
+      if (state.hrHistory.length > 300) state.hrHistory.shift();
+
+      // Trim window to ~64 seconds
+      let windowTotal = 0;
+      while (state.rrWindow.length > 0) {
+        windowTotal = state.rrWindow.reduce((a, b) => a + b, 0);
+        if (windowTotal > 70000 && state.rrWindow.length > 16) {
+          state.rrWindow.shift();
+        } else break;
+      }
+
+      // Compute metrics
+      state.coherence = computeCoherence(state.rrWindow);
+      state.coherenceSmooth += (state.coherence - state.coherenceSmooth) * 0.15;
+      state.rmssd = computeRMSSD(state.rrBuffer);
+
+      // Trigger heartbeat animation
+      state.lastBeatTime = Date.now();
+      state.orbTargetScale = 1.15;
+
+      updateMetrics();
+      updateStatus(msg);
+    }
+  };
+
+  ws.onclose = () => {
+    console.log('[WS] Disconnected, reconnecting in 2s...');
+    state.connected = false;
+    document.getElementById('statusDot').classList.remove('connected');
+    document.getElementById('statusLabel').textContent = 'Reconnecting...';
+    setTimeout(connectWS, 2000);
+  };
+
+  ws.onerror = () => {
+    ws.close();
+  };
+}
+
+// ============================================================
+// UI UPDATES
+// ============================================================
+
+function updateStatus(msg) {
+  const dot = document.getElementById('statusDot');
+  const label = document.getElementById('statusLabel');
+
+  if (state.connected) {
+    dot.classList.add('connected');
+    label.textContent = 'Live';
+  } else {
+    dot.classList.remove('connected');
+    label.textContent = 'Disconnected';
+  }
+
+  if (msg.device) {
+    document.getElementById('deviceName').textContent = msg.device;
+  }
+  if (msg.battery) {
+    document.getElementById('batteryText').textContent = msg.battery + '%';
+    const fillWidth = Math.round((msg.battery / 100) * 10);
+    document.getElementById('batteryFill').setAttribute('width', fillWidth);
+  }
+}
+
+function updateMetrics() {
+  // HR (smoothed)
+  document.getElementById('hrValue').innerHTML = Math.round(state.hrSmooth) + '<span class="metric-unit">bpm</span>';
+
+  // Coherence
+  const cs = state.coherenceSmooth;
+  document.getElementById('coherenceValue').textContent = cs.toFixed(1);
+
+  const levelEl = document.getElementById('coherenceLevel');
+  let level, color;
+  if (cs < 4) {
+    level = 'Low'; color = 'var(--low-core)';
+    state.targetColor = { r: 230, g: 57, b: 70 };
+  } else if (cs < 9) {
+    level = 'Medium'; color = 'var(--med-core)';
+    state.targetColor = { r: 6, g: 214, b: 160 };
+  } else {
+    level = 'High'; color = 'var(--high-core)';
+    state.targetColor = { r: 255, g: 209, b: 102 };
+  }
+  levelEl.textContent = level;
+  levelEl.style.color = color;
+  document.getElementById('coherenceValue').style.color = color;
+
+  // RMSSD
+  document.getElementById('rmssdValue').innerHTML = state.rmssd.toFixed(0) + '<span class="metric-unit">ms</span>';
+
+  // Sample count
+  document.getElementById('sampleCount').textContent = state.rrBuffer.length;
+
+  // R-R stats
+  const recent = state.rrBuffer.slice(-60);
+  if (recent.length > 0) {
+    document.getElementById('rrMin').textContent = 'Min: ' + Math.round(Math.min(...recent)) + 'ms';
+    document.getElementById('rrMax').textContent = 'Max: ' + Math.round(Math.max(...recent)) + 'ms';
+    document.getElementById('rrMean').textContent = 'Mean: ' + Math.round(recent.reduce((a, b) => a + b, 0) / recent.length) + 'ms';
+  }
+
+  // Session time
+  if (state.sessionStart) {
+    const elapsed = Math.floor((Date.now() - state.sessionStart) / 1000);
+    const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+    const s = (elapsed % 60).toString().padStart(2, '0');
+    document.getElementById('sessionTime').textContent = m + ':' + s;
+  }
+}
+
+// ============================================================
+// ORB RENDERER (Canvas)
+// ============================================================
+
+const orbCanvas = document.getElementById('orbCanvas');
+const orbCtx = orbCanvas.getContext('2d');
+let orbParticles = [];
+
+function initOrb() {
+  resizeOrb();
+  // Create particles
+  for (let i = 0; i < 120; i++) {
+    orbParticles.push({
+      angle: Math.random() * Math.PI * 2,
+      radius: 80 + Math.random() * 100,
+      speed: (Math.random() - 0.5) * 0.008,
+      size: 1 + Math.random() * 2,
+      opacity: 0.1 + Math.random() * 0.4,
+      drift: Math.random() * 0.003,
+    });
+  }
+}
+
+function resizeOrb() {
+  const rect = orbCanvas.parentElement.getBoundingClientRect();
+  orbCanvas.width = rect.width * 2;
+  orbCanvas.height = rect.height * 2;
+  orbCanvas.style.width = rect.width + 'px';
+  orbCanvas.style.height = rect.height + 'px';
+}
+
+function renderOrb(time) {
+  const w = orbCanvas.width;
+  const h = orbCanvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+  const ctx = orbCtx;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Smooth color transition
+  state.coreColor.r += (state.targetColor.r - state.coreColor.r) * 0.02;
+  state.coreColor.g += (state.targetColor.g - state.coreColor.g) * 0.02;
+  state.coreColor.b += (state.targetColor.b - state.coreColor.b) * 0.02;
+
+  const { r, g, b } = state.coreColor;
+  const colorStr = `${Math.round(r)},${Math.round(g)},${Math.round(b)}`;
+
+  // Heartbeat pulse decay
+  const beatAge = (Date.now() - state.lastBeatTime) / 1000;
+  const beatPulse = Math.exp(-beatAge * 3) * 0.15;
+  state.orbCurrentScale += (state.orbTargetScale - state.orbCurrentScale) * 0.1;
+  state.orbTargetScale += (1 - state.orbTargetScale) * 0.05;
+
+  const baseRadius = Math.min(w, h) * 0.18;
+  const scale = state.orbCurrentScale + beatPulse;
+  const radius = baseRadius * scale;
+
+  // Coherence affects orb smoothness
+  const cs = state.coherenceSmooth;
+  const chaos = Math.max(0, 1 - cs / 12); // 1 = chaotic, 0 = smooth
+
+  state.orbPhase += 0.008;
+
+  // Outer glow
+  const glowRadius = radius * (2.2 + cs * 0.08);
+  const glow = ctx.createRadialGradient(cx, cy, radius * 0.5, cx, cy, glowRadius);
+  glow.addColorStop(0, `rgba(${colorStr},${0.12 + cs * 0.01})`);
+  glow.addColorStop(0.4, `rgba(${colorStr},${0.04 + cs * 0.005})`);
+  glow.addColorStop(1, `rgba(${colorStr},0)`);
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, w, h);
+
+  // Organic orb shape (Fourier-based distortion)
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Draw orb with varying distortion
+  ctx.beginPath();
+  const steps = 120;
+  for (let i = 0; i <= steps; i++) {
+    const a = (i / steps) * Math.PI * 2;
+    // Low-frequency distortion (more when low coherence)
+    const d1 = Math.sin(a * 3 + state.orbPhase * 1.7) * chaos * 12;
+    const d2 = Math.cos(a * 5 + state.orbPhase * 2.3) * chaos * 8;
+    const d3 = Math.sin(a * 7 + state.orbPhase * 0.9) * chaos * 5;
+    const r = radius + d1 + d2 + d3;
+    const x = Math.cos(a) * r;
+    const y = Math.sin(a) * r;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+
+  // Radial gradient fill
+  const fill = ctx.createRadialGradient(0, -radius * 0.3, 0, 0, 0, radius);
+  fill.addColorStop(0, `rgba(255,255,255,${0.15 + cs * 0.02})`);
+  fill.addColorStop(0.3, `rgba(${colorStr},${0.6 + cs * 0.025})`);
+  fill.addColorStop(0.7, `rgba(${colorStr},${0.3 + cs * 0.015})`);
+  fill.addColorStop(1, `rgba(${colorStr},0.05)`);
+  ctx.fillStyle = fill;
+  ctx.fill();
+
+  // Inner white core
+  const coreGrad = ctx.createRadialGradient(0, -radius * 0.15, 0, 0, 0, radius * 0.5);
+  coreGrad.addColorStop(0, `rgba(255,255,255,${0.25 + beatPulse * 2})`);
+  coreGrad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = coreGrad;
+  ctx.fill();
+
+  // Particles
+  for (const p of orbParticles) {
+    p.angle += p.speed + (chaos * p.drift * Math.sin(time * 0.001 + p.angle));
+    // In high coherence, particles orbit more regularly
+    const pRadius = p.radius + chaos * Math.sin(time * 0.002 + p.angle * 3) * 30;
+    const px = Math.cos(p.angle) * pRadius * scale;
+    const py = Math.sin(p.angle) * pRadius * scale;
+
+    ctx.beginPath();
+    ctx.arc(px, py, p.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${colorStr},${p.opacity * (0.3 + cs * 0.05)})`;
+    ctx.fill();
+  }
+
+  // Coherence ring (appears at medium+)
+  if (cs > 3) {
+    const ringOpacity = Math.min(0.4, (cs - 3) * 0.04);
+    const ringRadius = radius * (1.4 + Math.sin(state.orbPhase * 0.5) * 0.05);
+    ctx.beginPath();
+    ctx.arc(0, 0, ringRadius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(${colorStr},${ringOpacity})`;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Second ring at high coherence
+    if (cs > 8) {
+      const ring2Opacity = Math.min(0.25, (cs - 8) * 0.03);
+      const ring2Radius = radius * (1.7 + Math.sin(state.orbPhase * 0.3 + 1) * 0.04);
+      ctx.beginPath();
+      ctx.arc(0, 0, ring2Radius, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(${colorStr},${ring2Opacity})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+}
+
+// ============================================================
+// R-R STRIP RENDERER
+// ============================================================
+
+const rrCanvas = document.getElementById('rrCanvas');
+const rrCtx = rrCanvas.getContext('2d');
+
+function renderRRStrip() {
+  const rect = rrCanvas.parentElement.querySelector('#rrCanvas').getBoundingClientRect();
+  rrCanvas.width = rect.width * 2;
+  rrCanvas.height = 180 * 2;
+
+  const w = rrCanvas.width;
+  const h = rrCanvas.height;
+  const ctx = rrCtx;
+
+  ctx.clearRect(0, 0, w, h);
+
+  const data = state.rrBuffer.slice(-80);
+  if (data.length < 2) return;
+
+  const min = Math.min(...data) - 20;
+  const max = Math.max(...data) + 20;
+  const range = max - min || 1;
+
+  const { r, g, b } = state.coreColor;
+  const colorStr = `${Math.round(r)},${Math.round(g)},${Math.round(b)}`;
+
+  // Fill gradient under curve
+  ctx.beginPath();
+  ctx.moveTo(0, h);
+  for (let i = 0; i < data.length; i++) {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - ((data[i] - min) / range) * (h - 40) - 20;
+    if (i === 0) ctx.lineTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.lineTo(w, h);
+  ctx.closePath();
+
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, `rgba(${colorStr},0.15)`);
+  grad.addColorStop(1, `rgba(${colorStr},0)`);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  for (let i = 0; i < data.length; i++) {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - ((data[i] - min) / range) * (h - 40) - 20;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = `rgba(${colorStr},0.7)`;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Dots
+  for (let i = 0; i < data.length; i++) {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - ((data[i] - min) / range) * (h - 40) - 20;
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${colorStr},0.5)`;
+    ctx.fill();
+  }
+}
+
+// ============================================================
+// HR HISTORY RENDERER
+// ============================================================
+
+const hrCanvas = document.getElementById('hrCanvas');
+const hrCtx = hrCanvas.getContext('2d');
+
+function renderHRHistory() {
+  const rect = hrCanvas.getBoundingClientRect();
+  hrCanvas.width = rect.width * 2;
+  hrCanvas.height = 120 * 2;
+
+  const w = hrCanvas.width;
+  const h = hrCanvas.height;
+  const ctx = hrCtx;
+
+  ctx.clearRect(0, 0, w, h);
+
+  const data = state.hrHistory.slice(-120);
+  if (data.length < 2) return;
+
+  const hrs = data.map(d => d.hr);
+  const min = Math.min(...hrs) - 5;
+  const max = Math.max(...hrs) + 5;
+  const range = max - min || 1;
+
+  const { r, g, b } = state.coreColor;
+  const colorStr = `${Math.round(r)},${Math.round(g)},${Math.round(b)}`;
+
+  // Fill
+  ctx.beginPath();
+  ctx.moveTo(0, h);
+  for (let i = 0; i < data.length; i++) {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - ((data[i].hr - min) / range) * (h - 40) - 20;
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(w, h);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, `rgba(${colorStr},0.1)`);
+  grad.addColorStop(1, `rgba(${colorStr},0)`);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  for (let i = 0; i < data.length; i++) {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - ((data[i].hr - min) / range) * (h - 40) - 20;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = `rgba(${colorStr},0.5)`;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+// ============================================================
+// SPECTRUM RENDERER
+// ============================================================
+
+const specCanvas = document.getElementById('spectrumCanvas');
+const specCtx = specCanvas.getContext('2d');
+
+function renderSpectrum() {
+  const rect = specCanvas.getBoundingClientRect();
+  specCanvas.width = rect.width * 2;
+  specCanvas.height = 48 * 2;
+
+  const w = specCanvas.width;
+  const h = specCanvas.height;
+  const ctx = specCtx;
+
+  ctx.clearRect(0, 0, w, h);
+
+  if (!state.spectrum) return;
+
+  const { power, freqRes, loIdx, hiIdx, peakIdx } = state.spectrum;
+  const { r, g, b } = state.coreColor;
+  const colorStr = `${Math.round(r)},${Math.round(g)},${Math.round(b)}`;
+
+  // Show frequencies 0.01 to 0.4 Hz
+  const startIdx = Math.max(1, Math.floor(0.01 / freqRes));
+  const endIdx = Math.min(power.length - 1, Math.ceil(0.4 / freqRes));
+
+  const slice = power.slice(startIdx, endIdx + 1);
+  const maxPow = Math.max(...slice) || 1;
+
+  // VLF/LF/HF band boundaries
+  const lfStart = Math.ceil(0.04 / freqRes) - startIdx;
+  const hfStart = Math.ceil(0.15 / freqRes) - startIdx;
+  const hfEnd = Math.ceil(0.4 / freqRes) - startIdx;
+
+  // Fill
+  ctx.beginPath();
+  ctx.moveTo(0, h);
+  for (let i = 0; i < slice.length; i++) {
+    const x = (i / (slice.length - 1)) * w;
+    const y = h - (slice[i] / maxPow) * (h - 8);
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(w, h);
+  ctx.closePath();
+
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, `rgba(${colorStr},0.3)`);
+  grad.addColorStop(1, `rgba(${colorStr},0.02)`);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  for (let i = 0; i < slice.length; i++) {
+    const x = (i / (slice.length - 1)) * w;
+    const y = h - (slice[i] / maxPow) * (h - 8);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = `rgba(${colorStr},0.6)`;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Peak marker
+  const peakRelIdx = peakIdx - startIdx;
+  if (peakRelIdx >= 0 && peakRelIdx < slice.length) {
+    const px = (peakRelIdx / (slice.length - 1)) * w;
+    const py = h - (slice[peakRelIdx] / maxPow) * (h - 8);
+    ctx.beginPath();
+    ctx.arc(px, py, 4, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${colorStr},0.9)`;
+    ctx.fill();
+
+    // Frequency label
+    ctx.fillStyle = `rgba(255,255,255,0.5)`;
+    ctx.font = '18px JetBrains Mono';
+    ctx.fillText((peakIdx * freqRes).toFixed(2) + 'Hz', px + 8, py - 4);
+  }
+
+  // Band dividers
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1;
+
+  if (lfStart > 0 && lfStart < slice.length) {
+    const x = (lfStart / (slice.length - 1)) * w;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+  }
+  if (hfStart > 0 && hfStart < slice.length) {
+    const x = (hfStart / (slice.length - 1)) * w;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+  }
+
+  ctx.setLineDash([]);
+}
+
+// ============================================================
+// BREATH GUIDE — 5s inhale / 5s exhale (0.1Hz coherence breathing)
+// ============================================================
+
+const breathState = {
+  active: false,
+  phase: 'idle',    // idle, inhale, exhale
+  cycleStart: 0,
+  inhaleMs: 5000,
+  exhaleMs: 5000,
+  cycles: 0,
+};
+
+const breathRing = document.getElementById('breathRing');
+const breathPhaseLabel = document.getElementById('breathPhaseLabel');
+const breathTimerEl = document.getElementById('breathTimer');
+const breathToggleBtn = document.getElementById('breathToggle');
+
+breathToggleBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (breathState.active) {
+    stopBreath();
+  } else {
+    startBreath();
+  }
+});
+
+function startBreath() {
+  breathState.active = true;
+  breathState.cycles = 0;
+  breathState.phase = 'inhale';
+  breathState.cycleStart = Date.now();
+  breathToggleBtn.textContent = 'Stop';
+  breathRing.classList.add('inhale');
+  breathRing.classList.remove('exhale');
+  breathPhaseLabel.textContent = 'Inhale';
+  breathPhaseLabel.style.color = 'rgba(255,255,255,0.6)';
+  tickBreath();
+}
+
+function stopBreath() {
+  breathState.active = false;
+  breathState.phase = 'idle';
+  breathToggleBtn.textContent = 'Start';
+  breathRing.classList.remove('inhale', 'exhale');
+  breathPhaseLabel.textContent = 'Breathe';
+  breathPhaseLabel.style.color = 'rgba(255,255,255,0.4)';
+  breathTimerEl.textContent = '5 : 5';
+}
+
+function tickBreath() {
+  if (!breathState.active) return;
+
+  const elapsed = Date.now() - breathState.cycleStart;
+  const cycleDuration = breathState.inhaleMs + breathState.exhaleMs;
+  const cyclePos = elapsed % cycleDuration;
+
+  if (cyclePos < breathState.inhaleMs) {
+    // Inhale phase
+    if (breathState.phase !== 'inhale') {
+      breathState.phase = 'inhale';
+      breathRing.classList.add('inhale');
+      breathRing.classList.remove('exhale');
+      breathPhaseLabel.textContent = 'Inhale';
+    }
+    const remaining = Math.ceil((breathState.inhaleMs - cyclePos) / 1000);
+    breathTimerEl.textContent = remaining;
+  } else {
+    // Exhale phase
+    if (breathState.phase !== 'exhale') {
+      breathState.phase = 'exhale';
+      breathRing.classList.add('exhale');
+      breathRing.classList.remove('inhale');
+      breathPhaseLabel.textContent = 'Exhale';
+      // Count completed cycles
+      breathState.cycles++;
+    }
+    const exhaleElapsed = cyclePos - breathState.inhaleMs;
+    const remaining = Math.ceil((breathState.exhaleMs - exhaleElapsed) / 1000);
+    breathTimerEl.textContent = remaining;
+  }
+
+  requestAnimationFrame(tickBreath);
+}
+
+// ============================================================
+// ANIMATION LOOP
+// ============================================================
+
+function frame(time) {
+  renderOrb(time);
+  requestAnimationFrame(frame);
+}
+
+// Lower-frequency updates for strips
+setInterval(() => {
+  renderRRStrip();
+  renderHRHistory();
+  renderSpectrum();
+  updateMetrics();
+}, 500);
+
+// ============================================================
+// INIT
+// ============================================================
+
+window.addEventListener('resize', () => {
+  resizeOrb();
+});
+
+initOrb();
+requestAnimationFrame(frame);
+connectWS();
+</script>
+</body>
+</html>

@@ -144,19 +144,6 @@
 }
 
 /* ─── Sidebar Hint ─── */
-.cmdk-hint-sidebar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  margin: 4px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 120ms ease;
-}
-.cmdk-hint-sidebar:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
 .cmdk-hint-key {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
@@ -167,11 +154,15 @@
   padding: 2px 5px;
   letter-spacing: 0.5px;
 }
-.cmdk-hint-label {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 10.5px;
-  color: var(--text-dim);
-  letter-spacing: 0.3px;
+.cmdk-logo-badge {
+  margin-left: auto;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 120ms ease;
+  flex-shrink: 0;
+}
+.cmdk-logo-badge:hover {
+  opacity: 0.8;
 }
 
 /* ─── Scrollbar ─── */

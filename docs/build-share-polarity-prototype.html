@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BUILD / SHARE Polarity — ACE Desktop Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ── ACE Design Tokens ── */
+:root {
+  --bg-deep:    #080a12;
+  --bg-surface: #0c0e18;
+  --bg-elevated:#141828;
+  --bg-card:    #101420;
+  --border:      rgba(140,120,255,0.10);
+  --border-hover:rgba(140,120,255,0.22);
+  --gold:       #c8a0f0;
+  --gold-dim:   #7a60b0;
+  --green:      #60d8a8;
+  --red:        #e07080;
+  --text-primary:   #e8e4f0;
+  --text-secondary: #9898b8;
+  --text-dim:       #606080;
+  --authority: #c8a0f0;
+  --capacity:  #60d8a8;
+  --expansion: #e080a0;
+  --glass-bg:     rgba(16,20,36,0.6);
+  --glass-border: rgba(140,120,255,0.08);
+  --glass-blur:   blur(12px);
+
+  /* Polarity tokens */
+  --build-color: #60d8a8;
+  --build-glow: rgba(96,216,168,0.3);
+  --build-dim: rgba(96,216,168,0.12);
+  --share-color: #e8a860;
+  --share-glow: rgba(232,168,96,0.3);
+  --share-dim: rgba(232,168,96,0.12);
+  --align-color: #c8a0f0;
+  --align-dim: rgba(200,160,240,0.12);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: 'Space Grotesk', sans-serif;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Ambient background glow */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(96,216,168,0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 30%, rgba(232,168,96,0.02) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 80%, rgba(140,120,255,0.03) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── TITLEBAR ── */
+.titlebar {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 0 18px 0 80px;
+  background: rgba(8,10,18,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--glass-border);
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+}
+
+.titlebar-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.titlebar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+/* ── ATMOSPHERE INTENSITY BAR ── */
+.atm-intensity-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.atm-intensity-icon {
+  font-size: 10px;
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+
+.atm-intensity-bar {
+  width: 100px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(140,120,255,0.08);
+  overflow: hidden;
+}
+
+.atm-intensity-fill {
+  height: 100%;
+  width: 45%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, rgba(140,120,255,0.4), rgba(200,160,240,0.6));
+  transition: width 0.8s ease;
+}
+
+/* ── POLARITY BAR (replaces mode chip) ── */
+.polarity-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 6px;
+  transition: background 0.2s;
+  position: relative;
+}
+.polarity-bar-wrap:hover {
+  background: rgba(140,120,255,0.06);
+}
+
+.polarity-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: color 0.5s, opacity 0.5s;
+}
+.polarity-label.build {
+  color: var(--build-color);
+  opacity: 0.7;
+}
+.polarity-label.share {
+  color: var(--share-color);
+  opacity: 0.7;
+}
+
+.polarity-bar {
+  width: 80px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(140,120,255,0.04);
+  overflow: hidden;
+  display: flex;
+  position: relative;
+}
+
+.polarity-fill-build {
+  height: 100%;
+  border-radius: 4px 0 0 4px;
+  background: linear-gradient(90deg, var(--build-color), rgba(96,216,168,0.6));
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.polarity-fill-share {
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(90deg, rgba(232,168,96,0.6), var(--share-color));
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+/* Starving pulse — 4s breath cycle */
+@keyframes polarity-starve-pulse {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 0.65; }
+}
+.polarity-fill-build.starving::after,
+.polarity-fill-share.starving::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  animation: polarity-starve-pulse 4s ease-in-out infinite;
+}
+.polarity-fill-build.starving::after {
+  background: var(--build-glow);
+  box-shadow: 0 0 8px var(--build-glow);
+}
+.polarity-fill-share.starving::after {
+  background: var(--share-glow);
+  box-shadow: 0 0 8px var(--share-glow);
+}
+
+/* Hover tooltip */
+.polarity-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  z-index: 200;
+}
+.polarity-bar-wrap:hover .polarity-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Other titlebar elements */
+.coherence-chip {
+  display: flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 12px;
+  border: 1px solid rgba(109,184,143,0.2);
+  background: rgba(109,184,143,0.06);
+}
+.coherence-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 7px rgba(109,184,143,0.6);
+  animation: breathe 2.5s ease-in-out infinite;
+}
+@keyframes breathe { 0%,100%{opacity:.6;transform:scale(.9)} 50%{opacity:1;transform:scale(1.1)} }
+.coherence-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7.5px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.theme-btn {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text-dim); font-size: 11px; width: 24px; height: 24px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+
+/* ── UNIFIED DETAIL PANEL ── */
+.detail-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 89;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.detail-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.detail-card {
+  position: fixed;
+  top: 46px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  width: 380px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  z-index: 90;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(140,120,255,0.05);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.detail-card.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Panel sections */
+.detail-section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7.5px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+
+.detail-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 14px 0;
+}
+
+/* Polarity detail section */
+.polarity-detail-ratio {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.polarity-detail-ratio .ratio-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+.polarity-detail-ratio .ratio-number.build { color: var(--build-color); }
+.polarity-detail-ratio .ratio-number.share { color: var(--share-color); }
+.polarity-detail-ratio .ratio-slash {
+  font-size: 18px;
+  color: var(--text-dim);
+  font-weight: 300;
+}
+.polarity-detail-ratio .ratio-period {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-left: auto;
+}
+
+/* Large polarity bar */
+.polarity-detail-bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 5px;
+  background: rgba(140,120,255,0.04);
+  overflow: hidden;
+  display: flex;
+  margin-bottom: 14px;
+}
+.polarity-detail-bar .build-fill {
+  height: 100%;
+  border-radius: 5px 0 0 5px;
+  background: linear-gradient(90deg, var(--build-color), rgba(96,216,168,0.5));
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.polarity-detail-bar .share-fill {
+  height: 100%;
+  border-radius: 0 5px 5px 0;
+  background: linear-gradient(90deg, rgba(232,168,96,0.5), var(--share-color));
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Meta rows */
+.polarity-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.polarity-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.polarity-meta-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.polarity-meta-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-primary);
+}
+.polarity-meta-value.streak {
+  color: var(--share-color);
+  background: var(--share-dim);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 9px;
+}
+.polarity-meta-value.align-count {
+  color: var(--align-color);
+}
+
+/* 14-day sparkline */
+.sparkline-wrap {
+  margin-bottom: 4px;
+}
+.sparkline-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.sparkline {
+  display: flex;
+  align-items: end;
+  gap: 2px;
+  height: 36px;
+}
+.spark-day {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 1px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.spark-build {
+  background: var(--build-color);
+  opacity: 0.7;
+  border-radius: 2px 2px 0 0;
+  transition: height 0.6s ease;
+}
+.spark-share {
+  background: var(--share-color);
+  opacity: 0.7;
+  border-radius: 0 0 2px 2px;
+  transition: height 0.6s ease;
+}
+.spark-day:last-child .spark-build { opacity: 1; }
+.spark-day:last-child .spark-share { opacity: 1; }
+.spark-day-labels {
+  display: flex;
+  gap: 2px;
+  margin-top: 4px;
+}
+.spark-day-labels span {
+  flex: 1;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 6px;
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+
+/* ── MAIN CONTENT ── */
+.main-content {
+  margin-top: 38px;
+  padding: 28px 32px 120px;
+  position: relative;
+  z-index: 1;
+}
+
+.section-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+}
+
+/* ── DASHBOARD WIDGET ── */
+.widget {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  max-width: 640px;
+}
+
+.widget-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.widget-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.widget-period-toggle {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.widget-period-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.widget-period-btn:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+.widget-period-btn.active {
+  background: rgba(140,120,255,0.1);
+  color: var(--text-secondary);
+}
+.widget-period-btn:hover {
+  color: var(--text-secondary);
+}
+
+/* Stacked area chart */
+.chart-wrap {
+  height: 140px;
+  display: flex;
+  align-items: end;
+  gap: 3px;
+  margin-bottom: 12px;
+  padding: 0 2px;
+}
+.chart-bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  border-radius: 3px;
+  overflow: hidden;
+  gap: 1px;
+  transition: opacity 0.2s;
+  cursor: pointer;
+  position: relative;
+}
+.chart-bar:hover {
+  opacity: 0.85;
+}
+.chart-build {
+  background: var(--build-color);
+  opacity: 0.65;
+  transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 3px 3px 0 0;
+}
+.chart-share {
+  background: var(--share-color);
+  opacity: 0.65;
+  transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 0;
+}
+.chart-align {
+  background: var(--align-color);
+  opacity: 0.25;
+  transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 0 0 3px 3px;
+}
+.chart-bar:hover .chart-build,
+.chart-bar:hover .chart-share { opacity: 0.9; }
+.chart-bar:hover .chart-align { opacity: 0.45; }
+
+.chart-labels {
+  display: flex;
+  gap: 3px;
+  padding: 0 2px;
+}
+.chart-labels span {
+  flex: 1;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+
+/* Legend */
+.chart-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+.legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+}
+.legend-dot.build { background: var(--build-color); }
+.legend-dot.share { background: var(--share-color); }
+.legend-dot.align { background: var(--align-color); opacity: 0.5; }
+
+/* Category breakdown */
+.category-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.category-col-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.category-col-title.build { color: var(--build-color); }
+.category-col-title.share { color: var(--share-color); }
+
+.category-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+.category-name {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.category-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+/* Last 5 share events */
+.share-events {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.share-events-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--share-color);
+  margin-bottom: 10px;
+}
+.share-event {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(140,120,255,0.04);
+}
+.share-event:last-child { border-bottom: none; }
+.share-event-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--share-color);
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+.share-event-text {
+  font-size: 11px;
+  color: var(--text-secondary);
+  flex: 1;
+}
+.share-event-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+/* ── SOMATIC BAR ── */
+.somatic-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  background: rgba(10,12,22,0.92);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--glass-border);
+  z-index: 50;
+  overflow: hidden;
+}
+
+.somatic-bar-breath {
+  position: absolute;
+  top: -50%; left: 50%;
+  width: 200px; height: 200px;
+  transform: translate(-50%, -25%);
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(140,120,255,0.08), transparent 70%);
+  animation: somatic-bloom 10s cubic-bezier(0.4,0,0.2,1) infinite;
+}
+@keyframes somatic-bloom {
+  0%   { transform:translate(-50%,-25%) scale(0);   opacity:0; }
+  15%  { opacity:0.7; }
+  50%  { transform:translate(-50%,-25%) scale(3.5); opacity:1; }
+  85%  { opacity:0.7; }
+  100% { transform:translate(-50%,-25%) scale(0);   opacity:0; }
+}
+
+.somatic-bar-pulse {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  transform: translate(-50%,-50%);
+  background: rgba(140,120,255,0.5);
+  box-shadow: 0 0 6px rgba(140,120,255,0.3);
+  animation: somatic-pulse 10s cubic-bezier(0.4,0,0.2,1) infinite;
+  z-index: 1;
+}
+@keyframes somatic-pulse {
+  0%   { transform:translate(-50%,-50%) scale(0.6); opacity:0.3; }
+  50%  { transform:translate(-50%,-50%) scale(1.8); opacity:1; }
+  100% { transform:translate(-50%,-50%) scale(0.6); opacity:0.3; }
+}
+
+.somatic-bar-text {
+  position: relative;
+  z-index: 1;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  opacity: 0.7;
+  transition: opacity 1.5s ease, color 1.5s ease;
+}
+.somatic-bar-text.polarity-active {
+  color: var(--share-color);
+  opacity: 0.85;
+}
+
+.somatic-bar .live-time {
+  position: relative;
+  z-index: 1;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: var(--text-dim);
+}
+
+/* ── CLI PREVIEW ── */
+.cli-preview {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  max-width: 640px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.7;
+}
+.cli-preview .prompt {
+  color: var(--gold-dim);
+}
+.cli-preview .label {
+  color: var(--text-dim);
+}
+.cli-preview .build-val { color: var(--build-color); }
+.cli-preview .share-val { color: var(--share-color); }
+.cli-preview .dim { color: var(--text-dim); opacity: 0.7; }
+.cli-preview .warn { color: var(--share-color); opacity: 0.85; }
+
+/* ── SIMULATOR CONTROLS ── */
+.sim-controls {
+  position: fixed;
+  bottom: 44px;
+  right: 18px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-hover);
+  border-radius: 10px;
+  padding: 14px 18px;
+  z-index: 200;
+  min-width: 220px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.sim-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+.sim-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.sim-row label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  min-width: 68px;
+}
+.sim-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--gold);
+  height: 4px;
+}
+.sim-row .sim-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-primary);
+  min-width: 30px;
+  text-align: right;
+}
+.sim-row select {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  padding: 3px 6px;
+}
+.sim-row select option {
+  background: var(--bg-card);
+}
+</style>
+</head>
+<body>
+
+<!-- ── TITLEBAR ── -->
+<div class="titlebar">
+  <div class="titlebar-center">
+    <!-- Atmosphere intensity bar -->
+    <div class="atm-intensity-wrap">
+      <span class="atm-intensity-icon">◐</span>
+      <div class="atm-intensity-bar">
+        <div class="atm-intensity-fill" id="atmFill"></div>
+      </div>
+    </div>
+
+    <!-- POLARITY BAR — replaces mode chip -->
+    <div class="polarity-bar-wrap" id="polarityBarWrap" onclick="toggleDetail()">
+      <span class="polarity-label build">BUILD</span>
+      <div class="polarity-bar">
+        <div class="polarity-fill-build" id="polarityBuild"></div>
+        <div class="polarity-fill-share" id="polarityShare"></div>
+      </div>
+      <span class="polarity-label share">SHARE</span>
+      <div class="polarity-tooltip" id="polarityTooltip"></div>
+    </div>
+  </div>
+
+  <div class="titlebar-right">
+    <div class="coherence-chip">
+      <div class="coherence-dot"></div>
+      <span class="coherence-label">Coherent</span>
+    </div>
+    <button class="theme-btn">☽</button>
+  </div>
+</div>
+
+<!-- ── UNIFIED DETAIL PANEL ── -->
+<div class="detail-overlay" id="detailOverlay" onclick="toggleDetail()"></div>
+<div class="detail-card" id="detailCard">
+  <!-- Atmosphere section -->
+  <div class="detail-section-label">Atmosphere</div>
+  <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;">
+    <span style="font-size:15px;font-weight:500;color:var(--text-primary);" id="detailFeel">Steady</span>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);" id="detailPct">45%</span>
+    <span style="font-size:10px;color:var(--text-dim);margin-left:auto;">42 min active</span>
+  </div>
+  <div style="height:2px;border-radius:1px;background:linear-gradient(90deg,rgba(140,120,255,0.4),rgba(200,160,240,0.3));margin-bottom:12px;"></div>
+
+  <div class="detail-divider"></div>
+
+  <!-- Polarity section -->
+  <div class="detail-section-label">Polarity</div>
+  <div class="polarity-detail-ratio">
+    <span class="ratio-number build" id="detailBuildNum">78</span>
+    <span class="ratio-slash">/</span>
+    <span class="ratio-number share" id="detailShareNum">22</span>
+    <span class="ratio-period">7d rolling</span>
+  </div>
+  <div class="polarity-detail-bar">
+    <div class="build-fill" id="detailBuildFill"></div>
+    <div class="share-fill" id="detailShareFill"></div>
+  </div>
+  <div class="polarity-meta">
+    <div class="polarity-meta-row">
+      <span class="polarity-meta-label">ALIGN this week</span>
+      <span class="polarity-meta-value align-count">14 actions</span>
+    </div>
+    <div class="polarity-meta-row">
+      <span class="polarity-meta-label">Last share</span>
+      <span class="polarity-meta-value" id="detailLastShare">emailed Kim — 2 days ago</span>
+    </div>
+    <div class="polarity-meta-row" id="streakRow">
+      <span class="polarity-meta-label">Streak</span>
+      <span class="polarity-meta-value streak" id="detailStreak">3 days BUILD-dominant</span>
+    </div>
+  </div>
+
+  <!-- 14-day sparkline -->
+  <div class="sparkline-wrap">
+    <div class="sparkline-label">14-DAY TREND</div>
+    <div class="sparkline" id="sparkline"></div>
+    <div class="spark-day-labels" id="sparkLabels"></div>
+  </div>
+</div>
+
+<!-- ── MAIN CONTENT ── -->
+<div class="main-content">
+
+  <div class="section-title">CLI Preview — /start output</div>
+  <div class="cli-preview" id="cliPreview">
+    <span class="prompt">❯ /start</span><br>
+    <span class="label">BUILD/SHARE (7d):</span> <span class="build-val" id="cliBuild">78</span><span class="dim">/</span><span class="share-val" id="cliShare">22</span> <span class="dim">—</span> <span class="dim" id="cliCount">3 shares this week</span><span class="dim">, last: </span><span id="cliLast">emailed Kim</span> <span class="dim">(yesterday)</span><br>
+    <span class="warn" id="cliNudge">SHARE channel is quiet — intentional?</span>
+  </div>
+
+  <div class="section-title">Dashboard Widget — deep view</div>
+  <div class="widget">
+    <div class="widget-header">
+      <span class="widget-title">BUILD / SHARE</span>
+      <div class="widget-period-toggle">
+        <button class="widget-period-btn" onclick="setPeriod(7)">7d</button>
+        <button class="widget-period-btn active" onclick="setPeriod(14)">14d</button>
+        <button class="widget-period-btn" onclick="setPeriod(21)">21d</button>
+      </div>
+    </div>
+
+    <!-- Stacked chart -->
+    <div class="chart-wrap" id="chartWrap"></div>
+    <div class="chart-labels" id="chartLabels"></div>
+
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-dot build"></div>BUILD</div>
+      <div class="legend-item"><div class="legend-dot share"></div>SHARE</div>
+      <div class="legend-item"><div class="legend-dot align"></div>ALIGN</div>
+    </div>
+
+    <!-- Category breakdown -->
+    <div class="category-columns">
+      <div>
+        <div class="category-col-title build">BUILD breakdown</div>
+        <div class="category-item"><span class="category-name">Desktop features</span><span class="category-count">18</span></div>
+        <div class="category-item"><span class="category-name">Skills & commands</span><span class="category-count">7</span></div>
+        <div class="category-item"><span class="category-name">Prototypes</span><span class="category-count">5</span></div>
+        <div class="category-item"><span class="category-name">Landing pages</span><span class="category-count">3</span></div>
+      </div>
+      <div>
+        <div class="category-col-title share">SHARE breakdown</div>
+        <div class="category-item"><span class="category-name">Emails sent</span><span class="category-count">4</span></div>
+        <div class="category-item"><span class="category-name">List email</span><span class="category-count">1</span></div>
+        <div class="category-item"><span class="category-name">Client calls</span><span class="category-count">2</span></div>
+        <div class="category-item"><span class="category-name">Messages</span><span class="category-count">2</span></div>
+      </div>
+    </div>
+
+    <!-- Last 5 share events -->
+    <div class="share-events">
+      <div class="share-events-title">Recent SHARE events</div>
+      <div class="share-event">
+        <div class="share-event-dot"></div>
+        <span class="share-event-text">Emailed Kim — seat confirmation follow-up</span>
+        <span class="share-event-date">Apr 3</span>
+      </div>
+      <div class="share-event">
+        <div class="share-event-dot"></div>
+        <span class="share-event-text">HeartMath API email to jwhite@heartmath.com</span>
+        <span class="share-event-date">Apr 4</span>
+      </div>
+      <div class="share-event">
+        <div class="share-event-dot"></div>
+        <span class="share-event-text">Emmanuel message — dog food</span>
+        <span class="share-event-date">Apr 4</span>
+      </div>
+      <div class="share-event">
+        <div class="share-event-dot"></div>
+        <span class="share-event-text">Aurora partnership conversation</span>
+        <span class="share-event-date">Apr 5</span>
+      </div>
+      <div class="share-event">
+        <div class="share-event-dot"></div>
+        <span class="share-event-text">ace-core v1.4 released to clients</span>
+        <span class="share-event-date">Apr 4</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SOMATIC BAR ── -->
+<div class="somatic-bar" id="somaticBar">
+  <div class="somatic-bar-breath"></div>
+  <div class="somatic-bar-pulse"></div>
+  <span class="somatic-bar-text" id="somaticText">what wants your attention right now</span>
+  <span class="live-time" id="liveTime">14:32:08</span>
+</div>
+
+<!-- ── SIMULATOR ── -->
+<div class="sim-controls">
+  <div class="sim-title">Polarity Simulator</div>
+  <div class="sim-row">
+    <label>BUILD %</label>
+    <input type="range" id="simBuild" min="5" max="95" value="78" oninput="updatePolarity()">
+    <span class="sim-value" id="simBuildVal">78</span>
+  </div>
+  <div class="sim-row">
+    <label>Streak (d)</label>
+    <input type="range" id="simStreak" min="0" max="14" value="3" oninput="updatePolarity()">
+    <span class="sim-value" id="simStreakVal">3</span>
+  </div>
+  <div class="sim-row">
+    <label>Scenario</label>
+    <select id="simScenario" onchange="applyScenario()">
+      <option value="custom">Custom</option>
+      <option value="healthy">Balanced (55/45)</option>
+      <option value="build-sprint">Build sprint (85/15, 5d)</option>
+      <option value="build-shadow">Shadow pattern (92/8, 8d)</option>
+      <option value="share-heavy">Share heavy (35/65)</option>
+    </select>
+  </div>
+</div>
+
+<script>
+// ── Data ──
+const sparklineData = [
+  { b: 70, s: 30 }, { b: 65, s: 35 }, { b: 72, s: 28 },
+  { b: 80, s: 20 }, { b: 75, s: 25 }, { b: 82, s: 18 },
+  { b: 88, s: 12 }, { b: 85, s: 15 }, { b: 78, s: 22 },
+  { b: 90, s: 10 }, { b: 82, s: 18 }, { b: 76, s: 24 },
+  { b: 80, s: 20 }, { b: 78, s: 22 }
+];
+
+const chartData = [
+  { b: 8, s: 3, a: 4 }, { b: 6, s: 4, a: 3 }, { b: 9, s: 2, a: 5 },
+  { b: 10, s: 2, a: 4 }, { b: 7, s: 3, a: 3 }, { b: 11, s: 1, a: 6 },
+  { b: 12, s: 2, a: 3 }, { b: 9, s: 3, a: 4 }, { b: 8, s: 2, a: 5 },
+  { b: 13, s: 1, a: 4 }, { b: 10, s: 2, a: 3 }, { b: 7, s: 3, a: 5 },
+  { b: 9, s: 2, a: 4 }, { b: 8, s: 3, a: 3 }
+];
+
+const somaticMessages = {
+  normal: [
+    "what wants your attention right now",
+    "notice where your weight rests",
+    "how's your breathing",
+    "the body remembers what the mind skips"
+  ],
+  shareStarving: [
+    "what's ready to leave the workshop?",
+    "who would benefit from what you've made?",
+    "one message to one person",
+    "the work is real when someone else holds it",
+    "what would you share if it didn't need to be perfect?"
+  ],
+  buildStarving: [
+    "what wants to be made right now?",
+    "the workshop is quiet",
+    "building refuels you — when's the next session?",
+    "is there something half-finished that wants completion?"
+  ]
+};
+
+let detailOpen = false;
+let currentMsgIndex = 0;
+let currentPool = 'normal';
+
+// ── Init ──
+function init() {
+  buildSparkline();
+  buildChart();
+  updatePolarity();
+  startClock();
+  startSomaticRotation();
+}
+
+// ── Polarity update ──
+function updatePolarity() {
+  const buildPct = parseInt(document.getElementById('simBuild').value);
+  const sharePct = 100 - buildPct;
+  const streak = parseInt(document.getElementById('simStreak').value);
+
+  document.getElementById('simBuildVal').textContent = buildPct;
+  document.getElementById('simStreakVal').textContent = streak;
+
+  // Visual floor: min 20% display
+  const displayBuild = Math.max(20, Math.min(80, buildPct));
+  const displayShare = 100 - displayBuild;
+
+  // Titlebar polarity bar
+  const buildEl = document.getElementById('polarityBuild');
+  const shareEl = document.getElementById('polarityShare');
+  buildEl.style.width = displayBuild + '%';
+  shareEl.style.width = displayShare + '%';
+
+  // Starving pulse
+  const buildStarving = buildPct < 20 && streak >= 3;
+  const shareStarving = sharePct < 20 && streak >= 3;
+  buildEl.classList.toggle('starving', buildStarving);
+  shareEl.classList.toggle('starving', shareStarving);
+
+  // Tooltip
+  document.getElementById('polarityTooltip').textContent =
+    `BUILD ${buildPct} / SHARE ${sharePct} (7d)`;
+
+  // Detail panel
+  document.getElementById('detailBuildNum').textContent = buildPct;
+  document.getElementById('detailShareNum').textContent = sharePct;
+  document.getElementById('detailBuildFill').style.width = displayBuild + '%';
+  document.getElementById('detailShareFill').style.width = displayShare + '%';
+
+  // Streak
+  const streakRow = document.getElementById('streakRow');
+  const streakEl = document.getElementById('detailStreak');
+  if (streak > 2 && buildPct > 75) {
+    streakRow.style.display = 'flex';
+    streakEl.textContent = `${streak} days BUILD-dominant`;
+  } else if (streak > 2 && sharePct > 75) {
+    streakRow.style.display = 'flex';
+    streakEl.textContent = `${streak} days SHARE-dominant`;
+    streakEl.style.color = 'var(--build-color)';
+    streakEl.style.background = 'var(--build-dim)';
+  } else {
+    streakRow.style.display = 'none';
+  }
+
+  // CLI preview
+  document.getElementById('cliBuild').textContent = buildPct;
+  document.getElementById('cliShare').textContent = sharePct;
+  const nudgeEl = document.getElementById('cliNudge');
+  if (sharePct < 25 && streak >= 3) {
+    nudgeEl.textContent = 'SHARE channel is quiet — intentional?';
+    nudgeEl.style.display = 'block';
+  } else if (buildPct < 25 && streak >= 3) {
+    nudgeEl.textContent = 'BUILD channel is quiet — when\'s the next session?';
+    nudgeEl.style.display = 'block';
+  } else {
+    nudgeEl.style.display = 'none';
+  }
+
+  // Somatic bar — shift message pool
+  if (sharePct < 25 && streak >= 3) {
+    currentPool = 'shareStarving';
+    document.getElementById('somaticText').classList.add('polarity-active');
+    document.getElementById('somaticText').style.color = 'var(--share-color)';
+  } else if (buildPct < 25 && streak >= 3) {
+    currentPool = 'buildStarving';
+    document.getElementById('somaticText').classList.add('polarity-active');
+    document.getElementById('somaticText').style.color = 'var(--build-color)';
+  } else {
+    currentPool = 'normal';
+    document.getElementById('somaticText').classList.remove('polarity-active');
+    document.getElementById('somaticText').style.color = '';
+  }
+
+  // Label opacity — dim the dominant side slightly
+  document.querySelector('.polarity-label.build').style.opacity =
+    buildPct > 60 ? '1' : '0.5';
+  document.querySelector('.polarity-label.share').style.opacity =
+    sharePct > 60 ? '1' : '0.5';
+}
+
+// ── Scenarios ──
+function applyScenario() {
+  const scenario = document.getElementById('simScenario').value;
+  const buildSlider = document.getElementById('simBuild');
+  const streakSlider = document.getElementById('simStreak');
+
+  switch (scenario) {
+    case 'healthy':
+      buildSlider.value = 55; streakSlider.value = 0; break;
+    case 'build-sprint':
+      buildSlider.value = 85; streakSlider.value = 5; break;
+    case 'build-shadow':
+      buildSlider.value = 92; streakSlider.value = 8; break;
+    case 'share-heavy':
+      buildSlider.value = 35; streakSlider.value = 2; break;
+  }
+  updatePolarity();
+}
+
+// ── Detail panel ──
+function toggleDetail() {
+  detailOpen = !detailOpen;
+  document.getElementById('detailOverlay').classList.toggle('visible', detailOpen);
+  document.getElementById('detailCard').classList.toggle('visible', detailOpen);
+
+  // Deactivate starving pulse when panel is open
+  if (detailOpen) {
+    document.getElementById('polarityBuild').classList.remove('starving');
+    document.getElementById('polarityShare').classList.remove('starving');
+  } else {
+    updatePolarity(); // re-evaluate
+  }
+}
+
+// ── Sparkline ──
+function buildSparkline() {
+  const container = document.getElementById('sparkline');
+  const labels = document.getElementById('sparkLabels');
+  container.innerHTML = '';
+  labels.innerHTML = '';
+
+  const today = new Date();
+  sparklineData.forEach((d, i) => {
+    const day = document.createElement('div');
+    day.className = 'spark-day';
+
+    const bH = (d.b / 100) * 36;
+    const sH = (d.s / 100) * 36;
+
+    const bEl = document.createElement('div');
+    bEl.className = 'spark-build';
+    bEl.style.height = bH + 'px';
+
+    const sEl = document.createElement('div');
+    sEl.className = 'spark-share';
+    sEl.style.height = sH + 'px';
+
+    day.appendChild(bEl);
+    day.appendChild(sEl);
+    container.appendChild(day);
+
+    const lbl = document.createElement('span');
+    const dt = new Date(today);
+    dt.setDate(dt.getDate() - (13 - i));
+    lbl.textContent = (i % 3 === 0) ? (dt.getMonth()+1) + '/' + dt.getDate() : '';
+    labels.appendChild(lbl);
+  });
+}
+
+// ── Chart ──
+function buildChart() {
+  const container = document.getElementById('chartWrap');
+  const labels = document.getElementById('chartLabels');
+  container.innerHTML = '';
+  labels.innerHTML = '';
+
+  const today = new Date();
+  const maxTotal = Math.max(...chartData.map(d => d.b + d.s + d.a));
+
+  chartData.forEach((d, i) => {
+    const total = d.b + d.s + d.a;
+    const scale = total / maxTotal;
+    const barH = scale * 140;
+
+    const bar = document.createElement('div');
+    bar.className = 'chart-bar';
+
+    const bEl = document.createElement('div');
+    bEl.className = 'chart-build';
+    bEl.style.height = ((d.b / total) * barH) + 'px';
+
+    const sEl = document.createElement('div');
+    sEl.className = 'chart-share';
+    sEl.style.height = ((d.s / total) * barH) + 'px';
+
+    const aEl = document.createElement('div');
+    aEl.className = 'chart-align';
+    aEl.style.height = ((d.a / total) * barH) + 'px';
+
+    bar.appendChild(bEl);
+    bar.appendChild(sEl);
+    bar.appendChild(aEl);
+    container.appendChild(bar);
+
+    const lbl = document.createElement('span');
+    const dt = new Date(today);
+    dt.setDate(dt.getDate() - (13 - i));
+    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    lbl.textContent = dayNames[dt.getDay()];
+    labels.appendChild(lbl);
+  });
+}
+
+function setPeriod(days) {
+  document.querySelectorAll('.widget-period-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  // In production, this would re-render with different data windows
+}
+
+// ── Clock ──
+function startClock() {
+  function tick() {
+    const now = new Date();
+    document.getElementById('liveTime').textContent =
+      now.toLocaleTimeString('en-US', { hour12: false });
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+// ── Somatic message rotation ──
+function startSomaticRotation() {
+  function rotate() {
+    const pool = somaticMessages[currentPool];
+    currentMsgIndex = (currentMsgIndex + 1) % pool.length;
+    const textEl = document.getElementById('somaticText');
+
+    // Crossfade
+    textEl.style.opacity = '0';
+    setTimeout(() => {
+      textEl.textContent = pool[currentMsgIndex];
+      textEl.style.opacity = currentPool === 'normal' ? '0.7' : '0.85';
+    }, 800);
+  }
+  setInterval(rotate, 8000); // faster for demo; production = 30s
+}
+
+// ── Boot ──
+window.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>

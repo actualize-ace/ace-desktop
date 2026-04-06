@@ -20,7 +20,7 @@ export default {
     el.innerHTML = `
       <div class="section-label">This Week</div>
       <div>${sorted.map(t => `
-        <div class="target-row">
+        <div class="target-row dash-clickable" data-cmd="What's the latest on this weekly target: ${escapeHtml(t.text)}">
           <span class="target-check${t.checked ? ' done' : ''}"></span>
           <span class="target-text${t.checked ? ' done' : ''}">${escapeHtml(t.text)}</span>
         </div>`).join('')}

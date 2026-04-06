@@ -84,6 +84,9 @@ module.exports = {
   VAULT_SCAFFOLD_ALL:     'vault-scaffold-all',
   VAULT_GET_COLOR_MAP:    'vault-get-color-map',
 
+  // Astro
+  ASTRO_TRANSITS:         'astro-transits',
+
   // Insight voice
   INSIGHT_TRANSCRIBE:     'insight-transcribe',
   INSIGHT_SPEAK:          'insight-speak',

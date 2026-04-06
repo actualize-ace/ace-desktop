@@ -171,18 +171,24 @@ export async function openArtifactDetail(slug) {
   const isArchived = data.status === 'archived'
   const isMissing = data.missing
 
+  // Context-aware open label
+  let openLabel = 'Open in Finder'
+  if (isHtml || isDir) openLabel = 'Open in Browser'
+  else if (isPdf) openLabel = 'Open in PDF Viewer'
+
   let actionsHtml = ''
-  // Archive / Restore button
-  actionsHtml += `<button class="artifacts-action-btn ${isArchived ? 'art-restore' : 'art-archive'}" id="art-archive-btn">${isArchived ? 'Restore' : 'Archive'}</button>`
+  // Primary open button — opens artifact in native app
+  if (filePath && !isMissing) {
+    actionsHtml += `<button class="artifacts-action-btn art-open-native" id="art-open-file">${openLabel}</button>`
+  }
   if (data.url) {
     actionsHtml += `<button class="artifacts-action-btn" id="art-open-url">Open URL</button>`
-  }
-  if (filePath) {
-    actionsHtml += `<button class="artifacts-action-btn" id="art-open-file">${isPdf ? 'Open PDF' : 'Open in Finder'}</button>`
   }
   if (previewSrc) {
     actionsHtml += `<button class="artifacts-action-btn" id="art-toggle-preview">Preview</button>`
   }
+  // Archive / Restore button
+  actionsHtml += `<button class="artifacts-action-btn ${isArchived ? 'art-restore' : 'art-archive'}" id="art-archive-btn">${isArchived ? 'Restore' : 'Archive'}</button>`
 
   detailEl.innerHTML = `
     ${isMissing ? '<div class="artifacts-missing-banner">Source file not found \u2014 the original file may have been moved or deleted.</div>' : ''}

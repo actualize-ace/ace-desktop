@@ -1,0 +1,517 @@
+/* ── Astro View ────────────────────────────────────────────────────────────── */
+
+.astro-body {
+  display: flex;
+  gap: 16px;
+  padding: 12px 16px;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Left: Wheel + Summary ── */
+.astro-left {
+  flex: 0 0 55%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.astro-wheel-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.astro-wheel {
+  width: 100%;
+  max-width: 480px;
+  max-height: 100%;
+  aspect-ratio: 1;
+}
+
+/* Sign glyphs in zodiac ring */
+.astro-sign-glyph {
+  font-size: 11px;
+  fill: var(--text-dim);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* House numbers */
+.astro-house-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  fill: var(--text-dim);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Angle labels (ASC, MC, etc.) */
+.astro-angle-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  font-weight: 500;
+  fill: var(--text-secondary);
+  letter-spacing: 0.08em;
+}
+
+/* Planet glyphs on wheel */
+.astro-planet-glyph {
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.astro-planet-group:hover circle {
+  stroke-width: 1.2;
+}
+.astro-planet-group.selected circle {
+  stroke-width: 1.5;
+}
+
+/* Transit planet glyphs */
+.astro-transit-glyph {
+  font-size: 9px;
+  fill: var(--gold-dim);
+  pointer-events: none;
+}
+
+.astro-transit-planet:hover {
+  opacity: 0.8 !important;
+}
+
+/* Aspect lines hover */
+.astro-aspect-line:hover {
+  stroke-width: 1.5 !important;
+  opacity: 0.6 !important;
+}
+
+/* ── Chart Summary (below wheel) ── */
+.astro-chart-summary {
+  display: flex;
+  gap: 16px;
+  padding: 8px 12px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  backdrop-filter: var(--glass-blur);
+}
+
+.astro-summary-block {
+  flex: 1;
+}
+
+.astro-summary-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.astro-el-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.astro-el-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-secondary);
+  width: 50px;
+  text-transform: capitalize;
+}
+
+.astro-el-bar {
+  flex: 1;
+  height: 3px;
+  background: var(--bg-elevated);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.astro-el-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.astro-el-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+  width: 12px;
+  text-align: right;
+}
+
+.astro-lunation {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* ── Right: Transit Summary + Detail ── */
+.astro-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+/* Transit summary card */
+.astro-transit-summary {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  backdrop-filter: var(--glass-blur);
+  padding: 12px;
+}
+
+.astro-transit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.astro-transit-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.astro-transit-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.astro-moon-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: rgba(200,160,240,0.04);
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.astro-moon-glyph {
+  font-size: 18px;
+  color: var(--gold-dim);
+}
+
+.astro-moon-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.astro-moon-sign {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.astro-moon-phase {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+.astro-retro-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  background: rgba(224,112,128,0.04);
+  border-radius: 4px;
+}
+
+.astro-retro-label {
+  font-size: 11px;
+  color: var(--red);
+}
+
+.astro-retro-list {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.astro-transit-aspects {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.astro-transit-aspect-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.astro-transit-aspect-row:hover {
+  background: rgba(140,120,255,0.06);
+}
+
+.astro-ta-transit,
+.astro-ta-natal {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  color: var(--text-primary);
+  min-width: 60px;
+}
+
+.astro-ta-glyph {
+  font-size: 12px;
+}
+
+.astro-ta-orb {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-left: auto;
+}
+
+/* ── Detail Panel ── */
+.astro-detail-panel {
+  flex: 1;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  backdrop-filter: var(--glass-blur);
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.astro-detail-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.astro-detail-empty-icon {
+  font-size: 28px;
+  opacity: 0.3;
+}
+
+.astro-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+
+.astro-detail-glyph {
+  font-size: 24px;
+}
+
+.astro-detail-title {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+}
+
+.astro-detail-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.astro-detail-pos {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+.astro-triad-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  letter-spacing: 0.14em;
+  padding: 2px 8px;
+  border-radius: 3px;
+  color: var(--bg-deep);
+  font-weight: 600;
+}
+
+.astro-transit-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  letter-spacing: 0.14em;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: var(--gold-dim);
+  color: var(--bg-deep);
+  font-weight: 600;
+}
+
+.astro-detail-section {
+  margin-bottom: 12px;
+}
+
+.astro-detail-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.astro-detail-text {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.astro-triad-text {
+  padding-left: 10px;
+  font-style: italic;
+}
+
+.astro-detail-aspect {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--text-primary);
+  transition: background 0.15s;
+}
+
+.astro-detail-aspect:hover {
+  background: rgba(140,120,255,0.06);
+}
+
+.astro-dim {
+  color: var(--text-dim);
+  font-size: 10px;
+}
+
+.astro-no-transits {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  gap: 4px;
+}
+
+/* ── Scrollbar styling ── */
+.astro-right::-webkit-scrollbar,
+.astro-detail-panel::-webkit-scrollbar {
+  width: 4px;
+}
+.astro-right::-webkit-scrollbar-thumb,
+.astro-detail-panel::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+/* ── Overview panel ── */
+.astro-overview-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+.astro-overview-row strong {
+  font-weight: 500;
+}
+.astro-overview-glyph {
+  width: 18px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--gold);
+}
+.astro-back-link {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 2px 0 8px;
+  transition: color 0.15s;
+}
+.astro-back-link:hover {
+  color: var(--text-secondary);
+}
+
+.astro-overview-hint {
+  margin-top: 16px;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  opacity: 0.6;
+}
+
+/* ── Light mode overrides ── */
+body.light .astro-sign-glyph { fill: var(--text-dim); }
+body.light .astro-house-num { fill: var(--text-dim); }
+body.light .astro-angle-label { fill: var(--text-secondary); }
+
+body.light .astro-planet-group circle {
+  fill: rgba(240,238,246,0.9);
+}
+body.light .astro-transit-planet circle {
+  fill: rgba(240,238,246,0.85);
+}
+body.light .astro-transit-glyph {
+  fill: var(--gold);
+}
+
+body.light .astro-chart-summary,
+body.light .astro-transit-summary,
+body.light .astro-detail-panel {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+}
+
+body.light .astro-moon-row {
+  background: rgba(90,72,192,0.05);
+}
+body.light .astro-retro-row {
+  background: rgba(192,72,88,0.05);
+}
+body.light .astro-transit-aspect-row:hover,
+body.light .astro-detail-aspect:hover {
+  background: rgba(90,72,192,0.06);
+}
+
+body.light .astro-el-bar {
+  background: var(--bg-card);
+}
+
+/* SVG wheel ring fills in light mode */
+body.light .astro-wheel circle[fill="url(#wheel-bg)"] {
+  fill: rgba(240,238,246,0.4);
+}

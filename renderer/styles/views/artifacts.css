@@ -136,6 +136,18 @@ body.light .artifacts-missing-banner {
   color: #c44; background: rgba(255,100,100,0.06);
 }
 
+/* Primary open-in-native-app button */
+.art-open-native {
+  background: rgba(136,120,255,0.12) !important;
+  border-color: rgba(136,120,255,0.35) !important;
+  color: var(--text-primary) !important;
+  font-weight: 500;
+}
+.art-open-native:hover {
+  background: rgba(136,120,255,0.22) !important;
+  border-color: rgba(136,120,255,0.5) !important;
+}
+
 /* Archive/restore button styles */
 .art-archive { color: var(--text-dim) !important; }
 .art-archive:hover { color: #f66 !important; border-color: rgba(255,100,100,0.3) !important; background: rgba(255,100,100,0.08) !important; }

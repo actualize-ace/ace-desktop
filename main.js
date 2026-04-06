@@ -389,6 +389,21 @@ ipcMain.handle(ch.VAULT_GRAPH_INVALIDATE, () => {
   catch { return false }
 })
 
+/// ─── Astro: daily transits via Python ────────────────────────────────────────
+
+ipcMain.handle(ch.ASTRO_TRANSITS, async () => {
+  const config = loadConfig()
+  const vaultPath = config?.vaultPath
+  if (!vaultPath) return null
+  const script = require('path').join(vaultPath, 'tools', 'astro', 'daily_transits.py')
+  return new Promise(resolve => {
+    require('child_process').execFile('python3', [script], { timeout: 10000 }, (err, stdout) => {
+      if (err) { resolve(null); return }
+      try { resolve(JSON.parse(stdout)) } catch { resolve(null) }
+    })
+  })
+})
+
 // ─── Insight: Deepgram STT + TTS ─────────────────────────────────────────────
 
 ipcMain.handle(ch.INSIGHT_TRANSCRIBE, async (_, audioBuffer) => {

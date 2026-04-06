@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACE Desktop — Insight View</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg-deep:#080a12;--bg-surface:#0c0e18;--bg-elevated:#141828;--bg-card:#101420;
+    --border:rgba(140,120,255,0.10);--border-hover:rgba(140,120,255,0.22);
+    --gold:#c8a0f0;--gold-dim:#7a60b0;--green:#60d8a8;--ark:#b080e0;
+    --text-primary:#e8e4f0;--text-secondary:#9898b8;--text-dim:#606080;
+    --authority:#c8a0f0;--capacity:#60d8a8;--expansion:#e080a0;
+    --sidebar-w:216px;--glass-border:rgba(140,120,255,0.08);
+    --gradient-accent:linear-gradient(135deg,#8878ff,#c8a0f0,#60d8a8);
+  }
+  html,body{width:100%;height:100%;background:var(--bg-deep);color:var(--text-primary);font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;overflow:hidden;font-size:13px;}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 20% 50%,rgba(136,120,255,0.04) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(96,216,168,0.025) 0%,transparent 40%),radial-gradient(ellipse at 60% 80%,rgba(224,128,160,0.02) 0%,transparent 40%);}
+
+  /* ═══ SHELL ═══ */
+  .app-shell{display:flex;flex-direction:column;height:100vh;position:relative;z-index:1;}
+  .titlebar{height:38px;flex-shrink:0;display:flex;align-items:center;padding:0 18px 0 80px;background:rgba(8,10,18,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--glass-border);}
+  .titlebar-center{flex:1;display:flex;justify-content:center;}
+  .titlebar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+  .traffic-lights{position:absolute;left:16px;top:12px;display:flex;gap:8px;}
+  .tl{width:12px;height:12px;border-radius:50%;}.tl-r{background:#ff5f57;}.tl-y{background:#febc2e;}.tl-g{background:#28c840;}
+  .intensity-bar{width:120px;height:6px;background:rgba(255,255,255,0.04);border-radius:3px;overflow:hidden;}
+  .intensity-fill{width:35%;height:100%;background:linear-gradient(90deg,#60d8a8,#c8a0f0);border-radius:3px;}
+  .mode-chip{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);padding:3px 8px;border:1px solid var(--border);border-radius:6px;}
+  .coherence-chip{display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--green);letter-spacing:0.04em;}
+  .pulse-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:0.6;}50%{opacity:1;}}
+  .app-body{flex:1;display:flex;overflow:hidden;}
+
+  /* ═══ SIDEBAR ═══ */
+  .sidebar{width:var(--sidebar-w);flex-shrink:0;display:flex;flex-direction:column;background:rgba(10,12,22,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-right:1px solid var(--glass-border);padding:12px 0 10px;overflow-y:auto;}
+  .sidebar-logo{display:flex;align-items:center;gap:10px;padding:4px 16px 14px;}
+  .sidebar-mark{width:26px;height:26px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:50%;box-shadow:0 0 14px rgba(136,120,255,0.3),0 0 40px rgba(200,160,240,0.1);}
+  .sidebar-mark svg{display:block;}
+  .sidebar-logo-text{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;background:var(--gradient-accent);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:0.04em;}
+  .sidebar-logo-sub{font-size:8px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;}
+  .nav-section{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);padding:12px 16px 6px;}
+  .nav-item{display:flex;align-items:center;gap:9px;padding:8px 16px;cursor:pointer;color:var(--text-secondary);transition:all 0.15s;position:relative;font-size:12.5px;}
+  .nav-item:hover{background:rgba(136,120,255,0.06);}
+  .nav-item .nav-icon{opacity:0.5;transition:opacity 0.15s;}
+  .nav-item:hover .nav-icon{opacity:0.75;}
+  .nav-item.active{background:linear-gradient(90deg,rgba(136,120,255,0.12),rgba(136,120,255,0.03));color:var(--text-primary);}
+  .nav-item.active .nav-icon{opacity:0.9;}
+  .nav-item.active::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:0 2px 2px 0;background:#8878ff;box-shadow:0 0 8px rgba(136,120,255,0.6),0 0 16px rgba(136,120,255,0.3);}
+  .nav-icon{width:16px;height:14px;flex-shrink:0;}
+  .sidebar-div{height:1px;background:var(--border);margin:8px 16px;}
+  .cmd-section{padding:2px 8px;}
+  .cmd-btn{display:flex;align-items:center;gap:6px;padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);cursor:pointer;border-radius:4px;transition:background 0.15s;}
+  .cmd-btn:hover{background:rgba(136,120,255,0.06);}
+  .cmd-dot{width:5px;height:5px;border-radius:50%;}
+  .sidebar-bottom{margin-top:auto;padding:12px 16px 0;}
+  .sidebar-status{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);padding:8px 0;}
+
+  /* ═══ MAIN ═══ */
+  .main-content{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
+  .view{display:none;flex-direction:column;flex:1;overflow:hidden;}.view.active{display:flex;}
+  .view-header{height:42px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 22px;border-bottom:1px solid var(--border);background:rgba(10,12,22,0.5);backdrop-filter:blur(8px);}
+  .view-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:var(--text-primary);letter-spacing:0.02em;}
+  .view-actions{display:flex;align-items:center;gap:12px;}
+
+  /* ═══ INSIGHT LAYOUT: coaching (2/3) + patterns (1/3) ═══ */
+  .vbody{flex:1;display:flex;overflow:hidden;}
+  .coaching{flex:2;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+  .pat-panel{flex:1;max-width:240px;min-width:180px;border-left:1px solid var(--border);display:flex;flex-direction:column;padding:20px 16px;overflow:hidden;background:rgba(8,10,18,0.4);}
+
+  /* ─ Coaching area ─ */
+  #orb-area{height:100px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 70%,rgba(136,120,255,0.05) 0%,transparent 55%);}
+  #ins-mark{width:60px;height:60px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 0 12px rgba(136,120,255,0.3)) drop-shadow(0 0 30px rgba(200,160,240,0.1));position:relative;transition:filter 0.6s;}
+  #ins-mark.active{filter:drop-shadow(0 0 18px rgba(136,120,255,0.5)) drop-shadow(0 0 50px rgba(200,160,240,0.2));}
+  #ins-mark svg{display:block;width:60px;height:60px;}
+  #ins-ring{position:absolute;inset:-5px;border-radius:50%;background:conic-gradient(from 0deg,rgba(136,120,255,0.9),rgba(200,160,240,0.65) 30deg,rgba(96,216,168,0.45) 90deg,rgba(136,120,255,0.10) 180deg,rgba(96,216,168,0.06) 270deg,rgba(136,120,255,0.9));-webkit-mask:radial-gradient(circle,transparent 70%,black 74%,black 88%,transparent 92%);mask:radial-gradient(circle,transparent 70%,black 74%,black 88%,transparent 92%);opacity:0.25;animation:spin 8s linear infinite;transition:opacity 0.5s;}
+  #ins-ring.active{opacity:0.9;animation-duration:2.5s;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  #waveform{height:36px;flex-shrink:0;border-bottom:1px solid var(--border);}
+  #wave{display:block;width:100%;height:100%;}
+
+  #chat{flex:1;overflow-y:auto;padding:12px 20px;display:flex;flex-direction:column;gap:14px;}
+  #chat::-webkit-scrollbar{width:3px;}#chat::-webkit-scrollbar-thumb{background:rgba(140,120,255,0.10);border-radius:2px;}
+
+  .msg{display:flex;flex-direction:column;animation:msgIn 0.25s ease;}
+  @keyframes msgIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .msg-user{align-items:flex-end;}.msg-ace{align-items:flex-start;}
+  .msg-label{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;}
+  .msg-user .msg-body{background:linear-gradient(135deg,rgba(136,120,255,0.10),rgba(200,160,240,0.06));border:1px solid rgba(136,120,255,0.15);border-radius:14px 14px 4px 14px;padding:9px 14px;max-width:75%;font-size:12.5px;line-height:1.6;box-shadow:0 2px 8px rgba(136,120,255,0.06);}
+  .msg-ace .msg-body{font-size:12.5px;line-height:1.7;max-width:90%;}
+  .typing{display:inline-flex;gap:3px;padding:6px 0;}.typing span{width:4px;height:4px;border-radius:50%;background:#8878ff;animation:bounce 1.2s ease-in-out infinite;}.typing span:nth-child(2){animation-delay:0.15s;}.typing span:nth-child(3){animation-delay:0.3s;}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:0.3;}30%{transform:translateY(-4px);opacity:1;}}
+
+  /* Chips */
+  .chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 5px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:500;vertical-align:baseline;transition:filter 0.15s;}
+  .chip:hover{filter:brightness(1.2);}
+  .chip-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+  .chip-trend{font-size:9px;opacity:0.5;margin-left:1px;}
+  .chip[data-triad="authority"]{background:rgba(200,160,240,0.10);border:1px solid rgba(200,160,240,0.18);color:var(--authority);}.chip[data-triad="authority"] .chip-dot{background:var(--authority);}
+  .chip[data-triad="capacity"]{background:rgba(96,216,168,0.08);border:1px solid rgba(96,216,168,0.15);color:var(--capacity);}.chip[data-triad="capacity"] .chip-dot{background:var(--capacity);}
+  .chip[data-triad="expansion"]{background:rgba(224,128,160,0.08);border:1px solid rgba(224,128,160,0.15);color:var(--expansion);}.chip[data-triad="expansion"] .chip-dot{background:var(--expansion);}
+
+  #chip-pop{position:fixed;z-index:200;background:rgba(16,20,36,0.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(140,120,255,0.10);border-radius:10px;padding:10px 14px;min-width:170px;box-shadow:0 6px 24px rgba(0,0,0,0.5);opacity:0;pointer-events:none;transform:translateY(3px);transition:opacity 0.15s,transform 0.15s;}
+  #chip-pop.show{opacity:1;pointer-events:auto;transform:translateY(0);}
+  .cp-name{font-size:12px;font-weight:600;margin-bottom:3px;}.cp-meta{font-size:9px;color:var(--text-dim);margin-bottom:7px;}.cp-bar{height:2px;background:rgba(255,255,255,0.05);border-radius:1px;margin-bottom:5px;overflow:hidden;}.cp-fill{height:100%;border-radius:1px;}.cp-pair{font-size:9px;color:var(--text-dim);font-style:italic;}
+
+  /* Input */
+  #input-bar{flex-shrink:0;display:flex;align-items:center;gap:9px;padding:10px 20px 12px;border-top:1px solid var(--border);}
+  #mic{width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(140,120,255,0.12);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;color:var(--text-dim);flex-shrink:0;}
+  #mic:hover{border-color:rgba(140,120,255,0.25);color:var(--text-secondary);}
+  #mic.on{border-color:rgba(136,120,255,0.45);background:rgba(136,120,255,0.06);color:var(--gold);box-shadow:0 0 12px rgba(136,120,255,0.1);}
+  #mic svg{width:14px;height:14px;fill:currentColor;}
+  #text-in{flex:1;height:34px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;padding:0 12px;color:var(--text-primary);font-family:inherit;font-size:12.5px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+  #text-in::placeholder{color:var(--text-dim);}
+  #text-in:focus{border-color:rgba(140,120,255,0.25);box-shadow:0 0 0 2px rgba(140,120,255,0.05);}
+  #mode-tag{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);transition:color 0.4s;}
+  #mode-tag.listening{color:var(--text-secondary);}#mode-tag.responding{color:var(--gold);}
+
+  /* ─ Pattern panel ─ */
+  .pp-label{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:16px;}
+  .pp-balance{display:flex;flex-direction:column;gap:8px;margin-bottom:24px;}
+  .pp-bal-row{display:flex;align-items:center;gap:8px;}
+  .pp-bal-letter{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;width:10px;text-align:right;}
+  .pp-bal-track{flex:1;height:3px;background:rgba(255,255,255,0.03);border-radius:2px;overflow:hidden;}
+  .pp-bal-fill{height:100%;border-radius:2px;transition:width 0.8s cubic-bezier(0.4,0,0.2,1);}
+  .pp-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;}
+  .pp-list::-webkit-scrollbar{width:2px;}.pp-list::-webkit-scrollbar-thumb{background:rgba(140,120,255,0.08);border-radius:1px;}
+  .pp-group{margin-bottom:14px;}
+  .pp-group-label{font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+  .pp-item{display:flex;flex-direction:column;gap:4px;padding:6px 4px;cursor:pointer;transition:all 0.15s;border-radius:6px;}
+  .pp-item:hover{background:rgba(136,120,255,0.06);}
+  .pp-item:hover .pp-name{color:var(--text-primary);}
+  .pp-item:hover .pp-dot{transform:scale(1.3);}
+  .pp-item:hover .pp-ask{opacity:1;}
+  .pp-row{display:flex;align-items:center;gap:7px;}
+  .pp-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;transition:transform 0.15s;}
+  .pp-name{font-size:11px;color:var(--text-secondary);flex:1;transition:color 0.15s;}
+  .pp-trend{font-size:9px;color:var(--text-dim);}
+  .pp-str{height:2px;background:rgba(255,255,255,0.03);border-radius:1px;margin-left:13px;overflow:hidden;}
+  .pp-str-fill{height:100%;border-radius:1px;}
+  .pp-ask{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text-dim);margin-left:13px;margin-top:2px;opacity:0;transition:opacity 0.15s;}
+  .pp-ask span{color:rgba(136,120,255,0.6);}
+
+  #keys{position:fixed;bottom:4px;right:10px;font-size:8px;color:rgba(255,255,255,0.06);}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="titlebar">
+    <div class="traffic-lights"><div class="tl tl-r"></div><div class="tl tl-y"></div><div class="tl tl-g"></div></div>
+    <div class="titlebar-center"><div class="intensity-bar"><div class="intensity-fill"></div></div></div>
+    <div class="titlebar-right"><div class="mode-chip">execute</div><div class="coherence-chip"><span class="pulse-dot"></span>Active</div></div>
+  </div>
+  <div class="app-body">
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-mark"><svg width="26" height="26" viewBox="0 0 100 100"><defs><radialGradient id="sg-orb" cx="38%" cy="38%" r="60%"><stop offset="0%" stop-color="#8878ff"/><stop offset="50%" stop-color="#c8a0f0"/><stop offset="100%" stop-color="#60d8a8"/></radialGradient></defs><circle cx="50" cy="50" r="38" fill="url(#sg-orb)" opacity="0.08"/><circle cx="50" cy="50" r="28" fill="url(#sg-orb)" opacity="0.85"/></svg></div>
+        <div><div class="sidebar-logo-text">ACE</div><div class="sidebar-logo-sub">Coherence Engine</div></div>
+      </div>
+      <div class="nav-section">Views</div>
+      <div class="nav-item" data-view="home"><svg class="nav-icon" viewBox="0 0 16 14" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="5.5" height="5.5" rx="1"/><rect x="9.5" y="1" width="5.5" height="5.5" rx="1"/><rect x="1" y="8.5" width="5.5" height="5.5" rx="1"/><rect x="9.5" y="8.5" width="5.5" height="5.5" rx="1"/></svg>Home</div>
+      <div class="nav-item" data-view="terminal"><svg class="nav-icon" viewBox="0 0 16 14" fill="none" stroke="currentColor" stroke-width="1.4"><polyline points="2,3 6,7 2,11"/><line x1="8" y1="11" x2="14" y2="11"/></svg>Terminal</div>
+      <div class="nav-item active" data-view="insight"><svg class="nav-icon" viewBox="0 0 16 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="7" r="5"/><circle cx="8" cy="7" r="2"/><line x1="8" y1="0" x2="8" y2="2"/><line x1="8" y1="12" x2="8" y2="14"/></svg>Insight</div>
+      <div class="nav-item" data-view="vault"><svg class="nav-icon" viewBox="0 0 16 14" fill="none" stroke="currentColor" stroke-width="1.4"><line x1="2" y1="2" x2="14" y2="2"/><line x1="2" y1="5.5" x2="12" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="2" y1="12.5" x2="10" y2="12.5"/></svg>Vault</div>
+      <div class="nav-item" data-view="people"><svg class="nav-icon" viewBox="0 0 16 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="6" cy="4" r="2.5"/><path d="M1,13 C1,9.5 3,8 6,8 C9,8 11,9.5 11,13"/><circle cx="12" cy="5" r="1.8"/></svg>People</div>
+      <div class="nav-item" data-view="breath"><svg class="nav-icon" viewBox="0 0 16 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="7" r="3"/><circle cx="8" cy="7" r="5.5"/></svg>Breath</div>
+      <div class="sidebar-div"></div>
+      <div class="nav-section">Commands</div>
+      <div class="cmd-section">
+        <div class="cmd-btn"><span class="cmd-dot" style="background:var(--gold)"></span>/start</div>
+        <div class="cmd-btn"><span class="cmd-dot" style="background:var(--gold)"></span>/brief</div>
+        <div class="cmd-btn"><span class="cmd-dot" style="background:var(--green)"></span>/pulse</div>
+        <div class="cmd-btn"><span class="cmd-dot" style="background:var(--ark)"></span>/coach</div>
+      </div>
+      <div class="sidebar-bottom"><div class="sidebar-status"><span class="pulse-dot"></span>ACE Online</div></div>
+    </div>
+
+    <div class="main-content">
+      <div class="view active" id="view-insight">
+        <div class="view-header">
+          <div class="view-title">Insight</div>
+          <div class="view-actions"><span id="mode-tag">ambient</span></div>
+        </div>
+        <div class="vbody">
+          <!-- Coaching 2/3 -->
+          <div class="coaching">
+            <div id="orb-area">
+              <div id="ins-mark">
+                <div id="ins-ring"></div>
+                <svg width="60" height="60" viewBox="0 0 100 100"><defs><radialGradient id="g-orb" cx="38%" cy="38%" r="60%"><stop offset="0%" stop-color="#8878ff"/><stop offset="50%" stop-color="#c8a0f0"/><stop offset="100%" stop-color="#60d8a8"/></radialGradient><radialGradient id="g-ctr" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="rgba(220,200,255,0.85)"/><stop offset="30%" stop-color="rgba(180,160,240,0.35)"/><stop offset="100%" stop-color="rgba(160,140,240,0)"/></radialGradient></defs><circle cx="50" cy="50" r="38" fill="url(#g-orb)" opacity="0.05"/><circle id="svgOrb" cx="50" cy="50" r="34" fill="url(#g-orb)" opacity="0.9"/><circle id="svgGlow" cx="50" cy="50" r="14" fill="url(#g-ctr)" opacity="0.8"/></svg>
+              </div>
+            </div>
+            <div id="waveform"><canvas id="wave"></canvas></div>
+            <div id="chat"></div>
+            <div id="input-bar">
+              <button id="mic" aria-label="Mic"><svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg></button>
+              <input id="text-in" type="text" placeholder="Type or speak..." autocomplete="off">
+            </div>
+          </div>
+          <!-- Pattern panel 1/3 -->
+          <div class="pat-panel">
+            <div class="pp-label">Patterns</div>
+            <div class="pp-balance" id="pp-bal"></div>
+            <div class="pp-list" id="pp-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="chip-pop"></div>
+<div id="keys">space: mic &middot; r: respond &middot; enter: send</div>
+
+<script>
+// ─── Data ────────────────────────────────────────────────
+const TC={authority:'#c8a0f0',capacity:'#60d8a8',expansion:'#e080a0'};
+const TR={rising:'\u2191',stable:'\u2192',fading:'\u2193'};
+const PAT=[
+  {n:'sovereignty',   t:'authority',s:0.80,tr:'stable', lc:'established',co:'authorship'},
+  {n:'aliveness',     t:'authority',s:0.75,tr:'rising', lc:'active',     co:'creative-spark'},
+  {n:'creative-spark',t:'authority',s:0.50,tr:'rising', lc:'emerging',   co:'aliveness'},
+  {n:'co-regulation', t:'capacity', s:0.58,tr:'rising', lc:'active',     co:'deep-rest'},
+  {n:'momentum',      t:'expansion',s:0.92,tr:'rising', lc:'established',co:'leverage'},
+  {n:'leverage',      t:'expansion',s:0.72,tr:'rising', lc:'active',     co:'momentum'},
+  {n:'flow',          t:'expansion',s:0.65,tr:'stable', lc:'active',     co:'momentum'},
+];
+const PATMAP={};PAT.forEach(p=>PATMAP[p.n]=p);
+
+// ─── State ───────────────────────────────────────────────
+const C={barCount:48,barW:2.5,barGap:2,barMaxH:12,barIdleH:1,barSmooth:0.12,breathHz:0.0003,breathAmp:0.03};
+const S={mode:'ambient',audioCtx:null,analyser:null,stream:null,freq:null,bars:new Float32Array(C.barCount),amp:0,sAmp:0,t0:performance.now(),respT:0,orbEls:[]};
+for(let i=0;i<C.barCount;i++)S.bars[i]=0.05+Math.sin(i*0.5)*0.02;
+
+// ─── DOM ─────────────────────────────────────────────────
+const waveBox=document.getElementById('waveform'),cv=document.getElementById('wave'),ctx=cv.getContext('2d');
+const markEl=document.getElementById('ins-mark'),ringEl=document.getElementById('ins-ring');
+const svgOrb=document.getElementById('svgOrb'),svgGlow=document.getElementById('svgGlow');
+const modeTag=document.getElementById('mode-tag'),micEl=document.getElementById('mic');
+const textIn=document.getElementById('text-in'),chatEl=document.getElementById('chat');
+const chipPop=document.getElementById('chip-pop');
+
+function resize(){const r=waveBox.getBoundingClientRect(),d=devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;ctx.setTransform(d,0,0,d,0,0);}
+addEventListener('resize',resize);resize();
+
+// ─── Audio ───────────────────────────────────────────────
+async function micOn(){try{S.audioCtx=new(AudioContext||webkitAudioContext)();S.stream=await navigator.mediaDevices.getUserMedia({audio:true});const src=S.audioCtx.createMediaStreamSource(S.stream);S.analyser=S.audioCtx.createAnalyser();S.analyser.fftSize=256;S.analyser.smoothingTimeConstant=0.7;src.connect(S.analyser);S.freq=new Uint8Array(S.analyser.frequencyBinCount);setMode('listening');}catch(e){}}
+function micOff(){if(S.stream)S.stream.getTracks().forEach(t=>t.stop());if(S.audioCtx)S.audioCtx.close();S.audioCtx=S.analyser=S.stream=S.freq=null;S.amp=0;setMode('ambient');}
+function readAudio(){if(!S.analyser)return;S.analyser.getByteFrequencyData(S.freq);let s=0;for(let i=0;i<S.freq.length;i++){const v=S.freq[i]/255;s+=v*v;}S.amp=Math.sqrt(s/S.freq.length);}
+
+function setMode(m){S.mode=m;modeTag.textContent=m;modeTag.className=m;micEl.classList.toggle('on',m==='listening');markEl.classList.toggle('active',m!=='ambient');ringEl.classList.toggle('active',m!=='ambient');if(m==='responding')S.respT=performance.now();}
+
+// ─── Waveform ────────────────────────────────────────────
+function drawWave(t){const r=waveBox.getBoundingClientRect(),W=r.width,H=r.height,cy=H/2,n=C.barCount;
+  const totalW=n*C.barW+(n-1)*C.barGap,sx=(W-totalW)/2;
+  for(let i=0;i<n;i++){let tgt;
+    if(S.mode==='listening'&&S.freq){tgt=S.freq[Math.floor(i*S.freq.length/n)]/255;}
+    else if(S.mode==='responding'){const rt=(t-(S.respT-S.t0))*0.001;const env=Math.sin(rt*3.2)*0.5+0.5;tgt=Math.max(0,env*0.45+Math.sin(rt*6+i*0.35)*0.25+Math.sin(rt*11+i*0.7)*0.1)*0.65;}
+    else{const st=t*0.0006;tgt=Math.max(0.03,0.04+Math.sin(st*0.5+i*0.3)*0.025+Math.sin(st*0.9+i*0.6)*0.012);}
+    S.bars[i]+=(tgt-S.bars[i])*C.barSmooth;}
+  ctx.clearRect(0,0,W,H);
+  const g=ctx.createLinearGradient(sx,0,sx+totalW,0);
+  if(S.mode==='responding'){g.addColorStop(0,'rgba(200,160,240,0.50)');g.addColorStop(0.5,'rgba(200,160,240,0.60)');g.addColorStop(1,'rgba(200,160,240,0.40)');}
+  else{g.addColorStop(0,'rgba(136,120,255,0.35)');g.addColorStop(0.5,'rgba(200,160,240,0.45)');g.addColorStop(1,'rgba(96,216,168,0.30)');}
+  ctx.strokeStyle=g;ctx.lineWidth=C.barW;ctx.lineCap='round';
+  const mH=S.mode==='ambient'?C.barIdleH:C.barMaxH;
+  for(let i=0;i<n;i++){const x=sx+i*(C.barW+C.barGap)+C.barW/2;const h=Math.max(0.3,S.bars[i]*mH);ctx.beginPath();ctx.moveTo(x,cy-h);ctx.lineTo(x,cy+h);ctx.stroke();}}
+
+function updateOrb(t){S.sAmp+=(S.amp-S.sAmp)*0.08;const b=Math.sin(t*C.breathHz);
+  const gr=14+b*2+S.sAmp*8+(S.mode==='responding'?(Math.sin((t-(S.respT-S.t0))*0.001*3)*0.5+0.5)*3:0);
+  svgGlow.setAttribute('r',gr.toFixed(1));
+  svgOrb.style.opacity=Math.min(1,0.85+b*0.05+S.sAmp*0.1).toFixed(3);
+  const sc=1+b*C.breathAmp+S.sAmp*0.05;markEl.querySelector('svg').style.transform=`scale(${sc.toFixed(4)})`;}
+
+// ─── Pattern panel ───────────────────────────────────────
+function buildPatPanel(){
+  const balEl=document.getElementById('pp-bal');
+  const listEl=document.getElementById('pp-list');
+  const triads=['authority','capacity','expansion'];
+  const labels={authority:'A',capacity:'C',expansion:'E'};
+  const names={authority:'Authority',capacity:'Capacity',expansion:'Expansion'};
+
+  // Balance bars
+  triads.forEach(t=>{
+    const pats=PAT.filter(p=>p.t===t);
+    const avg=pats.reduce((s,p)=>s+p.s,0)/(pats.length||1);
+    const row=document.createElement('div');row.className='pp-bal-row';
+    row.innerHTML=`<span class="pp-bal-letter" style="color:${TC[t]}">${labels[t]}</span><div class="pp-bal-track"><div class="pp-bal-fill" style="width:${avg*100}%;background:${TC[t]}"></div></div>`;
+    balEl.appendChild(row);
+  });
+
+  // Pattern list grouped by triad
+  triads.forEach(t=>{
+    const pats=PAT.filter(p=>p.t===t);
+    if(!pats.length)return;
+    const tc=TC[t];
+    const group=document.createElement('div');group.className='pp-group';
+    group.innerHTML=`<div class="pp-group-label" style="color:${tc}">${names[t]}</div>`;
+    pats.forEach(p=>{
+      const item=document.createElement('div');item.className='pp-item';
+      item.innerHTML=`<div class="pp-row"><div class="pp-dot" style="background:${tc}"></div><span class="pp-name">${p.n}</span><span class="pp-trend">${TR[p.tr]||''}</span></div><div class="pp-str"><div class="pp-str-fill" style="width:${p.s*100}%;background:${tc}"></div></div><div class="pp-ask"><span>\u25B6</span> ask about this</div>`;
+      item.addEventListener('click',()=>askAbout(p));
+      group.appendChild(item);
+    });
+    listEl.appendChild(group);
+  });
+}
+
+// ─── Chat ────────────────────────────────────────────────
+function chip(n){const p=PATMAP[n];if(!p)return`<b>${n}</b>`;return`<span class="chip" data-triad="${p.t}" onclick="showPop(this,'${n}')"><span class="chip-dot"></span>${n}<span class="chip-trend">${TR[p.tr]||''}</span></span>`;}
+function addMsg(r,h){const d=document.createElement('div');d.className=`msg msg-${r}`;d.innerHTML=`<div class="msg-label">${r==='ace'?'ACE':'YOU'}</div><div class="msg-body">${h}</div>`;chatEl.appendChild(d);chatEl.scrollTop=chatEl.scrollHeight;}
+function addTyping(){const d=document.createElement('div');d.className='msg msg-ace';d.id='typing';d.innerHTML=`<div class="msg-label">ACE</div><div class="typing"><span></span><span></span><span></span></div>`;chatEl.appendChild(d);chatEl.scrollTop=chatEl.scrollHeight;}
+function rmTyping(){const e=document.getElementById('typing');if(e)e.remove();}
+
+// Responses: mostly coaching, occasional pattern chips
+const RESP=[
+  `Tell me more about that. Where do you notice it in your body right now?`,
+  `I see ${chip('momentum')} and ${chip('leverage')} both rising \u2014 your engine pair is active. What's the one thread that feels most alive?`,
+  `What would it look like to give that your full attention for the next 90 minutes?`,
+  `${chip('sovereignty')} is holding steady. You're building from a grounded place, not reactive urgency. That matters.`,
+  `What does "done" look like for this session? One clear answer keeps scattered at bay.`,
+  `Something shifted when you said that. Stay with it \u2014 what's underneath?`,
+  `I notice ${chip('aliveness')} and ${chip('creative-spark')} showing up together. That's your expression signal. What wants to be made?`,
+];
+let rI=0;
+function aceRespond(){addTyping();setMode('responding');setTimeout(()=>{rmTyping();addMsg('ace',RESP[rI%RESP.length]);rI++;setMode('ambient');},1000+Math.random()*800);}
+function send(t){if(!t.trim())return;addMsg('user',t);textIn.value='';setTimeout(aceRespond,350);}
+
+const PAT_RESP={
+  'momentum':`${chip('momentum')} has 42 backlinks \u2014 your most referenced pattern. It co-occurs with ${chip('leverage')} 19 times. When one moves, the other follows. That's your signature build rhythm. What kicked this cycle off?`,
+  'leverage':`${chip('leverage')} is rising alongside momentum. You're not just doing \u2014 you're compounding. The question is whether you're leveraging deliberately or just riding the wave. Which is it?`,
+  'sovereignty':`${chip('sovereignty')} has been stable for weeks. That's rare \u2014 most people's authority patterns fluctuate. You're building from a grounded place. What's anchoring that right now?`,
+  'co-regulation':`${chip('co-regulation')} is rising while deep-rest fades. You might be sourcing regulation from connection instead of solitude right now. That works, but notice if it becomes dependency. Who's regulating you?`,
+  'creative-spark':`${chip('creative-spark')} is emerging \u2014 only 2 weeks old as a pattern. It pairs with ${chip('aliveness')}. Something wants to be expressed that hasn't had a container yet. What is it?`,
+  'flow':`${chip('flow')} is stable \u2014 your body knows the rhythm. This pattern usually shows up when sovereignty and momentum are both present. You're in a good window. Don't waste it on busywork.`,
+  'aliveness':`${chip('aliveness')} is active and rising. It co-occurs with creative-spark. This is your expression signal \u2014 the felt sense that something wants to come through. When did you last feel it today?`,
+};
+
+function askAbout(p){
+  addMsg('user',`Tell me about my ${p.n} pattern`);
+  addTyping();setMode('responding');
+  const resp=PAT_RESP[p.n]||`${chip(p.n)} is ${p.tr}. It's ${p.lc} and pairs with ${p.co}. What do you want to know?`;
+  setTimeout(()=>{rmTyping();addMsg('ace',resp);setMode('ambient');},1000+Math.random()*600);
+}
+
+window.showPop=function(el,n){
+  if(event)event.stopPropagation();
+  const p=PATMAP[n];if(!p)return;const tc=TC[p.t];
+  chipPop.innerHTML=`<div class="cp-name" style="color:${tc}">${n} ${TR[p.tr]||''}</div><div class="cp-meta">${p.lc} \u00b7 ${p.t}</div><div class="cp-bar"><div class="cp-fill" style="width:${p.s*100}%;background:${tc}"></div></div><div class="cp-pair">pairs with ${p.co}</div>`;
+  const r=el.getBoundingClientRect();
+  chipPop.style.left=Math.min(Math.max(r.left,8),innerWidth-190)+'px';
+  chipPop.style.top=(r.bottom+5)+'px';
+  chipPop.classList.add('show');
+};
+document.addEventListener('click',e=>{if(!e.target.closest('.chip')&&!e.target.closest('.pp-orb')&&!e.target.closest('#chip-pop'))chipPop.classList.remove('show');});
+
+// ─── Loop ────────────────────────────────────────────────
+function frame(ts){const t=ts-S.t0;if(S.mode==='listening')readAudio();drawWave(t);updateOrb(t);requestAnimationFrame(frame);}
+
+micEl.addEventListener('click',()=>{S.mode==='listening'?micOff():micOn();});
+textIn.addEventListener('keydown',e=>{if(e.key==='Enter'&&textIn.value.trim())send(textIn.value);});
+addEventListener('keydown',e=>{if(e.target===textIn)return;if(e.code==='Space'){e.preventDefault();micEl.click();}if(e.key==='r'||e.key==='R'){S.mode==='responding'?setMode(S.stream?'listening':'ambient'):aceRespond();}});
+
+addMsg('ace',`What's present for you right now?`);
+buildPatPanel();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACE — Coherence Integration (Somatic + Breath)</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ── ACE Design Tokens ── */
+:root {
+  --bg-deep:    #080a12;
+  --bg-surface: #0c0e18;
+  --bg-elevated:#141828;
+  --border:      rgba(140,120,255,0.10);
+  --gold:       #c8a0f0;
+  --gold-dim:   #7a60b0;
+  --green:      #60d8a8;
+  --red:        #e07080;
+  --text-primary:   #e8e4f0;
+  --text-secondary: #9898b8;
+  --text-dim:       #606080;
+  --glow-primary: rgba(140,120,255,0.15);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+/* ── Subtle background atmosphere ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(140,120,255,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse at 30% 70%, rgba(96,216,168,0.02) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* ======================================================
+   LAYER 1: SOMATIC BAR (always visible, bottom)
+   The bar IS your body signal. Full-width waveform.
+   ====================================================== */
+.somatic-bar {
+  position: relative;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  background: rgba(12,14,24,0.95);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+/* Full-width rhythm canvas — the bar becomes the heartbeat */
+#rhythmStrip {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 1.5s ease;
+}
+#rhythmStrip.active { opacity: 1; }
+
+/* HR readout — quiet, left side */
+.somatic-hr {
+  position: absolute;
+  left: 16px;
+  z-index: 3;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+.somatic-hr.visible { opacity: 0.6; }
+.somatic-hr-value {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Coherence glow — rises from center of the wave */
+.somatic-bar-glow {
+  position: absolute;
+  top: -60%;
+  left: 50%;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  transform: translate(-50%, -25%) scale(0);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  transition: background 2s ease, opacity 1.2s ease;
+}
+.somatic-bar-glow.active {
+  transform: translate(-50%, -25%) scale(1);
+  opacity: 1;
+  animation: glowBreathe 8s ease-in-out infinite;
+}
+@keyframes glowBreathe {
+  0%, 100% { transform: translate(-50%, -25%) scale(0.8); opacity: 0.35; }
+  50% { transform: translate(-50%, -25%) scale(1.15); opacity: 0.85; }
+}
+
+/* Bar text (daily quote / nudge) — fades out when sensor active */
+.somatic-bar-text {
+  position: relative;
+  z-index: 2;
+  margin: 0 auto;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  opacity: 0.5;
+  transition: opacity 0.8s ease;
+}
+.somatic-bar-text.hidden { opacity: 0; pointer-events: none; }
+
+/* Clock */
+.somatic-bar .live-time {
+  position: absolute;
+  right: 16px;
+  z-index: 3;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: var(--text-dim);
+  opacity: 0.4;
+}
+
+/* ======================================================
+   LAYER 2: BREATH VIEW (center, conscious practice)
+   ====================================================== */
+.breath-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 50px;
+  width: 100%;
+  position: relative;
+}
+
+/* Connection chip (top center, breath view only) */
+.conn-chip {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: rgba(140,120,255,0.04);
+  border: 1px solid rgba(140,120,255,0.08);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  z-index: 10;
+}
+.conn-chip.visible { opacity: 1; }
+.conn-chip.connected { border-color: rgba(96,216,168,0.12); }
+.conn-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  transition: background 0.6s;
+}
+.conn-chip.scanning .conn-dot {
+  background: var(--gold);
+  animation: scanPulse 1.5s ease-in-out infinite;
+}
+.conn-chip.connected .conn-dot { background: var(--green); }
+@keyframes scanPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+.conn-battery {
+  color: var(--text-dim);
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+.conn-chip.connected .conn-battery { opacity: 1; }
+
+/* Exit */
+.breath-exit {
+  position: absolute; top: 10px; right: 16px;
+  font-size: 18px; cursor: pointer;
+  background: none; border: none;
+  color: var(--text-dim); padding: 4px 8px;
+  border-radius: 6px; transition: all 0.2s;
+  z-index: 10;
+}
+.breath-exit:hover { background: rgba(140,120,255,0.08); color: var(--text-secondary); }
+
+/* HUD overlays */
+.hud {
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  pointer-events: none;
+  z-index: 5;
+}
+.hud.visible { opacity: 0.85; }
+.hud.breath-active { opacity: 0.35; }
+
+.hud-hr {
+  top: 50%;
+  left: 48px;
+  transform: translateY(-50%);
+}
+.hud-coherence {
+  top: 50%;
+  right: 48px;
+  transform: translateY(-50%);
+  text-align: right;
+}
+.hud-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.hud-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 32px;
+  font-weight: 300;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.hud-unit {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-dim);
+  margin-left: 2px;
+}
+.hud-level {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 6px;
+  transition: color 0.8s;
+}
+.hud-level.low { color: var(--red); }
+.hud-level.med { color: var(--green); }
+.hud-level.high { color: #ffd166; }
+
+/* Orb area (two-layer composite) */
+.breath-orb-area {
+  position: relative;
+  width: 280px; height: 280px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+#coherence-field {
+  position: absolute;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+#coherence-field.active { opacity: 1; }
+
+.breath-ring-outer {
+  position: absolute; width: 260px; height: 260px;
+  border-radius: 50%; border: 1px solid rgba(140,120,255,0.04);
+  z-index: 2;
+}
+.breath-ring-inner {
+  position: absolute; width: 180px; height: 180px;
+  border-radius: 50%; border: 1px solid rgba(140,120,255,0.08);
+  z-index: 2;
+}
+.breath-orb {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 38%, rgba(96,216,168,0.7), rgba(96,216,168,0.3) 50%, rgba(96,216,168,0.08) 80%);
+  box-shadow: 0 0 30px rgba(96,216,168,0.1), 0 0 60px rgba(96,216,168,0.03);
+  position: absolute;
+  z-index: 3;
+  transition: width 0.1s, height 0.1s;
+}
+
+/* Phase + Cycles */
+.breath-phase {
+  margin-top: 8px; height: 24px;
+  font-size: 14px; font-weight: 300;
+  letter-spacing: 4px; text-transform: uppercase;
+  color: var(--text-dim);
+}
+.breath-cycles {
+  margin-top: 4px; height: 16px;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  color: var(--text-dim);
+}
+
+/* Controls */
+.breath-controls {
+  margin-top: 28px;
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+}
+.breath-protocols { display: flex; gap: 6px; }
+.breath-proto-btn {
+  padding: 8px 14px;
+  background: rgba(140,120,255,0.04);
+  border: 1px solid rgba(140,120,255,0.1);
+  border-radius: 8px; color: var(--text-dim);
+  font-family: 'Space Grotesk', sans-serif; font-size: 11px;
+  cursor: pointer; transition: all 0.3s; text-align: center;
+}
+.breath-proto-btn:hover { background: rgba(140,120,255,0.08); color: var(--text-secondary); }
+.breath-proto-btn.active { background: rgba(140,120,255,0.1); border-color: rgba(140,120,255,0.25); color: var(--gold); }
+.proto-name { font-weight: 500; margin-bottom: 2px; }
+.proto-detail { font-size: 9px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+
+.breath-duration { display: flex; gap: 4px; }
+.breath-dur-btn {
+  padding: 5px 12px;
+  background: rgba(140,120,255,0.04);
+  border: 1px solid rgba(140,120,255,0.08);
+  border-radius: 5px; color: var(--text-dim);
+  font-family: 'Space Grotesk', sans-serif; font-size: 10px;
+  cursor: pointer; text-transform: uppercase;
+}
+.breath-dur-btn:hover { background: rgba(140,120,255,0.08); }
+.breath-dur-btn.active { background: rgba(140,120,255,0.1); border-color: rgba(140,120,255,0.2); color: var(--gold); }
+
+.breath-start {
+  padding: 10px 36px;
+  background: rgba(96,216,168,0.08);
+  border: 1px solid rgba(96,216,168,0.2);
+  border-radius: 8px; color: var(--green);
+  font-family: 'Space Grotesk', sans-serif; font-size: 12px;
+  letter-spacing: 2px; text-transform: uppercase;
+  cursor: pointer; transition: all 0.3s;
+}
+.breath-start:hover { background: rgba(96,216,168,0.15); }
+.breath-start.running {
+  background: rgba(224,112,128,0.08);
+  border-color: rgba(224,112,128,0.2);
+  color: var(--red);
+}
+
+.breath-cite {
+  position: absolute; bottom: 8px;
+  font-family: 'JetBrains Mono', monospace; font-size: 8px;
+  color: var(--text-dim); opacity: 0.4;
+}
+
+/* ======================================================
+   SIM CONTROLS (prototype only)
+   ====================================================== */
+.sim-controls {
+  position: fixed; top: 12px; right: 12px;
+  display: flex; flex-direction: column; gap: 5px;
+  z-index: 100;
+  background: rgba(20,24,40,0.9);
+  border: 1px solid rgba(140,120,255,0.15);
+  border-radius: 8px;
+  padding: 10px;
+}
+.sim-btn {
+  padding: 5px 10px;
+  background: rgba(200,160,240,0.06);
+  border: 1px solid rgba(200,160,240,0.15);
+  border-radius: 5px;
+  color: var(--gold);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sim-btn:hover { background: rgba(200,160,240,0.12); }
+.sim-btn.active { background: rgba(96,216,168,0.1); border-color: rgba(96,216,168,0.25); color: var(--green); }
+.sim-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 2px;
+}
+</style>
+</head>
+<body>
+
+<!-- ── LAYER 2: BREATH VIEW (conscious practice) ── -->
+<div class="breath-view">
+
+  <div class="conn-chip" id="connChip">
+    <div class="conn-dot" id="connDot"></div>
+    <span id="connLabel">Disconnected</span>
+    <span class="conn-battery" id="connBattery">87%</span>
+  </div>
+
+  <button class="breath-exit">&#x2715;</button>
+
+  <div class="hud hud-hr" id="hudHR">
+    <div class="hud-label">Heart Rate</div>
+    <div class="hud-value"><span id="hrValue">—</span><span class="hud-unit">bpm</span></div>
+  </div>
+
+  <div class="hud hud-coherence" id="hudCoherence">
+    <div class="hud-label">Coherence</div>
+    <div class="hud-level" id="coherenceLevel">—</div>
+  </div>
+
+  <div class="breath-orb-area">
+    <canvas id="coherence-field" width="280" height="280"></canvas>
+    <div class="breath-ring-outer"></div>
+    <div class="breath-ring-inner"></div>
+    <div class="breath-orb" id="breathOrb"></div>
+  </div>
+
+  <div class="breath-phase" id="breathPhase"></div>
+  <div class="breath-cycles" id="breathCycles"></div>
+
+  <div class="breath-controls">
+    <div class="breath-protocols">
+      <button class="breath-proto-btn active" data-proto="resonance">
+        <div class="proto-name">Resonance</div>
+        <div class="proto-detail">5s in · 5s out</div>
+      </button>
+      <button class="breath-proto-btn" data-proto="sighing">
+        <div class="proto-name">Cyclic Sighing</div>
+        <div class="proto-detail">2+1s in · 5.5s out</div>
+      </button>
+      <button class="breath-proto-btn" data-proto="box">
+        <div class="proto-name">Box</div>
+        <div class="proto-detail">4s all phases</div>
+      </button>
+      <button class="breath-proto-btn" data-proto="478">
+        <div class="proto-name">4-7-8</div>
+        <div class="proto-detail">4s · 7s · 8s</div>
+      </button>
+    </div>
+    <div class="breath-duration">
+      <button class="breath-dur-btn" data-dur="3">3 cycles</button>
+      <button class="breath-dur-btn active" data-dur="6">6 cycles</button>
+      <button class="breath-dur-btn" data-dur="12">12 cycles</button>
+      <button class="breath-dur-btn" data-dur="0">&#x221E;</button>
+    </div>
+    <button class="breath-start" id="breathStart">Begin</button>
+  </div>
+
+  <div class="breath-cite" id="breathCite">Lehrer & Gevirtz 2014 — resonance breathing optimizes heart rate variability</div>
+</div>
+
+<!-- ── LAYER 1: SOMATIC BAR (always visible) ── -->
+<div class="somatic-bar" id="somaticBar">
+  <div class="somatic-bar-glow" id="somaticGlow"></div>
+  <canvas id="rhythmStrip"></canvas>
+  <span class="somatic-hr" id="somaticHR"><span class="somatic-hr-value" id="barHR">—</span> bpm</span>
+  <span class="somatic-bar-text" id="somaticText">the body keeps the score</span>
+  <span class="live-time" id="liveTime"></span>
+</div>
+
+<!-- Sim Controls -->
+<div class="sim-controls">
+  <div class="sim-label">Simulate</div>
+  <button class="sim-btn" id="simToggle">Connect Sensor</button>
+  <button class="sim-btn" id="simLow">LOW</button>
+  <button class="sim-btn" id="simMed">MED</button>
+  <button class="sim-btn" id="simHigh">HIGH</button>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const coherenceState = {
+  connected: false,
+  scanning: false,
+  hr: 0,
+  level: 'low',
+  ratio: 0,
+};
+
+const COLORS = {
+  low:  { r: 224, g: 112, b: 128 },
+  med:  { r: 96,  g: 216, b: 168 },
+  high: { r: 255, g: 209, b: 102 },
+};
+
+let currentColor = { ...COLORS.low };
+let targetColor = { ...COLORS.low };
+
+// ============================================================
+// LAYER 1: SOMATIC BAR — Heartbeat Pulse + Coherence Glow
+// ============================================================
+const glowEl = document.getElementById('somaticGlow');
+
+function updateGlow() {
+  const c = currentColor;
+  const intensity = coherenceState.ratio;
+  glowEl.style.background = `radial-gradient(ellipse at center, rgba(${c.r|0},${c.g|0},${c.b|0},${0.06 + intensity * 0.2}) 0%, rgba(${c.r|0},${c.g|0},${c.b|0},0.02) 50%, transparent 75%)`;
+}
+
+// ============================================================
+// RHYTHM STRIP — scrolling R-R interval line on somatic bar
+// ============================================================
+const rsCanvas = document.getElementById('rhythmStrip');
+const rsCtx = rsCanvas.getContext('2d');
+const RS_W = 200, RS_H = 24;
+rsCanvas.width = RS_W * 2;  // retina
+rsCanvas.height = RS_H * 2;
+rsCtx.scale(2, 2);
+
+// Buffer of R-R intervals for the strip (last ~30 values)
+const rrStripBuf = [];
+const RR_STRIP_LEN = 40;
+
+// Simulated R-R data for prototype
+let simRRBase = 830; // ~72bpm
+function pushSimRR() {
+  if (!coherenceState.connected) return;
+  // Vary based on coherence level — high coherence = smooth sine wave pattern
+  const t = Date.now() * 0.001;
+  let variation;
+  if (coherenceState.level === 'high') {
+    // Smooth sinusoidal HRV (coherent pattern)
+    variation = Math.sin(t * 0.628) * 60; // 0.1Hz = coherence frequency
+  } else if (coherenceState.level === 'med') {
+    variation = Math.sin(t * 0.628) * 35 + (Math.random() - 0.5) * 20;
+  } else {
+    // Jagged, irregular (low coherence)
+    variation = (Math.random() - 0.5) * 80 + Math.sin(t * 0.3) * 15;
+  }
+  const rr = simRRBase + variation;
+  rrStripBuf.push(rr);
+  if (rrStripBuf.length > RR_STRIP_LEN) rrStripBuf.shift();
+
+  // Update bar HR from R-R
+  const avgRR = rrStripBuf.slice(-5).reduce((a, b) => a + b, 0) / Math.min(5, rrStripBuf.length);
+  coherenceState.hr = Math.round(60000 / avgRR);
+  document.getElementById('barHR').textContent = coherenceState.hr;
+  document.getElementById('hrValue').textContent = coherenceState.hr;
+}
+
+function drawRhythmStrip() {
+  rsCtx.clearRect(0, 0, RS_W, RS_H);
+  if (!coherenceState.connected || rrStripBuf.length < 2) return;
+
+  const c = currentColor;
+  const min = Math.min(...rrStripBuf);
+  const max = Math.max(...rrStripBuf);
+  const range = Math.max(max - min, 40); // minimum range to avoid flat line
+  const pad = 3;
+
+  rsCtx.beginPath();
+  for (let i = 0; i < rrStripBuf.length; i++) {
+    const x = (i / (RR_STRIP_LEN - 1)) * RS_W;
+    const normalized = (rrStripBuf[i] - min) / range;
+    const y = RS_H - pad - normalized * (RS_H - pad * 2);
+    if (i === 0) rsCtx.moveTo(x, y);
+    else rsCtx.lineTo(x, y);
+  }
+
+  rsCtx.strokeStyle = `rgba(${c.r|0},${c.g|0},${c.b|0},0.5)`;
+  rsCtx.lineWidth = 1.2;
+  rsCtx.lineJoin = 'round';
+  rsCtx.lineCap = 'round';
+  rsCtx.stroke();
+
+  // Subtle fill under the line
+  const lastX = ((rrStripBuf.length - 1) / (RR_STRIP_LEN - 1)) * RS_W;
+  rsCtx.lineTo(lastX, RS_H);
+  rsCtx.lineTo(0, RS_H);
+  rsCtx.closePath();
+  rsCtx.fillStyle = `rgba(${c.r|0},${c.g|0},${c.b|0},0.04)`;
+  rsCtx.fill();
+}
+
+// Push simulated R-R at realistic cadence (~1s)
+setInterval(pushSimRR, 950);
+
+// ============================================================
+// LAYER 2: COHERENCE FIELD — Canvas behind breath orb
+// ============================================================
+const canvas = document.getElementById('coherence-field');
+const ctx = canvas.getContext('2d');
+const W = 280, H = 280;
+canvas.width = W * 2;
+canvas.height = H * 2;
+ctx.scale(2, 2);
+
+function drawCoherenceField(time) {
+  ctx.clearRect(0, 0, W, H);
+  if (!coherenceState.connected) return;
+
+  currentColor.r += (targetColor.r - currentColor.r) * 0.02;
+  currentColor.g += (targetColor.g - currentColor.g) * 0.02;
+  currentColor.b += (targetColor.b - currentColor.b) * 0.02;
+
+  const cx = W / 2, cy = H / 2;
+  const intensity = coherenceState.ratio;
+  const breathPhase = Math.sin(time * 0.001) * 0.5 + 0.5;
+  const baseR = 60 + intensity * 40 + breathPhase * 10;
+
+  // Outer glow
+  const grad1 = ctx.createRadialGradient(cx, cy, baseR * 0.3, cx, cy, baseR * 2);
+  grad1.addColorStop(0, `rgba(${currentColor.r|0},${currentColor.g|0},${currentColor.b|0},${0.08 + intensity * 0.12})`);
+  grad1.addColorStop(0.5, `rgba(${currentColor.r|0},${currentColor.g|0},${currentColor.b|0},${0.03 + intensity * 0.05})`);
+  grad1.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grad1;
+  ctx.fillRect(0, 0, W, H);
+
+  // Inner field
+  const grad2 = ctx.createRadialGradient(cx * 0.92, cy * 0.9, 0, cx, cy, baseR * 1.2);
+  grad2.addColorStop(0, `rgba(${Math.min(255,currentColor.r+40)|0},${Math.min(255,currentColor.g+40)|0},${Math.min(255,currentColor.b+40)|0},${0.1 + intensity * 0.15})`);
+  grad2.addColorStop(0.6, `rgba(${currentColor.r|0},${currentColor.g|0},${currentColor.b|0},${0.04 + intensity * 0.06})`);
+  grad2.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grad2;
+  ctx.fillRect(0, 0, W, H);
+
+  // Ring pulse at high coherence
+  if (intensity > 0.6) {
+    const ringPhase = (Math.sin(time * 0.002) * 0.5 + 0.5) * (intensity - 0.6) / 0.4;
+    const ringR = baseR * 1.4 + ringPhase * 20;
+    ctx.beginPath();
+    ctx.arc(cx, cy, ringR, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(${currentColor.r|0},${currentColor.g|0},${currentColor.b|0},${ringPhase * 0.08})`;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  // Also update somatic bar glow
+  updateGlow();
+}
+
+// ============================================================
+// BREATH ANIMATION
+// ============================================================
+const PROTOCOLS = {
+  resonance: {
+    phases: [
+      { name: 'inhale', duration: 5, scale: 1.0 },
+      { name: 'exhale', duration: 5, scale: 0.4 },
+    ],
+    cite: 'Lehrer & Gevirtz 2014 — resonance breathing optimizes heart rate variability',
+  },
+  sighing: {
+    phases: [
+      { name: 'inhale', duration: 2, scale: 0.7 },
+      { name: 'inhale', duration: 1, scale: 1.0 },
+      { name: 'exhale', duration: 5.5, scale: 0.45 },
+      { name: 'rest', duration: 1.5, scale: 0.4 },
+    ],
+    cite: 'Balban et al. 2023 — cyclic sighing outperformed meditation for stress reduction',
+  },
+  box: {
+    phases: [
+      { name: 'inhale', duration: 4, scale: 1.0 },
+      { name: 'hold', duration: 4, scale: 1.0 },
+      { name: 'exhale', duration: 4, scale: 0.4 },
+      { name: 'hold', duration: 4, scale: 0.4 },
+    ],
+    cite: 'Box breathing — used in military and tactical stress management',
+  },
+  '478': {
+    phases: [
+      { name: 'inhale', duration: 4, scale: 1.0 },
+      { name: 'hold', duration: 7, scale: 1.0 },
+      { name: 'exhale', duration: 8, scale: 0.35 },
+    ],
+    cite: 'Weil 4-7-8 technique — clinical use for sleep and deep relaxation',
+  },
+};
+
+let breathState = {
+  running: false,
+  protocol: 'resonance',
+  startTime: 0,
+  cycleCount: 0,
+  targetCycles: 6,
+};
+
+function easeInOut(t) {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+function animateBreath(time) {
+  if (!breathState.running) return;
+
+  const proto = PROTOCOLS[breathState.protocol];
+  const cycleMs = proto.phases.reduce((a, p) => a + p.duration, 0) * 1000;
+  const elapsed = Date.now() - breathState.startTime;
+  const cycleElapsed = elapsed % cycleMs;
+  const currentCycle = Math.floor(elapsed / cycleMs);
+
+  if (currentCycle !== breathState.cycleCount) {
+    breathState.cycleCount = currentCycle;
+    if (breathState.targetCycles > 0 && currentCycle >= breathState.targetCycles) {
+      stopBreath();
+      return;
+    }
+  }
+
+  let phaseStart = 0;
+  let currentPhase = proto.phases[0];
+  let phaseProgress = 0;
+  for (const phase of proto.phases) {
+    const phaseEnd = phaseStart + phase.duration * 1000;
+    if (cycleElapsed < phaseEnd) {
+      currentPhase = phase;
+      phaseProgress = (cycleElapsed - phaseStart) / (phase.duration * 1000);
+      break;
+    }
+    phaseStart = phaseEnd;
+  }
+
+  const pi = proto.phases.indexOf(currentPhase);
+  const prev = proto.phases[(pi - 1 + proto.phases.length) % proto.phases.length];
+  const fromScale = (pi === 0 && currentCycle === 0 && elapsed < cycleMs) ? 0.4 : prev.scale;
+  const ease = currentPhase.name === 'hold' ? 1 : easeInOut(phaseProgress);
+  const scale = fromScale + (currentPhase.scale - fromScale) * ease;
+
+  const orb = document.getElementById('breathOrb');
+  const size = 60 + scale * 100;
+  orb.style.width = size + 'px';
+  orb.style.height = size + 'px';
+
+  let orbR = 96, orbG = 216, orbB = 168;
+  if (coherenceState.connected) {
+    const blend = 0.3;
+    orbR = orbR + (currentColor.r - orbR) * blend;
+    orbG = orbG + (currentColor.g - orbG) * blend;
+    orbB = orbB + (currentColor.b - orbB) * blend;
+  }
+
+  let op, gw;
+  if (currentPhase.name === 'inhale') { op = 0.5 + ease * 0.4; gw = 20 + ease * 30; }
+  else if (currentPhase.name === 'exhale') { op = 0.9 - ease * 0.4; gw = 50 - ease * 30; }
+  else if (currentPhase.name === 'hold') { op = currentPhase.scale > 0.7 ? 0.85 : 0.5; gw = currentPhase.scale > 0.7 ? 40 : 20; }
+  else { op = 0.45; gw = 15; }
+
+  orb.style.background = `radial-gradient(circle at 40% 38%, rgba(${orbR|0},${orbG|0},${orbB|0},${op}), rgba(${orbR|0},${orbG|0},${orbB|0},${op*0.4}) 50%, rgba(${orbR|0},${orbG|0},${orbB|0},${op*0.1}) 80%, transparent)`;
+  orb.style.boxShadow = `0 0 ${gw}px rgba(${orbR|0},${orbG|0},${orbB|0},${op*0.2}), 0 0 ${gw*2}px rgba(${orbR|0},${orbG|0},${orbB|0},${op*0.06})`;
+
+  document.getElementById('breathPhase').textContent = currentPhase.name;
+  const cyclesEl = document.getElementById('breathCycles');
+  cyclesEl.textContent = breathState.targetCycles > 0
+    ? `${currentCycle + 1} / ${breathState.targetCycles}`
+    : `cycle ${currentCycle + 1}`;
+
+  document.getElementById('hudHR').classList.toggle('breath-active', true);
+  document.getElementById('hudCoherence').classList.toggle('breath-active', true);
+}
+
+function startBreath() {
+  breathState.running = true;
+  breathState.startTime = Date.now();
+  breathState.cycleCount = 0;
+  document.getElementById('breathStart').textContent = 'Stop';
+  document.getElementById('breathStart').classList.add('running');
+}
+
+function stopBreath() {
+  breathState.running = false;
+  document.getElementById('breathStart').textContent = 'Begin';
+  document.getElementById('breathStart').classList.remove('running');
+  const orb = document.getElementById('breathOrb');
+  orb.style.width = '80px'; orb.style.height = '80px';
+  orb.style.background = ''; orb.style.boxShadow = '';
+  document.getElementById('breathPhase').textContent = '';
+  document.getElementById('breathCycles').textContent = '';
+  document.getElementById('hudHR').classList.remove('breath-active');
+  document.getElementById('hudCoherence').classList.remove('breath-active');
+}
+
+// ============================================================
+// MAIN LOOP
+// ============================================================
+function mainLoop(time) {
+  drawCoherenceField(time);
+  drawRhythmStrip();
+  animateBreath(time);
+  requestAnimationFrame(mainLoop);
+}
+requestAnimationFrame(mainLoop);
+
+// Clock
+setInterval(() => {
+  const now = new Date();
+  document.getElementById('liveTime').textContent =
+    now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+}, 1000);
+
+// HR is now driven by the rhythm strip R-R simulation
+
+// ============================================================
+// CONNECTION + COHERENCE STATE MANAGEMENT
+// ============================================================
+function setConnectionState(s) {
+  const chip = document.getElementById('connChip');
+  const label = document.getElementById('connLabel');
+  const field = document.getElementById('coherence-field');
+  const hudHR = document.getElementById('hudHR');
+  const hudCoh = document.getElementById('hudCoherence');
+  const glow = document.getElementById('somaticGlow');
+  const bio = document.getElementById('somaticBio');
+  const barText = document.getElementById('somaticText');
+
+  chip.classList.remove('scanning', 'connected');
+
+  if (s === 'disconnected') {
+    coherenceState.connected = false;
+    coherenceState.scanning = false;
+    chip.classList.remove('visible');
+    field.classList.remove('active');
+    hudHR.classList.remove('visible');
+    hudCoh.classList.remove('visible');
+    glow.classList.remove('active');
+    bio.classList.remove('visible');
+    barText.classList.remove('hidden');
+    deactivateEmber();
+    document.getElementById('hrValue').textContent = '—';
+    document.getElementById('coherenceLevel').textContent = '—';
+    document.getElementById('barHR').textContent = '—';
+    rrStripBuf.length = 0;
+  } else if (s === 'scanning') {
+    coherenceState.connected = false;
+    coherenceState.scanning = true;
+    chip.classList.add('visible', 'scanning');
+    label.textContent = 'Scanning...';
+    field.classList.remove('active');
+    hudHR.classList.remove('visible');
+    hudCoh.classList.remove('visible');
+    glow.classList.remove('active');
+    bio.classList.remove('visible');
+    barText.classList.remove('hidden');
+    deactivateEmber();
+  } else if (s === 'connected') {
+    coherenceState.connected = true;
+    coherenceState.scanning = false;
+    chip.classList.add('visible', 'connected');
+    label.textContent = 'Inner Balance';
+    field.classList.add('active');
+    hudHR.classList.add('visible');
+    hudCoh.classList.add('visible');
+    glow.classList.add('active');
+    bio.classList.add('visible');
+    barText.classList.add('hidden');
+    activateEmber();
+  }
+}
+
+function setCoherenceLevel(level) {
+  coherenceState.level = level;
+  targetColor = { ...COLORS[level] };
+  const el = document.getElementById('coherenceLevel');
+  if (level === 'low') {
+    coherenceState.ratio = 0.2;
+    el.textContent = 'LOW'; el.className = 'hud-level low';
+  } else if (level === 'med') {
+    coherenceState.ratio = 0.6;
+    el.textContent = 'MED'; el.className = 'hud-level med';
+  } else if (level === 'high') {
+    coherenceState.ratio = 0.95;
+    el.textContent = 'HIGH'; el.className = 'hud-level high';
+  }
+}
+
+// ============================================================
+// UI WIRING
+// ============================================================
+document.getElementById('breathStart').addEventListener('click', () => {
+  if (breathState.running) stopBreath(); else startBreath();
+});
+
+document.querySelectorAll('.breath-proto-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    breathState.protocol = btn.dataset.proto;
+    document.querySelectorAll('.breath-proto-btn').forEach(b => b.classList.toggle('active', b === btn));
+    document.getElementById('breathCite').textContent = PROTOCOLS[btn.dataset.proto].cite;
+    if (breathState.running) { stopBreath(); startBreath(); }
+  });
+});
+
+document.querySelectorAll('.breath-dur-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    breathState.targetCycles = parseInt(btn.dataset.dur);
+    document.querySelectorAll('.breath-dur-btn').forEach(b => b.classList.toggle('active', b === btn));
+  });
+});
+
+// ============================================================
+// SIM CONTROLS
+// ============================================================
+let simConnected = false;
+document.getElementById('simToggle').addEventListener('click', () => {
+  if (!simConnected) {
+    setConnectionState('scanning');
+    document.getElementById('simToggle').textContent = 'Scanning...';
+    setTimeout(() => {
+      setConnectionState('connected');
+      setCoherenceLevel('low');
+      document.getElementById('simToggle').textContent = 'Disconnect';
+      document.getElementById('simToggle').classList.add('active');
+      simConnected = true;
+    }, 2000);
+  } else {
+    setConnectionState('disconnected');
+    document.getElementById('simToggle').textContent = 'Connect Sensor';
+    document.getElementById('simToggle').classList.remove('active');
+    simConnected = false;
+  }
+});
+
+document.getElementById('simLow').addEventListener('click', () => setCoherenceLevel('low'));
+document.getElementById('simMed').addEventListener('click', () => setCoherenceLevel('med'));
+document.getElementById('simHigh').addEventListener('click', () => setCoherenceLevel('high'));
+
+// ============================================================
+// LIVE MODE — connect to real bridge if running
+// ============================================================
+let ws = null;
+function connectBridge() {
+  try {
+    ws = new WebSocket('ws://localhost:8765');
+    ws.onmessage = (e) => {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'status') {
+        if (msg.connected) {
+          setConnectionState('connected');
+          setCoherenceLevel('low');
+          document.getElementById('connBattery').textContent = msg.battery + '%';
+          document.getElementById('simToggle').textContent = 'LIVE';
+          document.getElementById('simToggle').classList.add('active');
+          simConnected = true;
+        } else {
+          setConnectionState('scanning');
+        }
+      } else if (msg.type === 'hr') {
+        coherenceState.hr = msg.hr;
+        document.getElementById('hrValue').textContent = msg.hr;
+        document.getElementById('connBattery').textContent = msg.battery + '%';
+        if (msg.rr && msg.rr.length > 0) {
+          // Basic coherence proxy
+          if (!window._rrBuf) window._rrBuf = [];
+          window._rrBuf.push(...msg.rr);
+          if (window._rrBuf.length > 60) window._rrBuf = window._rrBuf.slice(-60);
+          if (window._rrBuf.length >= 10) {
+            let sumSq = 0;
+            for (let i = 1; i < window._rrBuf.length; i++) {
+              const diff = window._rrBuf[i] - window._rrBuf[i-1];
+              sumSq += diff * diff;
+            }
+            const rmssd = Math.sqrt(sumSq / (window._rrBuf.length - 1));
+            if (rmssd > 60) setCoherenceLevel('high');
+            else if (rmssd > 35) setCoherenceLevel('med');
+            else setCoherenceLevel('low');
+          }
+        }
+      }
+    };
+    ws.onclose = () => setTimeout(connectBridge, 5000);
+    ws.onerror = () => ws.close();
+  } catch (e) { /* silent */ }
+}
+connectBridge();
+</script>
+</body>
+</html>

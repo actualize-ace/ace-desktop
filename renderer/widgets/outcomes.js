@@ -19,10 +19,11 @@ export default {
       <div class="section-label">Outcomes</div>
       <div class="outcomes-grid">${data.outcomes.map(o => {
         const statusColor = { 'ON TRACK':'green','AT RISK':'gold','BLOCKED':'red','COMPLETE':'green','IN PROGRESS':'blue-grey' }[o.status] || 'dim'
-        const daysColor   = o.daysToGate == null ? 'dim' : o.daysToGate < 0 ? 'red' : o.daysToGate <= 7 ? 'gold' : 'blue-grey'
-        const daysLabel   = o.daysToGate == null ? '' : o.daysToGate < 0 ? `${Math.abs(o.daysToGate)}d overdue` : o.daysToGate === 0 ? 'today' : `${o.daysToGate}d`
+        const isClosed    = o.status === 'COMPLETE' || o.status === 'CLOSED'
+        const daysColor   = o.daysToGate == null || isClosed ? 'dim' : o.daysToGate < 0 ? 'red' : o.daysToGate <= 7 ? 'gold' : 'blue-grey'
+        const daysLabel   = o.daysToGate == null ? '' : isClosed ? 'closed' : o.daysToGate < 0 ? `${Math.abs(o.daysToGate)}d overdue` : o.daysToGate === 0 ? 'today' : `${o.daysToGate}d`
         return `
-          <div class="oc-card">
+          <div class="oc-card dash-clickable" data-cmd="Tell me the current status of my outcome: ${escapeHtml(o.title)}">
             <div class="oc-title">${escapeHtml(o.title)}</div>
             <div class="oc-meta">
               ${o.status ? `<span class="oc-badge ${statusColor}">${escapeHtml(o.status)}</span>` : ''}

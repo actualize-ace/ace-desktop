@@ -164,4 +164,19 @@ function renderHealthBanner(health, el) {
   }
 }
 
-export { loadDashboard, getLayout }
+// ─── Clickable dashboard items → terminal ───────────────────────────────────
+function initDashClickables() {
+  const home = document.getElementById('view-home')
+  if (!home || home._dashClickWired) return
+  home._dashClickWired = true
+  home.addEventListener('click', (e) => {
+    const item = e.target.closest('.dash-clickable[data-cmd]')
+    if (!item) return
+    document.querySelector('.nav-item[data-view="terminal"]')?.click()
+    if (window.sendToActive) {
+      setTimeout(() => window.sendToActive(item.dataset.cmd + '\r'), 120)
+    }
+  })
+}
+
+export { loadDashboard, getLayout, initDashClickables }

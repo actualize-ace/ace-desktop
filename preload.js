@@ -102,6 +102,11 @@ contextBridge.exposeInMainWorld('ace', {
     setStatus: (slug, status) => ipcRenderer.invoke(ch.ARTIFACTS_SET_STATUS, slug, status),
   },
 
+  // ─── Astro ─────────────────────────────────────────────────────────────────
+  astro: {
+    getTransits: () => ipcRenderer.invoke(ch.ASTRO_TRANSITS),
+  },
+
   // ─── Insight voice ─────────────────────────────────────────────────────────
   insight: {
     transcribe: (audioBuffer) => ipcRenderer.invoke(ch.INSIGHT_TRANSCRIBE, audioBuffer),

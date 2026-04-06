@@ -1,0 +1,82 @@
+{
+  "planets": {
+    "sun": {
+      "natal": "Sun in Sagittarius in the 8th House — Identity forged through transformation. You don't do surface truth. The archer's fire burns in the house of death and rebirth, meaning your sense of self is constantly refined through deep encounters — with power, intimacy, shared resources, and the taboo. You seek meaning at depth, not breadth.",
+      "triad": "authority",
+      "triad_read": "Core identity authorship. Your Authority comes from having gone through the fire, not from credentials or position."
+    },
+    "moon": {
+      "natal": "Moon in Pisces in the 11th House — Emotional body tuned to the collective frequency. You feel what groups feel before they know it themselves. The 11th house Moon finds emotional home in community, vision, and futures that don't exist yet. Deeply empathic, sometimes to the point of losing your own signal in the noise.",
+      "triad": "capacity",
+      "triad_read": "Nervous system and inner rhythm. Your Capacity depends on distinguishing your own feelings from the collective field you absorb."
+    },
+    "mercury": {
+      "natal": "Mercury in Sagittarius in the 7th House — The philosopher's voice in the house of partnership. You think in big frames and communicate through story, vision, and meaning. In the 7th, your intellect is sharpened through dialogue — you need another mind to think against. Mercury conjunct Saturn gives this precision and weight.",
+      "triad": "authority",
+      "triad_read": "Articulation and mental clarity. Your Authority speaks through structured philosophy — not scattered ideas, but architected truth."
+    },
+    "venus": {
+      "natal": "Venus in Sagittarius in the 8th House — Love as adventure into the unknown. You're drawn to relationships that transform, not comfort. Venus conjunct Uranus adds electric independence — you need freedom within intimacy. In the 8th, beauty and value are found in depth, intensity, and shared vulnerability.",
+      "triad": "capacity",
+      "triad_read": "Venus in the 8th is Capacity — receptivity, depth, the ability to receive and be transformed by what you love."
+    },
+    "mars": {
+      "natal": "Mars in Scorpio in the 6th House — The warrior in its home sign, channeled through daily practice. Mars in Scorpio doesn't do anything halfway — it commits fully or not at all. In the 6th, this intensity becomes a work ethic that borders on obsessive. You build through relentless daily action, not bursts.",
+      "triad": "expansion",
+      "triad_read": "Execution energy and drive. Your Expansion happens through sustained, intense daily effort — the compound effect of showing up at full power."
+    },
+    "jupiter": {
+      "natal": "Jupiter in Aquarius in the 10th House — The great benefic in the house of public role, in the sign of innovation. Your career path expands through unconventional means, technology, and serving the collective. Jupiter here says your biggest growth comes through being publicly visible as a systems thinker and pattern-breaker.",
+      "triad": "expansion",
+      "triad_read": "Growth and opportunity. Your Expansion is through public innovation — building containers that serve the collective and scale beyond the personal."
+    },
+    "saturn": {
+      "natal": "Saturn in Sagittarius in the 7th House — The taskmaster in the house of partnership demands that your closest relationships be built on truth, not convenience. Saturn here delays or tests partnerships until you can show up with integrity. Mercury conjunct Saturn in the 7th: your word is your bond, literally.",
+      "triad": "capacity",
+      "triad_read": "Structure, discipline, limits. Your Capacity is built through commitments you actually keep — especially relational ones."
+    },
+    "uranus": {
+      "natal": "Uranus in Sagittarius in the 8th House — The revolutionary in the house of transformation. You break patterns at the deepest level — not just habits but psychic structures, power dynamics, and inherited ways of being. Venus conjunct Uranus: your relationships and creative expression carry this disruptive charge.",
+      "triad": "expansion",
+      "triad_read": "Disruption and breakthrough. Your Expansion breaks through exactly when you stop trying to do it the 'right' way."
+    },
+    "neptune": {
+      "natal": "Neptune in Capricorn in the 8th House — Vision grounded in structure, operating in the realm of the unseen. Neptune in Capricorn's generation builds spiritual/intuitive capacities into practical, lasting forms. In your 8th house, this manifests as an ability to see the hidden architecture underneath power, money, and transformation.",
+      "triad": "capacity",
+      "triad_read": "Depth, intuition, surrender. Your Capacity accesses something beyond the rational — a knowing that comes from letting go of control."
+    },
+    "pluto": {
+      "natal": "Pluto in Scorpio in the 6th House — Generational power placed in your house of daily work and service. Pluto in its home sign is maximum intensity — and in the 6th, that intensity is channeled into craft, health, and service. Mars conjunct Pluto here: you transform through doing. The work IS the transformation.",
+      "triad": "authority",
+      "triad_read": "Deep truth and power dynamics. Your Authority rests on having faced the shadow directly — not theoretically, but in your daily life."
+    }
+  },
+  "points": {
+    "north_node": "North Node in Taurus in the 12th House — The soul's direction is toward embodied stillness and surrender. Taurus North Node says: trust the body, trust what's simple, trust what grows slowly. The 12th house placement means this growth happens in the unseen — through rest, meditation, letting go, and spiritual practice. Moving away from Scorpio intensity toward Taurean peace.",
+    "south_node": "South Node in Scorpio in the 6th House — Mastery of crisis and intensity through daily grind. This is where you've already been — the relentless worker who transforms through sheer will and depth. The karmic pattern to release: believing you have to go through fire to earn your place.",
+    "chiron": "Chiron in Gemini in the 1st House — The wound is in communication and being seen. First house Chiron means this is part of your visible identity — the gap between inner knowing and outer expression. The healing gift: you build systems and structures (Mercury conjunct Saturn) that bridge this gap for others.",
+    "lilith": "Lilith in Taurus in the 1st House — Raw, unapologetic embodiment. The rejected feminine power lives in your body and material presence. This placement says: your physical existence, your appetites, and your refusal to be tamed are sacred, not shameful."
+  },
+  "aspects": {
+    "mercury_conjunction_saturn": "Mercury conjunct Saturn (0.51°) — The tightest major aspect in your chart. Disciplined mind, careful with words, thinks in structures. You don't speak until you've built the frame. The weight of this conjunction means your communication carries authority, but it can also feel heavy — like every word costs something.",
+    "moon_trine_pluto": "Moon trine Pluto (0.59°) — Effortless emotional depth. You have a natural ability to feel what's really going on underneath the surface. Emotional intelligence that operates at the level of power dynamics and transformation. This is your superpower for coaching and holding space.",
+    "venus_conjunction_uranus": "Venus conjunct Uranus (1.19°) — Electric independence in love and aesthetics. You're attracted to what's unconventional, future-facing, and free. Relationships that try to contain you will break. This conjunction makes you a natural innovator in anything involving beauty, design, or human connection.",
+    "mars_sextile_neptune": "Mars sextile Neptune (1.42°) — Action guided by vision. Your drive isn't just willpower — it's informed by something you can see that others can't yet. This aspect gives creative fuel to your execution and spiritual depth to your work ethic.",
+    "moon_square_mercury": "Moon square Mercury (1.87°) — Tension between what you feel and what you can say. The emotional body and the mental body speak different languages. This is a growth engine: the friction forces you to find new ways to bridge inner knowing and outer communication.",
+    "venus_sextile_jupiter": "Venus sextile Jupiter (2.16°) — Expansion through beauty, generosity, and relationships. Opportunities come through connection. Your aesthetic sense and relational warmth naturally attract abundance and open doors.",
+    "moon_square_saturn": "Moon square Saturn (2.38°) — Emotional discipline was earned, not inherited. The feelings had to learn to hold themselves. This creates deep resilience but also a tendency to suppress. The gift: you can hold space through hard things because you've built the internal structure.",
+    "mars_conjunction_pluto": "Mars conjunct Pluto (4.92°) — Raw power in Scorpio. Intensity of will that can move mountains or burn bridges. When this energy is conscious, it's unstoppable. When unconscious, it can be destructive. The key: channel into building, not fighting.",
+    "sun_conjunction_uranus": "Sun conjunct Uranus (6.77°) — The innovator. Your identity is fused with breaking new ground. You don't fit conventional paths and you shouldn't try. This conjunction says: your purpose IS to be different.",
+    "sun_conjunction_neptune": "Sun conjunct Neptune (7.63°) — Visionary identity. You see what isn't yet. The danger is losing yourself in the vision. The gift is that your sense of self is connected to something larger — you naturally serve a purpose beyond the personal."
+  },
+  "stellium": {
+    "sagittarius_8th": "The Sagittarius Stellium in the 8th House — Six planets in Sagittarius (Sun, Mercury, Venus, Saturn, Uranus, Neptune nearby), with four concentrated in the 8th house. This is the dominant signature: you don't just philosophize about truth — you live it at the level where things actually change. The 8th house demands you go all the way through, not around. Every major life theme (identity, love, communication, structure, innovation, vision) passes through the transformative fire."
+  },
+  "transit_aspects": {
+    "conjunction": "Conjunction — fusion, amplification, new beginning. The transit planet merges with your natal placement, intensifying its energy.",
+    "opposition": "Opposition — awareness through contrast. The transit planet illuminates what your natal placement has been avoiding or not seeing.",
+    "trine": "Trine — flow and ease. The transit planet supports your natal placement naturally. Good for manifestation and harvest.",
+    "square": "Square — friction and forced growth. The transit planet challenges your natal placement. Uncomfortable but productive.",
+    "sextile": "Sextile — opportunity knocking. The transit planet offers a gentle activation. Requires conscious engagement to use."
+  }
+}

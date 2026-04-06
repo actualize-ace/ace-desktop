@@ -27,7 +27,7 @@ export default {
             if (due) due.setHours(0,0,0,0)
             const overdue = due && due < today
             return `
-              <div class="fu-row">
+              <div class="fu-row dash-clickable" data-cmd="Check on my deal with ${escapeHtml(d.person)} for ${escapeHtml(d.product)}">
                 <span class="deal-stage-dot ${d.stage || 'lead'}"></span>
                 <span class="fu-person">${escapeHtml(d.person)}</span>
                 <span class="fu-topic" style="flex:1">${escapeHtml(d.next_action || d.product)}</span>

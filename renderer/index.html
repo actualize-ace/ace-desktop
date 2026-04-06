@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="styles/atmosphere.css">
   <link rel="stylesheet" href="styles/views/breath.css">
   <link rel="stylesheet" href="styles/views/insight.css">
+  <link rel="stylesheet" href="styles/views/astro.css">
   <link rel="stylesheet" href="styles/command-bar.css">
 </head>
 <body>
@@ -124,6 +125,7 @@
           <div class="sidebar-logo-text">ACE</div>
           <div class="sidebar-logo-sub">Coherence Engine</div>
         </div>
+        <kbd class="cmdk-hint-key cmdk-logo-badge" id="cmdk-hint-sidebar" title="Open command bar">⌘K</kbd>
       </div>
       <div class="nav-section">Views</div>
       <div class="nav-item active" data-view="home">
@@ -138,37 +140,55 @@
         <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><line x1="12" y1="7" x2="5" y2="17"/><line x1="12" y1="7" x2="19" y2="17"/></svg>
         Agents
       </div>
-      <div class="nav-item" data-view="vault">
-        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-        Vault
-      </div>
-      <div class="nav-item" data-view="graph">
-        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><line x1="8.2" y1="10.8" x2="15.8" y2="7.2"/><line x1="8.2" y1="13.2" x2="15.8" y2="16.8"/></svg>
-        Graph
-      </div>
       <div class="nav-item" data-view="people">
         <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="7" r="3"/><path d="M9 13c-4 0-6 2-6 4v1h12v-1c0-2-2-4-6-4z"/><circle cx="17" cy="9" r="2.5"/><path d="M17 13.5c-2 0-4 1.2-4 2.5"/></svg>
         People
       </div>
-      <div class="nav-item" data-view="history">
-        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        History
+      <div class="nav-group" id="nav-library">
+        <div class="nav-item nav-group-toggle">
+          <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="13" y2="11"/></svg>
+          Library
+          <svg class="nav-group-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="nav-group-items">
+          <div class="nav-item nav-sub-item" data-view="vault">
+            <svg class="nav-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+            Vault
+          </div>
+          <div class="nav-item nav-sub-item" data-view="graph">
+            <svg class="nav-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><line x1="8.2" y1="10.8" x2="15.8" y2="7.2"/><line x1="8.2" y1="13.2" x2="15.8" y2="16.8"/></svg>
+            Graph
+          </div>
+          <div class="nav-item nav-sub-item" data-view="history">
+            <svg class="nav-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            History
+          </div>
+          <div class="nav-item nav-sub-item" data-view="artifacts">
+            <svg class="nav-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Artifacts
+          </div>
+        </div>
       </div>
-      <div class="nav-item" data-view="artifacts">
-        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        Artifacts
-      </div>
-      <div class="nav-item" data-view="pipeline">
-        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        Pipeline
-      </div>
-      <div class="nav-item" data-view="breath">
-        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
-        Breath
-      </div>
-      <div class="nav-item" data-view="insight">
-        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-        Insight
+      <div class="nav-group" id="nav-practice">
+        <div class="nav-item nav-group-toggle">
+          <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+          Practice
+          <svg class="nav-group-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="nav-group-items">
+          <div class="nav-item nav-sub-item" data-view="breath">
+            <svg class="nav-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22c0-4.4 3.6-8 8-8M12 22c0-5.5-4.5-10-10-10M12 22c0-7.2 2.4-12 6-12M12 22c0-7.2-2.4-12-6-12"/></svg>
+            Breath
+          </div>
+          <div class="nav-item nav-sub-item" data-view="insight">
+            <svg class="nav-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
+            Insight
+          </div>
+          <div class="nav-item nav-sub-item" data-view="astro">
+            <svg class="nav-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+            Astro
+          </div>
+        </div>
       </div>
       <div class="sidebar-div"></div>
       <div class="nav-section">Commands</div>
@@ -216,10 +236,6 @@
             <span class="telem-label">Uptime</span>
             <span class="telem-value" id="telem-uptime">0:00</span>
           </div>
-        </div>
-        <div class="cmdk-hint-sidebar" id="cmdk-hint-sidebar" title="Search commands and views">
-          <kbd class="cmdk-hint-key">⌘K</kbd>
-          <span class="cmdk-hint-label">Command bar</span>
         </div>
         <div class="sidebar-status" id="sidebarStatus"><div class="status-pulse"></div><span class="status-label" id="statusLabel">ACE Online</span><span class="build-label" style="margin-left:auto;opacity:0.35;font-size:6.5px;letter-spacing:1px;">BUILD</span><div class="build-toggle" id="buildToggle" title="Build Mode"></div></div>
       </div>
@@ -270,6 +286,9 @@
 
           <!-- Identity anchor -->
           <div id="widget-identity"></div>
+
+          <!-- Cosmic weather -->
+          <div id="widget-astro"></div>
 
           <!-- Stats strip -->
           <div id="widget-metrics"></div>
@@ -364,11 +383,6 @@
         </div>
       </div>
 
-      <!-- PIPELINE VIEW -->
-      <div class="view" id="view-pipeline">
-        <div class="view-header"><div class="view-title">Pipeline</div></div>
-        <div class="vbody" style="display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase">Phase 2 — Coming soon</div>
-      </div>
 
       <!-- PEOPLE VIEW -->
       <div class="view" id="view-people">
@@ -501,6 +515,9 @@
         <div class="vbody" id="insight-body" style="flex:1;display:flex;overflow:hidden;"></div>
       </div>
 
+      <!-- ASTRO VIEW -->
+      <div class="view" id="view-astro"></div>
+
     </div>
   </div>
 
@@ -600,6 +617,7 @@ import { initArtifacts, renderArtifactsList } from './views/artifacts.js'
 import { initAtmosphere } from './modules/atmosphere.js'
 import { initBreath, onBreathEnter, onBreathExit } from './views/breath.js'
 import { initInsight, onInsightExit } from './views/insight.js'
+import { initAstro, onAstroExit } from './views/astro.js'
 
 // ─── Theme, Zoom, Time, Sidebar (from module) ──────────────────────────────
 initTheme()
@@ -632,6 +650,7 @@ navItems.forEach(item => {
     if (prevView === 'breath' && view !== 'breath') onBreathExit()
     // Insight view exit hook
     if (prevView === 'insight' && view !== 'insight') onInsightExit()
+    if (prevView === 'astro' && view !== 'astro') onAstroExit()
     navItems.forEach(n => n.classList.remove('active'))
     item.classList.add('active')
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'))
@@ -643,6 +662,7 @@ navItems.forEach(item => {
     else if (view === 'graph' && !state.graphInitialized) initGraph()
     else if (view === 'people' && !state.peopleInitialized) initPeople()
     else if (view === 'insight' && !state.insightInitialized) initInsight()
+    else if (view === 'astro' && !state.astroInitialized) { state.astroInitialized = true; initAstro() }
     else if (view === 'history' && !state.historyInitialized) initHistory()
     else if (view === 'artifacts') { if (!state.artifactsInitialized) initArtifacts(); else renderArtifactsList(); }
     else if (view === 'agents' && !state.agentsInitialized) {
@@ -655,6 +675,24 @@ navItems.forEach(item => {
     }
   })
 })
+// ─── Nav group dropdown toggle (Library + Practice) ─────────────────────────
+function initNavGroup(id, views) {
+  const group = document.getElementById(id)
+  if (!group) return
+  const toggle = group.querySelector('.nav-group-toggle')
+  toggle.addEventListener('click', (e) => {
+    if (e.target.closest('.nav-sub-item')) return
+    group.classList.toggle('open')
+  })
+  const updateActive = () => {
+    const activeView = document.querySelector('.nav-item.active')?.dataset.view
+    group.classList.toggle('has-active', views.includes(activeView))
+    if (views.includes(activeView)) group.classList.add('open')
+  }
+  navItems.forEach(n => n.addEventListener('click', updateActive))
+}
+initNavGroup('nav-library', ['vault', 'graph', 'history', 'artifacts'])
+initNavGroup('nav-practice', ['insight', 'breath', 'astro'])
 document.getElementById('open-terminal-btn')?.addEventListener('click', () => document.querySelector('.nav-item[data-view="terminal"]').click())
 document.querySelectorAll('[data-cmd]').forEach(el => {
   el.addEventListener('click', () => {

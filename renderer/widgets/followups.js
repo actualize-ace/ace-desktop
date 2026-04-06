@@ -20,7 +20,7 @@ export default {
 
     const renderRows = arr => arr.slice(0, 5).map(f => {
       const d = f.due ? parse(f.due) : null
-      return `<div class="fu-row">
+      return `<div class="fu-row dash-clickable" data-cmd="Check on my follow-up with ${escapeHtml(f.person)} about: ${escapeHtml(f.topic)}">
         <span class="fu-person">${escapeHtml(f.person)}</span>
         <span class="fu-topic" style="flex:1">${escapeHtml(f.topic)}</span>
         ${d ? `<span class="fu-due">${d.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})}</span>` : ''}

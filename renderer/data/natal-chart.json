@@ -1,0 +1,76 @@
+{
+  "birth": {
+    "name": "Nikhil Kale",
+    "date": "1985-12-17",
+    "time": "15:15",
+    "location": "Mumbai, India",
+    "lat": 19.076,
+    "lng": 72.878,
+    "timezone": "Asia/Kolkata"
+  },
+  "planets": {
+    "sun": { "name": "Sun", "glyph": "☉", "sign": "Sag", "degree": 25.40, "abs_degree": 265.40, "house_num": 8, "retrograde": false },
+    "moon": { "name": "Moon", "glyph": "☽", "sign": "Pis", "degree": 5.94, "abs_degree": 335.94, "house_num": 11, "retrograde": false },
+    "mercury": { "name": "Mercury", "glyph": "☿", "sign": "Sag", "degree": 4.07, "abs_degree": 244.07, "house_num": 7, "retrograde": false },
+    "venus": { "name": "Venus", "glyph": "♀", "sign": "Sag", "degree": 17.44, "abs_degree": 257.44, "house_num": 8, "retrograde": false },
+    "mars": { "name": "Mars", "glyph": "♂", "sign": "Sco", "degree": 1.61, "abs_degree": 211.61, "house_num": 6, "retrograde": false },
+    "jupiter": { "name": "Jupiter", "glyph": "♃", "sign": "Aqu", "degree": 15.28, "abs_degree": 315.28, "house_num": 10, "retrograde": false },
+    "saturn": { "name": "Saturn", "glyph": "♄", "sign": "Sag", "degree": 3.56, "abs_degree": 243.56, "house_num": 7, "retrograde": false },
+    "uranus": { "name": "Uranus", "glyph": "♅", "sign": "Sag", "degree": 18.63, "abs_degree": 258.63, "house_num": 8, "retrograde": false },
+    "neptune": { "name": "Neptune", "glyph": "♆", "sign": "Cap", "degree": 3.04, "abs_degree": 273.04, "house_num": 8, "retrograde": false },
+    "pluto": { "name": "Pluto", "glyph": "♇", "sign": "Sco", "degree": 6.53, "abs_degree": 216.53, "house_num": 6, "retrograde": false }
+  },
+  "points": {
+    "north_node": { "name": "North Node", "glyph": "☊", "sign": "Tau", "degree": 8.03, "abs_degree": 38.03, "house_num": 12 },
+    "south_node": { "name": "South Node", "glyph": "☋", "sign": "Sco", "degree": 8.03, "abs_degree": 218.03, "house_num": 6 },
+    "chiron": { "name": "Chiron", "glyph": "⚷", "sign": "Gem", "degree": 11.20, "abs_degree": 71.20, "house_num": 1 },
+    "lilith": { "name": "Lilith", "glyph": "⚸", "sign": "Tau", "degree": 22.00, "abs_degree": 52.00, "house_num": 1 }
+  },
+  "houses": [
+    { "num": 1, "sign": "Tau", "degree": 13.16, "abs_degree": 43.16 },
+    { "num": 2, "sign": "Gem", "degree": 12.01, "abs_degree": 72.01 },
+    { "num": 3, "sign": "Can", "degree": 7.29, "abs_degree": 97.29 },
+    { "num": 4, "sign": "Leo", "degree": 2.81, "abs_degree": 122.81 },
+    { "num": 5, "sign": "Vir", "degree": 1.83, "abs_degree": 151.83 },
+    { "num": 6, "sign": "Lib", "degree": 6.16, "abs_degree": 186.16 },
+    { "num": 7, "sign": "Sco", "degree": 13.16, "abs_degree": 223.16 },
+    { "num": 8, "sign": "Sag", "degree": 12.01, "abs_degree": 252.01 },
+    { "num": 9, "sign": "Cap", "degree": 7.29, "abs_degree": 277.29 },
+    { "num": 10, "sign": "Aqu", "degree": 2.81, "abs_degree": 302.81 },
+    { "num": 11, "sign": "Pis", "degree": 1.83, "abs_degree": 331.83 },
+    { "num": 12, "sign": "Ari", "degree": 6.16, "abs_degree": 6.16 }
+  ],
+  "angles": {
+    "asc": { "label": "ASC", "sign": "Tau", "degree": 13.16, "abs_degree": 43.16 },
+    "ic": { "label": "IC", "sign": "Leo", "degree": 2.81, "abs_degree": 122.81 },
+    "dsc": { "label": "DSC", "sign": "Sco", "degree": 13.16, "abs_degree": 223.16 },
+    "mc": { "label": "MC", "sign": "Aqu", "degree": 2.81, "abs_degree": 302.81 }
+  },
+  "aspects": [
+    { "p1": "mercury", "p2": "saturn", "type": "conjunction", "orb": 0.51 },
+    { "p1": "moon", "p2": "pluto", "type": "trine", "orb": 0.59 },
+    { "p1": "venus", "p2": "uranus", "type": "conjunction", "orb": 1.19 },
+    { "p1": "mars", "p2": "neptune", "type": "sextile", "orb": 1.42 },
+    { "p1": "moon", "p2": "mercury", "type": "square", "orb": 1.87 },
+    { "p1": "venus", "p2": "jupiter", "type": "sextile", "orb": 2.16 },
+    { "p1": "moon", "p2": "saturn", "type": "square", "orb": 2.38 },
+    { "p1": "moon", "p2": "neptune", "type": "sextile", "orb": 2.91 },
+    { "p1": "jupiter", "p2": "uranus", "type": "sextile", "orb": 3.35 },
+    { "p1": "neptune", "p2": "pluto", "type": "sextile", "orb": 3.5 },
+    { "p1": "moon", "p2": "mars", "type": "trine", "orb": 4.33 },
+    { "p1": "mars", "p2": "pluto", "type": "conjunction", "orb": 4.92 },
+    { "p1": "sun", "p2": "uranus", "type": "conjunction", "orb": 6.77 },
+    { "p1": "sun", "p2": "neptune", "type": "conjunction", "orb": 7.63 },
+    { "p1": "sun", "p2": "venus", "type": "conjunction", "orb": 7.96 }
+  ],
+  "elements": { "fire": 5, "earth": 1, "air": 1, "water": 3 },
+  "qualities": { "cardinal": 1, "fixed": 3, "mutable": 6 },
+  "lunation_phase": "Crescent",
+  "lunation_angle": 70.5,
+  "triad_mapping": {
+    "authority": ["sun", "pluto", "mercury"],
+    "capacity": ["moon", "saturn", "neptune"],
+    "expansion": ["jupiter", "mars", "uranus"],
+    "floater": ["venus"]
+  }
+}

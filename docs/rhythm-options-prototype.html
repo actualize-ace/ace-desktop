@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ACE Day Rhythm — 3 Options Compared</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      --bg-deep: #080a12;
+      --border: rgba(140,120,255,0.10);
+      --gold: #c8a0f0;
+      --green: #60d8a8;
+      --text-primary: #e8e4f0;
+      --text-secondary: #9898b8;
+      --text-dim: #606080;
+      --authority: #c8a0f0;
+      --capacity: #60d8a8;
+      --expansion: #e080a0;
+      --glass-bg: rgba(16,20,36,0.6);
+      --titlebar-bg: rgba(12,14,24,0.95);
+
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      height: 100vh; width: 100vw; overflow: hidden;
+      transition: background 0.6s;
+    }
+    body.light {
+      --bg-deep: #f0eef6;
+      --border: rgba(100,90,160,0.12);
+      --gold: #5a48c0;
+      --green: #1a8a60;
+      --text-primary: #18162a;
+      --text-secondary: #48466a;
+      --text-dim: #8886a0;
+      --authority: #5a48c0;
+      --capacity: #1a8a60;
+      --expansion: #c04878;
+      --glass-bg: rgba(240,238,246,0.7);
+      --titlebar-bg: rgba(240,238,246,0.95);
+    }
+
+    /* ═══ LAYOUT — 3 titlebars stacked ═══ */
+    .option-block {
+      margin: 0; padding: 0;
+      border-bottom: 1px solid rgba(140,120,255,0.06);
+    }
+    .option-label {
+      position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+      font-family: 'Space Grotesk'; font-size: 10px;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--text-dim);
+    }
+
+    /* ═══ TITLEBAR ═══ */
+    .titlebar {
+      height: 52px;
+      background: var(--titlebar-bg);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+      padding: 0 16px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px; color: var(--text-secondary);
+      position: relative;
+    }
+    .titlebar-center {
+      position: absolute; left: 50%; transform: translateX(-50%);
+      font-weight: 500; letter-spacing: 0.5px; font-size: 11px;
+    }
+    .titlebar-right {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .chip {
+      font-size: 9px; padding: 2px 8px; border-radius: 6px;
+      background: rgba(140,120,255,0.08); border: 1px solid rgba(140,120,255,0.15);
+      color: var(--gold);
+    }
+    .coherence-chip {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 9px; color: var(--green);
+    }
+    .coherence-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.2)} }
+
+    /* ═══ OPTION A: INTENSITY BAR ═══ */
+    .intensity-bar {
+      width: 64px; height: 6px;
+      border-radius: 3px;
+      background: rgba(140,120,255,0.08);
+      overflow: hidden;
+      position: relative;
+      margin-right: 4px;
+    }
+    body.light .intensity-bar { background: rgba(90,72,192,0.08); }
+    .intensity-fill {
+      height: 100%;
+      border-radius: 3px;
+      width: 0%;
+      transition: width 0.8s ease, background 1.5s ease;
+      position: relative;
+    }
+    .intensity-fill::after {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: 3px;
+      animation: bar-breathe var(--bar-breath, 3s) ease-in-out infinite;
+    }
+    @keyframes bar-breathe {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+    /* Glow behind bar */
+    .intensity-bar-wrap {
+      position: relative;
+      display: flex; align-items: center;
+    }
+    .intensity-glow {
+      position: absolute;
+      inset: -4px -2px;
+      border-radius: 6px;
+      filter: blur(6px);
+      opacity: 0;
+      transition: opacity 1.5s ease, background 1.5s ease;
+      pointer-events: none;
+    }
+
+    /* ═══ OPTION B: LIVING DOT ═══ */
+    .living-dot-wrap {
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+      width: 24px; height: 24px;
+      margin-right: 4px;
+    }
+    .living-dot {
+      border-radius: 50%;
+      transition: width 1s ease, height 1s ease, background 1.5s ease, box-shadow 1.5s ease;
+    }
+    .living-dot-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid transparent;
+      transition: width 1s ease, height 1s ease, border-color 1.5s ease, opacity 1s ease;
+      opacity: 0;
+    }
+
+    /* ═══ OPTION C: GRADIENT EMBER ═══ */
+    .ember-wrap {
+      position: relative;
+      display: flex; align-items: center;
+      margin-right: 4px;
+    }
+    .ember {
+      width: 36px; height: 14px;
+      border-radius: 7px;
+      position: relative;
+      overflow: hidden;
+      transition: box-shadow 1.5s ease;
+    }
+    .ember-core {
+      position: absolute; inset: 0;
+      border-radius: 7px;
+      transition: background 1.5s ease, opacity 1s ease;
+    }
+    .ember-glow {
+      position: absolute;
+      inset: -6px;
+      border-radius: 12px;
+      filter: blur(8px);
+      opacity: 0;
+      transition: opacity 1.5s ease, background 1.5s ease;
+      pointer-events: none;
+    }
+    .ember-surface {
+      position: absolute; inset: 0;
+      border-radius: 7px;
+      border: 1px solid rgba(140,120,255,0.08);
+      transition: border-color 1.5s ease;
+    }
+    body.light .ember-surface { border-color: rgba(90,72,192,0.1); }
+
+    /* ═══ MOCK CONTENT ═══ */
+    .mock-content {
+      height: calc(100vh - 156px - 160px); /* 3 titlebars + controls */
+      display: flex;
+    }
+    .mock-sidebar {
+      width: 216px; flex-shrink: 0; padding: 16px 0;
+      background: rgba(10,12,20,0.92); border-right: 1px solid var(--border);
+    }
+    body.light .mock-sidebar { background: rgba(236,234,244,0.92); }
+    .nav-item {
+      padding: 6px 20px; font-size: 11px; color: var(--text-secondary);
+      font-family: 'Space Grotesk';
+    }
+    .nav-item.on { background: rgba(140,120,255,0.06); color: var(--text-primary); }
+    .mock-cards {
+      flex: 1; padding: 20px; display: grid;
+      grid-template-columns: repeat(3,1fr); gap: 12px; align-content: start;
+    }
+    .mock-card {
+      background: var(--glass-bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px; min-height: 80px;
+    }
+    .mock-card.w2 { grid-column: span 2; }
+    .mock-card-title {
+      font-family: 'Space Grotesk'; font-size: 9px;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: var(--text-dim); margin-bottom: 10px;
+    }
+    .mock-line { height: 6px; border-radius: 3px; background: rgba(128,128,128,0.08); margin: 5px 0; }
+
+    /* ═══ CONTROLS ═══ */
+    .ctrl {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: 160px;
+      background: rgba(8,10,18,0.97); backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(140,120,255,0.15);
+      padding: 16px 24px;
+      display: flex; gap: 24px; align-items: flex-start;
+      font-family: 'Space Grotesk'; font-size: 11px; color: #9898b8;
+      z-index: 100;
+    }
+    body.light .ctrl { background: rgba(255,255,255,0.97); border-color: rgba(100,90,160,0.12); color: #48466a; }
+    .ctrl-section { flex: 1; }
+    .ctrl-section h4 {
+      font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px;
+      color: #c8a0f0; margin-bottom: 10px; font-weight: 500;
+    }
+    body.light .ctrl-section h4 { color: #5a48c0; }
+    .row { display: flex; justify-content: space-between; align-items: center; margin: 6px 0; }
+    .row label { color: #606080; font-size: 10px; }
+    .row input[type="range"] { width: 140px; accent-color: #c8a0f0; }
+    .row .val { width: 40px; text-align: right; font-family: 'JetBrains Mono'; font-size: 10px; }
+    .btn {
+      padding: 6px 12px; margin-top: 4px; margin-right: 4px;
+      background: rgba(140,120,255,0.08); border: 1px solid rgba(140,120,255,0.18);
+      border-radius: 6px; color: #c8a0f0; cursor: pointer;
+      font-family: 'Space Grotesk'; font-size: 9px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .btn:hover { background: rgba(140,120,255,0.18); }
+    .btn.go { background: rgba(96,216,168,0.12); border-color: rgba(96,216,168,0.2); color: #60d8a8; }
+    .preset-row { display: flex; gap: 4px; flex-wrap: wrap; }
+    .preset-btn {
+      padding: 5px 8px;
+      background: rgba(140,120,255,0.04); border: 1px solid rgba(140,120,255,0.1);
+      border-radius: 5px; color: #606080; cursor: pointer;
+      font-family: 'Space Grotesk'; font-size: 9px; text-transform: uppercase;
+    }
+    .preset-btn:hover { background: rgba(140,120,255,0.1); color: #9898b8; }
+    .preset-btn.active { background: rgba(140,120,255,0.12); border-color: rgba(140,120,255,0.25); color: #c8a0f0; }
+    .theme-btn-ctrl {
+      position: fixed; top: 8px; right: 16px; z-index: 200;
+      font-size: 16px; cursor: pointer; background: none; border: none;
+      color: var(--text-secondary); padding: 4px 8px; border-radius: 6px;
+    }
+    .theme-btn-ctrl:hover { background: rgba(140,120,255,0.1); }
+  </style>
+</head>
+<body>
+
+  <button class="theme-btn-ctrl" onclick="toggleTheme()">◑</button>
+
+  <!-- ═══ OPTION A: INTENSITY BAR ═══ -->
+  <div class="option-block">
+    <div class="titlebar">
+      <div class="option-label">A — Intensity Bar</div>
+      <div class="titlebar-center">Actualize Coherence Engine</div>
+      <div class="titlebar-right">
+        <div class="intensity-bar-wrap">
+          <div class="intensity-glow" id="barGlow"></div>
+          <div class="intensity-bar">
+            <div class="intensity-fill" id="barFill"></div>
+          </div>
+        </div>
+        <div class="chip">execute</div>
+        <div class="coherence-chip"><div class="coherence-dot"></div><span>Active</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ OPTION B: LIVING DOT ═══ -->
+  <div class="option-block">
+    <div class="titlebar">
+      <div class="option-label">B — Living Dot</div>
+      <div class="titlebar-center">Actualize Coherence Engine</div>
+      <div class="titlebar-right">
+        <div class="living-dot-wrap">
+          <div class="living-dot-ring" id="dotRing"></div>
+          <div class="living-dot" id="dotCore"></div>
+        </div>
+        <div class="chip">execute</div>
+        <div class="coherence-chip"><div class="coherence-dot"></div><span>Active</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ OPTION C: GRADIENT EMBER ═══ -->
+  <div class="option-block">
+    <div class="titlebar">
+      <div class="option-label">C — Gradient Ember</div>
+      <div class="titlebar-center">Actualize Coherence Engine</div>
+      <div class="titlebar-right">
+        <div class="ember-wrap">
+          <div class="ember-glow" id="emberGlow"></div>
+          <div class="ember" id="ember">
+            <div class="ember-core" id="emberCore"></div>
+            <div class="ember-surface"></div>
+          </div>
+        </div>
+        <div class="chip">execute</div>
+        <div class="coherence-chip"><div class="coherence-dot"></div><span>Active</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MOCK CONTENT ═══ -->
+  <div class="mock-content">
+    <div class="mock-sidebar">
+      <div class="nav-item on">Dashboard</div>
+      <div class="nav-item">Chat</div>
+      <div class="nav-item">Terminal</div>
+      <div class="nav-item">Vault</div>
+      <div class="nav-item">People</div>
+      <div class="nav-item">Graph</div>
+    </div>
+    <div class="mock-cards">
+      <div class="mock-card w2"><div class="mock-card-title">Synthesis</div><div class="mock-line" style="width:70%"></div><div class="mock-line" style="width:50%"></div></div>
+      <div class="mock-card"><div class="mock-card-title">Velocity</div><div class="mock-line" style="width:60%"></div></div>
+      <div class="mock-card"><div class="mock-card-title">Outcomes</div><div class="mock-line" style="width:80%"></div><div class="mock-line" style="width:55%"></div></div>
+      <div class="mock-card"><div class="mock-card-title">State</div><div class="mock-line" style="width:65%"></div></div>
+      <div class="mock-card"><div class="mock-card-title">Pipeline</div><div class="mock-line" style="width:75%"></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ CONTROLS ═══ -->
+  <div class="ctrl">
+    <div class="ctrl-section">
+      <h4>Inputs</h4>
+      <div class="row">
+        <label>Sessions today</label>
+        <input type="range" id="sSessions" min="0" max="10" value="3" oninput="render()">
+        <div class="val" id="sSessionsV">3</div>
+      </div>
+      <div class="row">
+        <label>Current session (min)</label>
+        <input type="range" id="sCurrent" min="0" max="90" value="22" oninput="render()">
+        <div class="val" id="sCurrentV">22m</div>
+      </div>
+      <div class="row">
+        <label>Total time today (hr)</label>
+        <input type="range" id="sTotal" min="0" max="8" value="1.5" step="0.25" oninput="render()">
+        <div class="val" id="sTotalV">1.5h</div>
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <h4>Presets</h4>
+      <div class="preset-row">
+        <div class="preset-btn" onclick="preset('empty')">Empty</div>
+        <div class="preset-btn" onclick="preset('light')">Light day</div>
+        <div class="preset-btn active" onclick="preset('normal')">Normal</div>
+        <div class="preset-btn" onclick="preset('heavy')">Heavy</div>
+        <div class="preset-btn" onclick="preset('overext')">Overextended</div>
+      </div>
+      <div style="margin-top: 10px;">
+        <button class="btn go" id="simBtn" onclick="sim()">▶ Simulate a day</button>
+        <button class="btn" onclick="preset('normal')">Reset</button>
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <h4>Algorithm</h4>
+      <div style="font-family:'JetBrains Mono';font-size:9px;line-height:1.7;color:#606080;">
+        <div>intensity = <span style="color:#9898b8" id="algoVal">0.00</span></div>
+        <div>= (sessions/8)×0.4 + (totalHrs/6)×0.35 + (curMin/60)×0.25</div>
+        <div style="margin-top:4px;">color: <span id="algoColor" style="color:#60d8a8">green</span> → <span style="color:#c8a0f0">amber</span> → <span style="color:#e080a0">rose</span></div>
+        <div>breath: <span style="color:#9898b8" id="algoBreath">3.0s</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let isLight = false;
+    let simRunning = false;
+    let simTimer = null;
+
+    // Animation state
+    let dotAnimFrame = null;
+    let breathPhase = 0;
+
+    function toggleTheme() {
+      isLight = !isLight;
+      document.body.classList.toggle('light', isLight);
+      render();
+    }
+
+    function lerp(a, b, t) { return a + (b - a) * Math.min(1, Math.max(0, t)); }
+    function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+    function blendHSL(h1, s1, l1, h2, s2, l2, t) {
+      // Handle hue wrapping
+      let dh = h2 - h1;
+      if (dh > 180) dh -= 360;
+      if (dh < -180) dh += 360;
+      return {
+        h: h1 + dh * t,
+        s: s1 + (s2 - s1) * t,
+        l: l1 + (l2 - l1) * t
+      };
+    }
+
+    function intensityColor(t) {
+      // 0 = green(155,60%,50%) → 0.5 = amber(35,70%,55%) → 1.0 = rose(345,65%,55%)
+      let h, s, l;
+      if (t < 0.5) {
+        const p = t / 0.5;
+        const c = blendHSL(155, 55, 48, 35, 65, 52, p);
+        h = c.h; s = c.s; l = c.l;
+      } else {
+        const p = (t - 0.5) / 0.5;
+        const c = blendHSL(35, 65, 52, 345, 60, 55, p);
+        h = c.h; s = c.s; l = c.l;
+      }
+      if (isLight) { l = l - 10; s = s + 5; }
+      return { h, s, l };
+    }
+
+    function render() {
+      const sessions = +document.getElementById('sSessions').value;
+      const curMin = +document.getElementById('sCurrent').value;
+      const totalHrs = +document.getElementById('sTotal').value;
+
+      document.getElementById('sSessionsV').textContent = sessions;
+      document.getElementById('sCurrentV').textContent = curMin + 'm';
+      document.getElementById('sTotalV').textContent = totalHrs + 'h';
+
+      // ── COMPOSITE INTENSITY (0→1) ──
+      const sessionFactor = clamp(sessions / 8, 0, 1);
+      const timeFactor = clamp(totalHrs / 6, 0, 1);
+      const currentFactor = clamp(curMin / 60, 0, 1);
+      const intensity = sessionFactor * 0.4 + timeFactor * 0.35 + currentFactor * 0.25;
+
+      const color = intensityColor(intensity);
+      const hsl = `hsl(${color.h}, ${color.s}%, ${color.l}%)`;
+      const hsla = (a) => `hsla(${color.h}, ${color.s}%, ${color.l}%, ${a})`;
+
+      // Breath speed: 3.5s at rest → 1.5s at max intensity
+      const breathSpeed = lerp(3.5, 1.5, intensity);
+
+      // Update algo display
+      document.getElementById('algoVal').textContent = intensity.toFixed(2);
+      document.getElementById('algoBreath').textContent = breathSpeed.toFixed(1) + 's';
+      const colorName = intensity < 0.3 ? 'green' : intensity < 0.6 ? 'amber' : 'rose';
+      const algoColorEl = document.getElementById('algoColor');
+      algoColorEl.textContent = colorName;
+      algoColorEl.style.color = hsl;
+
+      // ═══ OPTION A: INTENSITY BAR ═══
+      const barFill = document.getElementById('barFill');
+      const barGlow = document.getElementById('barGlow');
+      const fillPct = clamp(intensity * 100, 0, 100);
+      barFill.style.width = fillPct + '%';
+      barFill.style.background = `linear-gradient(90deg, ${hsla(0.7)}, ${hsl})`;
+      barFill.style.setProperty('--bar-breath', breathSpeed + 's');
+      barFill.style.boxShadow = `0 0 ${4 + intensity * 8}px ${hsla(0.3)}`;
+      barGlow.style.background = hsl;
+      barGlow.style.opacity = intensity * 0.15;
+
+      // ═══ OPTION B: LIVING DOT ═══
+      const dotCore = document.getElementById('dotCore');
+      const dotRing = document.getElementById('dotRing');
+
+      // Size: 5px (empty) → 12px (overextended)
+      const dotSize = lerp(5, 12, intensity);
+      dotCore.style.width = dotSize + 'px';
+      dotCore.style.height = dotSize + 'px';
+      dotCore.style.background = `radial-gradient(circle at 40% 38%, ${hsla(0.9)}, ${hsla(0.6)})`;
+      dotCore.style.boxShadow = `0 0 ${3 + intensity * 10}px ${hsla(0.3 + intensity * 0.2)}`;
+
+      // Ring appears at higher intensity
+      const ringSize = dotSize + 6 + intensity * 4;
+      dotRing.style.width = ringSize + 'px';
+      dotRing.style.height = ringSize + 'px';
+      dotRing.style.top = `calc(50% - ${ringSize/2}px)`;
+      dotRing.style.left = `calc(50% - ${ringSize/2}px)`;
+      dotRing.style.borderColor = hsla(0.2 + intensity * 0.2);
+      dotRing.style.opacity = intensity > 0.3 ? '1' : '0';
+
+      // ═══ OPTION C: GRADIENT EMBER ═══
+      const emberCore = document.getElementById('emberCore');
+      const emberGlow = document.getElementById('emberGlow');
+      const ember = document.getElementById('ember');
+
+      // Core: radial gradient that brightens with intensity
+      const coreOpacity = 0.15 + intensity * 0.7;
+      emberCore.style.background = `radial-gradient(ellipse 70% 80% at 50% 50%,
+        ${hsla(coreOpacity)},
+        ${hsla(coreOpacity * 0.4)} 50%,
+        ${hsla(coreOpacity * 0.1)} 80%,
+        transparent 100%)`;
+
+      // Glow bleeds outward at higher intensity
+      emberGlow.style.background = hsl;
+      emberGlow.style.opacity = intensity * 0.2;
+
+      // Border warms
+      ember.querySelector('.ember-surface').style.borderColor = hsla(0.08 + intensity * 0.15);
+
+      // Start breathing animation
+      if (!dotAnimFrame) startBreathing();
+    }
+
+    function startBreathing() {
+      const startTime = Date.now();
+
+      function animate() {
+        const sessions = +document.getElementById('sSessions').value;
+        const curMin = +document.getElementById('sCurrent').value;
+        const totalHrs = +document.getElementById('sTotal').value;
+        const intensity = clamp(sessions/8, 0, 1) * 0.4 + clamp(totalHrs/6, 0, 1) * 0.35 + clamp(curMin/60, 0, 1) * 0.25;
+        const breathSpeed = lerp(3.5, 1.5, intensity);
+        const t = (Date.now() - startTime) / 1000;
+        const breath = (Math.sin(t * (2 * Math.PI / breathSpeed)) + 1) / 2;
+
+        const color = intensityColor(intensity);
+        const hsla = (a) => `hsla(${color.h}, ${color.s}%, ${color.l}%, ${a})`;
+
+        // Dot breathing
+        const dotCore = document.getElementById('dotCore');
+        const dotScale = 1 + breath * 0.15 * intensity;
+        const dotGlow = 3 + intensity * 10 + breath * intensity * 6;
+        dotCore.style.transform = `scale(${dotScale})`;
+        dotCore.style.boxShadow = `0 0 ${dotGlow}px ${hsla(0.2 + breath * 0.15)}`;
+
+        // Ring breathing
+        const dotRing = document.getElementById('dotRing');
+        const ringScale = 1 + breath * 0.08;
+        dotRing.style.transform = `scale(${ringScale})`;
+
+        // Ember breathing
+        const emberCore = document.getElementById('emberCore');
+        const emberGlow = document.getElementById('emberGlow');
+        const coreOpacity = (0.15 + intensity * 0.7) * (0.7 + breath * 0.3);
+        emberCore.style.opacity = 0.7 + breath * 0.3;
+        emberGlow.style.opacity = intensity * (0.1 + breath * 0.12);
+
+        // Bar breathing (via pseudo-element doesn't work in JS, so we adjust box-shadow)
+        const barFill = document.getElementById('barFill');
+        const barGlow = document.getElementById('barGlow');
+        const barBreathGlow = 4 + intensity * 8 + breath * intensity * 4;
+        barFill.style.boxShadow = `0 0 ${barBreathGlow}px ${hsla(0.2 + breath * 0.15)}`;
+        barGlow.style.opacity = intensity * (0.08 + breath * 0.1);
+
+        dotAnimFrame = requestAnimationFrame(animate);
+      }
+
+      dotAnimFrame = requestAnimationFrame(animate);
+    }
+
+    function preset(name) {
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      if (event?.target) event.target.classList.add('active');
+      if (simRunning) sim();
+
+      const s = document.getElementById('sSessions');
+      const c = document.getElementById('sCurrent');
+      const t = document.getElementById('sTotal');
+
+      switch(name) {
+        case 'empty':    s.value=0; c.value=0;  t.value=0;    break;
+        case 'light':    s.value=1; c.value=12; t.value=0.5;  break;
+        case 'normal':   s.value=3; c.value=22; t.value=1.5;  break;
+        case 'heavy':    s.value=6; c.value=55; t.value=4;    break;
+        case 'overext':  s.value=9; c.value=78; t.value=6.5;  break;
+      }
+      render();
+    }
+
+    function sim() {
+      const btn = document.getElementById('simBtn');
+      if (simRunning) {
+        clearInterval(simTimer);
+        simRunning = false;
+        btn.textContent = '▶ Simulate a day';
+        return;
+      }
+      simRunning = true;
+      btn.textContent = '■ Stop';
+
+      const s = document.getElementById('sSessions');
+      const c = document.getElementById('sCurrent');
+      const t = document.getElementById('sTotal');
+
+      // Start empty
+      s.value = 0; c.value = 0; t.value = 0;
+      render();
+
+      let sessCount = 0;
+      let totalMin = 0;
+      let curMin = 0;
+      let phase = 'session';
+      let sessionTarget = 15 + Math.random() * 45;
+
+      simTimer = setInterval(() => {
+        if (phase === 'session') {
+          curMin += 2;
+          totalMin += 2;
+          c.value = Math.min(90, curMin);
+          t.value = (totalMin / 60).toFixed(2);
+
+          if (curMin >= sessionTarget) {
+            sessCount++;
+            s.value = sessCount;
+            curMin = 0;
+            c.value = 0;
+            if (sessCount >= 8) {
+              clearInterval(simTimer);
+              simRunning = false;
+              btn.textContent = '▶ Simulate a day';
+            } else {
+              phase = 'break';
+              sessionTarget = 15 + Math.random() * 50;
+            }
+          }
+        } else {
+          phase = 'session';
+        }
+        render();
+      }, 200);
+    }
+
+    // Init
+    render();
+  </script>
+</body>
+</html>

@@ -13,7 +13,8 @@ import targets      from './targets.js'
 import pipeline     from './pipeline.js'
 import followups    from './followups.js'
 import quickactions from './quickactions.js'
+import astro        from './astro.js'
 
-export const WIDGETS = [synthesis, identity, metrics, rhythm, velocity, state, outcomes, targets, pipeline, followups, quickactions]
+export const WIDGETS = [synthesis, identity, astro, metrics, rhythm, velocity, state, outcomes, targets, pipeline, followups, quickactions]
 
 export const DEFAULT_LAYOUT = WIDGETS.map(w => ({ id: w.id, enabled: w.defaultEnabled ?? true }))
