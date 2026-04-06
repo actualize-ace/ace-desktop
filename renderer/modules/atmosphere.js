@@ -628,6 +628,7 @@ function handleCoherenceUpdate(cs) {
   const hrEl = document.getElementById('somatic-bar-hr')
   const hrVal = document.getElementById('somatic-bar-hr-value')
   const hrDot = document.getElementById('somatic-bar-hr-dot')
+  const hrLevel = document.getElementById('somatic-bar-hr-level')
   const barText = document.getElementById('somatic-bar-text')
   const glowEl = document.getElementById('somatic-bar-glow')
 
@@ -647,6 +648,14 @@ function handleCoherenceUpdate(cs) {
     if (hrEl) hrEl.classList.add('visible')
     if (barText) barText.classList.add('coherence-hidden')
     if (hrVal) { hrVal.textContent = cs.hr || '—'; hrVal.classList.remove('somatic-bar-hr-connecting') }
+    // Coherence level word
+    const LEVEL_WORDS = { low: 'low', med: 'coherent', high: 'deep' }
+    if (hrLevel && cs.coherenceLevel) {
+      hrLevel.textContent = LEVEL_WORDS[cs.coherenceLevel] || ''
+      hrLevel.className = 'somatic-bar-hr-level ' + cs.coherenceLevel
+    } else if (hrLevel) {
+      hrLevel.textContent = ''
+    }
     // Update glow color target
     if (cs.coherenceLevel && COHERENCE_COLORS[cs.coherenceLevel]) {
       coherenceTargetColor = { ...COHERENCE_COLORS[cs.coherenceLevel] }
@@ -662,10 +671,12 @@ function handleCoherenceUpdate(cs) {
     strip.classList.remove('active')
     if (hrEl) hrEl.classList.add('visible')
     if (hrVal) { hrVal.textContent = 'connecting'; hrVal.classList.add('somatic-bar-hr-connecting') }
+    if (hrLevel) hrLevel.textContent = ''
     if (barText) barText.classList.add('coherence-hidden')
   } else {
     strip.classList.remove('active')
     if (hrEl) hrEl.classList.remove('visible')
+    if (hrLevel) hrLevel.textContent = ''
     if (barText) barText.classList.remove('coherence-hidden')
     // Hand glow back to atmosphere
     if (glowEl) glowEl.style.background = ''
