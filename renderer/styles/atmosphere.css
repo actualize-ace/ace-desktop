@@ -667,33 +667,7 @@ body.light .atm-audio-popover {
 /* ── Coherence: hide quote when sensor active ── */
 .somatic-bar-text.coherence-hidden { opacity: 0 !important; pointer-events: none; }
 
-/* ── HRV heart icon (somatic bar, before clock) ── */
-.hrv-btn {
-  position: absolute;
-  right: 56px;  /* left of the clock */
-  z-index: 3;
-  background: none; border: none;
-  color: var(--text-dim);
-  cursor: pointer;
-  padding: 6px;
-  display: flex; align-items: center;
-  opacity: 0.35;
-  transition: opacity 0.8s ease, color 0.8s;
-}
-.hrv-btn:hover { opacity: 0.6; }
-/* Connected — heart fills and brightens */
-.hrv-btn.connected {
-  opacity: 0.7;
-}
-.hrv-btn.connected:hover { opacity: 0.9; }
-.hrv-btn.connected .hrv-icon {
-  animation: none;
-  fill: currentColor;
-  stroke: currentColor;
-}
-.hrv-btn.connected.low .hrv-icon { color: rgba(224,112,128,0.7); }
-.hrv-btn.connected.med .hrv-icon { color: rgba(96,216,168,0.7); }
-.hrv-btn.connected.high .hrv-icon { color: rgba(255,209,102,0.7); }
+/* HRV heart icon styles are in shell.css (sidebar context) */
 
 /* ── HRV Status Panel ── */
 .hrv-panel-backdrop {
@@ -707,8 +681,8 @@ body.light .atm-audio-popover {
 
 .hrv-panel {
   position: fixed;
-  bottom: 48px;
-  right: 16px;
+  bottom: 80px;
+  left: calc(var(--sidebar-w) + 8px);
   width: 260px;
   background: var(--bg-card);
   border: 1px solid var(--border);

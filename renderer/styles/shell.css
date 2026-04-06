@@ -516,6 +516,27 @@ body.streaming .stab.active .stab-dot {
   color: var(--text-secondary); transition: all 0.1s;
 }
 .settings-cmd-option:hover { background: var(--bg-elevated); color: var(--text-primary); }
+
+/* ── HRV sensor button (sidebar) ── */
+.hrv-btn {
+  background: none; border: none;
+  color: var(--text-dim);
+  cursor: pointer; padding: 8px 16px; display: flex;
+  align-items: center; gap: 6px;
+  width: 100%;
+  opacity: 0.35;
+  transition: opacity 0.3s, color 0.8s;
+}
+.hrv-btn:hover { opacity: 0.65; }
+.hrv-btn.connected { opacity: 0.8; }
+.hrv-btn.connected .hrv-icon {
+  fill: currentColor; stroke: currentColor;
+}
+.hrv-btn.connected.low .hrv-icon { color: rgba(224,112,128,0.8); }
+.hrv-btn.connected.med .hrv-icon { color: rgba(96,216,168,0.8); }
+.hrv-btn.connected.high .hrv-icon { color: rgba(255,209,102,0.8); }
+.sidebar.collapsed .hrv-btn { justify-content: center; padding: 8px; }
+
 .settings-btn {
   background: none; border: none; color: var(--text-dim);
   cursor: pointer; padding: 8px 16px; display: flex;
