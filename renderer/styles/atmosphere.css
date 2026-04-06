@@ -675,12 +675,12 @@ body.light .atm-audio-popover {
   background: none; border: none;
   color: var(--text-dim);
   cursor: pointer;
-  padding: 4px;
+  padding: 6px;
   display: flex; align-items: center;
-  opacity: 0.15;
+  opacity: 0.35;
   transition: opacity 0.8s ease, color 0.8s;
 }
-.hrv-btn:hover { opacity: 0.4; }
+.hrv-btn:hover { opacity: 0.6; }
 /* Connected — heart fills and brightens */
 .hrv-btn.connected {
   opacity: 0.7;

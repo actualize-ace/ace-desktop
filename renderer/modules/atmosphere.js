@@ -631,7 +631,7 @@ function initCoherenceBar() {
     if (hrvBackdrop) hrvBackdrop.classList.remove('visible')
   }
 
-  if (hrvBtn) hrvBtn.addEventListener('click', openHrvPanel)
+  if (hrvBtn) hrvBtn.addEventListener('click', (e) => { e.stopPropagation(); openHrvPanel() })
   if (hrvClose) hrvClose.addEventListener('click', closeHrvPanel)
   if (hrvBackdrop) hrvBackdrop.addEventListener('click', closeHrvPanel)
 }
