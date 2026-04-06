@@ -708,20 +708,17 @@ function handleHrvIcon(cs) {
   const tooltipSub = document.getElementById('hrv-tooltip-sub')
   if (!btn) return
 
-  btn.classList.remove('scanning', 'connected', 'low', 'med', 'high')
+  btn.classList.remove('scanning', 'connected', 'low', 'med', 'high', 'hrv-visible')
+  const tooltip = document.getElementById('hrv-tooltip')
 
   if (cs.connected) {
-    btn.classList.add('connected')
+    btn.classList.add('connected', 'hrv-visible')
     if (cs.coherenceLevel) btn.classList.add(cs.coherenceLevel)
     if (tooltipText) tooltipText.textContent = 'Inner Balance'
     if (tooltipSub) tooltipSub.textContent = `${cs.hr || '—'} bpm · ${cs.battery || '—'}% battery`
-  } else if (cs.scanning) {
-    btn.classList.add('scanning')
-    if (tooltipText) tooltipText.textContent = 'Searching for sensor...'
-    if (tooltipSub) tooltipSub.textContent = 'Clip Inner Balance to your ear'
   } else {
-    if (tooltipText) tooltipText.textContent = 'Heart rhythm sensor'
-    if (tooltipSub) tooltipSub.textContent = 'Connect a HeartMath Inner Balance'
+    // Not connected — hide entirely. No heart, no tooltip, clean bar.
+    if (tooltip) tooltip.classList.remove('visible')
   }
 }
 

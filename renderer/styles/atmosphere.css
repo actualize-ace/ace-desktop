@@ -677,20 +677,16 @@ body.light .atm-audio-popover {
   cursor: pointer;
   padding: 4px;
   display: flex; align-items: center;
-  opacity: 0.2;
-  transition: opacity 0.3s, color 0.8s;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease, color 0.8s;
 }
-.hrv-btn:hover { opacity: 0.5; }
-.hrv-btn.scanning { opacity: 0.4; }
-.hrv-btn.scanning .hrv-icon {
-  animation: hrv-scan-pulse 2s ease-in-out infinite;
-  color: var(--gold);
+/* Only visible when sensor is connected */
+.hrv-btn.hrv-visible {
+  opacity: 0.7;
+  pointer-events: auto;
 }
-@keyframes hrv-scan-pulse {
-  0%, 100% { opacity: 0.3; transform: scale(0.95); }
-  50% { opacity: 0.8; transform: scale(1.05); }
-}
-.hrv-btn.connected { opacity: 0.7; }
+.hrv-btn.hrv-visible:hover { opacity: 0.9; }
 .hrv-btn.connected .hrv-icon {
   animation: none;
   fill: currentColor;
