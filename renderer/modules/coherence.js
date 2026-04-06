@@ -140,11 +140,12 @@ function handleMessage(msg) {
 }
 
 // ── Staleness detection ──
-// If no HR data arrives for 5s, the sensor is gone (removed from ear, turned off, out of range).
+// If no HR data arrives for 5s, the sensor is gone. Go fully back to default UI —
+// no "connecting" state. Bridge keeps listening silently in the background.
 function handleSensorStale() {
   if (!coherenceState.connected) return
   coherenceState.connected = false
-  coherenceState.scanning = true  // bridge still running, sensor lost
+  coherenceState.scanning = false  // fully back to default — no "connecting" noise
   coherenceState.hr = 0
   coherenceState.coherence = 0
   coherenceState.coherenceLevel = ''
