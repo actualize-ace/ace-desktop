@@ -350,9 +350,7 @@ export default {
           setTimeout(() => {
             const st = window.__aceState
             if (st?.activeId && st?.sessions) {
-              const modelEl = document.getElementById('chat-model-' + st.activeId)
               const permsEl = document.getElementById('chat-perms-' + st.activeId)
-              if (modelEl) modelEl.value = st.chatDefaults?.model || 'sonnet'
               if (permsEl) permsEl.value = 'auto'
               const tab = st.sessions[st.activeId]?.tab
               if (tab) {
@@ -821,9 +819,7 @@ export default {
       setTimeout(() => {
         const st = window.__aceState
         if (st?.activeId && st?.sessions) {
-          const modelEl = document.getElementById('chat-model-' + st.activeId)
           const permsEl = document.getElementById('chat-perms-' + st.activeId)
-          if (modelEl) modelEl.value = st.chatDefaults?.model || 'sonnet'
           if (permsEl) permsEl.value = 'auto'
           const tab = st.sessions[st.activeId]?.tab
           if (tab) {
