@@ -91,6 +91,20 @@ function createWindow(page) {
 
   mainWindow.loadFile(path.join(__dirname, 'renderer', page))
 
+  // External links: open in default browser, not inside Electron
+  mainWindow.webContents.on('will-navigate', (e, url) => {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      e.preventDefault()
+      shell.openExternal(url)
+    }
+  })
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      shell.openExternal(url)
+    }
+    return { action: 'deny' }
+  })
+
   // Open DevTools in development
   if (!app.isPackaged) {
     mainWindow.webContents.openDevTools({ mode: 'detach' })

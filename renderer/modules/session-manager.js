@@ -750,7 +750,7 @@ export function spawnSession(opts) {
     <div class="chat-view" id="chat-view-${id}">
       <div class="chat-messages" id="chat-msgs-${id}">
         <div class="chat-welcome">
-          <div class="chat-welcome-icon">◈</div>
+          <div class="chat-welcome-icon"><svg width="36" height="36" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cw-orb" cx="38%" cy="38%" r="60%"><stop offset="0%" stop-color="#8878ff"/><stop offset="50%" stop-color="#c8a0f0"/><stop offset="100%" stop-color="#60d8a8"/></radialGradient><radialGradient id="cw-center" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="rgba(220,200,255,0.9)"/><stop offset="30%" stop-color="rgba(180,160,240,0.4)"/><stop offset="100%" stop-color="rgba(160,140,240,0)"/></radialGradient></defs><circle cx="50" cy="50" r="38" fill="url(#cw-orb)" opacity="0.12"/><circle cx="50" cy="50" r="18" fill="url(#cw-orb)" opacity="0.7"/><circle cx="50" cy="50" r="10" fill="url(#cw-center)" opacity="0.9"/></svg></div>
           <div class="chat-welcome-text">ACE Chat</div>
           <div class="chat-welcome-sub">Enter to send · Shift+Enter for newline · Type a message below</div>
         </div>
@@ -1048,6 +1048,17 @@ export function initSessions() {
   // ResizeObserver for fitActive
   const ro = new ResizeObserver(() => fitActive())
   ro.observe(document.getElementById('pane-content-left'))
+
+  // External links: intercept clicks and open in default browser
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]')
+    if (!a) return
+    const href = a.getAttribute('href')
+    if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
+      e.preventDefault()
+      window.ace.shell.openExternal(href)
+    }
+  })
 
   // Window focus / visibility handlers
   document.addEventListener('visibilitychange', () => {
