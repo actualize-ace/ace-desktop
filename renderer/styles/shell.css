@@ -516,67 +516,6 @@ body.streaming .stab.active .stab-dot {
   color: var(--text-secondary); transition: all 0.1s;
 }
 .settings-cmd-option:hover { background: var(--bg-elevated); color: var(--text-primary); }
-/* ── HRV sensor button (sidebar) ── */
-.hrv-btn {
-  position: relative;
-  background: none; border: none;
-  color: var(--text-dim);
-  cursor: pointer; padding: 8px 16px; display: flex;
-  align-items: center; gap: 6px;
-  width: 100%;
-  opacity: 0.3;
-  transition: opacity 0.3s, color 0.8s;
-}
-.hrv-btn:hover { opacity: 0.7; }
-.hrv-btn.scanning { opacity: 0.5; }
-.hrv-btn.scanning .hrv-icon {
-  animation: hrv-scan-pulse 2s ease-in-out infinite;
-  color: var(--gold);
-}
-@keyframes hrv-scan-pulse {
-  0%, 100% { opacity: 0.3; transform: scale(0.95); }
-  50% { opacity: 0.8; transform: scale(1.05); }
-}
-.hrv-btn.connected { opacity: 0.8; }
-.hrv-btn.connected .hrv-icon {
-  animation: none;
-  fill: currentColor;
-  stroke: currentColor;
-}
-.hrv-btn.connected.low .hrv-icon { color: rgba(224,112,128,0.7); }
-.hrv-btn.connected.med .hrv-icon { color: rgba(96,216,168,0.7); }
-.hrv-btn.connected.high .hrv-icon { color: rgba(255,209,102,0.7); }
-.sidebar.collapsed .hrv-btn { justify-content: center; padding: 8px; }
-
-/* HRV tooltip */
-.hrv-tooltip {
-  position: absolute;
-  left: calc(var(--sidebar-w) + 8px);
-  bottom: 60px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
-  min-width: 180px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
-  z-index: 999;
-}
-.hrv-tooltip.visible { opacity: 1; pointer-events: auto; }
-.hrv-tooltip-text {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 11px;
-  color: var(--text-primary);
-  font-weight: 500;
-}
-.hrv-tooltip-sub {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  color: var(--text-dim);
-  margin-top: 2px;
-}
-
 .settings-btn {
   background: none; border: none; color: var(--text-dim);
   cursor: pointer; padding: 8px 16px; display: flex;
