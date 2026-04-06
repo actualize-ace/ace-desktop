@@ -4,6 +4,7 @@
 
 const WS_URL = 'ws://localhost:8765'
 const RECONNECT_MS = 3000
+const STALE_MS = 5000  // no HR data for 5s = sensor lost
 const RR_MIN = 300   // 200bpm hard floor
 const RR_MAX = 2000  // 30bpm hard ceiling
 const RR_JUMP = 0.25 // 25% deviation = artifact
@@ -24,6 +25,7 @@ export const coherenceState = {
 const listeners = { update: [], heartbeat: [] }
 let ws = null
 let reconnectTimer = null
+let staleTimer = null
 let initialized = false
 
 // ── Public API ──
@@ -56,6 +58,7 @@ function connect() {
       catch (_) { /* malformed frame, ignore */ }
     }
     ws.onclose = () => {
+      clearTimeout(staleTimer)
       if (coherenceState.connected || coherenceState.scanning) {
         coherenceState.connected = false
         coherenceState.scanning = false
@@ -100,6 +103,9 @@ function handleMessage(msg) {
   } else if (msg.type === 'hr') {
     coherenceState.hr = msg.hr
     coherenceState.battery = msg.battery || coherenceState.battery
+    // Reset stale timer — sensor is alive
+    clearTimeout(staleTimer)
+    staleTimer = setTimeout(handleSensorStale, STALE_MS)
     if (msg.rr && msg.rr.length > 0) {
       for (const rr of msg.rr) {
         if (filterRR(rr)) {
@@ -131,6 +137,20 @@ function handleMessage(msg) {
     }
     emit('update')
   }
+}
+
+// ── Staleness detection ──
+// If no HR data arrives for 5s, the sensor is gone (removed from ear, turned off, out of range).
+function handleSensorStale() {
+  if (!coherenceState.connected) return
+  coherenceState.connected = false
+  coherenceState.scanning = true  // bridge still running, sensor lost
+  coherenceState.hr = 0
+  coherenceState.coherence = 0
+  coherenceState.coherenceLevel = ''
+  coherenceState.rrWindow = []
+  coherenceState.rrStrip = []
+  emit('update')
 }
 
 // ── Artifact rejection ──
