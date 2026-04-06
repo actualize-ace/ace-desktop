@@ -620,24 +620,34 @@ body.light .atm-audio-popover {
 /* ── Coherence: status dot next to HR ── */
 .somatic-bar-hr-dot {
   display: inline-block;
-  width: 5px; height: 5px;
+  width: 6px; height: 6px;
   border-radius: 50%;
   margin-right: 6px;
   vertical-align: middle;
-  background: var(--text-dim);
-  transition: background 0.8s ease, box-shadow 0.8s ease;
+  transition: background 0.8s ease, box-shadow 0.8s ease, border-color 0.8s ease;
 }
+/* Scanning — hollow ring, pulsing gold */
 .somatic-bar-hr-dot.scanning {
-  background: var(--gold);
+  background: transparent;
+  border: 1.5px solid var(--gold);
+  box-shadow: 0 0 4px rgba(200,160,240,0.3);
   animation: coherence-hr-scan 1.5s ease-in-out infinite;
 }
 @keyframes coherence-hr-scan {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
 }
+/* Connected — solid green filled */
 .somatic-bar-hr-dot.connected {
   background: var(--green);
+  border: none;
   box-shadow: 0 0 4px rgba(96,216,168,0.4);
+  animation: none;
+}
+/* Scanning text style */
+.somatic-bar-hr-connecting {
+  font-style: italic;
+  opacity: 0.5;
 }
 
 /* ── Coherence: hide quote when sensor active ── */

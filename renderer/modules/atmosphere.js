@@ -646,7 +646,7 @@ function handleCoherenceUpdate(cs) {
     strip.classList.add('active')
     if (hrEl) hrEl.classList.add('visible')
     if (barText) barText.classList.add('coherence-hidden')
-    if (hrVal) hrVal.textContent = cs.hr || '—'
+    if (hrVal) { hrVal.textContent = cs.hr || '—'; hrVal.classList.remove('somatic-bar-hr-connecting') }
     // Update glow color target
     if (cs.coherenceLevel && COHERENCE_COLORS[cs.coherenceLevel]) {
       coherenceTargetColor = { ...COHERENCE_COLORS[cs.coherenceLevel] }
@@ -658,10 +658,10 @@ function handleCoherenceUpdate(cs) {
       glowEl.style.background = `radial-gradient(ellipse at center, rgba(${c.r|0},${c.g|0},${c.b|0},${0.06 + intensity * 0.2}) 0%, rgba(${c.r|0},${c.g|0},${c.b|0},0.02) 50%, transparent 75%)`
     }
   } else if (cs.scanning) {
-    // Bridge running, sensor not found yet — show scanning state
+    // Bridge running, sensor not found yet — show connecting state
     strip.classList.remove('active')
     if (hrEl) hrEl.classList.add('visible')
-    if (hrVal) hrVal.textContent = '—'
+    if (hrVal) { hrVal.textContent = 'connecting'; hrVal.classList.add('somatic-bar-hr-connecting') }
     if (barText) barText.classList.add('coherence-hidden')
   } else {
     strip.classList.remove('active')
