@@ -29,7 +29,10 @@ async function loadDashboard() {
     getMetrics:   () => window.ace.dash.getMetrics(),
     getVelocity:  () => window.ace.dash.getVelocity(),
     getRhythm:    () => window.ace.dash.getRhythm(),
-    getPatterns:  () => window.ace.dash.getPatterns(),
+  }
+  // Patterns: optional, don't break dashboard if unavailable
+  if (typeof window.ace.dash.getPatterns === 'function') {
+    sourceMap.getPatterns = () => window.ace.dash.getPatterns()
   }
 
   // Collect unique data sources needed by enabled widgets
