@@ -3,6 +3,7 @@
 // Design doc: docs/plans/2026-04-03-somatic-atmosphere-infusion-design.md
 
 import { state } from '../state.js'
+import { initCoherence, coherenceState, onCoherenceUpdate } from './coherence.js'
 
 // ── Constants ──
 const TICK_MS = 60_000  // update every minute
@@ -14,6 +15,16 @@ const IDLE_END_MS = 30 * 60_000     // 30 min — auto-close session
 const BREATH_REDUCTION = 0.05       // intensity reduction per completed protocol
 const BREATH_REDUCTION_CAP = 0.15   // max total breath reduction
 const CROSSFADE_MS = 30_000  // 30s frequency transitions
+
+// ── Coherence color map ──
+const COHERENCE_COLORS = {
+  low:  { r: 224, g: 112, b: 128 },  // warm rose
+  med:  { r: 96,  g: 216, b: 168 },  // capacity green
+  high: { r: 255, g: 209, b: 102 },  // soft gold
+}
+let coherenceCurrentColor = { r: 140, g: 120, b: 255 }  // default purple
+let coherenceTargetColor = { r: 140, g: 120, b: 255 }
+let coherenceAnimFrame = null
 
 // ── Somatic bar content pools ──
 const POOL_LOW = [
@@ -555,7 +566,7 @@ function checkNudge() {
   // Two-beat reveal: glow first, then word
   const glowEl = document.getElementById('somatic-bar-glow')
   const isLight = state.theme === 'light'
-  if (glowEl) {
+  if (glowEl && !state.coherenceConnected) {  // coherence owns the glow when connected
     glowEl.style.background = isLight
       ? 'radial-gradient(circle, rgba(90, 72, 192, 0.8) 0%, rgba(90, 72, 192, 0) 65%)'
       : 'radial-gradient(circle, rgba(140, 120, 255, 0.45) 0%, rgba(140, 120, 255, 0) 70%)'
@@ -583,6 +594,139 @@ function nudgeClick() {
   dismissNudge()
   const breathNav = document.querySelector('[data-view="breath"]')
   if (breathNav) breathNav.click()
+}
+
+// ── Coherence: rhythm strip rendering ──
+
+let rsCanvas = null
+let rsCtx = null
+let RS_W = 0, RS_H = 0
+
+function initCoherenceBar() {
+  rsCanvas = document.getElementById('somatic-bar-rhythm')
+  if (!rsCanvas) return
+  rsCtx = rsCanvas.getContext('2d')
+  sizeRhythmCanvas()
+  window.addEventListener('resize', sizeRhythmCanvas)
+
+  onCoherenceUpdate(handleCoherenceUpdate)
+  coherenceAnimLoop()
+}
+
+function sizeRhythmCanvas() {
+  if (!rsCanvas || !rsCanvas.parentElement) return
+  const rect = rsCanvas.parentElement.getBoundingClientRect()
+  RS_W = rect.width
+  RS_H = rect.height
+  rsCanvas.width = RS_W * 2
+  rsCanvas.height = RS_H * 2
+  rsCtx.setTransform(2, 0, 0, 2, 0, 0)
+}
+
+function handleCoherenceUpdate(cs) {
+  const strip = document.getElementById('somatic-bar-rhythm')
+  const hrEl = document.getElementById('somatic-bar-hr')
+  const hrVal = document.getElementById('somatic-bar-hr-value')
+  const barText = document.getElementById('somatic-bar-text')
+  const glowEl = document.getElementById('somatic-bar-glow')
+
+  if (!strip) return
+
+  state.coherenceConnected = cs.connected
+
+  if (cs.connected) {
+    strip.classList.add('active')
+    if (hrEl) hrEl.classList.add('visible')
+    if (barText) barText.classList.add('coherence-hidden')
+    if (hrVal) hrVal.textContent = cs.hr || '—'
+    // Update glow color target
+    if (cs.coherenceLevel && COHERENCE_COLORS[cs.coherenceLevel]) {
+      coherenceTargetColor = { ...COHERENCE_COLORS[cs.coherenceLevel] }
+    }
+    // Set glow
+    if (glowEl) {
+      const c = coherenceCurrentColor
+      const intensity = cs.coherence || 0
+      glowEl.style.background = `radial-gradient(ellipse at center, rgba(${c.r|0},${c.g|0},${c.b|0},${0.06 + intensity * 0.2}) 0%, rgba(${c.r|0},${c.g|0},${c.b|0},0.02) 50%, transparent 75%)`
+    }
+  } else {
+    strip.classList.remove('active')
+    if (hrEl) hrEl.classList.remove('visible')
+    if (barText) barText.classList.remove('coherence-hidden')
+    // Hand glow back to atmosphere
+    if (glowEl) glowEl.style.background = ''
+  }
+}
+
+function drawRhythmStrip() {
+  if (!rsCtx || RS_W === 0) return
+  rsCtx.clearRect(0, 0, RS_W, RS_H)
+
+  const buf = coherenceState.rrStrip
+  if (!coherenceState.connected || buf.length < 3) return
+
+  // Lerp color
+  coherenceCurrentColor.r += (coherenceTargetColor.r - coherenceCurrentColor.r) * 0.02
+  coherenceCurrentColor.g += (coherenceTargetColor.g - coherenceCurrentColor.g) * 0.02
+  coherenceCurrentColor.b += (coherenceTargetColor.b - coherenceCurrentColor.b) * 0.02
+
+  const c = coherenceCurrentColor
+  const min = Math.min(...buf)
+  const max = Math.max(...buf)
+  const range = Math.max(max - min, 40)
+  const padY = 6
+  const padX = 60
+
+  // Build smooth curve points
+  const points = []
+  for (let i = 0; i < buf.length; i++) {
+    const x = padX + (i / 79) * (RS_W - padX * 2)  // 80 = max strip length
+    const normalized = (buf[i] - min) / range
+    const y = RS_H - padY - normalized * (RS_H - padY * 2)
+    points.push({ x, y })
+  }
+
+  // Draw smooth quadratic bezier curve
+  rsCtx.beginPath()
+  rsCtx.moveTo(points[0].x, points[0].y)
+  for (let i = 0; i < points.length - 1; i++) {
+    const cpx = (points[i].x + points[i + 1].x) / 2
+    const cpy = (points[i].y + points[i + 1].y) / 2
+    rsCtx.quadraticCurveTo(points[i].x, points[i].y, cpx, cpy)
+  }
+  const last = points[points.length - 1]
+  rsCtx.lineTo(last.x, last.y)
+
+  // Stroke — brightness scales with coherence
+  const lineAlpha = 0.2 + (coherenceState.coherence || 0) * 0.35
+  rsCtx.strokeStyle = `rgba(${c.r|0},${c.g|0},${c.b|0},${lineAlpha})`
+  rsCtx.lineWidth = 1.3
+  rsCtx.lineJoin = 'round'
+  rsCtx.lineCap = 'round'
+  rsCtx.stroke()
+
+  // Subtle fill under curve
+  rsCtx.lineTo(last.x, RS_H)
+  rsCtx.lineTo(points[0].x, RS_H)
+  rsCtx.closePath()
+  const fillAlpha = 0.02 + (coherenceState.coherence || 0) * 0.04
+  rsCtx.fillStyle = `rgba(${c.r|0},${c.g|0},${c.b|0},${fillAlpha})`
+  rsCtx.fill()
+
+  // Edge fade
+  const edgeFade = rsCtx.createLinearGradient(0, 0, RS_W, 0)
+  const bgColor = state.theme === 'light' ? '240,238,246' : '12,14,24'
+  edgeFade.addColorStop(0, `rgba(${bgColor},1)`)
+  edgeFade.addColorStop(0.08, `rgba(${bgColor},0)`)
+  edgeFade.addColorStop(0.92, `rgba(${bgColor},0)`)
+  edgeFade.addColorStop(1, `rgba(${bgColor},1)`)
+  rsCtx.fillStyle = edgeFade
+  rsCtx.fillRect(0, 0, RS_W, RS_H)
+}
+
+function coherenceAnimLoop() {
+  drawRhythmStrip()
+  coherenceAnimFrame = requestAnimationFrame(coherenceAnimLoop)
 }
 
 // ── Audio Engine (Web Audio API — pure synthesis, no files) ──
@@ -1020,6 +1164,10 @@ export async function initAtmosphere() {
     }
     document.addEventListener('click', startSavedAudio, { once: true })
   }
+
+  // Start coherence (HeartMath) integration
+  initCoherence()
+  initCoherenceBar()
 
   // Start activity detection + tick
   initActivityListeners()
