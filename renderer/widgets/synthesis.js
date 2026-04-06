@@ -217,6 +217,7 @@ export default {
           <span class="cc-innermove-pattern-count">${pat.count}<span class="cc-innermove-trend">${pat.trend === '^' ? '\u2191' : pat.trend === 'v' ? '\u2193' : '\u2022'}</span></span>
         </div>` : ''}
         <div class="cc-innermove-prompt">${escapeHtml(coaching.prompt)}</div>
+        ${pat && pat.description ? `<div class="cc-innermove-desc">${escapeHtml(pat.description)}</div>` : ''}
         ${ten ? `<div class="cc-innermove-tension">tension: ${escapeHtml(ten.label)} \u2014 day ${ten.days}</div>` : ''}
         <div class="cc-innermove-actions">
           <button class="cc-innermove-open">Open ${escapeHtml(coaching.skill)}</button>
