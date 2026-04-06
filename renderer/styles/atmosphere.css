@@ -696,31 +696,128 @@ body.light .atm-audio-popover {
 .hrv-btn.connected.med .hrv-icon { color: rgba(96,216,168,0.7); }
 .hrv-btn.connected.high .hrv-icon { color: rgba(255,209,102,0.7); }
 
-/* HRV tooltip — pops up above the somatic bar */
-.hrv-tooltip {
-  position: absolute;
+/* ── HRV Status Panel ── */
+.hrv-panel-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 998;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+.hrv-panel-backdrop.visible { opacity: 1; pointer-events: auto; }
+
+.hrv-panel {
+  position: fixed;
+  bottom: 48px;
   right: 16px;
-  bottom: 40px;
+  width: 260px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
-  min-width: 180px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
+  border-radius: 12px;
   z-index: 999;
+  opacity: 0; pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity 0.2s, transform 0.2s;
+  overflow: hidden;
 }
-.hrv-tooltip.visible { opacity: 1; pointer-events: auto; }
-.hrv-tooltip-text {
+.hrv-panel.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+.hrv-panel-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--border);
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 11px;
+  font-size: 12px; font-weight: 500;
   color: var(--text-primary);
-  font-weight: 500;
 }
-.hrv-tooltip-sub {
+.hrv-panel-close {
+  margin-left: auto;
+  background: none; border: none;
+  color: var(--text-dim); font-size: 16px;
+  cursor: pointer; padding: 0 2px;
+  transition: color 0.15s;
+}
+.hrv-panel-close:hover { color: var(--text-primary); }
+
+.hrv-panel-body { padding: 12px 14px; }
+
+.hrv-panel-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.hrv-panel-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.hrv-panel-status {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-secondary);
+}
+.hrv-panel-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  flex-shrink: 0;
+}
+.hrv-dot-off { background: var(--text-dim); opacity: 0.4; }
+.hrv-dot-on { background: var(--green); box-shadow: 0 0 4px rgba(96,216,168,0.4); }
+.hrv-dot-searching {
+  background: var(--gold);
+  animation: hrv-dot-pulse 1.5s ease-in-out infinite;
+}
+@keyframes hrv-dot-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* Metrics row — only visible when connected */
+.hrv-panel-metrics {
+  display: flex; gap: 16px; justify-content: center;
+  padding: 10px 0 6px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  opacity: 0; height: 0; overflow: hidden;
+  transition: opacity 0.3s, height 0.3s;
+}
+.hrv-panel-metrics.visible { opacity: 1; height: auto; }
+.hrv-panel-metric { text-align: center; }
+.hrv-panel-metric-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18px; font-weight: 300;
+  color: var(--text-primary);
+  display: block; line-height: 1;
+}
+.hrv-panel-metric-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  display: block; margin-top: 2px;
+}
+.hrv-panel-level.low { color: rgba(224,112,128,0.8); }
+.hrv-panel-level.med { color: rgba(96,216,168,0.8); }
+.hrv-panel-level.high { color: rgba(255,209,102,0.8); }
+
+/* Help section */
+.hrv-panel-help {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.hrv-panel-help-text {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px; color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.hrv-panel-cmd {
+  display: block;
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
-  color: var(--text-dim);
-  margin-top: 2px;
+  background: rgba(140,120,255,0.06);
+  border: 1px solid rgba(140,120,255,0.1);
+  border-radius: 4px;
+  padding: 5px 8px;
+  color: var(--text-secondary);
+  user-select: all;
 }

@@ -614,22 +614,25 @@ function initCoherenceBar() {
   coherenceAnimLoop()
 
   // HRV sidebar icon — click to show tooltip
+  // HRV status panel — open/close
   const hrvBtn = document.getElementById('hrv-btn')
-  const hrvTooltip = document.getElementById('hrv-tooltip')
-  if (hrvBtn && hrvTooltip) {
-    let tooltipTimer = null
-    hrvBtn.addEventListener('click', () => {
-      hrvTooltip.classList.add('visible')
-      clearTimeout(tooltipTimer)
-      tooltipTimer = setTimeout(() => hrvTooltip.classList.remove('visible'), 3000)
-    })
-    // Hide on click elsewhere
-    document.addEventListener('click', (e) => {
-      if (!hrvBtn.contains(e.target) && !hrvTooltip.contains(e.target)) {
-        hrvTooltip.classList.remove('visible')
-      }
-    })
+  const hrvPanel = document.getElementById('hrv-panel')
+  const hrvBackdrop = document.getElementById('hrv-panel-backdrop')
+  const hrvClose = document.getElementById('hrv-panel-close')
+
+  function openHrvPanel() {
+    if (hrvPanel) hrvPanel.classList.add('visible')
+    if (hrvBackdrop) hrvBackdrop.classList.add('visible')
+    updateHrvPanel()
   }
+  function closeHrvPanel() {
+    if (hrvPanel) hrvPanel.classList.remove('visible')
+    if (hrvBackdrop) hrvBackdrop.classList.remove('visible')
+  }
+
+  if (hrvBtn) hrvBtn.addEventListener('click', openHrvPanel)
+  if (hrvClose) hrvClose.addEventListener('click', closeHrvPanel)
+  if (hrvBackdrop) hrvBackdrop.addEventListener('click', closeHrvPanel)
 }
 
 function sizeRhythmCanvas() {
@@ -704,21 +707,70 @@ function handleCoherenceUpdate(cs) {
 
 function handleHrvIcon(cs) {
   const btn = document.getElementById('hrv-btn')
-  const tooltipText = document.getElementById('hrv-tooltip-text')
-  const tooltipSub = document.getElementById('hrv-tooltip-sub')
   if (!btn) return
 
   btn.classList.remove('scanning', 'connected', 'low', 'med', 'high', 'hrv-visible')
-  const tooltip = document.getElementById('hrv-tooltip')
 
   if (cs.connected) {
     btn.classList.add('connected', 'hrv-visible')
     if (cs.coherenceLevel) btn.classList.add(cs.coherenceLevel)
-    if (tooltipText) tooltipText.textContent = 'Inner Balance'
-    if (tooltipSub) tooltipSub.textContent = `${cs.hr || '—'} bpm · ${cs.battery || '—'}% battery`
-  } else {
-    // Not connected — hide entirely. No heart, no tooltip, clean bar.
-    if (tooltip) tooltip.classList.remove('visible')
+  }
+  // Not connected = heart icon hidden (no hrv-visible class)
+
+  // Update panel if it's open
+  updateHrvPanel()
+}
+
+function updateHrvPanel() {
+  const cs = coherenceState
+  const bridgeDot = document.querySelector('#hrv-bridge-status .hrv-panel-dot')
+  const bridgeText = document.getElementById('hrv-bridge-text')
+  const sensorDot = document.querySelector('#hrv-sensor-status .hrv-panel-dot')
+  const sensorText = document.getElementById('hrv-sensor-text')
+  const metricsRow = document.getElementById('hrv-panel-metrics')
+  const helpSection = document.getElementById('hrv-panel-help')
+  const helpText = document.getElementById('hrv-panel-help-text')
+  const panelHR = document.getElementById('hrv-panel-hr')
+  const panelBattery = document.getElementById('hrv-panel-battery')
+  const panelLevel = document.getElementById('hrv-panel-level')
+
+  // Bridge status — if we have a WebSocket open (scanning or connected), bridge is running
+  const bridgeUp = cs.connected || cs.scanning
+  if (bridgeDot) {
+    bridgeDot.className = 'hrv-panel-dot ' + (bridgeUp ? 'hrv-dot-on' : 'hrv-dot-off')
+  }
+  if (bridgeText) bridgeText.textContent = bridgeUp ? 'Running' : 'Not running'
+
+  // Sensor status
+  if (sensorDot) {
+    sensorDot.className = 'hrv-panel-dot ' + (
+      cs.connected ? 'hrv-dot-on' :
+      cs.scanning ? 'hrv-dot-searching' : 'hrv-dot-off'
+    )
+  }
+  if (sensorText) {
+    sensorText.textContent = cs.connected ? `Connected · ${cs.battery || '—'}%` :
+      cs.scanning ? 'Searching...' : 'Not detected'
+  }
+
+  // Metrics — only when connected
+  if (metricsRow) metricsRow.classList.toggle('visible', cs.connected)
+  if (cs.connected) {
+    if (panelHR) panelHR.textContent = cs.hr || '—'
+    if (panelBattery) panelBattery.textContent = cs.battery ? cs.battery + '%' : '—'
+    if (panelLevel) {
+      const LEVEL_WORDS = { low: 'low', med: 'coherent', high: 'deep' }
+      panelLevel.textContent = LEVEL_WORDS[cs.coherenceLevel] || '—'
+      panelLevel.className = 'hrv-panel-metric-value hrv-panel-level ' + (cs.coherenceLevel || '')
+    }
+  }
+
+  // Help section — show when not connected
+  if (helpSection) helpSection.style.display = cs.connected ? 'none' : ''
+  if (helpText) {
+    helpText.textContent = bridgeUp
+      ? 'Clip the Inner Balance sensor to your ear'
+      : 'Start the bridge to connect your sensor:'
   }
 }
 
