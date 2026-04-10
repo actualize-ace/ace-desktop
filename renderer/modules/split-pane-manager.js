@@ -277,19 +277,9 @@ export function initSplitPane() {
     }
   })
 
-  // Restore split state from previous session
-  const wasSplit = localStorage.getItem('ace-split-active') === '1'
-  if (wasSplit) {
-    // Defer to after initial sessions are spawned
-    requestAnimationFrame(() => {
-      initSplit()
-      // Spawn a new session in the right pane
-      window.spawnSession({
-        container: document.getElementById('pane-content-right'),
-        tabBar: document.getElementById('session-tabs-right'),
-      })
-    })
-  }
+  // Don't auto-restore split — terminal should open full-width.
+  // User can split manually via the ⫻ button.
+  localStorage.removeItem('ace-split-active')
 
   // Expose for session-manager
   window.splitPaneManager = { checkCollapse, moveToOtherGroup, isSplitActive }

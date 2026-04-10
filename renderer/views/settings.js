@@ -110,6 +110,10 @@ export async function renderSettingsPanel() {
           ${sel('chat.effort', 'max', 'Max')}
         </select>
       </div>
+      <div class="settings-row">
+        <div class="settings-label">Lean Mode <span style="opacity:0.5;font-size:11px">— strips ~60k overhead tokens</span></div>
+        <div class="settings-toggle${d.chat?.lean !== false ? ' on' : ''}" data-setting="chat.lean"></div>
+      </div>
     </div>
 
     <div class="settings-section">
@@ -439,7 +443,7 @@ export function applySettingImmediately(path, value) {
       sidebar?.classList.remove('collapsed')
       if (toggleBtn) toggleBtn.innerHTML = '\u25c2 <span>Collapse</span>'
     }
-  } else if (path === 'chat.model' || path === 'chat.permissions' || path === 'chat.effort') {
+  } else if (path === 'chat.model' || path === 'chat.permissions' || path === 'chat.effort' || path === 'chat.lean') {
     // Update chatDefaults for new sessions
     const key = path.split('.')[1]
     state.chatDefaults[key] = value

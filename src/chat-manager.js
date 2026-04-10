@@ -3,6 +3,8 @@
 // Each message is a separate process invocation. Multi-turn via --resume.
 
 const { spawn } = require('child_process')
+const path = require('path')
+const fs = require('fs')
 const ch = require('./ipc-channels')
 
 const sessions = new Map() // chatId → { proc, claudeSessionId }
@@ -35,6 +37,26 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   // Reasoning effort — always pass explicitly
   if (opts.effort) {
     args.push('--effort', opts.effort)
+  }
+
+  // Token economy — lean mode (Phase 1)
+  // Strips MCP server schemas (~45k tokens) without breaking skills or tools.
+  // --bare gives deeper savings but requires ANTHROPIC_API_KEY (breaks OAuth/Max).
+  if (opts.lean !== false) {
+    const hasApiKey = !!process.env.ANTHROPIC_API_KEY
+
+    if (hasApiKey) {
+      args.push('--bare', '--add-dir', cwd)
+      // Inject CLAUDE.md manually when --bare kills auto-discovery
+      const claudeMdPath = path.join(cwd, 'CLAUDE.md')
+      if (fs.existsSync(claudeMdPath)) {
+        args.push('--append-system-prompt',
+          fs.readFileSync(claudeMdPath, 'utf8'))
+      }
+    } else {
+      // OAuth/Max path — suppress MCP servers but keep skills + all tools
+      args.push('--strict-mcp-config')
+    }
   }
 
   const proc = spawn(claudeBin, args, {

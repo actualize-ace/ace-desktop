@@ -33,7 +33,9 @@ let initialized = false
 export function initCoherence() {
   if (initialized) return
   initialized = true
-  connect()
+  // Disabled: auto-connect causes error loop when bridge isn't running.
+  // Re-enable when HeartMath bridge is calibrated and ready.
+  // connect()
 }
 
 export function onCoherenceUpdate(fn) { listeners.update.push(fn) }
@@ -156,14 +158,27 @@ function handleSensorStale() {
 
 // ── Artifact rejection ──
 
+let consecutiveRejects = 0
+const MAX_REJECTS = 10  // after 10 straight rejections, accept new rhythm
+
 function filterRR(rr) {
   if (rr < RR_MIN || rr > RR_MAX) return false
   const buf = coherenceState.rrWindow
   if (buf.length >= 3) {
     const recent = buf.slice(-5)
     const avg = recent.reduce((a, b) => a + b, 0) / recent.length
-    if (Math.abs(rr - avg) / avg > RR_JUMP) return false
+    if (Math.abs(rr - avg) / avg > RR_JUMP) {
+      consecutiveRejects++
+      if (consecutiveRejects >= MAX_REJECTS) {
+        // Rhythm shifted — reset window to break the death spiral
+        coherenceState.rrWindow = []
+        consecutiveRejects = 0
+        return true
+      }
+      return false
+    }
   }
+  consecutiveRejects = 0
   return true
 }
 

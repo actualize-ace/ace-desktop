@@ -72,6 +72,7 @@ export function sendChatMessage(id, prompt, sessionsObj) {
     model: modelEl?.value || state.chatDefaults.model,
     permissions: permsEl?.value || state.chatDefaults.permissions,
     effort: effortEl?.value || state.chatDefaults.effort,
+    lean: state.chatDefaults.lean !== false,
   }
   // Keep session state in sync with the model actually used
   if (s) s.model = opts.model
