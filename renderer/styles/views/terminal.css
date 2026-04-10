@@ -50,6 +50,49 @@
   background: rgba(212,165,116,0.3);
 }
 
+/* ── Context pressure — ambient somatic response to context fill ── */
+@keyframes ctx-pulse {
+  0%, 100% { opacity: 0.12; }
+  50%       { opacity: 0.32; }
+}
+
+/* Overlay renders on top of all children, never clips */
+.term-pane::before {
+  content: '';
+  position: absolute; inset: 0; z-index: 100;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 1.5s ease, background 1.5s ease;
+}
+
+/* 50–80%: warm amber breath at the edges */
+.term-pane.ctx-warn::before {
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(212,165,116,0.12) 100%);
+  opacity: 1;
+}
+/* 80–95%: heat intensifies */
+.term-pane.ctx-hot::before {
+  background: radial-gradient(ellipse at center, transparent 30%, rgba(212,165,116,0.28) 100%);
+  opacity: 1;
+}
+.term-pane.ctx-hot .term-hdr-dot {
+  background: var(--gold) !important;
+  box-shadow: 0 0 8px rgba(212,165,116,0.6) !important;
+  transition: background 1s, box-shadow 1s;
+}
+/* 95–100%: critical pressure — slow red pulse */
+.term-pane.ctx-critical::before {
+  background: radial-gradient(ellipse at center, transparent 20%, rgba(196,116,116,0.30) 100%);
+  animation: ctx-pulse 3s ease-in-out infinite;
+  opacity: 1;
+}
+.term-pane.ctx-critical .term-hdr-dot {
+  background: var(--red) !important;
+  box-shadow: 0 0 10px rgba(196,116,116,0.7) !important;
+  transition: background 1s, box-shadow 1s;
+}
+
 /* Scroll to bottom button */
 .scroll-to-bottom {
   position: absolute; bottom: 16px; right: 20px; z-index: 10;

@@ -73,6 +73,8 @@ export function sendChatMessage(id, prompt, sessionsObj) {
     permissions: permsEl?.value || state.chatDefaults.permissions,
     effort: effortEl?.value || state.chatDefaults.effort,
   }
+  // Keep session state in sync with the model actually used
+  if (s) s.model = opts.model
 
   // Send to backend
   window.ace.chat.send(id, prompt.trim(), s.claudeSessionId, opts)
@@ -375,6 +377,11 @@ export function updateChatStatus(id, event, sessionsObj) {
   if (event.usage) {
     s.totalTokens.input += event.usage.input_tokens || 0
     s.totalTokens.output += event.usage.output_tokens || 0
+    // Real context = input + cache fields (Claude caches full conversation history)
+    if (event.usage) {
+      const u = event.usage
+      s.contextInputTokens = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0)
+    }
   }
   const totalTok = s.totalTokens.input + s.totalTokens.output
 
@@ -387,8 +394,8 @@ export function updateChatStatus(id, event, sessionsObj) {
     if (tokEl) tokEl.textContent = formatTokens(totalTok) + ' tokens'
   }
 
-  // Update context bar
-  updateContextBar(id, totalTok)
+  // Update context bar using actual context window usage
+  updateContextBar(id, s.contextInputTokens)
 
   // Cost guardrail: warn if session cost exceeds threshold
   if (state._costGuardrail && s.totalCost > state._costGuardrail && !s._costWarned) {
@@ -407,26 +414,12 @@ export function updateTokensFromStream(id, event, sessionsObj) {
   if (event.type === 'stream_event' && event.event) {
     const e = event.event
     if (e.type === 'message_start' && e.message?.usage) {
-      s.totalTokens.input = e.message.usage.input_tokens || 0
-      s.totalTokens.output = e.message.usage.output_tokens || 0
-      const totalTok = s.totalTokens.input + s.totalTokens.output
-      const statusEl = document.getElementById('chat-status-' + id)
-      if (statusEl) {
-        const tokEl = statusEl.querySelector('.chat-tokens-label')
-        if (tokEl) tokEl.textContent = formatTokens(totalTok) + ' tokens'
-      }
-      updateContextBar(id, totalTok)
+      // Real context = input + cache_creation + cache_read (Claude caches the full history)
+      const u = e.message.usage
+      s.contextInputTokens = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0)
+      updateContextBar(id, s.contextInputTokens)
     }
-    if (e.type === 'message_delta' && e.usage) {
-      s.totalTokens.output += e.usage.output_tokens || 0
-      const totalTok = s.totalTokens.input + s.totalTokens.output
-      const statusEl = document.getElementById('chat-status-' + id)
-      if (statusEl) {
-        const tokEl = statusEl.querySelector('.chat-tokens-label')
-        if (tokEl) tokEl.textContent = formatTokens(totalTok) + ' tokens'
-      }
-      updateContextBar(id, totalTok)
-    }
+    // message_delta output tokens intentionally not added — context bar stays stable during streaming
   }
 }
 
@@ -437,18 +430,27 @@ export function formatTokens(n) {
 }
 
 export function updateContextBar(id, totalTokens) {
-  const modelEl = document.getElementById('chat-model-' + id)
-  const model = modelEl?.value || 'sonnet'
+  const model = state.sessions[id]?.model || state.chatDefaults?.model || 'opus'
   const CTX_LIMITS = { opus: 1000000, sonnet: 200000, haiku: 200000 }
   const maxCtx = CTX_LIMITS[model] || 200000
   const pct = Math.min(100, (totalTokens / maxCtx) * 100)
   const fill = document.getElementById('ctx-fill-' + id)
   const label = document.getElementById('ctx-label-' + id)
+  const barEl = document.getElementById('ctx-bar-' + id)
   if (fill) {
     fill.style.width = pct + '%'
     fill.className = 'ctx-bar-fill' + (pct > 80 ? ' critical' : pct > 50 ? ' warn' : '')
   }
-  if (label) label.textContent = formatTokens(totalTokens)
+  if (barEl) barEl.title = `Context: ${formatTokens(totalTokens)} / ${formatTokens(maxCtx)} tokens (${Math.round(pct)}%)`
+  if (label) label.textContent = Math.round(pct) + '%'
+
+  // Ambient pressure — somatic response on the pane itself
+  const paneEl = document.getElementById('pane-' + id)
+  if (paneEl) {
+    paneEl.classList.toggle('ctx-warn',     pct >= 50 && pct < 80)
+    paneEl.classList.toggle('ctx-hot',      pct >= 80 && pct < 95)
+    paneEl.classList.toggle('ctx-critical', pct >= 95)
+  }
 }
 
 // Wire chat stream listeners for a session
@@ -810,11 +812,19 @@ export function spawnSession(opts) {
     currentStreamText: '',
     currentToolInput: '',
     isStreaming: false,
+    model: state.chatDefaults.model,
     totalCost: 0,
     totalTokens: { input: 0, output: 0 },
+    contextInputTokens: 0,
     _settledBoundary: 0, _settledHTML: '', _currentAssistantEl: null, _pendingRAF: null, _currentToolBlock: null,
   }
   activateSession(id)
+
+  // Keep session model state in sync when user changes the dropdown
+  document.getElementById('chat-model-' + id)?.addEventListener('change', function () {
+    if (state.sessions[id]) state.sessions[id].model = this.value
+    updateContextBar(id, state.sessions[id]?.contextInputTokens || 0)
+  })
 
   // Close button
   document.getElementById('stab-close-' + id).addEventListener('click', (e) => {

@@ -12,8 +12,7 @@
   color:var(--text-dim); font-family:'Space Grotesk',sans-serif;
 }
 .chat-welcome-icon {
-  font-size:36px; opacity:0.6;
-  background: var(--gradient-accent); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  width:36px; height:36px; opacity:0.8;
   filter: drop-shadow(0 0 20px rgba(136,120,255,0.3));
 }
 .chat-welcome-text { font-size:15px; font-weight:400; color:var(--text-secondary); }

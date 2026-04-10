@@ -29,22 +29,18 @@ export function updateTelemetry() {
   const costEl = document.getElementById('telem-cost')
   if (costEl) costEl.textContent = '$' + totalCost.toFixed(2)
 
-  // Context depth (deepest session)
-  let maxCtxPct = 0
-  allSessions.forEach(s => {
-    const tok = (s.totalTokens?.input || 0) + (s.totalTokens?.output || 0)
-    const modelEl = document.getElementById('chat-model-' + Object.keys(state.sessions).find(id => state.sessions[id] === s))
-    const model = modelEl?.value || 'sonnet'
-    const limit = model === 'opus' ? 1000000 : 200000
-    const pct = (tok / limit) * 100
-    if (pct > maxCtxPct) maxCtxPct = pct
-  })
+  // Active session context %
+  const activeSession = state.sessions[state.activeId]
   const ctxEl = document.getElementById('telem-ctx-pct')
-  const ctxFill = document.getElementById('telem-ctx-fill')
-  if (ctxEl) ctxEl.textContent = Math.round(maxCtxPct) + '%'
-  if (ctxFill) {
-    ctxFill.style.width = Math.min(100, maxCtxPct) + '%'
-    ctxFill.className = 'telem-ctx-fill' + (maxCtxPct > 80 ? ' critical' : maxCtxPct > 50 ? ' warn' : '')
+  if (ctxEl) {
+    if (activeSession?.contextInputTokens) {
+      const model = activeSession?.model || state.chatDefaults?.model || 'opus'
+      const limit = model === 'opus' ? 1000000 : 200000
+      const pct = Math.min(100, Math.round((activeSession.contextInputTokens / limit) * 100))
+      ctxEl.textContent = pct + '%'
+    } else {
+      ctxEl.textContent = '—'
+    }
   }
 
   // Uptime

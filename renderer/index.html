@@ -215,9 +215,8 @@
           </div>
           <div class="telem-row">
             <span class="telem-label">Context</span>
-            <span class="telem-value" id="telem-ctx-pct">0%</span>
+            <span class="telem-value" id="telem-ctx-pct">—</span>
           </div>
-          <div class="telem-ctx-bar"><div class="telem-ctx-fill" id="telem-ctx-fill"></div></div>
           <div style="height:1px;background:var(--border);margin:4px 0"></div>
           <div class="telem-row">
             <span class="telem-label">5h usage</span>
@@ -663,6 +662,7 @@
 <script type="module">
 // ─── Imports ─────────────────────────────────────────────────────────────────
 import { state } from './state.js'
+window._state = state  // debug: exposes state to DevTools console
 import { SANITIZE_CONFIG, HL_LANGS, escapeHtml, syntaxHighlight, findSettledBoundary, renderTail, postProcessCodeBlocks, processWikilinks } from './modules/chat-renderer.js'
 import { xtermTheme, applyTheme, applyZoom, updateTime, initTheme } from './modules/theme.js'
 import { ACE_MARK, updateOrbState, initAceMark } from './modules/ace-mark.js'
