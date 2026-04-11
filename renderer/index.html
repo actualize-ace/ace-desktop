@@ -57,6 +57,17 @@
       </div>
     </div>
     <div class="titlebar-right">
+      <div class="preflight-status" id="preflight-status" style="display:none">
+        <div class="preflight-dot"></div>
+        <span class="preflight-label" id="preflight-label"></span>
+        <div class="preflight-card" id="preflight-card" style="display:none">
+          <div class="preflight-msg" id="preflight-msg"></div>
+          <div class="preflight-actions">
+            <button class="preflight-btn" id="preflight-recheck">Re-detect</button>
+            <button class="preflight-btn" id="preflight-settings">Open Settings</button>
+          </div>
+        </div>
+      </div>
       <div class="titlebar-nextmove" id="titlebar-nextmove" title="Click to execute">
         <div class="titlebar-nm-dot" id="titlebar-nm-dot"></div>
         <span class="titlebar-nm-label" id="titlebar-nm-label"></span>
@@ -840,6 +851,49 @@ initOracle()
 
 // ─── Somatic Atmosphere ──
 initAtmosphere().then(() => initBreath())
+
+// ─── Preflight Result Handler ──
+window.ace.preflight.onResult((result) => {
+  const el = document.getElementById('preflight-status')
+  const label = document.getElementById('preflight-label')
+  const card = document.getElementById('preflight-card')
+  const msg = document.getElementById('preflight-msg')
+
+  if (result.binary.ok) {
+    el.style.display = 'none'
+  } else {
+    el.style.display = 'flex'
+    el.className = 'preflight-status' + (result.binary.error === 'missing' ? ' error' : '')
+    const messages = {
+      'missing': 'Claude CLI not found',
+      'not-executable': 'Claude CLI not executable',
+      'not-responding': 'Claude CLI not responding',
+    }
+    label.textContent = messages[result.binary.error] || 'Claude CLI issue'
+    msg.textContent = result.binary.error === 'missing'
+      ? 'Binary not found at ' + (result.binary.path || 'configured path') + '. Install Claude Code or update the path in Settings.'
+      : result.binary.error === 'not-executable'
+      ? 'Found ' + result.binary.path + ' but it is not executable. Check file permissions.'
+      : 'Found ' + result.binary.path + ' but it did not respond to --version within 5 seconds.'
+
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.preflight-btn')) return
+      card.style.display = card.style.display === 'none' ? 'block' : 'none'
+    })
+  }
+
+  // Store result for chat placeholder logic
+  window.__preflightResult = result
+})
+
+document.getElementById('preflight-recheck')?.addEventListener('click', () => {
+  document.getElementById('preflight-label').textContent = 'Checking...'
+  window.ace.preflight.recheckBinary()
+})
+
+document.getElementById('preflight-settings')?.addEventListener('click', () => {
+  document.getElementById('settings-overlay')?.classList.add('open')
+})
 
 </script>
   <script type="module">
