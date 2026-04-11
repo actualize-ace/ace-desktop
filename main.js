@@ -4,14 +4,39 @@ const fs = require('fs')
 const { execSync, spawn } = require('child_process')
 const ch = require('./src/ipc-channels')
 
+// ─── Process Cleanup ─────────────────────────────────────────────────────────
+
+function killAllChildren() {
+  try { require('./src/pty-manager').killAll() } catch {}
+  try { require('./src/chat-manager').cancelAll() } catch {}
+}
+
 // ─── Global Error Handlers ───────────────────────────────────────────────────
 
 process.on('uncaughtException', (err) => {
   console.error('[main] uncaughtException:', err)
+  killAllChildren()
 })
 
 process.on('unhandledRejection', (reason) => {
   console.error('[main] unhandledRejection:', reason)
+  killAllChildren()
+})
+
+// ─── Signal & Exit Handlers ──────────────────────────────────────────────────
+
+process.on('SIGINT', () => {
+  killAllChildren()
+  app.quit()
+})
+
+process.on('SIGTERM', () => {
+  killAllChildren()
+  app.quit()
+})
+
+process.on('exit', () => {
+  killAllChildren()
 })
 
 // ─── Single Instance Lock ─────────────────────────────────────────────────────
@@ -167,8 +192,7 @@ app.on('activate', () => {
 })
 
 app.on('before-quit', () => {
-  try { require('./src/pty-manager').killAll() } catch {}
-  try { require('./src/chat-manager').cancelAll() } catch {}
+  killAllChildren()
 })
 
 // ─── PTY IPC Handlers ────────────────────────────────────────────────────────
