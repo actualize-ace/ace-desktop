@@ -82,17 +82,32 @@ const KNOWN_PATHS = [
 
 function detectClaudeBinary() {
   // Try which first
+  let found = null
   try {
     const result = execSync('which claude', { encoding: 'utf8', env: process.env }).trim()
-    if (result && fs.existsSync(result)) return result
+    if (result && fs.existsSync(result)) found = result
   } catch {}
 
   // Try known paths
-  for (const p of KNOWN_PATHS) {
-    if (fs.existsSync(p)) return p
+  if (!found) {
+    for (const p of KNOWN_PATHS) {
+      if (fs.existsSync(p)) { found = p; break }
+    }
   }
 
-  return null
+  if (!found) return null
+
+  // Verify it actually works
+  try {
+    const version = execSync(`"${found}" --version`, {
+      encoding: 'utf8',
+      timeout: 5000,
+      env: process.env,
+    }).trim()
+    return { path: found, version }
+  } catch {
+    return { path: found, version: null }
+  }
 }
 
 // ─── Window ───────────────────────────────────────────────────────────────────
@@ -175,6 +190,8 @@ app.whenReady().then(() => {
     global.VAULT_PATH = config.vaultPath
     global.CLAUDE_BIN = config.claudeBinaryPath
     createWindow('index.html')
+    // Pre-flight checks (async, non-blocking)
+    require('./src/preflight').run(mainWindow, config.claudeBinaryPath, config.vaultPath)
     require('./src/file-watcher').start(mainWindow)
     require('./src/db-reader').open(config.vaultPath)
   }
@@ -221,6 +238,10 @@ ipcMain.on(ch.CHAT_RESPOND, (_, chatId, text) => require('./src/chat-manager').r
 
 ipcMain.handle(ch.DETECT_BINARY, () => {
   return detectClaudeBinary()
+})
+
+ipcMain.on(ch.PREFLIGHT_RECHECK_BINARY, () => {
+  require('./src/preflight').run(mainWindow, global.CLAUDE_BIN, global.VAULT_PATH)
 })
 
 ipcMain.handle(ch.PICK_VAULT, async () => {
