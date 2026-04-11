@@ -14,6 +14,15 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   cancel(chatId)
   opts = opts || {}
 
+  // Pre-spawn binary guard
+  if (!fs.existsSync(claudeBin)) {
+    if (!win.isDestroyed()) {
+      win.webContents.send(`${ch.CHAT_ERROR}:${chatId}`,
+        JSON.stringify({ type: 'binary-missing', path: claudeBin }))
+    }
+    return
+  }
+
   const args = ['-p', prompt, '--output-format', 'stream-json',
                 '--verbose', '--include-partial-messages']
   if (claudeSessionId) args.push('--resume', claudeSessionId)

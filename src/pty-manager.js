@@ -1,9 +1,17 @@
 const pty = require('node-pty')
+const fs  = require('fs')
 const ch  = require('./ipc-channels')
 
 const sessions = new Map()
 
 function create(win, id, cwd, claudeBin, cols, rows) {
+  if (!fs.existsSync(claudeBin)) {
+    if (!win.isDestroyed()) {
+      win.webContents.send(ch.PTY_ERROR, `Claude CLI not found at ${claudeBin}. It may have been moved or uninstalled.`)
+    }
+    return null
+  }
+
   const shell = pty.spawn(claudeBin, [], {
     name: 'xterm-256color',
     cols: cols || 120,
@@ -56,6 +64,13 @@ function killAll() {
 }
 
 function resume(win, id, cwd, claudeBin, cols, rows, sessionId) {
+  if (!fs.existsSync(claudeBin)) {
+    if (!win.isDestroyed()) {
+      win.webContents.send(ch.PTY_ERROR, `Claude CLI not found at ${claudeBin}. It may have been moved or uninstalled.`)
+    }
+    return null
+  }
+
   const shell = pty.spawn(claudeBin, ['--resume', sessionId], {
     name: 'xterm-256color',
     cols: cols || 120,
