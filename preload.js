@@ -12,6 +12,12 @@ contextBridge.exposeInMainWorld('ace', {
     getConfig:     ()       => ipcRenderer.invoke(ch.GET_CONFIG),
   },
 
+  // ─── Preflight ────────────────────────────────────────────────────────────
+  preflight: {
+    onResult: (cb) => ipcRenderer.on(ch.PREFLIGHT_RESULT, (_, result) => cb(result)),
+    recheckBinary: () => ipcRenderer.send(ch.PREFLIGHT_RECHECK_BINARY),
+  },
+
   // ─── PTY / Sessions ──────────────────────────────────────────────────────────
   pty: {
     create:  (id, cwd, cols, rows) => ipcRenderer.invoke('pty-create', id, cwd, cols, rows),
