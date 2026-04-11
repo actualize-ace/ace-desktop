@@ -803,7 +803,7 @@ export function spawnSession(opts) {
         </select>
       </div>
       <div class="chat-input-area">
-        <textarea class="chat-input" id="chat-input-${id}" placeholder="${window.__preflightResult?.binary?.ok !== false ? 'Type /start to begin your day' : 'Message ACE...'}" rows="1"></textarea>
+        <textarea class="chat-input" id="chat-input-${id}" placeholder="${window.__preflightResult?.binary?.ok && window.__preflightResult?.vault?.ok ? 'Type /start to begin your day' : 'Message ACE...'}" rows="1"></textarea>
         <button class="chat-send-btn" id="chat-send-${id}">↑</button>
       </div>
     </div>

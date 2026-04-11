@@ -876,14 +876,17 @@ window.ace.preflight.onResult((result) => {
       ? 'Found ' + result.binary.path + ' but it is not executable. Check file permissions.'
       : 'Found ' + result.binary.path + ' but it did not respond to --version within 5 seconds.'
 
-    el.addEventListener('click', (e) => {
-      if (e.target.closest('.preflight-btn')) return
-      card.style.display = card.style.display === 'none' ? 'block' : 'none'
-    })
   }
 
   // Store result for chat placeholder logic
   window.__preflightResult = result
+})
+
+// Wire preflight card toggle once (outside onResult to avoid listener stacking)
+document.getElementById('preflight-status')?.addEventListener('click', (e) => {
+  if (e.target.closest('.preflight-btn')) return
+  const card = document.getElementById('preflight-card')
+  if (card) card.style.display = card.style.display === 'none' ? 'block' : 'none'
 })
 
 document.getElementById('preflight-recheck')?.addEventListener('click', () => {
