@@ -880,6 +880,32 @@ window.ace.preflight.onResult((result) => {
 
   // Store result for chat placeholder logic
   window.__preflightResult = result
+
+  // Update any existing chat input placeholders (sessions created before preflight returned)
+  if (result.binary.ok && result.vault.ok) {
+    document.querySelectorAll('.chat-input').forEach(el => {
+      if (el.placeholder === 'Message ACE...') {
+        el.placeholder = 'Type /start to begin your day'
+      }
+    })
+
+    // Inject dashboard nudge — right under the greeting
+    const nameEl = document.getElementById('home-name')
+    if (nameEl && !document.getElementById('start-nudge')) {
+      const nudge = document.createElement('div')
+      nudge.id = 'start-nudge'
+      nudge.className = 'start-nudge'
+      nudge.innerHTML = '<span class="start-nudge-orb"></span>/start<span class="start-nudge-text">Begin your day</span><span class="start-nudge-arrow">\u2192</span>'
+      nudge.addEventListener('click', () => {
+        document.querySelector('.nav-item[data-view="terminal"]')?.click()
+        if (window.sendToActive) {
+          setTimeout(() => window.sendToActive('/start\r'), 150)
+        }
+        nudge.remove()
+      })
+      nameEl.after(nudge)
+    }
+  }
 })
 
 // Wire preflight card toggle once (outside onResult to avoid listener stacking)

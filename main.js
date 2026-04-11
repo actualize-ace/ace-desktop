@@ -190,8 +190,10 @@ app.whenReady().then(() => {
     global.VAULT_PATH = config.vaultPath
     global.CLAUDE_BIN = config.claudeBinaryPath
     createWindow('index.html')
-    // Pre-flight checks (async, non-blocking)
-    require('./src/preflight').run(mainWindow, config.claudeBinaryPath, config.vaultPath)
+    // Pre-flight checks — wait for renderer to load before sending IPC
+    mainWindow.webContents.once('did-finish-load', () => {
+      require('./src/preflight').run(mainWindow, config.claudeBinaryPath, config.vaultPath)
+    })
     require('./src/file-watcher').start(mainWindow)
     require('./src/db-reader').open(config.vaultPath)
   }
