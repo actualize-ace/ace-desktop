@@ -92,4 +92,8 @@ module.exports = {
   INSIGHT_TRANSCRIBE:     'insight-transcribe',
   INSIGHT_SPEAK:          'insight-speak',
   INSIGHT_STOP_SPEAKING:  'insight-stop-speaking',
+
+  // Preflight
+  PREFLIGHT_RESULT:         'preflight-result',
+  PREFLIGHT_RECHECK_BINARY: 'preflight-recheck-binary',
 }
