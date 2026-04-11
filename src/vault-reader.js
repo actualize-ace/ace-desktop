@@ -308,7 +308,7 @@ function parseRitualRhythm(vaultPath) {
       const dailyNote = fs.readFileSync(path.join(vaultPath, '01-Journal', 'daily', day.date + '.md'), 'utf8')
       // /start: filled morning journal (not empty template)
       if (!day.start) {
-        const morningMatch = dailyNote.match(/\*\*What is true this morning:\*\*\s*(.+)/)
+        const morningMatch = dailyNote.match(/\*\*What is true this morning:\*\*[ \t]*(.+)/)
         if (morningMatch && morningMatch[1].trim().length > 0) day.start = true
       }
       // /close: actual session log entries (not just template comment)

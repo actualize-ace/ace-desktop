@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACE Ecosystem Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg-deep: #0a0b0f;
+    --bg-layer1: #12141a;
+    --bg-layer2: #1a1d26;
+    --bg-layer3: #222633;
+    --border-subtle: rgba(255,255,255,0.06);
+    --border-active: rgba(255,255,255,0.12);
+    --text-primary: #e8e6e3;
+    --text-secondary: #8a8d97;
+    --text-dim: #555860;
+    /* Triad colors */
+    --authority: #c9a055;
+    --authority-glow: rgba(201,160,85,0.15);
+    --capacity: #5a9e6f;
+    --capacity-glow: rgba(90,158,111,0.15);
+    --expansion: #6b7fd4;
+    --expansion-glow: rgba(107,127,212,0.15);
+    /* Functional */
+    --accent-warm: #d4845a;
+    --accent-cool: #5a8fd4;
+    --accent-purple: #9b7ed4;
+    --flow-line: rgba(255,255,255,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Ambient background grain */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 60px 40px 100px; }
+
+  /* Header */
+  .header { text-align: center; margin-bottom: 72px; }
+  .header h1 {
+    font-size: 2.6rem;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+  .header h1 span { font-weight: 600; }
+  .header .subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+  }
+  .header .triad-bar {
+    display: flex; justify-content: center; gap: 32px; margin-top: 24px;
+  }
+  .triad-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+  .triad-pill.auth { color: var(--authority); border-color: rgba(201,160,85,0.3); background: var(--authority-glow); }
+  .triad-pill.cap { color: var(--capacity); border-color: rgba(90,158,111,0.3); background: var(--capacity-glow); }
+  .triad-pill.exp { color: var(--expansion); border-color: rgba(107,127,212,0.3); background: var(--expansion-glow); }
+
+  /* Section titles */
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+    padding-left: 4px;
+  }
+
+  /* Layer containers */
+  .layer {
+    position: relative;
+    margin-bottom: 48px;
+  }
+  .layer-content {
+    background: var(--bg-layer1);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 32px;
+  }
+  .layer-content:hover { border-color: var(--border-active); }
+
+  /* Node grid */
+  .node-grid {
+    display: grid;
+    gap: 16px;
+  }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-5 { grid-template-columns: repeat(5, 1fr); }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+  @media (max-width: 900px) {
+    .grid-3, .grid-4, .grid-5 { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* Node card */
+  .node {
+    background: var(--bg-layer2);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .node::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .node:hover {
+    border-color: var(--border-active);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  .node:hover::before { opacity: 1; }
+  .node.accent-gold::before { background: var(--authority); }
+  .node.accent-green::before { background: var(--capacity); }
+  .node.accent-blue::before { background: var(--expansion); }
+  .node.accent-warm::before { background: var(--accent-warm); }
+  .node.accent-purple::before { background: var(--accent-purple); }
+  .node.accent-cool::before { background: var(--accent-cool); }
+
+  .node-icon {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .node-title {
+    font-weight: 600;
+    font-size: 0.92rem;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+  }
+  .node-desc {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .node-tech {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    margin-top: 10px;
+    letter-spacing: 0.03em;
+  }
+
+  /* Wide node */
+  .node.wide { grid-column: span 2; }
+  .node.full { grid-column: 1 / -1; }
+
+  /* Flow arrows between layers */
+  .flow-connector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 48px;
+    position: relative;
+  }
+  .flow-connector .line {
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--border-subtle), var(--border-active), var(--border-subtle));
+  }
+  .flow-connector .label {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    background: var(--bg-deep);
+    padding: 2px 12px;
+  }
+
+  /* Multi-flow connectors */
+  .flow-multi {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 48px;
+    position: relative;
+    padding: 0 80px;
+  }
+  .flow-multi .pipe {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .flow-multi .pipe .arrow {
+    width: 1px; height: 20px;
+    background: var(--border-active);
+  }
+  .flow-multi .pipe .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+  }
+
+  /* Update pipeline strip */
+  .pipeline-strip {
+    background: var(--bg-layer2);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 24px 32px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 8px 0;
+    overflow-x: auto;
+  }
+  .pipeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-width: 120px;
+    flex-shrink: 0;
+  }
+  .pipeline-step .step-icon {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 8px;
+    border: 1px solid;
+  }
+  .pipeline-step .step-icon.gold { border-color: rgba(201,160,85,0.4); background: var(--authority-glow); }
+  .pipeline-step .step-icon.green { border-color: rgba(90,158,111,0.4); background: var(--capacity-glow); }
+  .pipeline-step .step-icon.blue { border-color: rgba(107,127,212,0.4); background: var(--expansion-glow); }
+  .pipeline-step .step-icon.purple { border-color: rgba(155,126,212,0.4); background: rgba(155,126,212,0.12); }
+
+  .pipeline-step .step-name {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+  .pipeline-step .step-detail {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--text-dim);
+  }
+  .pipeline-arrow {
+    flex: 1;
+    min-width: 40px;
+    height: 1px;
+    background: linear-gradient(to right, var(--border-active), var(--border-subtle));
+    position: relative;
+  }
+  .pipeline-arrow::after {
+    content: '›';
+    position: absolute;
+    right: -2px;
+    top: -8px;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+  }
+
+  /* Vault structure tree */
+  .vault-tree {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    background: var(--bg-layer3);
+    border-radius: 8px;
+    padding: 20px 24px;
+  }
+  .vault-tree .dir { color: var(--text-primary); font-weight: 500; }
+  .vault-tree .file { color: var(--text-secondary); }
+  .vault-tree .comment { color: var(--text-dim); font-style: italic; }
+  .vault-tree .triad-a { color: var(--authority); }
+  .vault-tree .triad-c { color: var(--capacity); }
+  .vault-tree .triad-e { color: var(--expansion); }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    padding: 16px 0;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.72rem; color: var(--text-secondary);
+  }
+  .legend-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+
+  /* Two-column layout */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
+
+  /* Annotation callouts */
+  .callout {
+    display: flex; align-items: flex-start; gap: 12px;
+    background: var(--bg-layer2);
+    border-left: 2px solid var(--authority);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin-top: 12px;
+  }
+  .callout.green { border-left-color: var(--capacity); }
+  .callout.blue { border-left-color: var(--expansion); }
+  .callout .callout-text {
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+  .callout .callout-text strong { color: var(--text-primary); font-weight: 500; }
+
+  /* Sub-header */
+  .section-header {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+  }
+  .section-sub {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 56px 0;
+  }
+
+  /* Tag badges */
+  .tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.06em;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--bg-layer3);
+    color: var(--text-dim);
+    margin-right: 4px;
+  }
+  .tag.shipped { color: var(--capacity); background: var(--capacity-glow); }
+  .tag.planned { color: var(--expansion); background: var(--expansion-glow); }
+  .tag.missing { color: var(--accent-warm); background: rgba(212,132,90,0.12); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <h1><span>ACE</span> Ecosystem Architecture</h1>
+    <div class="subtitle">Actualize Coherence Engine &mdash; Full System Map &mdash; April 2026</div>
+    <div class="triad-bar">
+      <span class="triad-pill auth">Authority</span>
+      <span class="triad-pill cap">Capacity</span>
+      <span class="triad-pill exp">Expansion</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- LAYER 1: ACE Desktop -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="layer">
+    <div class="section-label">Layer 1 &mdash; ACE Desktop (Electron)</div>
+    <div class="layer-content">
+      <div class="node-grid grid-4">
+
+        <div class="node accent-gold">
+          <span class="node-icon">&#9670;</span>
+          <div class="node-title">Main Process</div>
+          <div class="node-desc">App lifecycle, config persistence, file watcher (chokidar), IPC registry, Claude binary detection</div>
+          <div class="node-tech">main.js &middot; 50+ IPC channels</div>
+        </div>
+
+        <div class="node accent-gold">
+          <span class="node-icon">&#9671;</span>
+          <div class="node-title">Preload Bridge</div>
+          <div class="node-desc">Context-isolated IPC bridge exposing window.ace API to renderer</div>
+          <div class="node-tech">preload.js &middot; typed channels</div>
+        </div>
+
+        <div class="node accent-blue wide">
+          <span class="node-icon">&#9724;</span>
+          <div class="node-title">Renderer &mdash; Views &amp; Widgets</div>
+          <div class="node-desc">Dashboard (modular widgets), Chat, Agent Terminal, Vault Editor, Knowledge Graph, People, History, Artifacts, Insight, Oracle, Astro Blueprint, Atmosphere</div>
+          <div class="node-tech">renderer/ &middot; D3.js &middot; xterm.js &middot; marked &middot; DOMPurify</div>
+        </div>
+
+        <div class="node accent-green">
+          <span class="node-icon">&#8862;</span>
+          <div class="node-title">Chat Manager</div>
+          <div class="node-desc">Spawns Claude CLI with --output-format stream-json. Parses NDJSON, forwards events via IPC.</div>
+          <div class="node-tech">src/chat-manager.js</div>
+        </div>
+
+        <div class="node accent-green">
+          <span class="node-icon">&#8863;</span>
+          <div class="node-title">PTY Manager</div>
+          <div class="node-desc">Full terminal sessions via node-pty. Agent Terminal runs Claude Code directly.</div>
+          <div class="node-tech">src/pty-manager.js &middot; node-pty</div>
+        </div>
+
+        <div class="node accent-purple">
+          <span class="node-icon">&#9702;</span>
+          <div class="node-title">Vault Reader</div>
+          <div class="node-desc">Parses state.md, active.md, follow-ups.md, patterns, artifacts. Feeds dashboard widgets.</div>
+          <div class="node-tech">src/vault-reader.js</div>
+        </div>
+
+        <div class="node accent-cool">
+          <span class="node-icon">&#9673;</span>
+          <div class="node-title">Analytics DB</div>
+          <div class="node-desc">SQLite reader for pipeline, metrics, revenue. Bundled as extraResource.</div>
+          <div class="node-tech">src/db-reader.js &middot; better-sqlite3</div>
+        </div>
+
+      </div>
+
+      <div class="callout" style="margin-top:20px;">
+        <div class="callout-text"><strong>Distribution:</strong> electron-builder &rarr; DMG (macOS) / EXE (Windows planned). <span class="tag missing">no auto-updater yet</span> Manual install. <span class="tag planned">electron-updater planned</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flow: Desktop ↕ Claude CLI -->
+  <div class="flow-connector">
+    <div class="line"></div>
+    <span class="label">spawns &amp; streams</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- LAYER 2: Claude CLI + MCP -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="layer">
+    <div class="section-label">Layer 2 &mdash; Claude Code CLI + Skills + MCP Servers</div>
+    <div class="layer-content">
+      <div class="node-grid grid-3">
+
+        <div class="node accent-gold">
+          <span class="node-icon">&#9654;</span>
+          <div class="node-title">Claude Code CLI</div>
+          <div class="node-desc">AI backbone. Multi-turn sessions, --resume, model selection, stream-json output. Max subscription (no API key).</div>
+          <div class="node-tech">claude --output-format stream-json</div>
+        </div>
+
+        <div class="node accent-blue">
+          <span class="node-icon">&#9881;</span>
+          <div class="node-title">Skills Engine</div>
+          <div class="node-desc">30+ skills in .claude/skills/. Each has SKILL.md + optional SKILL.personal.md overlay. Deterministic behavior encoding.</div>
+          <div class="node-tech">/start /close /coach /edge /pipeline /build-vault ...</div>
+        </div>
+
+        <div class="node accent-green">
+          <span class="node-icon">&#9733;</span>
+          <div class="node-title">CLAUDE.md Bootloader</div>
+          <div class="node-desc">Session start protocol: validate state.md, read active.md, cross-check outcomes. Routing via context-router.md.</div>
+          <div class="node-tech">CLAUDE.md &middot; 00-System/</div>
+        </div>
+
+      </div>
+
+      <div style="margin-top:20px;">
+        <div class="section-label" style="margin-bottom:12px;">MCP Servers (Tool Providers)</div>
+        <div class="node-grid grid-5">
+          <div class="node accent-warm">
+            <div class="node-title">Google Workspace</div>
+            <div class="node-desc">Gmail, Calendar, Drive, Docs</div>
+            <div class="node-tech">nikhil@asraya.io</div>
+          </div>
+          <div class="node accent-warm">
+            <div class="node-title">ace-analytics</div>
+            <div class="node-desc">Revenue, pipeline, metrics, deals, campaigns</div>
+            <div class="node-tech">SQLite &middot; ace.db</div>
+          </div>
+          <div class="node accent-warm">
+            <div class="node-title">Hindsight</div>
+            <div class="node-desc">Semantic memory, recall, mental models</div>
+            <div class="node-tech">local MCP</div>
+          </div>
+          <div class="node accent-warm">
+            <div class="node-title">FluentCRM</div>
+            <div class="node-desc">Contacts, tags, lists, campaigns, automations</div>
+            <div class="node-tech">WordPress REST</div>
+          </div>
+          <div class="node accent-warm">
+            <div class="node-title">ThriveCart</div>
+            <div class="node-desc">Products, transactions, subscriptions</div>
+            <div class="node-tech">exiting &rarr; Stripe</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flow: CLI ↕ Vault -->
+  <div class="flow-connector">
+    <div class="line"></div>
+    <span class="label">reads &amp; writes</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- LAYER 3: Vault -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="layer">
+    <div class="section-label">Layer 3 &mdash; ACE Vault (Nikhil's System &mdash; R&amp;D Lab)</div>
+    <div class="layer-content">
+      <div class="split">
+
+        <div>
+          <div class="section-header">Vault Structure</div>
+          <div class="section-sub">Deterministic routing via context-router.md. Each data type has one canonical home.</div>
+          <div class="vault-tree">
+            <span class="dir">Actualize/</span><br>
+            ├── <span class="dir triad-a">00-System/</span> <span class="comment">&larr; state, active, routing, schemas, permissions</span><br>
+            │&nbsp;&nbsp; ├── <span class="dir">core/</span> <span class="comment">&larr; identity (DCA, triad, voice, edges) — human-edit only</span><br>
+            │&nbsp;&nbsp; ├── <span class="file">state.md</span> <span class="comment">&larr; mode, energy, outcomes, failures</span><br>
+            │&nbsp;&nbsp; ├── <span class="file">active.md</span> <span class="comment">&larr; max 3 current outcomes</span><br>
+            │&nbsp;&nbsp; └── <span class="file">context-router.md</span> <span class="comment">&larr; placement rules</span><br>
+            ├── <span class="dir triad-c">01-Journal/</span> <span class="comment">&larr; daily notes, patterns, weekly reviews</span><br>
+            ├── <span class="dir">02-Rituals/</span> <span class="comment">&larr; coaching session log</span><br>
+            ├── <span class="dir">03-Calendar/</span> <span class="comment">&larr; commitments (rules only, not events)</span><br>
+            ├── <span class="dir triad-e">04-Network/</span> <span class="comment">&larr; people, follow-ups, network map</span><br>
+            ├── <span class="dir">05-Research/</span> <span class="comment">&larr; topics, finance, reference</span><br>
+            ├── <span class="dir triad-e">Domains/</span> <span class="comment">&larr; actualize, adept-arcanum, asraya, ...</span><br>
+            │&nbsp;&nbsp; └── <span class="dir">actualize/clients/</span> <span class="comment">&larr; per-client build materials</span><br>
+            ├── <span class="dir">.claude/skills/</span> <span class="comment">&larr; 30+ command specs</span><br>
+            └── <span class="dir">11-Artifacts/</span> <span class="comment">&larr; shipped creative work</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-header">Data Architecture</div>
+          <div class="section-sub">Markdown for identity &amp; narrative. SQLite for metrics &amp; pipeline. Git for history.</div>
+          <div class="node-grid" style="grid-template-columns:1fr; gap:12px;">
+            <div class="node accent-gold">
+              <div class="node-title">Identity Layer</div>
+              <div class="node-desc">00-System/core/ — DCA, coherence triad, nervous system map, coach constitution, voice profile, edges &amp; fears. Human-authored. Never AI-generated.</div>
+              <div class="node-tech">markdown &middot; wikilinks &middot; human-edit only</div>
+            </div>
+            <div class="node accent-green">
+              <div class="node-title">Operational Layer</div>
+              <div class="node-desc">state.md + active.md + decision-log + execution-log + follow-ups. AI reads and writes within permission bounds.</div>
+              <div class="node-tech">markdown &middot; schema-validated</div>
+            </div>
+            <div class="node accent-blue">
+              <div class="node-title">Metrics Layer</div>
+              <div class="node-desc">ace.db (SQLite) — pipeline deals, revenue events, campaign stats, social metrics. Single source of truth for numbers.</div>
+              <div class="node-tech">better-sqlite3 &middot; ace-analytics MCP</div>
+            </div>
+            <div class="node accent-purple">
+              <div class="node-title">Memory Layer</div>
+              <div class="node-desc">File-based auto-memory (MEMORY.md index) + Hindsight semantic recall. Behavioral rules, people facts, project state.</div>
+              <div class="node-tech">markdown + Hindsight MCP</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="callout green" style="margin-top:20px;">
+        <div class="callout-text"><strong>Repo:</strong> <code>mythopoetix/nikhil</code> (private). This vault is the development lab — features are built here, tested, then released to ace-core for client distribution.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- UPDATE PIPELINE -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="layer">
+    <div class="section-label">Update Pipeline &mdash; How Clients Get Updates</div>
+
+    <div class="section-header">Vault Content Updates <span class="tag shipped">working</span></div>
+    <div class="section-sub">Cherry-picked releases from Nikhil's vault through ace-core to client vaults.</div>
+
+    <div class="pipeline-strip">
+      <div class="pipeline-step">
+        <div class="step-icon gold">&#9998;</div>
+        <div class="step-name">Develop</div>
+        <div class="step-detail">Nikhil's vault</div>
+      </div>
+      <div class="pipeline-arrow"></div>
+      <div class="pipeline-step">
+        <div class="step-icon gold">&#9745;</div>
+        <div class="step-name">/release</div>
+        <div class="step-detail">cherry-pick &amp; diff</div>
+      </div>
+      <div class="pipeline-arrow"></div>
+      <div class="pipeline-step">
+        <div class="step-icon green">&#9670;</div>
+        <div class="step-name">verify-vault.sh</div>
+        <div class="step-detail">privacy gate</div>
+      </div>
+      <div class="pipeline-arrow"></div>
+      <div class="pipeline-step">
+        <div class="step-icon blue">&#9651;</div>
+        <div class="step-name">ace-core</div>
+        <div class="step-detail">actualize-ace/core</div>
+      </div>
+      <div class="pipeline-arrow"></div>
+      <div class="pipeline-step">
+        <div class="step-icon purple">&#8631;</div>
+        <div class="step-name">/sync-core</div>
+        <div class="step-detail">client pulls</div>
+      </div>
+      <div class="pipeline-arrow"></div>
+      <div class="pipeline-step">
+        <div class="step-icon purple">&#9673;</div>
+        <div class="step-name">Client Vault</div>
+        <div class="step-detail">merge + preserve</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:16px;">
+      <div class="callout-text"><strong>Key contracts:</strong> vault-manifest.json (structural schema) &middot; core-manifest.txt (synced vs. client-owned files) &middot; verify-vault.sh (privacy scan + manifest check). Conflicts resolved by client choice: take core, keep local, or manual merge.</div>
+    </div>
+
+    <div style="margin-top:32px;">
+      <div class="section-header">Desktop App Updates <span class="tag missing">not yet built</span></div>
+      <div class="section-sub">Currently manual DMG builds. Planned: electron-updater with GitHub Releases.</div>
+
+      <div class="pipeline-strip" style="opacity:0.5;">
+        <div class="pipeline-step">
+          <div class="step-icon gold">&#9998;</div>
+          <div class="step-name">Build</div>
+          <div class="step-detail">electron-builder</div>
+        </div>
+        <div class="pipeline-arrow"></div>
+        <div class="pipeline-step">
+          <div class="step-icon green">&#9745;</div>
+          <div class="step-name">Sign</div>
+          <div class="step-detail">notarize / authenticode</div>
+        </div>
+        <div class="pipeline-arrow"></div>
+        <div class="pipeline-step">
+          <div class="step-icon blue">&#8593;</div>
+          <div class="step-name">Publish</div>
+          <div class="step-detail">GitHub Releases</div>
+        </div>
+        <div class="pipeline-arrow"></div>
+        <div class="pipeline-step">
+          <div class="step-icon purple">&#8631;</div>
+          <div class="step-name">Auto-check</div>
+          <div class="step-detail">on app launch</div>
+        </div>
+        <div class="pipeline-arrow"></div>
+        <div class="pipeline-step">
+          <div class="step-icon purple">&#9660;</div>
+          <div class="step-name">Install</div>
+          <div class="step-detail">prompt user</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- THREE-REPO MODEL -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="layer">
+    <div class="section-label">Three-Repository Model</div>
+    <div class="layer-content">
+      <div class="node-grid grid-3">
+
+        <div class="node accent-gold">
+          <span class="node-icon">&#9733;</span>
+          <div class="node-title">Nikhil's Vault</div>
+          <div class="node-desc">R&amp;D lab. All features built and tested here first. Source of /release pushes. Full operator access.</div>
+          <div class="node-tech">mythopoetix/nikhil &middot; private</div>
+          <div style="margin-top:8px;">
+            <span class="tag">read/write</span>
+            <span class="tag">all skills</span>
+            <span class="tag">all MCPs</span>
+          </div>
+        </div>
+
+        <div class="node accent-blue">
+          <span class="node-icon">&#9670;</span>
+          <div class="node-title">ace-core</div>
+          <div class="node-desc">Shared engine template. Skills, scaffolding, CLAUDE.md, templates, schemas. Clients clone from this. Read-only to clients.</div>
+          <div class="node-tech">actualize-ace/core</div>
+          <div style="margin-top:8px;">
+            <span class="tag">template source</span>
+            <span class="tag">versioned</span>
+            <span class="tag">CHANGELOG</span>
+          </div>
+        </div>
+
+        <div class="node accent-green">
+          <span class="node-icon">&#9673;</span>
+          <div class="node-title">Client Vaults</div>
+          <div class="node-desc">Per-client repos with identity files, custom domains, personal configuration. Diverge from core safely. Sync via /sync-core.</div>
+          <div class="node-tech">actualize-ace/[client]-ace</div>
+          <div style="margin-top:8px;">
+            <span class="tag">read/write client</span>
+            <span class="tag">identity-owned</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div style="display:flex; justify-content:center; gap:40px; margin-top:20px; flex-wrap:wrap;">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--authority)"></div>Nikhil &rarr; ace-core (/release)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--expansion)"></div>ace-core &rarr; Clients (/sync-core)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--capacity)"></div>Client &larr;&rarr; Own repo (daily use)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- EXTERNAL INTEGRATIONS -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="layer">
+    <div class="section-label">External Integrations</div>
+    <div class="layer-content">
+      <div class="node-grid grid-4">
+
+        <div class="node accent-warm">
+          <div class="node-title">Gmail + Calendar</div>
+          <div class="node-desc">Email processing, scheduling, availability checks. Google Workspace MCP.</div>
+          <div class="node-tech">nikhil@asraya.io &middot; OAuth</div>
+        </div>
+
+        <div class="node accent-warm">
+          <div class="node-title">Google Drive + Docs</div>
+          <div class="node-desc">Client Blueprints, shared documents, export to PDF. Source material for /build-vault.</div>
+          <div class="node-tech">Google Workspace MCP</div>
+        </div>
+
+        <div class="node accent-cool">
+          <div class="node-title">Deepgram</div>
+          <div class="node-desc">Speech-to-text (Nova-2) and text-to-speech (Aura-2 Athena) for Insight voice coaching.</div>
+          <div class="node-tech">API key in ace-config.json</div>
+        </div>
+
+        <div class="node accent-cool">
+          <div class="node-title">HeartMath BLE</div>
+          <div class="node-desc">HRV coherence sensor via Bluetooth. Somatic regulation data for Capacity leg.</div>
+          <div class="node-tech">pending calibration</div>
+        </div>
+
+        <div class="node accent-purple">
+          <div class="node-title">Stripe</div>
+          <div class="node-desc">Payment processing. Direct curl API (migrating from ThriveCart).</div>
+          <div class="node-tech">API key in settings.json</div>
+        </div>
+
+        <div class="node accent-purple">
+          <div class="node-title">Cal.com</div>
+          <div class="node-desc">Booking links and availability management.</div>
+          <div class="node-tech">API key in settings.json</div>
+        </div>
+
+        <div class="node accent-purple">
+          <div class="node-title">Fathom</div>
+          <div class="node-desc">Call recording and transcription. Source for /process-call skill.</div>
+          <div class="node-tech">API key in ~/.zshenv</div>
+        </div>
+
+        <div class="node accent-purple">
+          <div class="node-title">Telegram</div>
+          <div class="node-desc">Remote ACE access via @AsrayaOraceBot. claude-code-telegram launchd service.</div>
+          <div class="node-tech">v1.3.0 &middot; launchd</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- LEGEND -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="layer">
+    <div class="section-label">Legend</div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--authority)"></div>Authority (truth, identity, choice)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--capacity)"></div>Capacity (regulation, depth, resilience)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--expansion)"></div>Expansion (rhythm, containers, realization)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent-warm)"></div>Google / External API</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent-purple)"></div>Third-party service</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent-cool)"></div>Somatic / Voice hardware</div>
+    </div>
+    <div style="margin-top:12px;">
+      <span class="tag shipped">shipped</span>
+      <span class="tag planned">planned</span>
+      <span class="tag missing">gap</span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
