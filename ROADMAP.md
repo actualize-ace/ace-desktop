@@ -42,7 +42,7 @@ Target: first client build for Joe Hawley (macOS). Windows follows after Mac is 
 
 | Feature | Status | Blocker | Plan |
 |---------|--------|---------|------|
-| Setup screen polish | Not started | Blocks client UX | Audit current setup flow (vault picker, binary detection) for first-time user clarity. Verify Claude binary actually works on first run. Test API key if provided. Pre-flight vault structure check. Vault integrity: verify `00-System/` structure exists on first launch, auto-scaffold or warn if missing — prevents app crashes on malformed vaults. **First 60 seconds:** silent vault validation → ready terminal → subtle `/start` prompt. No thinking required from the user. **Spawn health check:** re-verify Claude binary before first message each session (not just on setup) — if PATH changed or binary was removed, show human-readable fix, not a raw spawn error. |
+| Setup screen polish | Done | — | Pre-flight module (binary health + vault structure), titlebar status indicator, spawn guards in chat-manager + pty-manager, `/start` placeholder, vault validation gate in setup screen, version display. [Design](docs/plans/2026-04-10-setup-screen-polish-design.md) |
 | Onboarding tutorial | Not started | Blocks client UX | Post-setup guided walkthrough shown once. Introduces the Triad, explains daily rituals (/start, /eod), tours the dashboard widgets and views, shows where to get help. Progressive disclosure — don't dump all 22 features at once. |
 | Rich output panel | Not started | Blocks client UX | Replace xterm chat with HTML renderer (markdown, code blocks, tool cards) |
 | Session containment + timer | Not started | — | [containment-ritual-ux.md](docs/plans/2026-04-09-containment-ritual-ux.md) |
