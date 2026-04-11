@@ -6,6 +6,7 @@ import { updateOrbState } from './ace-mark.js'
 import { setAttention, clearAttention, updateAttentionBadge } from './attention.js'
 import { onSessionClose } from './atmosphere.js'
 import { initSplitPane, moveToOtherGroup } from './split-pane-manager.js'
+import { startTimer, clearTimer } from './session-timer.js'
 
 // ─── Chat System ─────────────────────────────────────────────────────────────
 
@@ -754,7 +755,37 @@ export function renderQuestionCard(id, data, containerEl, sessionsObj) {
 
 // ─── Sessions ────────────────────────────────────────────────────────────────
 
+const SESSION_LIMIT = 3
+
+function countSessionsInContainer(containerId) {
+  const container = document.getElementById(containerId)
+  if (!container) return 0
+  return container.querySelectorAll('.term-pane').length
+}
+
+function showToast(message, durationMs = 3500) {
+  let toast = document.getElementById('ace-toast')
+  if (!toast) {
+    toast = document.createElement('div')
+    toast.id = 'ace-toast'
+    toast.className = 'ace-toast'
+    document.body.appendChild(toast)
+  }
+  toast.textContent = message
+  toast.classList.add('ace-toast--visible')
+  clearTimeout(toast._hideTimer)
+  toast._hideTimer = setTimeout(() => toast.classList.remove('ace-toast--visible'), durationMs)
+}
+
 export function spawnSession(opts) {
+  // Session limit check — block before creating any DOM
+  const targetContainerId = (opts?.container || document.getElementById('pane-content-left')).id
+  const currentCount = countSessionsInContainer(targetContainerId)
+  if (currentCount >= SESSION_LIMIT) {
+    showToast(`${SESSION_LIMIT} sessions open in this pane. Close one before opening another.`)
+    return
+  }
+
   const resumeId = opts?.resumeId || null
   const resumeCwd = opts?.resumeCwd || null
   const id = 'sess-' + Date.now()
@@ -767,6 +798,14 @@ export function spawnSession(opts) {
       <div class="term-hdr-label">ACE Session</div>
       <button class="mode-toggle-btn" id="mode-toggle-${id}">Terminal</button>
       <div class="term-hdr-path" id="hdr-path-${id}">Chat Mode</div>
+      <span class="session-timer" id="session-timer-${id}" style="display:none"></span>
+      <select class="session-duration-select" id="session-duration-${id}" title="Set session timer">
+        <option value="">Timer</option>
+        <option value="15">15m</option>
+        <option value="30">30m</option>
+        <option value="60">60m</option>
+        <option value="90">90m</option>
+      </select>
     </div>
     <div class="chat-view" id="chat-view-${id}">
       <div class="chat-messages" id="chat-msgs-${id}">
@@ -855,6 +894,17 @@ export function spawnSession(opts) {
   document.getElementById('stab-move-' + id).addEventListener('click', (e) => {
     e.stopPropagation()
     moveToOtherGroup(id)
+  })
+
+  // Session timer — duration select starts countdown, hides dropdown
+  document.getElementById('session-duration-' + id)?.addEventListener('change', (e) => {
+    const val = parseInt(e.target.value)
+    if (val) {
+      startTimer(id, val)
+      e.target.style.display = 'none'
+    } else {
+      clearTimer(id)
+    }
   })
 
   // Chat input handling
@@ -994,6 +1044,7 @@ export function toggleSessionMode(id) {
 export function closeSession(id) {
   const s = state.sessions[id]
   if (!s) return
+  clearTimer(id)
   if (s.term) window.ace.pty.kill(id)
   if (s.isStreaming) window.ace.chat.cancel(id)
   if (s._cleanupListeners) s._cleanupListeners()
