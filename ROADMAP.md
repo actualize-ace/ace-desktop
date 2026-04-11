@@ -46,7 +46,7 @@ Target: first client build for Joe Hawley (macOS). Windows follows after Mac is 
 | Onboarding tutorial | Not started | Blocks client UX | Post-setup guided walkthrough shown once. Introduces the Triad, explains daily rituals (/start, /eod), tours the dashboard widgets and views, shows where to get help. Progressive disclosure — don't dump all 22 features at once. |
 | Rich output panel | Not started | Blocks client UX | Replace xterm chat with HTML renderer (markdown, code blocks, tool cards) |
 | Session containment + timer | Not started | — | [containment-ritual-ux.md](docs/plans/2026-04-09-containment-ritual-ux.md) |
-| Process cleanup on exit | Not started | — | Add `process.on('exit')` / `SIGINT` / `uncaughtException` handlers in main.js that call `ptyManager.killAll()` + `chatManager.cancelAll()`. Prevents zombie Claude processes if Electron crashes hard. |
+| Process cleanup on exit | Done | — | `killAllChildren()` in main.js — covers `SIGINT`, `SIGTERM`, `process.on('exit')`, `uncaughtException`, `unhandledRejection`, and `before-quit`. Commit `9904225`. |
 | Native module bundling (ARM64) | Not started | Blocks dist | Verify better-sqlite3 + node-pty compile against Electron 28 headers for Apple Silicon |
 | Code signing / notarization | Not started | Blocks clean install | **Path A (ideal):** Apple Developer ID ($99/yr) → electron-builder afterSign hook → notarized DMG, clean install. **Path B (day-one fallback):** Unsigned DMG, Joe bypasses Gatekeeper via right-click > Open or `xattr -cr` during build session. Document both. Get Apple Dev account set up either way. |
 | extraResources verification | Not started | — | Verify `../tools/ace-analytics` resolves correctly on build machine and bundles into DMG |
