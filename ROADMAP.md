@@ -44,8 +44,8 @@ Target: first client build for Joe Hawley (macOS). Windows follows after Mac is 
 |---------|--------|---------|------|
 | Setup screen polish | Done | — | Pre-flight module (binary health + vault structure), titlebar status indicator, spawn guards in chat-manager + pty-manager, `/start` placeholder, vault validation gate in setup screen, version display. [Design](docs/plans/2026-04-10-setup-screen-polish-design.md) |
 | Onboarding tutorial | Not started | Blocks client UX | Post-setup guided walkthrough shown once. Introduces the Triad, explains daily rituals (/start, /eod), tours the dashboard widgets and views, shows where to get help. Progressive disclosure — don't dump all 22 features at once. |
-| Rich output panel | Not started | Blocks client UX | Replace xterm chat with HTML renderer (markdown, code blocks, tool cards) |
-| Session containment + timer | Not started | — | [containment-ritual-ux.md](docs/plans/2026-04-09-containment-ritual-ux.md) |
+| Rich output panel | Done | — | Chat mode already renders full markdown (marked.js), syntax-highlighted code blocks (18 languages, copy buttons), tool cards (Edit diffs, Bash commands, Write previews), permission approval cards, and question blocks. Agent Terminal stays raw xterm.js by design. |
+| Session containment + timer | Done | — | 3-per-pane limit with toast, countdown timer (15/30/60/90m) with warning→critical→expiry nudge, light+dark mode. Ritual entry (Feature B) deferred to next sprint. Commit `b990bc2`. [Design](docs/plans/2026-04-09-containment-ritual-ux.md) |
 | Process cleanup on exit | Done | — | `killAllChildren()` in main.js — covers `SIGINT`, `SIGTERM`, `process.on('exit')`, `uncaughtException`, `unhandledRejection`, and `before-quit`. Commit `9904225`. |
 | Native module bundling (ARM64) | Not started | Blocks dist | Verify better-sqlite3 + node-pty compile against Electron 28 headers for Apple Silicon |
 | Code signing / notarization | Not started | Blocks clean install | **Path A (ideal):** Apple Developer ID ($99/yr) → electron-builder afterSign hook → notarized DMG, clean install. **Path B (day-one fallback):** Unsigned DMG, Joe bypasses Gatekeeper via right-click > Open or `xattr -cr` during build session. Document both. Get Apple Dev account set up either way. |
@@ -87,6 +87,7 @@ Target: Marc Cooper (Windows). Sequential — don't start until Joe's Mac build 
 | Notification system redesign | Medium | Replace red dot with non-social-media color (amber/accent). Click notification → jump to correct session pane with pulsing dot on tab. Multiple notifications → dropdown to pick which chat. |
 | Terminal session naming | Medium | Sessions created from Agent Terminal default to "ACE" — should auto-name from first prompt or vault context. |
 | Client feedback integration | Medium | Incorporate Joe + Marc usage patterns |
+| Tool result previews (master accordion) | Medium | Wrap consecutive tool calls in a single collapsible "Claude used N tools" bar. Click expands group, each tool card independently expandable. Keeps chat clean for clients, lets builders drill in. ~30-40 lines in chat-renderer.js. |
 | HeartMath calibration | Low | Side-by-side session (ACE vs HeartMath app) to fix coherence thresholds |
 
 ---
