@@ -274,41 +274,18 @@ export function appendToolInput(id, partialJson, sessionsObj) {
   s.currentToolInput += partialJson
 
   // Update activity indicator with file path or tool details
-  let toolGroupName = s._toolGroup?.name || ''
+  let toolName = s._currentToolName || ''
   try {
     const parsed = JSON.parse(s.currentToolInput)
     const detail = parsed.file_path || parsed.path || parsed.command || parsed.pattern || parsed.query || ''
     if (detail) {
       const short = detail.split('/').pop() || detail.slice(0, 40)
-      updateActivityIndicator(id, `${toolGroupName}: ${short}`, sessionsObj)
+      updateActivityIndicator(id, `${toolName}: ${short}`, sessionsObj)
     }
   } catch {}
 
-  const detailEl = s._currentToolBlock.querySelector('.chat-tool-detail')
-  if (!detailEl) return
-
-  if (s._toolGroup) {
-    // Grouped read-only tool — update latest item and show compact list
-    const items = s._toolGroup.items
-    if (items.length > 0) items[items.length - 1].input = s.currentToolInput
-    let html = ''
-    for (const item of items) {
-      let label = ''
-      try {
-        const p = JSON.parse(item.input)
-        label = p.file_path || p.path || p.command || p.pattern || p.query || item.input.slice(0, 60)
-        if (label.includes('/')) {
-          const parts = label.split('/')
-          label = parts.length > 3 ? '.../' + parts.slice(-3).join('/') : label
-        }
-      } catch {
-        label = item.input.slice(0, 60) || '...'
-      }
-      html += `<div class="tool-item">${escapeHtml(label)}</div>`
-    }
-    detailEl.innerHTML = html
-  } else if (s._questionBlockEl) {
-    // Question tool — render the question text as markdown
+  // Question tool — render markdown in question block
+  if (s._questionBlockEl) {
     try {
       const parsed = JSON.parse(s.currentToolInput)
       const question = parsed.question || parsed.text || parsed.message || JSON.stringify(parsed, null, 2)
@@ -317,32 +294,54 @@ export function appendToolInput(id, partialJson, sessionsObj) {
         headerEl.innerHTML = DOMPurify.sanitize(marked.parse(question), SANITIZE_CONFIG)
         headerEl.classList.add('md-body')
       }
-      const msgsEl = document.getElementById('chat-msgs-' + id)
-      if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight
+      scrollChatToBottom(id, 120)
     } catch {}
     return
-  } else {
-    // Visible tool (Edit/Write/Bash) — show full input as formatted diff/content
-    try {
-      const parsed = JSON.parse(s.currentToolInput)
-      if (parsed.old_string != null && parsed.new_string != null) {
-        // Edit tool — show diff view
-        const file = parsed.file_path ? `<div class="tool-item" style="font-weight:500">${escapeHtml(parsed.file_path.split('/').slice(-3).join('/'))}</div>` : ''
-        detailEl.innerHTML = `${file}<pre class="tool-diff"><span class="diff-remove">${escapeHtml(parsed.old_string)}</span><span class="diff-add">${escapeHtml(parsed.new_string)}</span></pre>`
-      } else if (parsed.command) {
-        // Bash tool — show command
-        detailEl.innerHTML = `<pre>${escapeHtml(parsed.command)}</pre>`
-      } else if (parsed.content != null) {
-        // Write tool — show file path + content preview
-        const file = parsed.file_path ? `<div class="tool-item" style="font-weight:500">${escapeHtml(parsed.file_path.split('/').slice(-3).join('/'))}</div>` : ''
-        const preview = parsed.content.length > 500 ? parsed.content.slice(0, 500) + '...' : parsed.content
-        detailEl.innerHTML = `${file}<pre>${escapeHtml(preview)}</pre>`
-      } else {
-        detailEl.innerHTML = `<pre>${escapeHtml(JSON.stringify(parsed, null, 2))}</pre>`
-      }
-    } catch {
-      detailEl.innerHTML = `<pre>${escapeHtml(s.currentToolInput)}</pre>`
+  }
+
+  // Ops item — update the item label and detail
+  const detailEl = s._currentToolBlock.querySelector('.chat-ops-item-detail')
+  const labelEl = s._currentToolBlock.querySelector('.chat-ops-item-label')
+  if (!detailEl) return
+
+  try {
+    const parsed = JSON.parse(s.currentToolInput)
+
+    // Update item label with short description
+    let shortLabel = toolName
+    const filePath = parsed.file_path || parsed.path || ''
+    if (filePath) {
+      const parts = filePath.split('/')
+      shortLabel = toolName + ': ' + (parts.length > 3 ? '.../' + parts.slice(-3).join('/') : filePath)
+    } else if (parsed.command) {
+      shortLabel = toolName + ': ' + (parsed.command.length > 50 ? parsed.command.slice(0, 50) + '...' : parsed.command)
+    } else if (parsed.pattern) {
+      shortLabel = toolName + ': ' + parsed.pattern
+    } else if (parsed.query) {
+      shortLabel = toolName + ': ' + parsed.query.slice(0, 40)
     }
+    if (labelEl) labelEl.textContent = shortLabel
+
+    // Render detail content (visible when item is expanded)
+    if (parsed.old_string != null && parsed.new_string != null) {
+      // Edit tool — diff view
+      const file = parsed.file_path ? `<div class="tool-item" style="font-weight:500">${escapeHtml(parsed.file_path.split('/').slice(-3).join('/'))}</div>` : ''
+      detailEl.innerHTML = `${file}<pre class="tool-diff"><span class="diff-remove">${escapeHtml(parsed.old_string)}</span><span class="diff-add">${escapeHtml(parsed.new_string)}</span></pre>`
+    } else if (parsed.command) {
+      // Bash tool — command
+      detailEl.innerHTML = `<pre>${escapeHtml(parsed.command)}</pre>`
+    } else if (parsed.content != null) {
+      // Write tool — file path + content preview
+      const file = parsed.file_path ? `<div class="tool-item" style="font-weight:500">${escapeHtml(parsed.file_path.split('/').slice(-3).join('/'))}</div>` : ''
+      const preview = parsed.content.length > 500 ? parsed.content.slice(0, 500) + '...' : parsed.content
+      detailEl.innerHTML = `${file}<pre>${escapeHtml(preview)}</pre>`
+    } else {
+      // Generic — show key info
+      const label = parsed.file_path || parsed.path || parsed.pattern || parsed.query || JSON.stringify(parsed, null, 2).slice(0, 200)
+      detailEl.innerHTML = `<pre>${escapeHtml(label)}</pre>`
+    }
+  } catch {
+    detailEl.innerHTML = `<pre>${escapeHtml(s.currentToolInput.slice(0, 200))}</pre>`
   }
 }
 
