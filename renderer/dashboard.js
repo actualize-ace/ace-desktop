@@ -132,39 +132,44 @@ async function loadDashboard() {
 }
 
 function renderHealthBanner(health, el) {
-  const pageGroups = {}
-  for (const m of health.missing) {
-    const key = m.page || 'system'
-    if (!pageGroups[key]) pageGroups[key] = []
-    pageGroups[key].push(m)
-  }
+  const critical = health.missing.filter(m => m.tier === 'engine')
+  const other = health.missing.filter(m => m.tier !== 'engine')
 
-  const groupHtml = Object.entries(pageGroups).map(([page, items]) => {
-    const label = page === 'system' ? 'System' : page.charAt(0).toUpperCase() + page.slice(1)
-    const itemsHtml = items.map(i =>
-      `<span class="health-item health-${i.tier}">${i.path}</span>`
-    ).join('')
-    return `<div class="health-group"><strong>${label}</strong> ${itemsHtml}</div>`
-  }).join('')
+  const criticalHtml = critical.length
+    ? `<div class="health-section">
+        <span class="health-section-label health-engine">${critical.length} engine file${critical.length === 1 ? '' : 's'} missing</span>
+        <button class="health-fix-critical" onclick="window.__fixCriticalVault__()">Repair</button>
+       </div>`
+    : ''
+
+  const otherHtml = other.length
+    ? `<div class="health-section">
+        <span class="health-section-label health-scaffolding">${other.length} optional file${other.length === 1 ? '' : 's'} missing</span>
+       </div>`
+    : ''
 
   el.innerHTML = `
     <div class="vault-health-card">
       <div class="health-header">
         <span class="health-score">${health.score}%</span>
         <span class="health-label">Vault Integrity</span>
-        <span class="health-count">${health.missing.length} item${health.missing.length === 1 ? '' : 's'} missing</span>
-        <button class="health-fix-all" onclick="window.__fixAllVault__()">Fix All</button>
         <button class="health-dismiss" onclick="this.closest('.vault-health-card').remove()">\u00d7</button>
       </div>
-      <div class="health-body">${groupHtml}</div>
+      <div class="health-body">${criticalHtml}${otherHtml}</div>
     </div>
   `
 
-  window.__fixAllVault__ = async () => {
-    const btn = el.querySelector('.health-fix-all')
-    if (btn) { btn.textContent = 'Fixing...'; btn.disabled = true }
-    await window.ace.health.scaffoldAll(health.missing)
-    el.remove()
+  window.__fixCriticalVault__ = async () => {
+    const btn = el.querySelector('.health-fix-critical')
+    if (btn) { btn.textContent = 'Repairing...'; btn.disabled = true }
+    await window.ace.health.scaffoldAll(critical)
+    // Re-check health after repair
+    const updated = await window.ace.health.check()
+    if (updated && !updated.ok && updated.missing?.length) {
+      renderHealthBanner(updated, el)
+    } else {
+      el.remove()
+    }
     if (typeof loadDashboard === 'function') loadDashboard()
   }
 }
