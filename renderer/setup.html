@@ -215,7 +215,7 @@
         <div class="status-dot" id="vault-dot"></div>
         <button id="vault-btn">Browse</button>
       </div>
-      <div class="warning" id="vault-warning">⚠ No .mcp.json found — this may not be an ACE vault.</div>
+      <div class="warning" id="vault-warning">Please select your ACE vault folder.</div>
     </div>
 
     <div class="step">
@@ -271,17 +271,21 @@
       $('vault-path').textContent = result.vaultPath
       $('vault-path').className = 'step-value ' + (result.hasMcp ? 'valid' : '')
       $('vault-dot').className = 'status-dot ' + (result.hasMcp ? 'green' : 'amber')
+      $('vault-warning').textContent = result.hasMcp
+        ? ''
+        : 'Please select your ACE vault folder. If you haven\'t received your vault yet, your operator will set it up during your first session.'
       $('vault-warning').style.display = result.hasMcp ? 'none' : 'block'
       checkReady()
     })
 
     async function detectBinary() {
-      $('binary-path').textContent = 'Detecting…'
+      $('binary-path').textContent = 'Detecting\u2026'
       $('binary-dot').className = 'status-dot'
-      const found = await window.ace.setup.detectBinary()
-      if (found) {
-        state.binaryPath = found
-        $('binary-path').textContent = found
+      const result = await window.ace.setup.detectBinary()
+      if (result && result.path) {
+        state.binaryPath = result.path
+        const label = result.version ? result.path + ' (' + result.version + ')' : result.path
+        $('binary-path').textContent = label
         $('binary-path').className = 'step-value valid'
         $('binary-dot').className = 'status-dot green'
         $('install-guide').classList.remove('visible')
@@ -303,7 +307,7 @@
     })
 
     function checkReady() {
-      $('launch-btn').disabled = !(state.vaultPath && state.binaryPath)
+      $('launch-btn').disabled = !(state.vaultPath && state.vaultValid && state.binaryPath)
     }
 
     $('launch-btn').addEventListener('click', async () => {
