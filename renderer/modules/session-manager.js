@@ -136,11 +136,7 @@ export function renderChatStream(id, sessionsObj) {
   tailEl.innerHTML = tail ? renderTail(tail) : ''
 
   // Auto-scroll
-  const msgsEl = document.getElementById('chat-msgs-' + id)
-  if (msgsEl) {
-    const isAtBottom = (msgsEl.scrollHeight - msgsEl.scrollTop - msgsEl.clientHeight) < 60
-    if (isAtBottom) msgsEl.scrollTop = msgsEl.scrollHeight
-  }
+  scrollChatToBottom(id, 120)
 }
 
 // Show an inline banner in the chat message area
@@ -187,6 +183,8 @@ export function finalizeMessage(id, sessionsObj) {
   s._settledBoundary = 0
   s._settledHTML = ''
   clearActivityIndicator(id, sessionsObj)
+  // Auto-scroll on finalize — generous threshold (user may have scrolled up deliberately)
+  scrollChatToBottom(id, 300)
   if (s._wordTimer) { clearInterval(s._wordTimer); s._wordTimer = null }
   s._toolGroup = null
   s._currentAssistantEl = null
@@ -367,6 +365,15 @@ export function clearActivityIndicator(id, sessionsObj) {
   if (!s || !s._currentAssistantEl) return
   const indicator = s._currentAssistantEl.querySelector('.chat-activity')
   if (indicator) indicator.remove()
+}
+
+// Scroll chat to bottom — respects autoScroll setting and proximity threshold
+function scrollChatToBottom(id, threshold) {
+  if (state._autoScroll === false) return
+  const msgsEl = document.getElementById('chat-msgs-' + id)
+  if (!msgsEl) return
+  const dist = msgsEl.scrollHeight - msgsEl.scrollTop - msgsEl.clientHeight
+  if (dist < (threshold || 120)) msgsEl.scrollTop = msgsEl.scrollHeight
 }
 
 // Update chat status bar + context bar
@@ -1127,6 +1134,7 @@ export function initSessions() {
     const cfg = await window.ace.setup.getConfig()
     if (cfg?.defaults?.chat) state.chatDefaults = cfg.defaults.chat
     if (cfg?.defaults?.guardrails?.sessionCostWarning) state._costGuardrail = cfg.defaults.guardrails.sessionCostWarning
+    state._autoScroll = cfg?.defaults?.startup?.autoScroll !== false
   })()
 
   // New session button
