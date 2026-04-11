@@ -126,6 +126,37 @@
   font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim);
 }
 
+/* Operations container — collapsed tool summary */
+.chat-ops-container { border:1px solid var(--border); border-radius:6px; margin:8px 0; overflow:hidden; }
+.chat-ops-header {
+  display:flex; align-items:center; gap:8px; padding:6px 12px; cursor:pointer;
+  font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--text-dim);
+  transition:background 0.12s;
+}
+.chat-ops-header:hover { background:rgba(212,165,116,0.03); }
+.chat-ops-icon { font-size:10px; }
+.chat-ops-count { font-weight:500; }
+.chat-ops-chevron { margin-left:auto; font-size:8px; transition:transform 0.15s; }
+.chat-ops-container:not(.collapsed) .chat-ops-chevron { transform:rotate(90deg); }
+.chat-ops-list { padding:0; }
+.chat-ops-container.collapsed .chat-ops-list { display:none; }
+.chat-ops-item { border-top:1px solid var(--border); }
+.chat-ops-item-header {
+  display:flex; align-items:center; gap:8px; padding:5px 12px; cursor:pointer;
+  font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--text-dim);
+  transition:background 0.12s;
+}
+.chat-ops-item-header:hover { background:rgba(212,165,116,0.03); }
+.chat-ops-item-chevron { margin-left:auto; font-size:7px; transition:transform 0.15s; }
+.chat-ops-item:not(.collapsed) .chat-ops-item-chevron { transform:rotate(90deg); }
+.chat-ops-item-detail { padding:0 12px 8px; font-size:11px; }
+.chat-ops-item.collapsed .chat-ops-item-detail { display:none; }
+.chat-ops-item-detail pre {
+  background:var(--bg-card); border:1px solid var(--border); border-radius:4px;
+  padding:8px 10px; margin:4px 0; overflow-x:auto;
+  font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim);
+}
+
 /* Chat status bar */
 .chat-status {
   display:flex; align-items:center; gap:14px;
