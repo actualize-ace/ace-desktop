@@ -553,10 +553,28 @@ export function wireChatListeners(id, sessionsObj) {
     const msgsEl = document.getElementById('chat-msgs-' + id)
     if (!msgsEl) return
     if (msg.includes('No STDIN data') || msg.includes('proceeding without')) return
-    const errEl = document.createElement('div')
-    errEl.className = 'chat-error'
-    errEl.textContent = msg
-    msgsEl.appendChild(errEl)
+
+    // Check for structured binary-missing error
+    let parsed = null
+    try { parsed = JSON.parse(msg) } catch {}
+
+    if (parsed?.type === 'binary-missing') {
+      const card = document.createElement('div')
+      card.className = 'chat-error binary-missing-card'
+      card.innerHTML = `
+        <div style="margin-bottom:8px">Claude CLI not found at <code>${parsed.path || 'configured path'}</code>.</div>
+        <div style="margin-bottom:10px;opacity:0.7">It may have been moved or uninstalled.</div>
+        <div style="display:flex;gap:8px">
+          <button class="preflight-btn" onclick="window.ace.preflight.recheckBinary()">Re-detect</button>
+          <button class="preflight-btn" onclick="document.getElementById('settings-overlay')?.classList.add('open')">Open Settings</button>
+        </div>`
+      msgsEl.appendChild(card)
+    } else {
+      const errEl = document.createElement('div')
+      errEl.className = 'chat-error'
+      errEl.textContent = msg
+      msgsEl.appendChild(errEl)
+    }
     setAttention(id, sessionsObj)
   })
   const cleanupExit = window.ace.chat.onExit(id, code => {
@@ -785,7 +803,7 @@ export function spawnSession(opts) {
         </select>
       </div>
       <div class="chat-input-area">
-        <textarea class="chat-input" id="chat-input-${id}" placeholder="Message ACE..." rows="1"></textarea>
+        <textarea class="chat-input" id="chat-input-${id}" placeholder="${window.__preflightResult?.binary?.ok !== false ? 'Type /start to begin your day' : 'Message ACE...'}" rows="1"></textarea>
         <button class="chat-send-btn" id="chat-send-${id}">↑</button>
       </div>
     </div>
@@ -854,6 +872,13 @@ export function spawnSession(opts) {
     }
     if (e.key === 'Escape' && state.sessions[id].isStreaming) {
       window.ace.chat.cancel(id)
+    }
+  })
+  // Reset placeholder after first message
+  inputEl.addEventListener('input', function resetPlaceholder() {
+    if (inputEl.placeholder !== 'Message ACE...') {
+      inputEl.placeholder = 'Message ACE...'
+      inputEl.removeEventListener('input', resetPlaceholder)
     }
   })
   inputEl.addEventListener('input', () => {
