@@ -186,7 +186,10 @@ export function finalizeMessage(id, sessionsObj) {
   // Auto-scroll on finalize — generous threshold (user may have scrolled up deliberately)
   scrollChatToBottom(id, 300)
   if (s._wordTimer) { clearInterval(s._wordTimer); s._wordTimer = null }
-  s._toolGroup = null
+  s._opsContainer = null
+  s._opsCount = 0
+  s._currentToolName = null
+  s._hadToolBlocks = false
   s._currentAssistantEl = null
 
   // Update button state
@@ -491,8 +494,9 @@ export function wireChatListeners(id, sessionsObj) {
           clearActivityIndicator(id, sessionsObj)
           // If there were tool blocks before this text, create new settled/tail
           // so text renders AFTER the tool blocks in the DOM
-          if (s._toolGroup || s._hadToolBlocks) {
-            s._toolGroup = null
+          if (s._opsContainer || s._hadToolBlocks) {
+            s._opsContainer = null
+            s._opsCount = 0
             // Finalize current settled text
             if (s.currentStreamText && s._currentAssistantEl) {
               const contentEl = s._currentAssistantEl.querySelector('.chat-msg-content')
@@ -534,7 +538,7 @@ export function wireChatListeners(id, sessionsObj) {
       if (e.type === 'content_block_stop') {
         if (s._currentToolBlock) {
           // Detect /close skill invocation
-          if (s._toolGroup?.name === 'Skill' || (!s._toolGroup && s._currentToolBlock.querySelector?.('.chat-tool-name')?.textContent?.includes('Skill'))) {
+          if (s._currentToolName === 'Skill') {
             try {
               const parsed = JSON.parse(s.currentToolInput)
               if (parsed.skill === 'close') onSessionClose()
