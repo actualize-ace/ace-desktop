@@ -204,12 +204,10 @@ export function finalizeMessage(id, sessionsObj) {
   }
 }
 
-// Tools that show expanded with content preview (auto-approved but visible)
-const VISIBLE_TOOLS = new Set(['Edit', 'Write', 'Bash', 'NotebookEdit'])
-// Tools that need user input (questions)
+// Tools that need user input (questions) — render outside ops container
 const QUESTION_TOOLS = new Set(['AskUserQuestion'])
 
-// Tool block helpers — consolidates consecutive same-type tools into one block
+// Tool block helpers — all non-question tools go into an ops container
 export function appendToolBlock(id, toolInfo, sessionsObj) {
   sessionsObj = sessionsObj || state.sessions
   const s = sessionsObj[id]
@@ -217,45 +215,56 @@ export function appendToolBlock(id, toolInfo, sessionsObj) {
   const contentEl = s._currentAssistantEl.querySelector('.chat-msg-content')
   const toolName = toolInfo.name || 'Tool'
   const needsInput = QUESTION_TOOLS.has(toolName)
-  const showExpanded = VISIBLE_TOOLS.has(toolName)
 
-  // Only consolidate non-interactive, non-visible tools
-  if (!needsInput && !showExpanded && s._toolGroup && s._toolGroup.name === toolName && s._toolGroup.block) {
-    s._toolGroup.count++
-    s._toolGroup.items.push({ input: '' })
-    const header = s._toolGroup.block.querySelector('.chat-tool-name')
-    if (header) header.textContent = `${toolName} · ${s._toolGroup.count} calls`
-    updateActivityIndicator(id, toolName, sessionsObj)
-    s._currentToolBlock = s._toolGroup.block
-    s.currentToolInput = ''
-    return
-  }
-
-  // New tool block
-  const block = document.createElement('div')
-  block.className = 'chat-tool-block' + (showExpanded ? '' : ' collapsed')
+  // Track current tool name for Skill/close detection
+  s._currentToolName = toolName
 
   if (needsInput) {
+    // Question tool — render outside container, break current container
+    s._opsContainer = null
+    s._opsCount = 0
+    const block = document.createElement('div')
     block.className = 'chat-question-block'
     block.innerHTML = `<div class="question-header" id="question-text-${id}"></div>`
     s._questionBlockEl = block
-    // Trigger attention — a question needs the user's input
+    const tailEl = contentEl.querySelector('.chat-tail:last-of-type')
+    contentEl.insertBefore(block, tailEl)
     setAttention(id, sessionsObj)
-  } else {
-    block.innerHTML = `<div class="chat-tool-header"><span class="chat-tool-icon">⚡</span><span class="chat-tool-name">${escapeHtml(toolName)}</span><span class="chat-tool-chevron">▸</span></div><div class="chat-tool-detail"></div>`
+    s._currentToolBlock = block
+    s.currentToolInput = ''
+    updateActivityIndicator(id, toolName, sessionsObj)
+    return
   }
 
-  const hdr = block.querySelector('.chat-tool-header')
-  if (hdr) hdr.addEventListener('click', () => block.classList.toggle('collapsed'))
-  const tailEl = contentEl.querySelector('.chat-tail:last-of-type')
-  contentEl.insertBefore(block, tailEl)
+  // Non-question tool — add to ops container
+  if (!s._opsContainer) {
+    // Create new ops container
+    const container = document.createElement('div')
+    container.className = 'chat-ops-container collapsed'
+    container.innerHTML = `<div class="chat-ops-header"><span class="chat-ops-icon">⚡</span><span class="chat-ops-count">1 operation</span><span class="chat-ops-chevron">▸</span></div><div class="chat-ops-list"></div>`
+    container.querySelector('.chat-ops-header').addEventListener('click', () => container.classList.toggle('collapsed'))
+    const tailEl = contentEl.querySelector('.chat-tail:last-of-type')
+    contentEl.insertBefore(container, tailEl)
+    s._opsContainer = container
+    s._opsCount = 0
+  }
 
-  // Don't group visible or interactive tools
-  s._toolGroup = (needsInput || showExpanded) ? null : { name: toolName, block, count: 1, items: [{ input: '' }] }
-  s._currentToolBlock = block
+  // Create ops item
+  s._opsCount++
+  const countEl = s._opsContainer.querySelector('.chat-ops-count')
+  if (countEl) countEl.textContent = s._opsCount === 1 ? '1 operation' : `${s._opsCount} operations`
+
+  const item = document.createElement('div')
+  item.className = 'chat-ops-item collapsed'
+  item.innerHTML = `<div class="chat-ops-item-header"><span class="chat-ops-item-label">${escapeHtml(toolName)}</span><span class="chat-ops-item-chevron">▸</span></div><div class="chat-ops-item-detail"></div>`
+  item.querySelector('.chat-ops-item-header').addEventListener('click', () => item.classList.toggle('collapsed'))
+
+  s._opsContainer.querySelector('.chat-ops-list').appendChild(item)
+  s._currentToolBlock = item
   s.currentToolInput = ''
 
   updateActivityIndicator(id, toolName, sessionsObj)
+  scrollChatToBottom(id, 120)
 }
 
 export function appendToolInput(id, partialJson, sessionsObj) {
