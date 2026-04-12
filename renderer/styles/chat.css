@@ -201,6 +201,7 @@
 .ctx-bar {
   width:80px; height:3px; background:var(--bg-elevated); border-radius:2px;
   overflow:hidden; border:1px solid var(--border);
+  transition: box-shadow 1.2s ease, border-color 1.2s ease;
 }
 .ctx-bar-fill {
   height:100%; background:var(--green); border-radius:2px;
@@ -210,6 +211,36 @@
 .ctx-bar-fill.critical { background:var(--red); }
 .ctx-bar-pct {
   font-family:'JetBrains Mono',monospace; font-size:7px; color:var(--text-dim);
+}
+
+/* Context pressure glow — replaces the old full-pane wash.
+   Carrier: the ctx-bar itself (overflow:hidden clips shadow on the fill,
+   so glow lives on the parent). Escalates with three thresholds via
+   breathing animations — slower/subtler at warn, faster/stronger at
+   critical. The cadence itself carries the urgency. */
+.term-pane.ctx-warn .ctx-bar {
+  border-color: rgba(212,165,116,0.35);
+  animation: ctx-bar-breathe-warn 4s ease-in-out infinite;
+}
+.term-pane.ctx-hot .ctx-bar {
+  border-color: rgba(212,165,116,0.6);
+  animation: ctx-bar-breathe-hot 3s ease-in-out infinite;
+}
+.term-pane.ctx-critical .ctx-bar {
+  border-color: rgba(196,116,116,0.7);
+  animation: ctx-bar-pulse-critical 2s ease-in-out infinite;
+}
+@keyframes ctx-bar-breathe-warn {
+  0%, 100% { box-shadow: 0 0 3px rgba(212,165,116,0.35); }
+  50%      { box-shadow: 0 0 7px rgba(212,165,116,0.55); }
+}
+@keyframes ctx-bar-breathe-hot {
+  0%, 100% { box-shadow: 0 0 6px rgba(212,165,116,0.55); }
+  50%      { box-shadow: 0 0 13px rgba(212,165,116,0.85); }
+}
+@keyframes ctx-bar-pulse-critical {
+  0%, 100% { box-shadow: 0 0 10px rgba(196,116,116,0.65); }
+  50%      { box-shadow: 0 0 22px rgba(196,116,116,1.0); }
 }
 
 /* Chat controls bar */
