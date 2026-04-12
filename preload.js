@@ -56,6 +56,12 @@ contextBridge.exposeInMainWorld('ace', {
     getSynthesisAI:       (context) => ipcRenderer.invoke(ch.GET_SYNTHESIS_AI, context),
     getLayout:            ()        => ipcRenderer.invoke(ch.GET_LAYOUT),
     saveLayout:           (layout)  => ipcRenderer.invoke(ch.SAVE_LAYOUT, layout),
+
+    getNorthStar:   () => ipcRenderer.invoke(ch.GET_NORTHSTAR),
+    getDailyFocus:  () => ipcRenderer.invoke(ch.GET_DAILY_FOCUS),
+    getBuildBlocks: () => ipcRenderer.invoke(ch.GET_BUILD_BLOCKS),
+    markDone:       (item) => ipcRenderer.invoke(ch.MARK_DONE, item),
+    snoozeItem:     (item, days) => ipcRenderer.invoke(ch.SNOOZE_ITEM, item, days),
   },
 
   // ─── Chat (stream-json mode) ─────────────────────────────────────────────────
