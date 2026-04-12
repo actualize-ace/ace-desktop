@@ -829,3 +829,16 @@
   background: rgba(140,120,255,0.1);
   color: var(--gold);
 }
+
+/* ── COCKPIT — Reduced motion ─────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .ns-anchors, .ns-star.current,
+  .cockpit-triad-deck .triad-leg,
+  .cockpit-triad-deck .urgency-dot,
+  .cockpit-triad-deck .action-card.risen,
+  .cockpit-triad-deck .action-card.risen::after,
+  .cmp-center, .cmp-needle {
+    animation: none !important;
+    transition: none !important;
+  }
+}
