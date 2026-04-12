@@ -17,4 +17,28 @@ import astro        from './astro.js'
 
 export const WIDGETS = [synthesis, identity, astro, metrics, rhythm, velocity, state, outcomes, targets, pipeline, followups, quickactions]
 
-export const DEFAULT_LAYOUT = WIDGETS.map(w => ({ id: w.id, enabled: w.defaultEnabled ?? true }))
+// Zone assignment for cockpit layout
+// 'cockpit-*' = sacred ACE framework zones (fixed order, framework-defined)
+// 'dock' = operator-extensible zone
+// 'legacy' = old widgets disabled by default
+export const WIDGET_ZONES = {
+  synthesis:    'cockpit-brain',
+  velocity:     'cockpit-flow',
+  rhythm:       'cockpit-flow',
+  astro:        'cockpit-flow',
+
+  identity:     'legacy',
+  metrics:      'legacy',
+  state:        'legacy',
+  outcomes:     'legacy',
+  targets:      'legacy',
+  pipeline:     'legacy',
+  followups:    'legacy',
+  quickactions: 'legacy',
+}
+
+// New default — cockpit-active widgets enabled, legacy disabled
+export const DEFAULT_LAYOUT = WIDGETS.map(w => ({
+  id: w.id,
+  enabled: WIDGET_ZONES[w.id] !== 'legacy',
+}))
