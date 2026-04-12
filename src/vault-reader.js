@@ -567,7 +567,69 @@ function parseRitualRhythm(vaultPath) {
   }
   const streaks = todayIdx >= 0 ? { start: streak('start'), active: streak('active'), eod: streak('eod') } : { start: 0, active: 0, eod: 0 }
 
-  return { week, streaks }
+  // Build 28-day rolling window for cockpit rhythm widget
+  const days28 = []
+  for (let i = 27; i >= 0; i--) {
+    const d = new Date(today)
+    d.setDate(today.getDate() - i)
+    days28.push({ date: d.toISOString().slice(0, 10), start: false, active: false, eod: false })
+  }
+  const days28Map = new Map(days28.map(d => [d.date, d]))
+
+  // Re-scan log text for the 28-day window
+  {
+    let currentDate = null
+    for (const line of text.split('\n')) {
+      const headingMatch = line.match(/^#{1,3}\s+(\d{4}-\d{2}-\d{2})/)
+      if (headingMatch) {
+        currentDate = headingMatch[1]
+        const entry = days28Map.get(currentDate)
+        if (entry) {
+          const heading = line.toLowerCase()
+          if (heading.includes('day start'))     entry.start = true
+          if (heading.includes('session close')) entry.active = true
+          if (heading.includes('eod'))           entry.eod = true
+        }
+        continue
+      }
+      if (!currentDate) continue
+      const entry = days28Map.get(currentDate)
+      if (!entry) continue
+      const sourceMatch = line.match(/^\s*-\s*\*\*Sources?:\*\*\s*(.+)/i)
+      if (sourceMatch) {
+        const source = sourceMatch[1].toLowerCase()
+        if (source.includes('/start')) entry.start = true
+        if (source.includes('/close')) entry.active = true
+        if (source.includes('/eod'))   entry.eod = true
+      }
+      const singleSource = line.match(/^\s*-\s*\*\*Source:\*\*\s*(.+)/i)
+      if (singleSource) {
+        const source = singleSource[1].toLowerCase()
+        if (source.includes('/start')) entry.start = true
+        if (source.includes('/close')) entry.active = true
+        if (source.includes('/eod'))   entry.eod = true
+      }
+    }
+  }
+
+  // Daily-note fallback for days28
+  for (const day of days28) {
+    if (day.start && day.active && day.eod) continue
+    try {
+      const dailyNote = fs.readFileSync(path.join(vaultPath, '01-Journal', 'daily', day.date + '.md'), 'utf8')
+      if (!day.start) {
+        const morningMatch = dailyNote.match(/\*\*What is true this morning:\*\*[ \t]*(.+)/)
+        if (morningMatch && morningMatch[1].trim().length > 0) day.start = true
+      }
+      if (!day.active && /## Session Log[\s\S]*?- Shipped:/i.test(dailyNote)) day.active = true
+      if (!day.eod) {
+        const eodEnergy = dailyNote.match(/## EOD Closure[\s\S]*?\*\*Energy:\*\*[ \t]*(.+)/)
+        if (eodEnergy && eodEnergy[1].trim().length > 0) day.eod = true
+      }
+    } catch {}
+  }
+
+  return { week, streaks, days28 }
 }
 
 // ─── People Directory (04-Network/people/ + network-map.md) ─────────────────

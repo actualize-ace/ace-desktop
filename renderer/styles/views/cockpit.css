@@ -208,13 +208,17 @@ body.light .vbody.cockpit .orb-score { text-shadow: 0 0 20px rgba(255,255,255,0.
 }
 .vbody.cockpit .cockpit-synthesis-line {
   font-family: var(--font-display);
-  font-size: 18px; font-weight: 300;
+  font-size: 16px; font-weight: 300;
   color: var(--text-primary);
-  line-height: 1.5;
-  margin-bottom: 24px;
-  min-height: 56px;
+  line-height: 1.4;
+  margin-bottom: 20px;
+  min-height: 45px;
   letter-spacing: 0.01em;
   transition: opacity 1.5s ease;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .vbody.cockpit .cockpit-synthesis-line em {
   font-family: var(--font-script);
@@ -331,11 +335,18 @@ body.light .vbody.cockpit .orb-score { text-shadow: 0 0 20px rgba(255,255,255,0.
 .vbody.cockpit .flow-label .meta { color: var(--text-whisper); font-size: 7px; }
 
 .vbody.cockpit .velocity-wave { height: 52px; width: 100%; }
-.vbody.cockpit .velocity-wave svg { width: 100%; height: 100%; display: block; }
+.vbody.cockpit .velocity-wave svg { width: 100%; height: 100%; display: block; overflow: visible; }
 .vbody.cockpit .velocity-wave path.line {
   stroke: var(--gold); fill: none; stroke-width: 1.5;
   filter: drop-shadow(0 0 6px var(--glow-accent));
 }
+.vbody.cockpit .velocity-hit { cursor: pointer; }
+.vbody.cockpit .velocity-wave svg:hover .velocity-hit + .velocity-dot { opacity: 0.8; }
+.vbody.cockpit .flow-label .meta {
+  color: var(--text-whisper); font-size: 7px;
+  margin: 0 auto 0 8px;
+}
+.vbody.cockpit .flow-label .arrow { margin-left: 4px; }
 
 .vbody.cockpit .rhythm-grid {
   display: grid;

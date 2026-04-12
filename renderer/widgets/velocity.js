@@ -34,6 +34,17 @@ export default {
       ? Math.round((totalThisWeek - totalLastWeek) / totalLastWeek * 100)
       : null
     const arrowChar = delta === null ? '·' : delta > 0 ? '↑' : delta < 0 ? '↓' : '→'
+    const metaText = delta === null
+      ? `${totalThisWeek} this week`
+      : `${totalThisWeek} this week · ${delta >= 0 ? '+' : ''}${delta}%`
+
+    // Build per-point labels + dates for rollover
+    const today = new Date()
+    const dateLabels = []
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(today); d.setDate(d.getDate() - i)
+      dateLabels.push(d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }))
+    }
 
     // Map values to SVG coordinates (viewBox 0-300 × 0-52, inverted Y)
     const maxVal = Math.max(1, ...series)
@@ -41,7 +52,7 @@ export default {
     const points = series.map((v, i) => {
       const x = (i / (n - 1)) * 300
       const y = 52 - (v / maxVal) * 40 - 4 // reserve 4px top/bottom padding
-      return { x, y }
+      return { x, y, v, label: dateLabels[i] }
     })
 
     // Build a smooth path using quadratic bezier through midpoints
@@ -61,10 +72,25 @@ export default {
 
     const areaPath = `${linePath} L${points[n - 1].x},52 L${points[0].x},52 Z`
 
+    // Invisible rollover hit-markers per data point
+    const markers = points.map((p, i) =>
+      `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="8"
+               fill="transparent" class="velocity-hit" data-i="${i}">
+         <title>${p.label}: ${p.v} action${p.v === 1 ? '' : 's'}</title>
+       </circle>`
+    ).join('')
+    // Visible dots at each point for visual affordance
+    const dots = points.map((p, i) =>
+      `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2"
+               fill="var(--gold)" opacity="${p.v > 0 ? 0.6 : 0.2}"
+               class="velocity-dot"/>`
+    ).join('')
+
     el.innerHTML = `
       <div class="flow-block">
         <div class="flow-label">
           <span>Velocity</span>
+          <span class="meta">${metaText}</span>
           <span class="arrow">${arrowChar}</span>
         </div>
         <div class="velocity-wave">
@@ -77,6 +103,8 @@ export default {
             </defs>
             <path fill="url(#velArea)" stroke="none" d="${areaPath}" />
             <path class="line" d="${linePath}" />
+            ${dots}
+            ${markers}
           </svg>
         </div>
       </div>`

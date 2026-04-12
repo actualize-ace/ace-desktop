@@ -11,7 +11,8 @@ export default {
   defaultEnabled: true,
 
   render(data, el) {
-    if (!data || !data.week || !data.week.length) {
+    const days28 = data?.days28 || []
+    if (!days28.length) {
       el.innerHTML = `
         <div class="flow-block">
           <div class="flow-label"><span>Rhythm</span><span class="meta">—</span></div>
@@ -22,33 +23,29 @@ export default {
       return
     }
 
-    // Build level map keyed by date string (YYYY-MM-DD)
-    const levels = {}
-    for (const day of data.week) {
-      const count = (day.start ? 1 : 0) + (day.active ? 1 : 0) + (day.eod ? 1 : 0)
-      levels[day.date] = count
-    }
+    // Compute density stats for meta line
+    const activeDays = days28.filter(d => d.start || d.active || d.eod).length
+    const totalRituals = days28.reduce((sum, d) =>
+      sum + (d.start ? 1 : 0) + (d.active ? 1 : 0) + (d.eod ? 1 : 0), 0)
 
-    // Render 28 cells, oldest on left → newest on right
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const cells = []
-    for (let i = 27; i >= 0; i--) {
-      const d = new Date(today)
-      d.setDate(d.getDate() - i)
-      const key = d.toISOString().slice(0, 10)
-      const level = levels[key] ?? 0
-      const cls = level > 0 ? `rhythm-cell active-${Math.min(3, level)}` : 'rhythm-cell'
-      cells.push(`<div class="${cls}" title="${key}: ${level} ritual${level === 1 ? '' : 's'}"></div>`)
-    }
+    const cells = days28.map(d => {
+      const count = (d.start ? 1 : 0) + (d.active ? 1 : 0) + (d.eod ? 1 : 0)
+      const cls = count > 0 ? `rhythm-cell active-${Math.min(3, count)}` : 'rhythm-cell'
+      const parts = []
+      if (d.start)  parts.push('/start')
+      if (d.active) parts.push('active')
+      if (d.eod)    parts.push('/eod')
+      const tip = `${d.date}\n${parts.length ? parts.join(' · ') : 'nothing logged'}`
+      return `<div class="${cls}" title="${tip}"></div>`
+    }).join('')
 
     el.innerHTML = `
       <div class="flow-block">
         <div class="flow-label">
           <span>Rhythm</span>
-          <span class="meta">28 days</span>
+          <span class="meta">${activeDays}/28 days · ${totalRituals} rituals</span>
         </div>
-        <div class="rhythm-grid">${cells.join('')}</div>
+        <div class="rhythm-grid">${cells}</div>
       </div>`
   }
 }
