@@ -46,25 +46,35 @@ function pulseArrival(id, kind) {
     // Force reflow so the animation restarts even if the class lingered
     void el.offsetWidth
     el.classList.add('just-arrived')
-    setTimeout(() => el.classList.remove('just-arrived'), 1600)
+    // CSS animation is 3s; clear class slightly after so animation completes
+    setTimeout(() => el.classList.remove('just-arrived'), 3100)
   })
 }
 
+// Switch nav view if not already active, then run the activation fn after
+// two rAF ticks (one frame to apply classes, one for layout). Deterministic
+// replacement for the previous magic 100ms setTimeout.
+function switchViewAndRun(viewName, fn) {
+  const navItem = document.querySelector(`.nav-item[data-view="${viewName}"]`)
+  const alreadyActive = navItem?.classList.contains('active')
+  if (navItem && !alreadyActive) navItem.click()
+  requestAnimationFrame(() => requestAnimationFrame(fn))
+}
+
 function route(item) {
+  console.log('[attention-menu] route', item)
   if (item.kind === 'session') {
-    document.querySelector('.nav-item[data-view="terminal"]')?.click()
-    setTimeout(() => {
+    switchViewAndRun('terminal', () => {
       activateSession(item.id)
       clearAttention(item.id, state.sessions)
       pulseArrival(item.id, 'session')
-    }, 100)
+    })
   } else {
-    document.querySelector('.nav-item[data-view="agents"]')?.click()
-    setTimeout(() => {
+    switchViewAndRun('agents', () => {
       focusAgentPane(item.id)
       clearAttention(item.id, state.agentSessions)
       pulseArrival(item.id, 'agent')
-    }, 100)
+    })
   }
 }
 
