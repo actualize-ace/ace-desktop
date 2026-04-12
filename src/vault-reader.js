@@ -224,6 +224,146 @@ function parseDCA(vaultPath) {
   } catch { return null }
 }
 
+// ─── DCA Frontmatter (core/dca.md) ─────────────────────────────────────────
+
+function parseDCAFrontmatter(vaultPath) {
+  try {
+    const text = fs.readFileSync(path.join(vaultPath, '00-System', 'core', 'dca.md'), 'utf8')
+    const fmMatch = text.match(/^---\n([\s\S]*?)\n---/)
+    if (!fmMatch) return defaultDCAFrontmatter()
+
+    const lines = fmMatch[1].split('\n')
+    const result = {
+      north_star_anchors: [],
+      gate_date: null,
+      journey_start: null,
+      affirmations: [],
+      compass_directions: defaultCompassDirections(),
+    }
+
+    let currentList = null      // 'north_star_anchors' | 'affirmations' | null
+    let currentDirection = null // 'north' | 'east' | 'south' | 'west' | null
+    let currentDirField = null  // 'label' | 'keywords' | null
+
+    for (const raw of lines) {
+      const line = raw.replace(/\r$/, '')
+      if (!line.trim()) continue
+
+      // Top-level scalar: "key: value"
+      const scalar = line.match(/^([a-z_]+):\s*(.+)$/)
+      if (scalar) {
+        const [, key, val] = scalar
+        if (key === 'gate_date') result.gate_date = val.trim()
+        else if (key === 'journey_start') result.journey_start = val.trim()
+        currentList = null
+        currentDirection = null
+        currentDirField = null
+        continue
+      }
+
+      // List header: "key:" (no value)
+      const listHeader = line.match(/^([a-z_]+):\s*$/)
+      if (listHeader) {
+        const key = listHeader[1]
+        if (key === 'north_star_anchors' || key === 'affirmations') {
+          currentList = key
+          currentDirection = null
+        } else if (key === 'compass_directions') {
+          currentList = 'compass_directions'
+          currentDirection = null
+        }
+        continue
+      }
+
+      // List item: "  - "value""
+      const listItem = line.match(/^\s*-\s*"?(.+?)"?\s*$/)
+      if (listItem && currentList === 'north_star_anchors') {
+        result.north_star_anchors.push(listItem[1])
+        continue
+      }
+      if (listItem && currentList === 'affirmations') {
+        result.affirmations.push(listItem[1])
+        continue
+      }
+      // Keywords list under a direction
+      if (listItem && currentDirection && currentDirField === 'keywords') {
+        if (!result.compass_directions[currentDirection].keywords) {
+          result.compass_directions[currentDirection].keywords = []
+        }
+        result.compass_directions[currentDirection].keywords.push(listItem[1])
+        continue
+      }
+
+      // Compass direction header: "  north:" (2-space indent)
+      const dirHeader = line.match(/^\s{2}(north|east|south|west):\s*$/)
+      if (dirHeader && currentList === 'compass_directions') {
+        currentDirection = dirHeader[1]
+        currentDirField = null
+        if (!result.compass_directions[currentDirection]) {
+          result.compass_directions[currentDirection] = { label: '', keywords: [] }
+        }
+        continue
+      }
+
+      // Direction field: "    label: "..."" or "    keywords: [...]"
+      const dirField = line.match(/^\s{4}(label|keywords):\s*(.*)$/)
+      if (dirField && currentDirection) {
+        const [, field, val] = dirField
+        currentDirField = field
+        if (field === 'label') {
+          result.compass_directions[currentDirection].label = val.replace(/^["']|["']$/g, '')
+        } else if (field === 'keywords') {
+          // Inline array form: keywords: [a, b, c]
+          if (val.startsWith('[') && val.endsWith(']')) {
+            result.compass_directions[currentDirection].keywords =
+              val.slice(1, -1).split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean)
+          } else {
+            result.compass_directions[currentDirection].keywords = []
+          }
+        }
+        continue
+      }
+    }
+
+    // Compute journey day count
+    if (result.gate_date && result.journey_start) {
+      const start = new Date(result.journey_start)
+      const gate = new Date(result.gate_date)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const daysTotal = Math.round((gate - start) / (1000 * 60 * 60 * 24))
+      const daysElapsed = Math.round((today - start) / (1000 * 60 * 60 * 24))
+      result.daysTotal = daysTotal
+      result.daysElapsed = Math.max(0, Math.min(daysTotal, daysElapsed))
+    }
+
+    return result
+  } catch (e) {
+    return { ...defaultDCAFrontmatter(), error: e.message }
+  }
+}
+
+function defaultCompassDirections() {
+  return {
+    north: { label: 'Visible expression', keywords: ['content', 'post', 'publish', 'talk', 'podcast', 'video', 'share'] },
+    east:  { label: 'Sovereign infrastructure', keywords: ['build', 'code', 'ship', 'system', 'automation', 'integration', 'deploy'] },
+    south: { label: 'Liberation and overflow', keywords: ['recovery', 'regulate', 'breath', 'body', 'rest', 'integration', 'audit-energy'] },
+    west:  { label: 'Lineage and devotion', keywords: ['strategy', 'ritual', 'ancestry', 'decision', 'vision', 'threshold'] },
+  }
+}
+
+function defaultDCAFrontmatter() {
+  return {
+    north_star_anchors: [],
+    gate_date: null,
+    journey_start: null,
+    affirmations: [],
+    compass_directions: defaultCompassDirections(),
+    daysElapsed: null,
+    daysTotal: null,
+  }
+}
+
 // ─── Days Since Last Pulse (system-metrics.md) ──────────────────────────────
 
 function daysSinceLastPulse(vaultPath) {
@@ -585,4 +725,4 @@ function parsePatterns(vaultPath) {
   } catch (e) { return { counts: [], tensions: [], coOccurrences: [], descriptions: {}, error: e.message } }
 }
 
-module.exports = { parseState, parseFollowUps, listDir, parseExecutionLog, parseRitualRhythm, parsePeople, parseArtifacts, getArtifactDetail, updateArtifactStatus, parsePatterns }
+module.exports = { parseState, parseFollowUps, listDir, parseExecutionLog, parseRitualRhythm, parsePeople, parseArtifacts, getArtifactDetail, updateArtifactStatus, parsePatterns, parseDCAFrontmatter }
