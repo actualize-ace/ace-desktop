@@ -23,12 +23,15 @@ async function loadDashboard() {
 
   // Data source → IPC method map
   const sourceMap = {
-    getState:     () => window.ace.dash.getState(),
-    getPipeline:  () => window.ace.dash.getPipeline(),
-    getFollowUps: () => window.ace.dash.getFollowUps(),
-    getMetrics:   () => window.ace.dash.getMetrics(),
-    getVelocity:  () => window.ace.dash.getVelocity(),
-    getRhythm:    () => window.ace.dash.getRhythm(),
+    getState:        () => window.ace.dash.getState(),
+    getPipeline:     () => window.ace.dash.getPipeline(),
+    getFollowUps:    () => window.ace.dash.getFollowUps(),
+    getMetrics:      () => window.ace.dash.getMetrics(),
+    getVelocity:     () => window.ace.dash.getVelocity(),
+    getRhythm:       () => window.ace.dash.getRhythm(),
+    getNorthStar:    () => window.ace.dash.getNorthStar(),
+    getDailyFocus:   () => window.ace.dash.getDailyFocus(),
+    getBuildBlocks:  () => window.ace.dash.getBuildBlocks(),
   }
   // Patterns: optional, don't break dashboard if unavailable
   if (typeof window.ace.dash.getPatterns === 'function') {
@@ -55,15 +58,23 @@ async function loadDashboard() {
   // Always fetch velocity for synthesis context (even if velocity widget is disabled)
   if (!data.getVelocity) data.getVelocity = await window.ace.dash.getVelocity()
 
+  // Always fetch cockpit composite data for composite widgets
+  if (!data.getNorthStar)   data.getNorthStar   = await window.ace.dash.getNorthStar()
+  if (!data.getDailyFocus)  data.getDailyFocus  = await window.ace.dash.getDailyFocus()
+  if (!data.getBuildBlocks) data.getBuildBlocks = await window.ace.dash.getBuildBlocks()
+
   // Bundle allData for composite widgets (dataSource: null)
   const allData = {
-    state:     data.getState,
-    metrics:   data.getMetrics,
-    pipeline:  data.getPipeline,
-    followUps: data.getFollowUps,
-    velocity:  data.getVelocity,
-    rhythm:    data.getRhythm,
-    patterns:  data.getPatterns,
+    state:        data.getState,
+    metrics:      data.getMetrics,
+    pipeline:     data.getPipeline,
+    followUps:    data.getFollowUps,
+    velocity:     data.getVelocity,
+    rhythm:       data.getRhythm,
+    patterns:     data.getPatterns,
+    northStar:    data.getNorthStar,
+    dailyFocus:   data.getDailyFocus,
+    buildBlocks:  data.getBuildBlocks,
   }
 
   // ─── Vault health banner ──────────────────────────────────
