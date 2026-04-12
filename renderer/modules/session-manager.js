@@ -252,7 +252,7 @@ export function appendToolBlock(id, toolInfo, sessionsObj) {
     s._questionBlockEl = block
     const tailEl = contentEl.querySelector('.chat-tail:last-of-type')
     contentEl.insertBefore(block, tailEl)
-    setAttention(id, sessionsObj)
+    setAttention(id, sessionsObj, 'question')
     s._currentToolBlock = block
     s.currentToolInput = ''
     updateActivityIndicator(id, toolName, sessionsObj)
@@ -615,7 +615,7 @@ export function wireChatListeners(id, sessionsObj) {
       errEl.textContent = msg
       msgsEl.appendChild(errEl)
     }
-    setAttention(id, sessionsObj)
+    setAttention(id, sessionsObj, 'error')
   })
   const cleanupExit = window.ace.chat.onExit(id, code => {
     const s = sessionsObj[id]
@@ -631,7 +631,7 @@ export function wireChatListeners(id, sessionsObj) {
     const agentsVisible = document.getElementById('view-agents')?.classList.contains('active')
     const sessionVisible = terminalVisible && id === state.activeId
     const agentVisible = agentsVisible && id === state.focusedAgentId
-    if (!sessionVisible && !agentVisible) setAttention(id, sessionsObj)
+    if (!sessionVisible && !agentVisible) setAttention(id, sessionsObj, 'exit')
   })
   // Store cleanup functions on session so listeners are removed on close
   const s = sessionsObj[id]
@@ -912,6 +912,9 @@ export function spawnSession(opts) {
     isStreaming: false,
     model: state.chatDefaults.model,
     totalCost: 0,
+    needsAttention: false,
+    attentionReason: null,
+    attentionAt: null,
     totalTokens: { input: 0, output: 0 },
     contextInputTokens: 0,
     _settledBoundary: 0, _settledHTML: '', _currentAssistantEl: null, _pendingRAF: null, _currentToolBlock: null,
