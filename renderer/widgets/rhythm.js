@@ -23,29 +23,39 @@ export default {
       return
     }
 
-    // Compute density stats for meta line
-    const activeDays = days28.filter(d => d.start || d.active || d.eod).length
-    const totalRituals = days28.reduce((sum, d) =>
-      sum + (d.start ? 1 : 0) + (d.active ? 1 : 0) + (d.eod ? 1 : 0), 0)
+    // Per-ritual totals for the meta line
+    const ritualCounts = {
+      start:  days28.filter(d => d.start).length,
+      active: days28.filter(d => d.active).length,
+      eod:    days28.filter(d => d.eod).length,
+    }
 
-    const cells = days28.map(d => {
-      const count = (d.start ? 1 : 0) + (d.active ? 1 : 0) + (d.eod ? 1 : 0)
-      const cls = count > 0 ? `rhythm-cell active-${Math.min(3, count)}` : 'rhythm-cell'
-      const parts = []
-      if (d.start)  parts.push('/start')
-      if (d.active) parts.push('active')
-      if (d.eod)    parts.push('/eod')
-      const tip = `${d.date}\n${parts.length ? parts.join(' · ') : 'nothing logged'}`
-      return `<div class="${cls}" title="${tip}"></div>`
+    const rowFor = (key, cls) => days28.map(d => {
+      const on = !!d[key]
+      const tip = `${d.date} · ${key}: ${on ? 'yes' : 'no'}`
+      return `<div class="${on ? `rhythm-cell ${cls}` : 'rhythm-cell'}" title="${tip}"></div>`
     }).join('')
 
     el.innerHTML = `
       <div class="flow-block">
         <div class="flow-label">
           <span>Rhythm</span>
-          <span class="meta">${activeDays}/28 days · ${totalRituals} rituals</span>
+          <span class="meta">start ${ritualCounts.start} · active ${ritualCounts.active} · eod ${ritualCounts.eod}</span>
         </div>
-        <div class="rhythm-grid">${cells}</div>
+        <div class="rhythm-stack">
+          <div class="rhythm-row" title="/start — morning grounding">
+            <div class="rhythm-row-label">/start</div>
+            <div class="rhythm-grid rhythm-grid-thin">${rowFor('start', 'active-3')}</div>
+          </div>
+          <div class="rhythm-row" title="active — session work during the day">
+            <div class="rhythm-row-label">active</div>
+            <div class="rhythm-grid rhythm-grid-thin">${rowFor('active', 'active-2')}</div>
+          </div>
+          <div class="rhythm-row" title="/eod — end-of-day closure">
+            <div class="rhythm-row-label">/eod</div>
+            <div class="rhythm-grid rhythm-grid-thin">${rowFor('eod', 'active-1')}</div>
+          </div>
+        </div>
       </div>`
   }
 }

@@ -232,17 +232,23 @@ export default {
     const phaseRaw = (_cachedTransits.moon?.phase?.phase || '').toLowerCase()
     const { symbol, label } = phaseToGlyph(phaseRaw)
     const moonSign = SIGN_NAMES[_cachedTransits.moon?.sign] || _cachedTransits.moon?.sign || ''
+    const sunSign = SIGN_NAMES[_cachedTransits.sun?.sign] || _cachedTransits.sun?.sign || ''
+    const retros = _cachedTransits.retrogrades || []
+    const retroChip = retros.length
+      ? `<span class="astro-retro" title="${retros.join(', ')} retrograde">℞ ${retros[0]}${retros.length > 1 ? ` +${retros.length - 1}` : ''}</span>`
+      : ''
 
     el.innerHTML = `
       <div class="astro-block" id="astro-block">
         <div class="flow-label">
           <span>Cosmos</span>
-          <span class="meta">${moonSign}</span>
+          <span class="meta">${sunSign ? '☉ ' + sunSign : ''}${retroChip}</span>
         </div>
         <div class="astro-body">
           <div class="astro-symbol">${symbol}</div>
-          <div class="astro-label">${label}</div>
+          <div class="astro-label">${label}${moonSign ? `<br/><span style="opacity:0.7">in ${moonSign}</span>` : ''}</div>
         </div>
+        <div class="astro-footer-hint">click for today's weather</div>
       </div>`
 
     document.getElementById('astro-block')?.addEventListener('click', () => {

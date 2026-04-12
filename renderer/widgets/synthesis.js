@@ -32,6 +32,7 @@ export default {
     const risenLeg = allData._risenLeg
     const risenLabel = risenLeg ? `${risenLeg} rising` : 'in flow'
     const energyTag = ctx.energy ? `energy ${ctx.energy}` : ''
+    const risenTitle = risenLeg ? 'Click: why this leg is rising' : 'Coherence in flow'
 
     el.innerHTML = `
       <div class="cockpit-synthesis">
@@ -42,7 +43,7 @@ export default {
           <div class="cockpit-signal-cluster" data-leg="E">${dotHtml(6)}${dotHtml(7)}${dotHtml(8)}</div>
         </div>
         <div class="cockpit-synthesis-mode">
-          <span class="tag">${escapeHtml(risenLabel)}</span>
+          <span class="tag ${risenLeg ? 'clickable-pill' : ''}" data-action="risen-why" title="${risenTitle}">${escapeHtml(risenLabel)}</span>
           ${energyTag ? `<span class="tag energy">${escapeHtml(energyTag)}</span>` : ''}
         </div>
         <div class="cockpit-affirmation" id="cc-affirmation">${escapeHtml(initialAff)}</div>
@@ -53,6 +54,12 @@ export default {
       c.addEventListener('click', () => {
         document.querySelector('.nav-item[data-view="terminal"]')?.click()
       })
+    })
+
+    // Risen-leg pill click → explain why this leg is rising
+    el.querySelector('[data-action="risen-why"]')?.addEventListener('click', () => {
+      if (!risenLeg) return
+      showRisenWhyOverlay(risenLeg, allData, ctx)
     })
 
     // Affirmation rotation (every 11s)
@@ -428,7 +435,8 @@ export default {
     }
   },
 
-  // Narrative synthesis for cockpit — actionable, prescriptive, italic emphasis
+  // Narrative synthesis for cockpit — warm, human, connected.
+  // Writes to the user, not about them. Final emphasized clause carries the invitation.
   _buildCockpitNarrative(ctx, allData) {
     const score = ctx.coherenceScore || 0
     const signals = ctx.signals || []
@@ -436,40 +444,49 @@ export default {
     const yellow = signals.filter(s => s === 'yellow').length
     const risen = allData?._risenLeg
     const weakest = allData?._weakestLeg
+    const greens = signals.filter(s => s === 'green').length
+    const risenItem = allData?._candidatesByLeg?.[risen]?.[0]
 
-    // Critical states first
-    if (red >= 3) {
-      return `Multiple signals are red. <em>Tend to the body before the work.</em>`
-    }
+    // Recovery / depletion states — care comes first
     if (ctx.energy === 'depleted') {
-      return `Energy depleted. <em>Recovery is the work today.</em>`
+      return `Your body's been carrying a lot. <em>Let today be smaller than yesterday.</em>`
     }
     if (allData?.state?.recovery_flag === true) {
-      return `You flagged recovery. <em>Honor it fully.</em>`
+      return `You flagged recovery and the system's listening. <em>Honor that choice today.</em>`
+    }
+    if (red >= 3) {
+      return `The signals are asking for your attention before the work. <em>Check in with your body first.</em>`
     }
 
-    // High-coherence states
+    // High coherence — name what's working + gentle directional nudge
     if (score >= 15) {
-      if (risen === 'authority')  return `Systems are aligned to you. <em>Author the next gate.</em>`
-      if (risen === 'expansion')  return `Momentum is on your side. <em>Ship the real thing.</em>`
-      if (risen === 'capacity')   return `Steady strength in the container. <em>Deepen what's already working.</em>`
-      return `Systems are aligning to you. <em>Hold the cadence.</em>`
+      if (risen === 'authority') {
+        const label = risenItem?.label ? ` ${risenItem.label.toLowerCase()}` : ''
+        return `You're clear and the field is with you. <em>The next move${label ? ` —${label}` : ''} is ready when you are.</em>`
+      }
+      if (risen === 'expansion') {
+        return `Momentum is real today. <em>Spend it on something that will still matter next week.</em>`
+      }
+      if (risen === 'capacity') {
+        return `You're steady in the container — that's rare. <em>Deepen what's already working.</em>`
+      }
+      return `The whole system is humming. <em>Stay in this current a little longer.</em>`
     }
 
-    // Mid-coherence — focus on weakest leg
+    // Mid coherence — acknowledge + offer the gentlest useful move
     if (score >= 11) {
-      if (weakest === 'authority') return `Outcomes need your voice. <em>Say what's true and move.</em>`
-      if (weakest === 'capacity')  return `Body and bonds want tending. <em>Start there, then build.</em>`
-      if (weakest === 'expansion') return `Rhythm has slipped. <em>One concrete block changes the week.</em>`
-      return `Some friction in the field. <em>Simplify to what matters.</em>`
+      if (weakest === 'authority') return `Most of you is aligned; your voice hasn't quite landed yet. <em>Say the true thing and let it move.</em>`
+      if (weakest === 'capacity')  return `The work is here but the body's asking to be tended first. <em>Start with breath, then the doing.</em>`
+      if (weakest === 'expansion') return `You're held, and you're clear — now the rhythm wants one real block. <em>Pick it and protect it.</em>`
+      return `There's some friction in the field. <em>Simplify to the one thing that matters.</em>`
     }
 
-    // Lower coherence — regulation-first
+    // Lower coherence — invitation to smallness, not demands
     if (yellow >= 4 || red >= 1) {
-      return `Multiple signals asking for attention. <em>One thing, done with care.</em>`
+      return `A few signals are asking for care today. <em>One small, honest move is plenty.</em>`
     }
 
-    return `The container needs care before the work. <em>Regulate first.</em>`
+    return `The container wants tending before the work does. <em>Slow down — it's not against you.</em>`
   },
 
   _buildStructural(ctx) {
@@ -1008,4 +1025,89 @@ export default {
       if (loadingEl) loadingEl.classList.remove('active')
     })
   },
+}
+
+// ─── Risen-leg why overlay ─────────────────────────────────────────────
+
+function escAttr(s) {
+  return String(s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+function showRisenWhyOverlay(leg, allData, ctx) {
+  document.querySelectorAll('.cockpit-overlay').forEach(o => o.remove())
+
+  const top = allData?._candidatesByLeg?.[leg]?.[0]
+  const weakest = allData?._weakestLeg
+  const compass = allData?.compass?.direction
+  const dailyFocus = allData?.dailyFocus || []
+  const legSigRange = { authority: [0,2], capacity: [3,5], expansion: [6,8] }[leg]
+  const signals = ctx.signals || []
+  const legGreens = legSigRange
+    ? signals.slice(legSigRange[0], legSigRange[1] + 1).filter(s => s === 'green').length
+    : 0
+
+  // Recompute score breakdown for the top candidate (shadow of dashboard's computeLeverageScore)
+  const breakdown = []
+  if (top) {
+    for (const f of dailyFocus) {
+      const fLow = (f || '').toLowerCase()
+      if (top.label && fLow.includes(top.label.toLowerCase().slice(0, 20))) {
+        breakdown.push({ reason: 'Matches today’s focus', points: 5 })
+        break
+      }
+      if (top._raw?.person && fLow.includes(top._raw.person.toLowerCase())) {
+        breakdown.push({ reason: `Focus mentions ${top._raw.person}`, points: 5 })
+        break
+      }
+    }
+    if (top.leg === weakest) breakdown.push({ reason: `${weakest} is the weakest leg right now`, points: 3 })
+    if (top.urgency === 'critical' || top.urgency === 'urgent')
+      breakdown.push({ reason: `Urgency: ${top.urgency}`, points: 2 })
+    else breakdown.push({ reason: 'Baseline urgency', points: 1 })
+    if (top.direction && top.direction === compass)
+      breakdown.push({ reason: `Aligned with compass direction (${compass})`, points: 1 })
+  }
+  const total = breakdown.reduce((s, r) => s + r.points, 0)
+
+  const breakdownHtml = breakdown.map(r => `
+    <div class="cockpit-overlay-row">
+      <span class="cockpit-overlay-row-label">${escAttr(r.reason)}</span>
+      <span class="cockpit-overlay-row-value active">+${r.points}</span>
+    </div>`).join('')
+
+  const topLabel = top?.label || '(no candidate)'
+  const topCtx = top?.context || ''
+
+  const overlay = document.createElement('div')
+  overlay.className = 'cockpit-overlay'
+  overlay.innerHTML = `
+    <div class="cockpit-overlay-panel">
+      <div class="cockpit-overlay-header">
+        <span class="cockpit-overlay-label">Why ${escAttr(leg)} is rising</span>
+        <button class="cockpit-overlay-close" aria-label="Close">×</button>
+      </div>
+      <div class="cockpit-overlay-body">
+        <div style="margin-bottom:14px;">
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:15px;color:var(--text-primary);margin-bottom:4px;">${escAttr(topLabel)}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);">${escAttr(topCtx)}</div>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;">Leverage score: ${total}</div>
+        ${breakdownHtml || '<div style="font-style:italic;color:var(--text-dim);font-size:12px;">No candidates available.</div>'}
+        <div style="margin-top:18px;padding-top:14px;border-top:1px dashed var(--border);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--text-secondary);line-height:1.5;">
+          The risen leg shifts daily based on what has highest leverage: focus match (+5), weakest leg (+3), urgency (+2), compass alignment (+1).
+        </div>
+      </div>
+      <div class="cockpit-overlay-footer">
+        <button class="cockpit-overlay-btn secondary" data-action="close">Close</button>
+      </div>
+    </div>`
+
+  const close = () => overlay.remove()
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close() })
+  overlay.querySelector('.cockpit-overlay-close').addEventListener('click', close)
+  overlay.querySelector('[data-action="close"]').addEventListener('click', close)
+  document.addEventListener('keydown', function esc(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc) }
+  })
+  document.body.appendChild(overlay)
 }
