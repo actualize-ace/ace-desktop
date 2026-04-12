@@ -5,6 +5,7 @@
 import northstar   from './northstar.js'
 import compass      from './compass.js'
 import { triadAuthority, triadCapacity, triadExpansion } from './triad-leg.js'
+import innermove    from './innermove.js'
 import synthesis    from './synthesis.js'
 import identity     from './identity.js'
 import metrics      from './metrics.js'
@@ -21,6 +22,7 @@ import astro        from './astro.js'
 export const WIDGETS = [
   northstar, synthesis, compass,
   triadAuthority, triadCapacity, triadExpansion,
+  innermove,
   identity, astro, metrics, rhythm, velocity,
   state, outcomes, targets, pipeline, followups, quickactions,
 ]
@@ -36,6 +38,7 @@ export const WIDGET_ZONES = {
   'triad-authority':'cockpit-triad',
   'triad-capacity': 'cockpit-triad',
   'triad-expansion':'cockpit-triad',
+  innermove:        'cockpit-coaching',
   velocity:     'cockpit-flow',
   rhythm:       'cockpit-flow',
   astro:        'cockpit-flow',

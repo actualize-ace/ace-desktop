@@ -736,3 +736,61 @@
   min-height: 22px;
   transition: opacity 1.5s ease;
 }
+
+/* ── COCKPIT — Inner Move ──────────────────────────────────── */
+.cockpit-innermove {
+  background:
+    linear-gradient(135deg, rgba(96,216,168,0.06) 0%, transparent 50%),
+    var(--glass-bg);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--green);
+  border-radius: 10px;
+  padding: 22px 26px;
+  margin-bottom: 28px;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+.im-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.im-icon { color: var(--green); font-size: 16px; text-shadow: 0 0 8px rgba(96,216,168,0.5); }
+.im-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--green);
+}
+.im-skill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text-dim);
+  margin-left: auto;
+}
+.im-pattern { display: flex; gap: 10px; align-items: baseline; margin-bottom: 8px; }
+.im-pattern-name { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ark); }
+.im-pattern-count { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); }
+.im-pattern-trend { color: var(--red); margin-left: 4px; }
+.im-prompt {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px; font-weight: 300; color: var(--text-primary);
+  line-height: 1.5; max-width: 88%;
+  letter-spacing: 0.01em;
+}
+.im-tension {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text-dim);
+  margin-top: 10px; letter-spacing: 0.05em;
+}
+.im-actions { margin-top: 12px; }
+.im-open {
+  background: rgba(96,216,168,0.1);
+  border: 1px solid rgba(96,216,168,0.3);
+  color: var(--green);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.im-open:hover {
+  background: rgba(96,216,168,0.2);
+  border-color: var(--green);
+}
