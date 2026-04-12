@@ -1,11 +1,13 @@
 /* ── TERMINAL VIEW ── */
 .term-container { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
-.session-tabs { display: flex; align-items: center; gap: 2px; padding: 6px 12px 0; background: rgba(14,12,9,0.9); border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.stab { display: flex; align-items: center; gap: 5px; padding: 4px 10px 5px; border-radius: 5px 5px 0 0; border: 1px solid transparent; border-bottom: none; cursor: pointer; flex-shrink: 0; transition: all 0.12s; font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.8px; color: var(--text-dim); background: none; }
+.session-tabs { display: flex; align-items: center; gap: 2px; padding: 6px 12px 0; background: rgba(14,12,9,0.9); border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; scrollbar-width: none; }
+.session-tabs::-webkit-scrollbar { display: none; }
+.stab { display: flex; align-items: center; gap: 5px; padding: 4px 10px 5px; border-radius: 5px 5px 0 0; border: 1px solid transparent; border-bottom: none; cursor: pointer; flex: 0 1 auto; min-width: 50px; overflow: hidden; transition: all 0.12s; font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.8px; color: var(--text-dim); background: none; }
 .stab:hover { color: var(--text-secondary); background: rgba(212,165,116,0.03); }
 .stab.active { color: var(--text-primary); background: rgba(136,120,255,0.08); border-color: var(--border); box-shadow: inset 0 -2px 0 rgba(136,120,255,0.5); }
-.stab-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); transition: all 0.3s; }
+.stab-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); transition: all 0.3s; flex-shrink: 0; }
 .stab-dot.attention { background: var(--gold); animation: breathe 1.2s ease-in-out infinite; box-shadow: 0 0 6px rgba(212,165,116,0.5); }
+.stab-label { min-width: 0; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .attention-badge {
   display: none; align-items: center; justify-content: center;
   min-width: 18px; height: 18px; border-radius: 9px; padding: 0 5px;
@@ -21,10 +23,10 @@
 }
 .attention-badge.visible { display: flex; }
 .attention-badge:hover { transform: scale(1.25); box-shadow: 0 0 16px rgba(224,112,128,0.9), 0 0 32px rgba(224,112,128,0.5); }
-.stab-close { display: flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 3px; font-size: 10px; line-height: 1; color: var(--text-dim); opacity: 0; transition: opacity 0.1s, background 0.1s; margin-left: 2px; }
+.stab-close { display: flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 3px; font-size: 10px; line-height: 1; color: var(--text-dim); opacity: 0; transition: opacity 0.1s, background 0.1s; margin-left: 2px; flex-shrink: 0; }
 .stab:hover .stab-close { opacity: 1; }
 .stab-close:hover { background: rgba(212,165,116,0.15); color: var(--text-primary); }
-.stab-add { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; color: var(--text-dim); font-size: 14px; transition: all 0.12s; border: 1px solid transparent; background: none; margin-left: 3px; }
+.stab-add { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; color: var(--text-dim); font-size: 14px; transition: all 0.12s; border: 1px solid transparent; background: none; margin-left: 3px; flex-shrink: 0; }
 .stab-add:hover { border-color: var(--border); color: var(--text-secondary); }
 /* Split layout */
 .split-layout { display: flex; flex: 1; overflow: hidden; }

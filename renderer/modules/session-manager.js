@@ -11,6 +11,15 @@ import { attach as attachSlashMenu } from './slash-menu.js'
 
 // ─── Chat System ─────────────────────────────────────────────────────────────
 
+// Derive a short session name from the first user prompt. Keeps the label
+// scannable across tabs. Falls back to 'ACE' if the prompt is empty.
+function deriveSessionName(prompt) {
+  if (!prompt || !prompt.trim()) return 'ACE'
+  const cleaned = prompt.trim().replace(/\s+/g, ' ')
+  if (cleaned.length <= 28) return cleaned
+  return cleaned.slice(0, 28).trim() + '…'
+}
+
 export function sendChatMessage(id, prompt, sessionsObj) {
   sessionsObj = sessionsObj || state.sessions
   const s = sessionsObj[id]
@@ -47,6 +56,16 @@ export function sendChatMessage(id, prompt, sessionsObj) {
   assistantMsg.className = 'chat-msg chat-msg-assistant'
   assistantMsg.innerHTML = `<div class="chat-msg-label">ACE <span class="chat-streaming-indicator"><span></span><span></span><span></span></span><span class="chat-status-word" id="status-word-${id}">Thinking</span></div><div class="chat-msg-content md-body"><div class="chat-settled"></div><div class="chat-tail"></div></div>`
   msgsEl.appendChild(assistantMsg)
+
+  // Auto-name session on first user send (while name is still the default).
+  // Only the tab gets the name — the header label stays "ACE SESSION" as a
+  // static category marker. Tab = identity, header = category.
+  if (s.messages.length === 0 && (!s.name || s.name === 'ACE')) {
+    const newName = deriveSessionName(prompt)
+    s.name = newName
+    const tabLabel = document.getElementById('tab-label-' + id)
+    if (tabLabel) tabLabel.textContent = newName
+  }
 
   s.messages.push({ role: 'user', content: prompt.trim(), timestamp: Date.now() })
   s.currentStreamText = ''
@@ -815,7 +834,7 @@ export function spawnSession(opts) {
   pane.innerHTML = `
     <div class="term-hdr">
       <div class="term-hdr-dot" style="background:var(--green);box-shadow:0 0 7px rgba(109,184,143,0.5)"></div>
-      <div class="term-hdr-label">ACE Session</div>
+      <div class="term-hdr-label" id="hdr-label-${id}">ACE Session</div>
       <button class="mode-toggle-btn" id="mode-toggle-${id}">Terminal</button>
       <div class="term-hdr-path" id="hdr-path-${id}">Chat Mode</div>
       <span class="session-timer" id="session-timer-${id}" style="display:none"></span>
@@ -874,7 +893,7 @@ export function spawnSession(opts) {
   const tab = document.createElement('div')
   tab.className = 'stab'; tab.id = 'tab-' + id
   const moveArrow = targetContainer.id === 'pane-content-right' ? '←' : '→'
-  tab.innerHTML = `<div class="stab-dot"></div><span>ACE</span><span class="stab-move" id="stab-move-${id}" title="Move to other pane">${moveArrow}</span><span class="stab-close" id="stab-close-${id}" title="Close session">×</span>`
+  tab.innerHTML = `<div class="stab-dot"></div><span class="stab-label" id="tab-label-${id}">ACE</span><span class="stab-move" id="stab-move-${id}" title="Move to other pane">${moveArrow}</span><span class="stab-close" id="stab-close-${id}" title="Close session">×</span>`
   tab.addEventListener('click', (e) => { if (!e.target.classList.contains('stab-close') && !e.target.classList.contains('stab-move')) activateSession(id) })
   const targetTabBar = opts?.tabBar || document.getElementById('session-tabs-left')
   const addBtn = targetTabBar.querySelector('.stab-add')
@@ -883,6 +902,7 @@ export function spawnSession(opts) {
   state.sessions[id] = {
     term: null, fitAddon: null, pane, tab,
     mode: 'chat',
+    name: 'ACE',
     claudeSessionId: null,
     resumeId: resumeId,
     resumeCwd: resumeCwd,

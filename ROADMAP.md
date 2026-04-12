@@ -99,7 +99,7 @@ Promoted from post-ship — building with velocity.
 | Living orb | Not started | Medium | Animated orb reacting to PTY activity / session state |
 | Scratchpad | Not started | Medium | Persistent markdown notepad sidebar |
 | Notification system redesign | Not started | Medium | Replace red dot with non-social-media color (amber/accent). Click notification → jump to correct session pane with pulsing dot on tab. Multiple notifications → dropdown to pick which chat. |
-| Terminal session naming | Not started | Medium | Sessions created from Agent Terminal default to "ACE" — should auto-name from first prompt or vault context. |
+| ~~Terminal session naming~~ | Done | ~~Medium~~ | Shipped 2026-04-12: `deriveSessionName()` auto-names session from first user prompt (trim + 28-char ellipsis). Tab updates on first send; header stays static "ACE SESSION" (tab = identity, header = category). Includes responsive tab bar fix — tabs flex-shrink w/ 50px floor, horizontal scroll fallback, fixed dot + close survive squeeze. Files: [session-manager.js](renderer/modules/session-manager.js), [terminal.css](renderer/styles/views/terminal.css). |
 | Client feedback integration | Not started | Medium | Incorporate Joe + Marc usage patterns |
 | HeartMath calibration | Not started | Low | Side-by-side session (ACE vs HeartMath app) to fix coherence thresholds |
 
