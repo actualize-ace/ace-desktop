@@ -158,12 +158,12 @@ async function loadDashboard() {
     }
   }
 
-  // Render Triad signal dots in column headers
-  const signals = allData.metrics?._signals || Array(9).fill('dim')
+  // Legacy: render Triad signal dots in old column headers (elements may no longer exist)
+  const legacySignals = signals.length ? signals : Array(9).fill('dim')
   const dotGroups = {
-    authority:  signals.slice(0, 3),  // A1, A2, A3
-    capacity:   signals.slice(3, 6),  // C1, C2, C3
-    expansion:  signals.slice(6, 9),  // E1, E2, E3
+    authority:  legacySignals.slice(0, 3),
+    capacity:   legacySignals.slice(3, 6),
+    expansion:  legacySignals.slice(6, 9),
   }
   for (const [leg, dots] of Object.entries(dotGroups)) {
     const el = document.getElementById(`dots-${leg}`)
