@@ -86,6 +86,35 @@ async function loadDashboard() {
     compass:      data.getCompass,
   }
 
+  // ─── Build candidate pools per leg + compute leverage + select risen ─────
+  const candidatesByLeg = buildCandidatesByLeg(allData)
+  const compassDir = allData.compass?.direction
+  const dailyFocus = allData.dailyFocus || []
+  const signals = allData.metrics?._signals || []
+  const weakestLeg = computeWeakestLeg(signals)
+
+  for (const leg of ['authority', 'capacity', 'expansion']) {
+    for (const c of candidatesByLeg[leg]) {
+      c._leverage = computeLeverageScore(c, { dailyFocus, weakestLeg, compassDirection: compassDir })
+    }
+    candidatesByLeg[leg].sort((a, b) => (b._leverage || 0) - (a._leverage || 0))
+  }
+
+  // Find risen leg — highest leverage across all leg-tops
+  let topScore = -1
+  let risenLeg = null
+  for (const leg of ['authority', 'capacity', 'expansion']) {
+    const top = candidatesByLeg[leg][0]
+    if (top && top._leverage > topScore) {
+      topScore = top._leverage
+      risenLeg = leg
+    }
+  }
+
+  allData._candidatesByLeg = candidatesByLeg
+  allData._risenLeg = risenLeg
+  allData._weakestLeg = weakestLeg
+
   // ─── Vault health banner ──────────────────────────────────
   try {
     const health = await window.ace.health?.check?.()
@@ -208,5 +237,241 @@ function initDashClickables() {
     }
   })
 }
+
+// ─── Cockpit candidate builders per leg ──────────────────────────────────
+
+function buildCandidatesByLeg(allData) {
+  const dismissed = JSON.parse(localStorage.getItem('cockpit-dismissed') || '[]')
+  const today = new Date().toISOString().slice(0, 10)
+  const dismissedToday = new Set(
+    dismissed.filter(d => d.date === today).map(d => d.label)
+  )
+  const cycled = JSON.parse(sessionStorage.getItem('cockpit-cycled') || '[]')
+  const cycledSet = new Set(cycled)
+
+  const filterDismissed = (arr) => arr.filter(c =>
+    !dismissedToday.has(c.label) && !cycledSet.has(c.label)
+  )
+
+  return {
+    authority: filterDismissed(buildAuthorityCandidates(allData)),
+    capacity:  filterDismissed(buildCapacityCandidates(allData)),
+    expansion: filterDismissed(buildExpansionCandidates(allData)),
+  }
+}
+
+function buildAuthorityCandidates(allData) {
+  const candidates = []
+  const outcomes = allData.state?.outcomes || []
+
+  for (const o of outcomes) {
+    if (!o.title || /COMPLETE|CLOSED|ABSORBED/i.test(o.status || '')) continue
+    const days = o.daysToGate
+    let urgency = 'normal'
+    if (days != null && days <= 0) urgency = 'critical'
+    else if (days != null && days <= 3) urgency = 'urgent'
+    else if (days != null && days <= 7) urgency = 'warning'
+    if (/AT RISK|BLOCKED/i.test(o.status || '')) urgency = 'urgent'
+
+    candidates.push({
+      type: 'outcome',
+      leg: 'authority',
+      urgency,
+      label: o.title,
+      context: o.gateLabel
+        ? `Gate ${o.gateLabel}${days != null ? ` · ${Math.abs(days)} days ${days < 0 ? 'past' : ''}` : ''}`
+        : (o.status || ''),
+      _raw: o,
+    })
+  }
+  return candidates
+}
+
+function buildCapacityCandidates(allData) {
+  const candidates = []
+  const signals = allData.metrics?._signals || []
+  const state = allData.state || {}
+  const followUps = Array.isArray(allData.followUps) ? allData.followUps : []
+
+  // Regulation invitation (C1 yellow/red)
+  const c1 = signals[3]
+  if (c1 === 'yellow' || c1 === 'red') {
+    candidates.push({
+      type: 'regulation',
+      leg: 'capacity',
+      urgency: c1 === 'red' ? 'urgent' : 'warning',
+      label: 'Regulation invitation',
+      context: `C1 ${c1} · energy ${state.energy || 'unknown'}`,
+      _raw: { signal: 'C1', color: c1 },
+    })
+  }
+
+  // Recovery protocol
+  if (state.energy === 'depleted') {
+    candidates.push({
+      type: 'recovery',
+      leg: 'capacity',
+      urgency: 'critical',
+      label: 'Recovery protocol',
+      context: `Energy depleted · mode ${state.mode || 'unknown'}`,
+      _raw: { energy: state.energy },
+    })
+  }
+
+  // Follow-ups
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const overdueFu = followUps.filter(f => {
+    if (!f.due) return false
+    const d = new Date(f.due)
+    if (isNaN(d.getTime())) return false
+    d.setHours(0, 0, 0, 0)
+    return d < today && (f.status || '').toLowerCase() !== 'done'
+  }).sort((a, b) => new Date(a.due) - new Date(b.due))
+
+  for (const fu of overdueFu) {
+    const daysOverdue = Math.round((today - new Date(fu.due)) / (1000 * 60 * 60 * 24))
+    let urgency = 'normal'
+    if (daysOverdue >= 15) urgency = 'critical'
+    else if (daysOverdue >= 8) urgency = 'urgent'
+    else if (daysOverdue >= 3) urgency = 'warning'
+
+    candidates.push({
+      type: 'followup',
+      leg: 'capacity',
+      urgency,
+      label: `${fu.person} — ${(fu.topic || '').slice(0, 60)}`,
+      context: `${daysOverdue} days overdue`,
+      _raw: { person: fu.person, topic: fu.topic, due: fu.due },
+    })
+  }
+
+  return candidates
+}
+
+function buildExpansionCandidates(allData) {
+  const candidates = []
+  const state = allData.state || {}
+  const buildBlocks = allData.buildBlocks || []
+  const patterns = allData.patterns || {}
+  const signals = allData.metrics?._signals || []
+  const pipeline = Array.isArray(allData.pipeline) ? allData.pipeline : []
+
+  // Weekly targets (unchecked)
+  const targets = (state.weeklyTargets || []).filter(t => !t.checked)
+  for (const t of targets) {
+    candidates.push({
+      type: 'target',
+      leg: 'expansion',
+      urgency: 'normal',
+      label: t.text,
+      context: 'This week',
+      _raw: { text: t.text },
+    })
+  }
+
+  // BUILD blocks (next 24h)
+  for (const b of buildBlocks) {
+    candidates.push({
+      type: 'build_block',
+      leg: 'expansion',
+      urgency: b.hoursUntil <= 2 ? 'urgent' : 'normal',
+      label: b.title,
+      context: `in ${b.hoursUntil}h · ${b.duration} min`,
+      _raw: b,
+    })
+  }
+
+  // Cadence (day-of-week)
+  const dow = new Date().getDay()
+  if (dow === 6) {
+    candidates.push({
+      type: 'cadence', leg: 'expansion', urgency: 'normal',
+      label: 'Write list email', context: 'Saturday ritual',
+      _raw: { ritual: 'list-email' },
+    })
+  }
+  if (dow === 0) {
+    candidates.push({
+      type: 'cadence', leg: 'expansion', urgency: 'normal',
+      label: 'Weekly review', context: 'Sunday ritual',
+      _raw: { ritual: 'weekly-review' },
+    })
+  }
+
+  // Growth edges
+  const c2 = signals[4]
+  if (patterns.tensions?.length) {
+    for (const t of patterns.tensions) {
+      if (t.days < 3) continue
+      candidates.push({
+        type: 'growth_edge',
+        leg: 'expansion',
+        urgency: t.days >= 7 ? 'urgent' : 'warning',
+        label: `Growth edge: ${t.label}`,
+        context: `${t.days} days alive`,
+        _raw: t,
+      })
+    }
+  } else if (c2 === 'yellow' || c2 === 'red') {
+    candidates.push({
+      type: 'growth_edge',
+      leg: 'expansion',
+      urgency: c2 === 'red' ? 'urgent' : 'warning',
+      label: 'Untouched edge',
+      context: `Capacity → Depth ${c2}`,
+      _raw: { signal: 'C2', color: c2 },
+    })
+  }
+
+  // Pipeline (overdue only)
+  for (const deal of pipeline) {
+    if (!deal.due_date) continue
+    const due = new Date(deal.due_date)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    if (due >= today) continue
+    candidates.push({
+      type: 'pipeline',
+      leg: 'expansion',
+      urgency: 'urgent',
+      label: `${deal.person} — ${(deal.next_action || '').slice(0, 60)}`,
+      context: `Overdue · $${deal.amount}`,
+      _raw: deal,
+    })
+  }
+
+  return candidates
+}
+
+// Local scoring helpers — mirror src/synthesizer.js but inline for renderer
+function computeWeakestLeg(signals) {
+  const score = (c) => c === 'green' ? 2 : c === 'yellow' ? 1 : 0
+  const a = signals[0] && signals[1] && signals[2] ? score(signals[0]) + score(signals[1]) + score(signals[2]) : 6
+  const c = signals[3] && signals[4] && signals[5] ? score(signals[3]) + score(signals[4]) + score(signals[5]) : 6
+  const e = signals[6] && signals[7] && signals[8] ? score(signals[6]) + score(signals[7]) + score(signals[8]) : 6
+  if (a <= c && a <= e) return 'authority'
+  if (c <= e) return 'capacity'
+  return 'expansion'
+}
+
+function computeLeverageScore(item, ctx) {
+  let score = 0
+  const focus = ctx.dailyFocus || []
+  for (const f of focus) {
+    const fLow = (f || '').toLowerCase()
+    if (item.label && fLow.includes(item.label.toLowerCase().slice(0, 20))) { score += 5; break }
+    if (item._raw?.person && fLow.includes(item._raw.person.toLowerCase())) { score += 5; break }
+  }
+  if (item.leg && item.leg === ctx.weakestLeg) score += 3
+  if (item.urgency === 'critical' || item.urgency === 'urgent') score += 2
+  else score += 1
+  return score
+}
+
+// Cockpit-refresh — re-render dashboard after card actions
+window.addEventListener('cockpit-refresh', () => {
+  loadDashboard()
+})
 
 export { loadDashboard, getLayout, initDashClickables }
