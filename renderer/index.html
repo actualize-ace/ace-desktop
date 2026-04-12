@@ -303,20 +303,18 @@
             <div id="widget-compass" class="cb-compass"></div>
           </div>
 
-          <!-- Identity anchor -->
+          <!-- Identity anchor (legacy — hidden in cockpit) -->
           <div id="widget-identity"></div>
 
-          <!-- Cosmic weather -->
-          <div id="widget-astro"></div>
-
-          <!-- Stats strip -->
+          <!-- Stats strip (legacy — hidden in cockpit) -->
           <div id="widget-metrics"></div>
 
-          <!-- Rhythm heatmap -->
-          <div id="widget-rhythm"></div>
-
-          <!-- Velocity waveform — above the fold -->
-          <div id="widget-velocity" style="margin-bottom:10px"></div>
+          <!-- Flow layer: velocity + rhythm + astro -->
+          <div class="cockpit-flow-row">
+            <div id="widget-velocity"></div>
+            <div id="widget-rhythm"></div>
+            <div id="widget-astro"></div>
+          </div>
 
           <!-- Triad deck -->
           <div class="cockpit-triad-deck">

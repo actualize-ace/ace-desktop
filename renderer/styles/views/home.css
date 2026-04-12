@@ -384,6 +384,18 @@
   50%      { transform: scale(1.6); opacity: 0.85; }
 }
 
+/* ── COCKPIT — Flow Row (velocity + rhythm + astro) ──────────── */
+.cockpit-flow-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1.4fr 0.6fr;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+@media (max-width: 1100px) {
+  .cockpit-flow-row { grid-template-columns: 1fr 1fr; }
+  .cockpit-flow-row #widget-astro { grid-column: span 2; }
+}
+
 /* ── COCKPIT — Brain Row layout (synthesis + compass side by side) ── */
 .cockpit-brain-row {
   display: grid;
