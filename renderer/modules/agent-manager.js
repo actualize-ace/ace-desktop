@@ -145,6 +145,7 @@ export function spawnAgentPane(targetRow) {
     mode: 'chat',
     claudeSessionId: null, messages: [], currentStreamText: '', currentToolInput: '',
     isStreaming: false, totalCost: 0, totalTokens: { input: 0, output: 0 },
+    needsAttention: false, attentionReason: null, attentionAt: null,
     _settledBoundary: 0, _settledHTML: '', _currentAssistantEl: null, _pendingRAF: null, _currentToolBlock: null,
   }
 
