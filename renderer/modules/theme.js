@@ -50,9 +50,12 @@ export function updateTime() {
   const t     = now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false })
   const d     = now.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' })
   const greet = now.getHours() < 12 ? 'morning' : now.getHours() < 17 ? 'afternoon' : 'evening'
-  document.getElementById('live-time').textContent  = t
-  document.getElementById('home-time').textContent  = d.toUpperCase()
-  document.getElementById('home-name').textContent  = `Good ${greet}, Nikhil.`
+  const liveEl = document.getElementById('live-time')
+  const homeTimeEl = document.getElementById('home-time')
+  const homeNameEl = document.getElementById('home-name')
+  if (liveEl) liveEl.textContent = t
+  if (homeTimeEl) homeTimeEl.textContent = d.toUpperCase()
+  if (homeNameEl) homeNameEl.textContent = `Good ${greet}, Nikhil.`
 }
 
 export function initTheme() {
