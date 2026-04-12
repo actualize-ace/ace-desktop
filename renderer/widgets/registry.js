@@ -3,6 +3,7 @@
 // Each widget: { id, label, description, dataSource, defaultEnabled, render(data, el) }
 
 import northstar   from './northstar.js'
+import orb          from './orb.js'
 import compass      from './compass.js'
 import { triadAuthority, triadCapacity, triadExpansion } from './triad-leg.js'
 import innermove    from './innermove.js'
@@ -20,7 +21,7 @@ import quickactions from './quickactions.js'
 import astro        from './astro.js'
 
 export const WIDGETS = [
-  northstar, synthesis, compass,
+  northstar, orb, synthesis, compass,
   triadAuthority, triadCapacity, triadExpansion,
   innermove,
   identity, astro, metrics, rhythm, velocity,
@@ -33,6 +34,7 @@ export const WIDGETS = [
 // 'legacy' = old widgets disabled by default
 export const WIDGET_ZONES = {
   northstar:        'cockpit-top',
+  orb:              'cockpit-brain',
   synthesis:        'cockpit-brain',
   compass:          'cockpit-brain',
   'triad-authority':'cockpit-triad',

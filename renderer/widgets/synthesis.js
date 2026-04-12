@@ -19,55 +19,36 @@ export default {
     const ctx = this._buildContext(allData)
     this._lastCtx = ctx // stash for Inner Move widget (_buildCoachingPrompt)
     const structural = this._buildStructural(ctx)
-    const label = this._stateLabel(ctx.coherenceScore)
 
     const signalKeys = ['A1','A2','A3','C1','C2','C3','E1','E2','E3']
-    const signalLabels = ['A','C','E']
 
     const affirmations = allData.northStar?.affirmations || []
     const initialAff = affirmations[0] || ''
 
+    const sig = (i) => ctx.signals[i] || 'dim'
+    const dotHtml = (i) => `<div class="cockpit-signal-dot ${sig(i)}" title="${signalKeys[i]}: ${SIGNAL_NAMES[signalKeys[i]]}"></div>`
+
     el.innerHTML = `
-      <div class="command-center cockpit-mode">
-        <div class="cc-pulse">
-          <div class="cc-orb ${label}" data-action="threshold">
-            <span class="cc-orb-score">${ctx.coherenceScore}</span>
-            <span class="cc-orb-label">${label}</span>
-          </div>
-          <div class="cc-center">
-            <div class="cc-synthesis" id="cc-synthesis-text">${escapeHtml(structural)}</div>
-            <div class="cc-synth-loading" id="cc-synth-loading">
-              <span>Synthesizing</span>
-              <div class="cc-synth-loading-bar"></div>
-            </div>
-            <div class="cc-signals">
-              ${[0,1,2].map(row => {
-                const offset = row * 3
-                return `<span class="cc-signal-label">${signalLabels[row]}</span>` +
-                  [0,1,2].map(col => {
-                    const color = ctx.signals[offset + col] || 'dim'
-                    return `<div class="cc-signal-dot ${color}" title="${signalKeys[offset + col]}: ${SIGNAL_NAMES[signalKeys[offset + col]]}"></div>`
-                  }).join('')
-              }).join('')}
-            </div>
-            <div class="cc-mode-tag">${escapeHtml(ctx.mode || '\u2014')} \u00b7 ${escapeHtml(ctx.energy || '\u2014')}</div>
-            <div class="cc-affirmation" id="cc-affirmation">${escapeHtml(initialAff)}</div>
-          </div>
+      <div class="cockpit-synthesis">
+        <div class="cockpit-synthesis-line" id="cc-synthesis-text">${escapeHtml(structural)}</div>
+        <div class="cockpit-synthesis-signals">
+          <div class="cockpit-signal-cluster" data-leg="A">${dotHtml(0)}${dotHtml(1)}${dotHtml(2)}</div>
+          <div class="cockpit-signal-cluster" data-leg="C">${dotHtml(3)}${dotHtml(4)}${dotHtml(5)}</div>
+          <div class="cockpit-signal-cluster" data-leg="E">${dotHtml(6)}${dotHtml(7)}${dotHtml(8)}</div>
         </div>
+        <div class="cockpit-synthesis-mode">
+          <span class="tag">${escapeHtml(ctx.mode || '\u2014')}</span>
+          <span class="tag energy">${escapeHtml(ctx.energy || '\u2014')}</span>
+        </div>
+        <div class="cockpit-affirmation" id="cc-affirmation">${escapeHtml(initialAff)}</div>
       </div>`
 
-    // Orb click → Threshold Mode placeholder
-    el.querySelector('[data-action="threshold"]')?.addEventListener('click', () => {
-      alert("Threshold Mode opens here:\n\n\u2192 3 coherence breaths\n\u2192 North Star anchors recited\n\u2192 \u2018What wants to be created today?\u2019\n\u2192 Your answer becomes today\u2019s intent\n\u2192 Cockpit shapes around it")
-    })
-
-    // Signal matrix click → terminal (coaching)
-    const signalGrid = el.querySelector('.cc-signals')
-    if (signalGrid) {
-      signalGrid.addEventListener('click', () => {
+    // Signal cluster click → terminal (coaching)
+    el.querySelectorAll('.cockpit-signal-cluster').forEach(c => {
+      c.addEventListener('click', () => {
         document.querySelector('.nav-item[data-view="terminal"]')?.click()
       })
-    }
+    })
 
     // Affirmation rotation (every 11s)
     if (affirmations.length > 1) {
@@ -85,9 +66,7 @@ export default {
       }, 11000)
     }
 
-    // Show synthesis loading + async AI
-    const loadingEl = document.getElementById('cc-synth-loading')
-    if (loadingEl) loadingEl.classList.add('active')
+    // Async AI layer — updates synthesis-line when ready
     this._fetchAI(ctx, allData, el, [])
   },
 

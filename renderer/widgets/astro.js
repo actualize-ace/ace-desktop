@@ -230,27 +230,41 @@ export default {
     }
     el.style.display = ''
 
-    const message = buildMessage(_cachedTransits)
-    const subline = buildSubline(_cachedTransits)
+    // Map moon phase → symbol + short label
+    const phaseRaw = (_cachedTransits.moon?.phase?.phase || '').toLowerCase()
+    const { symbol, label } = phaseToGlyph(phaseRaw)
+
+    // Tooltip: the full contextual message (click to remix)
+    const fullMessage = buildMessage(_cachedTransits)
 
     el.innerHTML = `
-      <div class="astro-anchor" id="astro-anchor-remix">
-        <span class="astro-anchor-text">${message}</span>
-        <span class="astro-anchor-sub">${subline}</span>
+      <div class="astro-block" id="astro-block" title="${escapeAttr(fullMessage)}">
+        <div class="astro-symbol">${symbol}</div>
+        <div class="astro-label">${label}</div>
       </div>`
 
-    // Click to remix
-    document.getElementById('astro-anchor-remix')?.addEventListener('click', () => {
+    // Click → remix the tooltip (for people who check it frequently)
+    document.getElementById('astro-block')?.addEventListener('click', () => {
       _currentVariant++
       const newMsg = buildMessage(_cachedTransits)
-      const textEl = el.querySelector('.astro-anchor-text')
-      if (textEl) {
-        textEl.style.opacity = '0'
-        setTimeout(() => {
-          textEl.textContent = newMsg
-          textEl.style.opacity = '1'
-        }, 200)
-      }
+      const block = el.querySelector('#astro-block')
+      if (block) block.setAttribute('title', newMsg)
     })
   }
+}
+
+function escapeAttr(s) {
+  return String(s || '').replace(/"/g, '&quot;').replace(/\n/g, ' ')
+}
+
+function phaseToGlyph(phase) {
+  if (phase.includes('new'))             return { symbol: '●',  label: 'new<br/>moon' }
+  if (phase.includes('waxing crescent')) return { symbol: '☽',  label: 'waxing<br/>crescent' }
+  if (phase.includes('first quarter'))   return { symbol: '◐',  label: 'first<br/>quarter' }
+  if (phase.includes('waxing gibbous'))  return { symbol: '☽',  label: 'waxing<br/>gibbous' }
+  if (phase.includes('full'))            return { symbol: '○',  label: 'full<br/>moon' }
+  if (phase.includes('waning gibbous'))  return { symbol: '☾',  label: 'waning<br/>gibbous' }
+  if (phase.includes('last quarter'))    return { symbol: '◑',  label: 'last<br/>quarter' }
+  if (phase.includes('waning crescent')) return { symbol: '☾',  label: 'waning<br/>crescent' }
+  return { symbol: '☽', label: phase || 'moon' }
 }
