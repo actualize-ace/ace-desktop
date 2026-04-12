@@ -153,4 +153,7 @@
 .term-hdr-dot.just-arrived {
   animation: arrival-pulse 1.5s ease-out 1;
 }
+/* Lift tab clipping during pulse so the 14px glow isn't squared off by
+   .stab's overflow:hidden. Reverts automatically when class is removed. */
+.stab:has(.stab-dot.just-arrived) { overflow: visible; }
 
