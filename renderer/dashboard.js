@@ -178,6 +178,22 @@ async function loadDashboard() {
     const nameEl = document.getElementById('home-name')
     if (nameEl) nameEl.textContent = `Good ${greet}, ${userName}.`
   }
+
+  // "Begin here" whisper — appears 1.2s after entry, fades after 5s
+  setTimeout(() => {
+    const whisper = document.getElementById('begin-whisper')
+    if (!whisper || !risenLeg) return
+    const colIdx = { authority: 0, capacity: 1, expansion: 2 }[risenLeg]
+    if (colIdx == null) return
+    whisper.style.left = `${(colIdx + 0.5) * 33.33}%`
+    whisper.style.transform = 'translateX(-50%)'
+    whisper.textContent = 'begin here ↓'
+    whisper.classList.add('show')
+    setTimeout(() => {
+      whisper.classList.add('fade')
+      setTimeout(() => whisper.classList.remove('show', 'fade'), 1500)
+    }, 5000)
+  }, 1200)
 }
 
 function renderHealthBanner(health, el) {
