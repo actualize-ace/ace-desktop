@@ -806,3 +806,26 @@
   background: rgba(96,216,168,0.2);
   border-color: var(--green);
 }
+
+/* ── COCKPIT — Context menu ────────────────────────────────── */
+.cockpit-ctx-menu {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-hover);
+  border-radius: 6px;
+  padding: 4px;
+  z-index: 9999;
+  min-width: 180px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+}
+.cockpit-ctx-menu .ctx-item {
+  padding: 7px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+.cockpit-ctx-menu .ctx-item:hover {
+  background: rgba(140,120,255,0.1);
+  color: var(--gold);
+}

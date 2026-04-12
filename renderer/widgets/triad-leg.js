@@ -141,6 +141,12 @@ function makeWidget(leg) {
         this._openCoachingSession(item, allData)
       })
 
+      // Right-click → context menu
+      card.addEventListener('contextmenu', (e) => {
+        e.preventDefault()
+        this._showContextMenu(e, item, allData)
+      })
+
       // Hover buttons
       card.querySelector('[data-action="done"]')?.addEventListener('click', async (e) => {
         e.stopPropagation()
@@ -186,6 +192,72 @@ function makeWidget(leg) {
           }
         }, 200)
       }, 150)
+    },
+
+    _showContextMenu(event, item, allData) {
+      // Remove any existing menu
+      document.querySelectorAll('.cockpit-ctx-menu').forEach(m => m.remove())
+
+      const menu = document.createElement('div')
+      menu.className = 'cockpit-ctx-menu'
+      menu.style.position = 'fixed'
+      menu.style.left = `${event.clientX}px`
+      menu.style.top = `${event.clientY}px`
+
+      const items = []
+      if (['outcome', 'target', 'followup', 'pipeline'].includes(item.type)) {
+        items.push({ label: 'Mark done', action: 'done' })
+      }
+      items.push({ label: 'Skip today', action: 'skip' })
+      if (item.type === 'followup') {
+        items.push({ label: 'Snooze 3 days', action: 'snooze-3' })
+        items.push({ label: 'Snooze 1 week', action: 'snooze-7' })
+      }
+      items.push({ label: 'Cycle to next', action: 'cycle' })
+      items.push({ label: 'Open in vault', action: 'vault' })
+      items.push({ label: 'Why this is here?', action: 'why' })
+
+      menu.innerHTML = items.map(i =>
+        `<div class="ctx-item" data-action="${i.action}">${i.label}</div>`
+      ).join('')
+
+      document.body.appendChild(menu)
+
+      menu.querySelectorAll('.ctx-item').forEach(el => {
+        el.addEventListener('click', async () => {
+          const action = el.dataset.action
+          menu.remove()
+          if (action === 'done') {
+            const r = await window.ace.dash.markDone(item)
+            if (r?.error) console.error(r.error)
+            window.dispatchEvent(new CustomEvent('cockpit-refresh'))
+          } else if (action === 'skip') {
+            const dismissed = JSON.parse(localStorage.getItem('cockpit-dismissed') || '[]')
+            dismissed.push({ label: item.label, date: new Date().toISOString().slice(0, 10) })
+            localStorage.setItem('cockpit-dismissed', JSON.stringify(dismissed))
+            window.dispatchEvent(new CustomEvent('cockpit-refresh'))
+          } else if (action === 'snooze-3' || action === 'snooze-7') {
+            const days = action === 'snooze-3' ? 3 : 7
+            const r = await window.ace.dash.snoozeItem(item, days)
+            if (r?.error) console.error(r.error)
+            window.dispatchEvent(new CustomEvent('cockpit-refresh'))
+          } else if (action === 'cycle') {
+            const cycled = JSON.parse(sessionStorage.getItem('cockpit-cycled') || '[]')
+            cycled.push(item.label)
+            sessionStorage.setItem('cockpit-cycled', JSON.stringify(cycled))
+            window.dispatchEvent(new CustomEvent('cockpit-refresh'))
+          } else if (action === 'vault') {
+            document.querySelector('.nav-item[data-view="vault"]')?.click()
+          } else if (action === 'why') {
+            alert(`Leverage: ${item._leverage || 0}\nLeg: ${item.leg}\nUrgency: ${item.urgency}\nType: ${item.type}`)
+          }
+        })
+      })
+
+      // Click anywhere else closes menu
+      setTimeout(() => {
+        document.addEventListener('click', () => menu.remove(), { once: true })
+      }, 100)
     },
 
     _openSignalCoaching(key, name, leg) {
