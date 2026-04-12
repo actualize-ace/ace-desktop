@@ -38,8 +38,7 @@ export default {
       ? `${totalThisWeek} this week`
       : `${totalThisWeek} this week · ${delta >= 0 ? '+' : ''}${delta}%`
 
-    // Build per-point labels + dates for rollover
-    const today = new Date()
+    // Build per-point date labels for rollover
     const dateLabels = []
     for (let i = 13; i >= 0; i--) {
       const d = new Date(today); d.setDate(d.getDate() - i)
