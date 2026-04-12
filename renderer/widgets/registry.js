@@ -4,6 +4,7 @@
 
 import northstar   from './northstar.js'
 import compass      from './compass.js'
+import { triadAuthority, triadCapacity, triadExpansion } from './triad-leg.js'
 import synthesis    from './synthesis.js'
 import identity     from './identity.js'
 import metrics      from './metrics.js'
@@ -17,16 +18,24 @@ import followups    from './followups.js'
 import quickactions from './quickactions.js'
 import astro        from './astro.js'
 
-export const WIDGETS = [northstar, synthesis, compass, identity, astro, metrics, rhythm, velocity, state, outcomes, targets, pipeline, followups, quickactions]
+export const WIDGETS = [
+  northstar, synthesis, compass,
+  triadAuthority, triadCapacity, triadExpansion,
+  identity, astro, metrics, rhythm, velocity,
+  state, outcomes, targets, pipeline, followups, quickactions,
+]
 
 // Zone assignment for cockpit layout
 // 'cockpit-*' = sacred ACE framework zones (fixed order, framework-defined)
 // 'dock' = operator-extensible zone
 // 'legacy' = old widgets disabled by default
 export const WIDGET_ZONES = {
-  northstar:    'cockpit-top',
-  synthesis:    'cockpit-brain',
-  compass:      'cockpit-brain',
+  northstar:        'cockpit-top',
+  synthesis:        'cockpit-brain',
+  compass:          'cockpit-brain',
+  'triad-authority':'cockpit-triad',
+  'triad-capacity': 'cockpit-triad',
+  'triad-expansion':'cockpit-triad',
   velocity:     'cockpit-flow',
   rhythm:       'cockpit-flow',
   astro:        'cockpit-flow',
