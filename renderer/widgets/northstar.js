@@ -1,6 +1,7 @@
 // renderer/widgets/northstar.js
 // North Star bar — anchors + journey constellation + alignment
 import { escapeHtml } from '../modules/chat-renderer.js'
+import { openVaultFile } from '../views/vault.js'
 
 export default {
   id: 'northstar',
@@ -153,10 +154,13 @@ function showDCAOverlay(ns, alignment) {
   overlay.querySelector('[data-action="close"]').addEventListener('click', close)
   overlay.querySelector('[data-action="edit-dca"]').addEventListener('click', async () => {
     close()
-    if (filePath && window.ace?.shell?.openPath) {
-      await window.ace.shell.openPath(filePath)
-    } else {
-      document.querySelector('.nav-item[data-view="vault"]')?.click()
+    // Navigate to vault view, then open dca.md
+    document.querySelector('.nav-item[data-view="vault"]')?.click()
+    if (filePath) {
+      // Give vault view a beat to initialize if it's first-open
+      setTimeout(() => {
+        try { openVaultFile(filePath, 'dca.md') } catch (e) { console.error('Open DCA failed:', e) }
+      }, 120)
     }
   })
   document.addEventListener('keydown', function esc(e) {

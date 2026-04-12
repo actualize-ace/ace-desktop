@@ -107,29 +107,37 @@ export default {
             <path class="line" d="${linePath}" />
             ${markers}
           </svg>
+          <div class="velocity-dot" id="velocity-dot"></div>
           <div class="velocity-tooltip" id="velocity-tooltip"></div>
         </div>
       </div>`
 
-    // Wire custom DOM tooltip
+    // Wire custom DOM tooltip + circular HTML dot overlay (SVG is stretched
+    // non-uniformly so SVG circles render as ovals; HTML dot stays round)
     const wave = el.querySelector('.velocity-wave')
     const tooltip = el.querySelector('#velocity-tooltip')
-    if (wave && tooltip) {
+    const dot = el.querySelector('#velocity-dot')
+    if (wave && tooltip && dot) {
       el.querySelectorAll('.velocity-hit').forEach(hit => {
-        hit.addEventListener('mouseenter', (e) => {
+        hit.addEventListener('mouseenter', () => {
           const rect = wave.getBoundingClientRect()
           const cx = parseFloat(hit.getAttribute('cx'))
-          // Map SVG cx (0-300) to pixel position inside wave
+          const cy = parseFloat(hit.getAttribute('cy'))
           const px = (cx / 300) * rect.width
+          const py = (cy / 52) * rect.height
           tooltip.innerHTML = `
             <div class="vt-date">${hit.dataset.label}</div>
             <div class="vt-value">${hit.dataset.value} action${hit.dataset.value === '1' ? '' : 's'}</div>
             <div class="vt-avg">3-day avg: ${hit.dataset.avg}</div>`
           tooltip.style.left = `${px}px`
           tooltip.classList.add('show')
+          dot.style.left = `${px}px`
+          dot.style.top = `${py}px`
+          dot.classList.add('show')
         })
         hit.addEventListener('mouseleave', () => {
           tooltip.classList.remove('show')
+          dot.classList.remove('show')
         })
       })
     }

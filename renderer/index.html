@@ -320,8 +320,17 @@
           <!-- Inner Move bar -->
           <div id="widget-innermove"></div>
 
-          <!-- Dock zone (hidden when empty for v1) -->
-          <div id="widget-dock" data-empty="true" style="display:none"></div>
+          <!-- Operator Dock — custom UI widgets -->
+          <div id="widget-dock" class="cockpit-dock">
+            <div class="dock-label"><span class="dock-deco">┈</span>Your Instruments<span class="dock-deco">┈</span></div>
+            <div class="dock-grid">
+              <div class="dock-tile dock-tile-add" data-action="add-widget">
+                <div class="dock-tile-icon">+</div>
+                <div class="dock-tile-label">Add instrument</div>
+              </div>
+            </div>
+            <div class="dock-hint">Roadmap: tier-1 analytics, pipeline, content queue, calendar block.<br/>Tier-2 custom skills become tiles here.</div>
+          </div>
         </div>
       </div>
 

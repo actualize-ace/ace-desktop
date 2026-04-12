@@ -1,6 +1,7 @@
 // renderer/widgets/compass.js
 // Creative Compass — four DCA-anchored cardinal directions with weekly needle
 import { escapeHtml } from '../modules/chat-renderer.js'
+import { openVaultFile } from '../views/vault.js'
 
 export default {
   id: 'compass',
@@ -102,6 +103,13 @@ function showCompassOverlay(directions, compass) {
   overlay.querySelector('[data-action="edit-dca"]').addEventListener('click', () => {
     close()
     document.querySelector('.nav-item[data-view="vault"]')?.click()
+    // Ask the main process for the DCA path and open it in vault view
+    setTimeout(async () => {
+      try {
+        const ns = await window.ace.dash.getNorthStar()
+        if (ns?.filePath) openVaultFile(ns.filePath, 'dca.md')
+      } catch (e) { console.error('Open DCA failed:', e) }
+    }, 120)
   })
   document.addEventListener('keydown', function esc(e) {
     if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc) }

@@ -481,4 +481,11 @@ window.addEventListener('cockpit-refresh', () => {
   loadDashboard()
 })
 
+// Wire dock "Add instrument" tile — one-time delegation
+document.addEventListener('click', (e) => {
+  const addTile = e.target.closest('.dock-tile-add')
+  if (!addTile) return
+  alert("Operator Dock — coming soon.\n\nTier 1: built-in tiles (analytics, pipeline, content queue, today's calendar).\nTier 2: your custom ACE skills as tiles.\nTier 3: drag-and-drop reorder, resize, and visibility.\n\nFor now, this zone reserves the space.")
+})
+
 export { loadDashboard, getLayout, initDashClickables }

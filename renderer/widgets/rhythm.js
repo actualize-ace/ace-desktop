@@ -45,9 +45,12 @@ export default {
       eod:    streakFor('eod'),
     }
 
-    // Today's status
+    // Today's status — each ritual is clickable to run (or re-run) it
     const today = days28[days28.length - 1] || {}
-    const todayMark = (on) => on ? '<span style="color:var(--gold)">●</span>' : '<span style="color:var(--text-dim);opacity:0.4">○</span>'
+    const todayMark = (on, cmd) =>
+      `<button class="rhythm-today-btn ${on ? 'on' : 'off'}" data-cmd="${cmd}" title="${on ? 'Re-run ' : 'Run '}${cmd}">
+         ${on ? '●' : '○'} <span class="rhythm-today-cmd">${cmd}</span>
+       </button>`
 
     const rowFor = (key, cls) => days28.map(d => {
       const on = !!d[key]
@@ -87,13 +90,32 @@ export default {
         <div class="rhythm-today">
           <span class="rhythm-today-label">today</span>
           <span class="rhythm-today-dots">
-            ${todayMark(today.start)} /start
-            <span class="rhythm-today-sep">·</span>
-            ${todayMark(today.active)} active
-            <span class="rhythm-today-sep">·</span>
-            ${todayMark(today.eod)} /eod
+            ${todayMark(today.start, '/start')}
+            ${todayMark(today.active, '/close')}
+            ${todayMark(today.eod, '/eod')}
           </span>
         </div>
       </div>`
+
+    // Wire today-ritual buttons — click routes to terminal + sends the slash command
+    el.querySelectorAll('.rhythm-today-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cmd = btn.dataset.cmd
+        if (!cmd) return
+        document.querySelector('.nav-item[data-view="terminal"]')?.click()
+        setTimeout(() => {
+          if (window.spawnSession) window.spawnSession()
+          setTimeout(() => {
+            const st = window.__aceState
+            if (st?.activeId && window.sendChatMessage) {
+              window.sendChatMessage(st.activeId, cmd)
+            } else if (window.sendToActive) {
+              // Fallback for PTY sessions
+              window.sendToActive(cmd + '\r')
+            }
+          }, 200)
+        }, 150)
+      })
+    })
   }
 }
