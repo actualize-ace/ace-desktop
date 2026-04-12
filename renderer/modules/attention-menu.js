@@ -36,19 +36,15 @@ function collectFlagged() {
   return items.sort((a, b) => (b.at || 0) - (a.at || 0))
 }
 
-function pulseArrival(id, kind) {
+function pulseArrival(id /* kind unused — only tab dot pulses */) {
+  // Only pulse the tab dot. Header dot is reserved for pressure-mirror
+  // (ctx-warn/hot/critical) and should not carry the "you've arrived" signal.
   const tabDot = document.querySelector(`#tab-${id} .stab-dot`)
-  const paneEl = kind === 'session' ? state.sessions[id]?.pane : state.agentSessions[id]?.pane
-  const hdrDot = paneEl?.querySelector('.term-hdr-dot')
-  ;[tabDot, hdrDot].forEach(el => {
-    if (!el) return
-    el.classList.remove('just-arrived')
-    // Force reflow so the animation restarts even if the class lingered
-    void el.offsetWidth
-    el.classList.add('just-arrived')
-    // CSS animation is 3s; clear class slightly after so animation completes
-    setTimeout(() => el.classList.remove('just-arrived'), 3100)
-  })
+  if (!tabDot) return
+  tabDot.classList.remove('just-arrived')
+  void tabDot.offsetWidth // reflow so animation restarts
+  tabDot.classList.add('just-arrived')
+  setTimeout(() => tabDot.classList.remove('just-arrived'), 3100)
 }
 
 // Switch nav view if not already active, then run the activation fn after
@@ -103,7 +99,7 @@ function escapeHtml(str) {
 
 let outsideHandler = null
 let keyHandler = null
-let activeIdx = 0
+let activeIdx = -1  // -1 = nothing highlighted; arrow keys step into the list
 let currentItems = []
 
 export function open() {
@@ -119,7 +115,7 @@ export function open() {
   if (!menu) return
   menu.classList.add('open')
   menu.setAttribute('aria-hidden', 'false')
-  activeIdx = 0
+  activeIdx = -1  // no pre-selection; user must arrow/hover to highlight
   highlight()
   // Outside-click dismiss — defer one tick so the triggering click doesn't immediately close
   setTimeout(() => {
@@ -130,9 +126,21 @@ export function open() {
   }, 0)
   keyHandler = (e) => {
     if (e.key === 'Escape') { e.preventDefault(); close() }
-    else if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = (activeIdx + 1) % currentItems.length; highlight() }
-    else if (e.key === 'ArrowUp')   { e.preventDefault(); activeIdx = (activeIdx - 1 + currentItems.length) % currentItems.length; highlight() }
-    else if (e.key === 'Enter')     { e.preventDefault(); const it = currentItems[activeIdx]; if (it) { close(); route(it) } }
+    else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      activeIdx = activeIdx < 0 ? 0 : (activeIdx + 1) % currentItems.length
+      highlight()
+    }
+    else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      activeIdx = activeIdx < 0 ? currentItems.length - 1 : (activeIdx - 1 + currentItems.length) % currentItems.length
+      highlight()
+    }
+    else if (e.key === 'Enter') {
+      e.preventDefault()
+      const it = currentItems[activeIdx]
+      if (it) { close(); route(it) }
+    }
   }
   document.addEventListener('keydown', keyHandler)
 }
@@ -143,7 +151,7 @@ function highlight() {
     const isActive = i === activeIdx
     el.classList.toggle('active', isActive)
     el.setAttribute('tabindex', isActive ? '0' : '-1')
-    if (isActive) el.focus()
+    if (isActive && document.activeElement !== el) el.focus()
   })
 }
 
