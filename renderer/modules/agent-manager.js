@@ -2,7 +2,7 @@
 import { state } from '../state.js'
 import { xtermTheme } from './theme.js'
 import { escapeHtml, SANITIZE_CONFIG, findSettledBoundary, renderTail, postProcessCodeBlocks, processWikilinks, syntaxHighlight } from './chat-renderer.js'
-import { updateOrbState } from './ace-mark.js'
+import { updateOrbState, aceMarkSvg } from './ace-mark.js'
 import { setAttention, clearAttention } from './attention.js'
 import { sendChatMessage, wireChatListeners, scheduleRender } from './session-manager.js'
 
@@ -12,6 +12,11 @@ export function wireAgentExitHandler() {
     if (!state.agentSessions[exitId]) return
     state.agentSessions[exitId].status = code === 0 ? 'complete' : 'error'
     updateAgentDots(exitId)
+    // Notification parity with terminal sessions — flag attention if the
+    // user isn't currently focused on this agent's pane.
+    const agentsVisible = document.getElementById('view-agents')?.classList.contains('active')
+    const isFocused = agentsVisible && exitId === state.focusedAgentId
+    if (!isFocused) setAttention(exitId, state.agentSessions, code === 0 ? 'exit' : 'error')
   })
 }
 
@@ -33,10 +38,12 @@ export function agentDotClass(id) {
 
 export function updateAgentDots(id) {
   const cls   = agentDotClass(id)
+  const s     = state.agentSessions[id]
+  const attn  = s?.needsAttention ? ' attention' : ''
   const apDot = document.querySelector(`#pane-${id} .ap-dot`)
-  if (apDot) apDot.className = 'ap-dot ' + cls
+  if (apDot) apDot.className = 'ap-dot ' + cls + attn
   const arDot = document.querySelector(`#ar-item-${id} .ar-dot`)
-  if (arDot) arDot.className = 'ar-dot ' + (cls === 'orchestrating' ? 'orch' : cls)
+  if (arDot) arDot.className = 'ar-dot ' + (cls === 'orchestrating' ? 'orch' : cls) + attn
 }
 
 export function refreshAgentsLayout() {
@@ -82,7 +89,7 @@ export function spawnAgentPane(targetRow) {
     <div class="chat-view" id="chat-view-${id}">
       <div class="chat-messages" id="chat-msgs-${id}">
         <div class="chat-welcome">
-          <div class="chat-welcome-icon">◈</div>
+          <div class="chat-welcome-icon">${aceMarkSvg(36)}</div>
           <div class="chat-welcome-text">Agent Chat</div>
           <div class="chat-welcome-sub">Enter to send · Shift+Enter for newline</div>
         </div>

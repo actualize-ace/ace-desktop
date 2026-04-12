@@ -17,6 +17,9 @@
 .ap-dot.waiting { background:var(--text-dim); opacity:0.5; }
 .ap-dot.orchestrating { background:var(--gold); box-shadow:0 0 7px rgba(200,160,240,0.45); animation:breathe 2.2s ease-in-out infinite; }
 .ap-dot.error { background:var(--red); }
+.ap-dot.attention { background:#d4a574 !important; animation:breathe 1.2s ease-in-out infinite !important; box-shadow:0 0 6px rgba(212,165,116,0.55) !important; opacity:1 !important; }
+.ap-dot.just-arrived { background:#d4a574 !important; animation:arrival-pulse 3s ease-out 1 !important; }
+.apane-tab:has(.ap-dot.just-arrived) { overflow:visible; }
 .ap-role { font-size:7.5px; letter-spacing:0.5px; color:var(--text-dim); padding:1px 5px; border-radius:3px; background:var(--bg-elevated); border:1px solid var(--border); flex-shrink:0; font-family:'JetBrains Mono',monospace; }
 .ap-name-label { font-size:8.5px; letter-spacing:0.8px; color:var(--text-secondary); flex:1; font-family:'JetBrains Mono',monospace; }
 .ap-task-label { font-size:7.5px; color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px; font-family:'JetBrains Mono',monospace; }
@@ -34,6 +37,9 @@
 .ar-dot.done { background:var(--green); opacity:0.6; }
 .ar-dot.error { background:var(--red); }
 .ar-dot.waiting { background:var(--text-dim); opacity:0.5; }
+.ar-dot.attention { background:#d4a574 !important; animation:breathe 1.2s ease-in-out infinite !important; box-shadow:0 0 6px rgba(212,165,116,0.55) !important; opacity:1 !important; }
+.ar-dot.just-arrived { background:#d4a574 !important; animation:arrival-pulse 3s ease-out 1 !important; }
+.ar-item:has(.ar-dot.just-arrived) { overflow:visible; }
 .ar-name { flex:1; font-size:8.5px; }
 .ar-time { font-size:7.5px; color:var(--text-dim); }
 .ar-spawn { padding:6px 8px; margin:6px 10px; background:none; border:1px dashed rgba(212,165,116,0.15); border-radius:4px; cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:7.5px; letter-spacing:1px; text-transform:uppercase; color:var(--text-dim); transition:all 0.14s; text-align:center; }

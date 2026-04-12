@@ -16,12 +16,40 @@
   border-radius: 4px;
   background: rgba(140,120,255,0.08);
   overflow: hidden;
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 body.light .atm-intensity-bar { background: rgba(90,72,192,0.08); }
+
+/* Hover affordance on the whole intensity cluster — pulsing glow across the
+   entire track (not just the filled portion) so it reads clearly as
+   interactive. */
+.atm-intensity-wrap { cursor: pointer; transition: transform 0.18s ease; }
+.atm-intensity-wrap:hover .atm-intensity-bar {
+  background: rgba(140,120,255,0.22);
+  animation: atm-hover-pulse 1.6s ease-in-out infinite;
+  transform: scaleY(1.2);
+}
+body.light .atm-intensity-wrap:hover .atm-intensity-bar {
+  background: rgba(90,72,192,0.22);
+  animation: atm-hover-pulse-light 1.6s ease-in-out infinite;
+}
+.atm-intensity-wrap:hover .atm-intensity-icon { opacity: 1; color: var(--gold); }
+.atm-intensity-wrap:hover .atm-intensity-fill { filter: brightness(1.2); }
+.atm-intensity-wrap:active { transform: scale(0.98); }
+
+@keyframes atm-hover-pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(140,120,255,0.2),  inset 0 0 4px rgba(200,160,240,0.15); }
+  50%      { box-shadow: 0 0 14px rgba(140,120,255,0.5), inset 0 0 8px rgba(200,160,240,0.35); }
+}
+@keyframes atm-hover-pulse-light {
+  0%, 100% { box-shadow: 0 0 6px rgba(90,72,192,0.22), inset 0 0 4px rgba(90,72,192,0.15); }
+  50%      { box-shadow: 0 0 14px rgba(90,72,192,0.45), inset 0 0 8px rgba(90,72,192,0.35); }
+}
+
 .atm-intensity-fill {
   height: 100%; width: 0%;
   border-radius: 4px;
-  transition: width 0.8s ease, background 1.5s ease, box-shadow 1.5s ease;
+  transition: width 0.8s ease, background 1.5s ease, box-shadow 1.5s ease, filter 0.18s ease;
 }
 /* ── Intensity Detail Overlay ── */
 .atm-detail-overlay {
@@ -384,11 +412,11 @@ body.light .somatic-bar.nudge-active .somatic-bar-pulse {
   transition: opacity 1.5s ease, color 1.5s ease, letter-spacing 1.5s ease;
 }
 
-/* Nudge mode — text becomes the invitation word */
+/* Nudge mode — text brightens and glows. Casing stays lowercase for voice
+   consistency with the default state (source strings are all lowercase). */
 .somatic-bar.nudge-active .somatic-bar-text {
   opacity: 1;
-  letter-spacing: 4px;
-  text-transform: uppercase;
+  letter-spacing: 2.5px;
   color: rgba(140, 120, 255, 0.9);
   animation: somatic-text-glow 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }

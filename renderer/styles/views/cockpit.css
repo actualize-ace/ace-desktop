@@ -537,9 +537,23 @@ body.light .vbody.cockpit .orb-score { text-shadow: 0 0 20px rgba(255,255,255,0.
 
 .vbody.cockpit .velocity-wave { height: 52px; width: 100%; }
 .vbody.cockpit .velocity-wave svg { width: 100%; height: 100%; display: block; overflow: visible; }
+/* Soft outer glow — wider, dimmer stroke sits behind the main line for a
+   sense of motion. vector-effect on both paths keeps widths uniform even
+   when the SVG gets stretched horizontally by preserveAspectRatio="none". */
+.vbody.cockpit .velocity-wave path.line-glow {
+  stroke: var(--gold); fill: none; stroke-width: 4;
+  stroke-linecap: round; stroke-linejoin: round;
+  opacity: 0.25; filter: blur(2px);
+  animation: velocity-shimmer 3.6s ease-in-out infinite;
+}
 .vbody.cockpit .velocity-wave path.line {
   stroke: var(--gold); fill: none; stroke-width: 1.5;
-  filter: drop-shadow(0 0 6px var(--glow-accent));
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px var(--glow-accent));
+}
+@keyframes velocity-shimmer {
+  0%, 100% { opacity: 0.22; stroke-width: 4; }
+  50%      { opacity: 0.45; stroke-width: 6; }
 }
 .vbody.cockpit .velocity-wave { position: relative; }
 .vbody.cockpit .velocity-hit { cursor: pointer; pointer-events: all; }

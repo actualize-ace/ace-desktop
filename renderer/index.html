@@ -94,6 +94,7 @@
   <div class="app-body">
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
+      <div class="sidebar-scroll">
       <div class="sidebar-logo">
         <div class="sidebar-mark" id="sidebarMark">
           <div class="sidebar-mark-ring" id="sidebarRing"></div>
@@ -123,6 +124,13 @@
                 <stop offset="30%" stop-color="rgba(180,160,240,0.4)"/>
                 <stop offset="100%" stop-color="rgba(160,140,240,0)"/>
               </radialGradient>
+              <!-- Static core dot — always visible, matches chat welcome + oracle + app icon. -->
+              <radialGradient id="sg-core-static" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"  stop-color="rgba(255,255,255,1)"/>
+                <stop offset="30%" stop-color="rgba(230,215,255,0.75)"/>
+                <stop offset="70%" stop-color="rgba(200,160,240,0.15)"/>
+                <stop offset="100%" stop-color="rgba(200,160,240,0)"/>
+              </radialGradient>
             </defs>
             <circle id="smDisc" cx="50" cy="50" r="38" fill="url(#sg-orb)" opacity="0.08"/>
             <circle id="smOrb" cx="50" cy="50" r="0" fill="url(#sg-orb)" opacity="0"/>
@@ -131,6 +139,9 @@
             <circle id="smOrbC" cx="20.6" cy="67" r="0" fill="url(#sg-cap)" opacity="0"/>
             <circle id="smOrbE" cx="79.4" cy="67" r="0" fill="url(#sg-exp)" opacity="0"/>
             <path id="smMark" fill="url(#sg-mark)" d=""/>
+            <!-- Always-on brand core — sits on top of the animated mark so the
+                 white dot is visible at idle too (matches chat welcome / oracle). -->
+            <circle id="smCoreStatic" cx="50" cy="48" r="14" fill="url(#sg-core-static)"/>
           </svg>
         </div>
         <div>
@@ -142,7 +153,7 @@
       <div class="nav-section">Views</div>
       <div class="nav-item active" data-view="home">
         <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        Home
+        Command
       </div>
       <div class="nav-item" data-view="terminal">
         <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
@@ -211,6 +222,8 @@
         <button class="cmd-btn" data-cmd="/eod"><div class="cmd-dot" style="background:var(--ark)"></div>/eod</button>
         <button class="cmd-btn" data-cmd="/coach"><div class="cmd-dot" style="background:var(--ark)"></div>/coach</button>
       </div>
+      </div><!-- /.sidebar-scroll -->
+      <div class="sidebar-pinned">
       <div class="sidebar-bottom">
         <div class="sidebar-telemetry" id="sidebar-telemetry">
           <div class="telem-row">
@@ -263,6 +276,7 @@
         </div>
       </div>
       <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle sidebar">◂ <span>Collapse</span></button>
+      </div><!-- /.sidebar-pinned -->
     </div>
 
     <!-- Main content -->
@@ -271,7 +285,7 @@
       <!-- HOME VIEW -->
       <div class="view active" id="view-home">
         <div class="view-header">
-          <div class="view-title">Home</div>
+          <div class="view-title">Command</div>
           <div class="view-actions">
             <button class="vbtn icon-btn" id="refresh-btn" title="Refresh dashboard">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
@@ -421,6 +435,18 @@
             <div class="vault-empty" id="people-graph-empty">Loading graph...</div>
           </div>
         </div>
+        <div class="people-ask-bar" id="people-ask-bar">
+          <div class="people-ask-chips">
+            <button class="people-ask-chip" data-prompt="Who should I follow up with today? Surface anyone overdue or slipping.">Today's follow-ups</button>
+            <button class="people-ask-chip" data-prompt="Which relationships in my network have gone dormant (no contact in 30+ days)? List them with last-contact dates.">Dormant connections</button>
+            <button class="people-ask-chip" data-prompt="Who are the highest-leverage people in my network right now — relative to my current goals and open follow-ups?">Highest leverage</button>
+            <button class="people-ask-chip" data-prompt="Map my network by category. Where are my strongest ties and where am I thin?">Map my network</button>
+          </div>
+          <div class="people-ask-input-row">
+            <input type="text" id="people-ask-input" placeholder="Ask about your network...">
+            <button class="vbtn graph-ask-btn" id="people-ask-send">Ask</button>
+          </div>
+        </div>
       </div>
 
       <!-- HISTORY VIEW -->
@@ -568,7 +594,23 @@
     <div class="oracle-backdrop" id="oracle-backdrop"></div>
     <div class="oracle-panel">
       <div class="oracle-header">
-        <div class="oracle-title-orb"></div>
+        <svg class="oracle-title-orb" width="22" height="22" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <radialGradient id="oracle-orb-body" cx="38%" cy="35%" r="65%">
+              <stop offset="0%" stop-color="#8878ff"/>
+              <stop offset="45%" stop-color="#c8a0f0"/>
+              <stop offset="100%" stop-color="#60d8a8"/>
+            </radialGradient>
+            <radialGradient id="oracle-orb-core" cx="50%" cy="50%" r="50%">
+              <stop offset="0%"  stop-color="rgba(255,255,255,1)"/>
+              <stop offset="30%" stop-color="rgba(230,215,255,0.75)"/>
+              <stop offset="70%" stop-color="rgba(200,160,240,0.15)"/>
+              <stop offset="100%" stop-color="rgba(200,160,240,0)"/>
+            </radialGradient>
+          </defs>
+          <path d="M 50.00,16.00 Q 54.33,47.50 79.44,67.00 Q 50.00,55.00 20.56,67.00 Q 45.67,47.50 50.00,16.00 Z" fill="url(#oracle-orb-body)"/>
+          <circle cx="50" cy="48" r="14" fill="url(#oracle-orb-core)"/>
+        </svg>
         <div class="oracle-title">Oracle</div>
         <select class="oracle-model-select" id="oracle-model" title="Model">
           <option value="sonnet" selected>Sonnet</option>
@@ -951,12 +993,15 @@ document.getElementById('preflight-settings')?.addEventListener('click', () => {
   </script>
   <script type="module">
     import { WIDGETS, DEFAULT_LAYOUT } from './widgets/registry.js'
-    import { loadDashboard } from './dashboard.js'
+    import { loadDashboard, getLayout } from './dashboard.js'
 
     async function renderSettings() {
       const el = document.getElementById('layout-list')
       if (!el) return
-      const saved = await window.ace.dash.getLayout() || DEFAULT_LAYOUT
+      // Use the same merged/cleaned layout as the dashboard itself — picks up
+      // newly-added widgets, drops ones no longer in the registry, and respects
+      // zone rules (e.g. legacy widgets force-disabled in cockpit mode).
+      const saved = await getLayout()
 
       el.innerHTML = saved.map(item => {
         const w = WIDGETS.find(w => w.id === item.id)

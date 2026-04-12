@@ -104,7 +104,8 @@ export default {
               </linearGradient>
             </defs>
             <path fill="url(#velArea)" stroke="none" d="${areaPath}" />
-            <path class="line" d="${linePath}" />
+            <path class="line-glow" d="${linePath}" vector-effect="non-scaling-stroke" />
+            <path class="line" d="${linePath}" vector-effect="non-scaling-stroke" />
             ${markers}
           </svg>
           <div class="velocity-dot" id="velocity-dot"></div>

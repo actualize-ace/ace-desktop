@@ -15,6 +15,13 @@ let transitData = null
 let selectedPlanet = null
 let selectedAspect = null
 
+// Re-render the wheel on theme toggle — the SVG bakes light/dark fills into
+// its markup at render time, so it can't respond to theme changes via CSS alone.
+window.addEventListener('ace-theme-change', () => {
+  const container = document.getElementById('astro-wheel-container')
+  if (container && natalData) renderWheel(container)
+})
+
 // ── Data Loading ─────────────────────────────────────────────────────────────
 
 async function loadNatalChart() {

@@ -34,6 +34,9 @@ export function applyTheme(t) {
     Object.values(state.sessions).forEach(s => { if (s?.term) s.term.options.theme = { ...xt } })
     Object.values(state.agentSessions).forEach(s => { if (s?.term) s.term.options.theme = { ...xt } })
   } catch(e) {}
+  // Let views that bake theme-specific values into their own DOM (e.g. astro
+  // SVG fills) re-render themselves. Pure-CSS views ignore this.
+  window.dispatchEvent(new CustomEvent('ace-theme-change', { detail: t }))
 }
 
 export function applyZoom(z) {

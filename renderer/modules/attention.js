@@ -35,11 +35,18 @@ export function clearAttention(id, sessionsObj) {
 }
 
 export function updateAttentionBadge() {
-  const count = Object.values(state.sessions).filter(s => s.needsAttention).length +
-                Object.values(state.agentSessions).filter(s => s.needsAttention).length
+  const sessionCount = Object.values(state.sessions).filter(s => s.needsAttention).length
+  const agentCount   = Object.values(state.agentSessions).filter(s => s.needsAttention).length
+  const count = sessionCount + agentCount
   const badge = document.getElementById('attention-badge')
   if (badge) {
     badge.textContent = count
     badge.classList.toggle('visible', count > 0)
   }
+  // Mirror agent-attention state onto the Agents nav-item so the user sees
+  // it from anywhere in the app, not just inside the Agents view.
+  const agentsNav = document.querySelector('.nav-item[data-view="agents"]')
+  if (agentsNav) agentsNav.classList.toggle('has-attention', agentCount > 0)
+  const sessionsNav = document.querySelector('.nav-item[data-view="terminal"]')
+  if (sessionsNav) sessionsNav.classList.toggle('has-attention', sessionCount > 0)
 }

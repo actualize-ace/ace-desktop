@@ -8,19 +8,31 @@ async function getLayout() {
     await window.ace.dash.saveLayout(DEFAULT_LAYOUT)
     return DEFAULT_LAYOUT
   }
-  // Merge: keep saved order/enabled, add any new widgets from registry at end
-  const savedIds = new Set(saved.map(w => w.id))
-  const merged = [...saved]
+  const registryIds = new Set(WIDGETS.map(w => w.id))
+  // 1) Drop IDs no longer in the registry (stale/renamed widgets).
+  const cleaned = saved.filter(w => registryIds.has(w.id))
+  // 2) Merge: keep saved order/enabled for known IDs, append newly-registered widgets at end.
+  const cleanedIds = new Set(cleaned.map(w => w.id))
+  const merged = [...cleaned]
   for (const w of WIDGETS) {
-    if (!savedIds.has(w.id)) merged.push({ id: w.id, enabled: w.defaultEnabled ?? true })
+    if (!cleanedIds.has(w.id)) merged.push({ id: w.id, enabled: w.defaultEnabled ?? true })
   }
-  // Cockpit mode: force-disable any widget in the 'legacy' zone, regardless of saved state.
-  // The cockpit replaces these widgets with triad cards; saved layouts from the pre-cockpit era
-  // would otherwise re-enable them and double the home view.
-  return merged.map(l => {
-    if (WIDGET_ZONES[l.id] === 'legacy') return { ...l, enabled: false }
-    return l
-  })
+  // 3) Cockpit mode: force-disable any widget in the 'legacy' zone, regardless
+  //    of saved state — the cockpit replaces these with triad cards.
+  const normalized = merged.map(l =>
+    WIDGET_ZONES[l.id] === 'legacy' ? { ...l, enabled: false } : l
+  )
+  // 4) Sort legacy widgets to the bottom so the settings list reads
+  //    active-first, dormant-after instead of interleaving. Stable within groups.
+  const active = normalized.filter(l => WIDGET_ZONES[l.id] !== 'legacy')
+  const legacy = normalized.filter(l => WIDGET_ZONES[l.id] === 'legacy')
+  const ordered = [...active, ...legacy]
+  // 5) Persist the cleaned + reordered layout if it differs from saved. Prevents
+  //    stale IDs from accumulating and keeps settings UI stable across reloads.
+  const sameShape = saved.length === ordered.length
+    && saved.every((s, i) => s.id === ordered[i].id && s.enabled === ordered[i].enabled)
+  if (!sameShape) { window.ace.dash.saveLayout(ordered).catch(() => {}) }
+  return ordered
 }
 
 async function loadDashboard() {

@@ -679,7 +679,7 @@
   opacity: 0.3;
 }
 .cockpit-triad-deck .card-btn {
-  background: rgba(20,24,40,0.6);
+  background: var(--bg-card);
   border: 1px solid var(--border);
   color: var(--gold);
   width: 24px; height: 24px;
@@ -691,7 +691,7 @@
 }
 .cockpit-triad-deck .card-btn:hover {
   border-color: var(--gold-dim);
-  background: rgba(140,120,255,0.1);
+  background: var(--bg-elevated);
 }
 .cockpit-triad-deck .arrow {
   font-family: 'JetBrains Mono', monospace;

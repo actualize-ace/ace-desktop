@@ -48,6 +48,10 @@ export const ACE_MARK = {
     return d + ' Z'
   },
 
+  // Static mark path at scale=1 — computed lazily so helpers can reuse it
+  // without triggering full initialization.
+  staticPath() { return this.computePath(1) },
+
   init() {
     this.elMark = document.getElementById('smMark')
     this.elDisc = document.getElementById('smDisc')
@@ -247,4 +251,30 @@ export function updateOrbState() {
 // Init ACE Mark animation
 export function initAceMark() {
   ACE_MARK.init()
+}
+
+// Shared ACE mark SVG — drop-in brand icon matching assets/ace.png:
+// concave triangle with a bright luminous orb at the centroid. Use anywhere
+// we want the ACE brand mark (chat welcomes, oracle header, etc).
+let _markIdCounter = 0
+export function aceMarkSvg(size = 36, opacity = 1) {
+  const uid = `ace-mark-${++_markIdCounter}`
+  const d = ACE_MARK.staticPath()
+  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">`
+    + `<defs>`
+    + `<radialGradient id="${uid}-body" cx="38%" cy="35%" r="65%">`
+    + `<stop offset="0%" stop-color="#8878ff"/>`
+    + `<stop offset="45%" stop-color="#c8a0f0"/>`
+    + `<stop offset="100%" stop-color="#60d8a8"/>`
+    + `</radialGradient>`
+    + `<radialGradient id="${uid}-core" cx="50%" cy="50%" r="50%">`
+    + `<stop offset="0%"  stop-color="rgba(255,255,255,1)"/>`
+    + `<stop offset="30%" stop-color="rgba(230,215,255,0.75)"/>`
+    + `<stop offset="70%" stop-color="rgba(200,160,240,0.15)"/>`
+    + `<stop offset="100%" stop-color="rgba(200,160,240,0)"/>`
+    + `</radialGradient>`
+    + `</defs>`
+    + `<path d="${d}" fill="url(#${uid}-body)" opacity="${opacity}"/>`
+    + `<circle cx="50" cy="48" r="14" fill="url(#${uid}-core)" opacity="${opacity}"/>`
+    + `</svg>`
 }

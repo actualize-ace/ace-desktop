@@ -36,15 +36,22 @@ function collectFlagged() {
   return items.sort((a, b) => (b.at || 0) - (a.at || 0))
 }
 
-function pulseArrival(id /* kind unused — only tab dot pulses */) {
-  // Only pulse the tab dot. Header dot is reserved for pressure-mirror
+function pulseArrival(id, kind) {
+  // Session: pulse tab dot. Agent: pulse BOTH the roster dot (ar-dot) and
+  // the pane tab dot (ap-dot) so the user's eye can find the pane itself,
+  // not just the sidebar entry. Header dot is reserved for pressure-mirror
   // (ctx-warn/hot/critical) and should not carry the "you've arrived" signal.
-  const tabDot = document.querySelector(`#tab-${id} .stab-dot`)
-  if (!tabDot) return
-  tabDot.classList.remove('just-arrived')
-  void tabDot.offsetWidth // reflow so animation restarts
-  tabDot.classList.add('just-arrived')
-  setTimeout(() => tabDot.classList.remove('just-arrived'), 3100)
+  const targets = kind === 'agent'
+    ? [document.querySelector(`#ar-item-${id} .ar-dot`),
+       document.querySelector(`#pane-${id} .ap-dot`)]
+    : [document.querySelector(`#tab-${id} .stab-dot`)]
+  targets.forEach(dot => {
+    if (!dot) return
+    dot.classList.remove('just-arrived')
+    void dot.offsetWidth // reflow so animation restarts
+    dot.classList.add('just-arrived')
+    setTimeout(() => dot.classList.remove('just-arrived'), 3100)
+  })
 }
 
 // Switch nav view if not already active, then run the activation fn after

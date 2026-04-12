@@ -722,9 +722,8 @@ body.light .cc-innermove-featured {
   flex-shrink: 0;
 }
 .oracle-title-orb {
-  width: 22px; height: 22px; border-radius: 50%;
-  background: radial-gradient(circle at 38% 35%, #8878ff, #c8a0f0);
-  box-shadow: 0 0 10px rgba(136,120,255,0.4);
+  width: 22px; height: 22px;
+  filter: drop-shadow(0 0 6px rgba(136,120,255,0.45));
   flex-shrink: 0;
 }
 .oracle-title {

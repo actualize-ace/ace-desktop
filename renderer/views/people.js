@@ -551,24 +551,50 @@ function highlightGraphCategory(catName) {
   })
 }
 
-document.getElementById('people-ask-btn').addEventListener('click', () => {
-  const personName = currentPersonName || 'this person'
-  const prompt = `Tell me about ${personName} — their current status, open follow-ups, and what I should focus on next.`
-
+// Shared dispatcher — spawns a new session and sends any prompt about the network
+function askAboutNetwork(prompt, tabLabel) {
   document.querySelector('.nav-item[data-view="terminal"]').click()
   setTimeout(() => {
     if (window.spawnSession) window.spawnSession()
     setTimeout(() => {
       if (state.activeId) {
-        const tab = state.sessions[state.activeId]?.tab
-        if (tab) {
-          const span = tab.querySelector('span:not(.stab-close)')
-          if (span) span.textContent = personName
+        if (tabLabel) {
+          const tab = state.sessions[state.activeId]?.tab
+          if (tab) {
+            const span = tab.querySelector('span:not(.stab-close)')
+            if (span) span.textContent = tabLabel
+          }
         }
         if (window.sendChatMessage) window.sendChatMessage(state.activeId, prompt)
       }
     }, 200)
   }, 150)
+}
+
+// Existing per-person Ask AI button in the view header
+document.getElementById('people-ask-btn').addEventListener('click', () => {
+  const personName = currentPersonName || 'this person'
+  const prompt = `Tell me about ${personName} — their current status, open follow-ups, and what I should focus on next.`
+  askAboutNetwork(prompt, personName)
+})
+
+// Persistent ask bar — general network prompts + free-form input
+const askInput = document.getElementById('people-ask-input')
+const askSend  = document.getElementById('people-ask-send')
+function fireAsk() {
+  const prompt = askInput.value.trim()
+  if (!prompt) return
+  askInput.value = ''
+  askAboutNetwork(prompt, 'Network')
+}
+askInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); fireAsk() }
+})
+askSend.addEventListener('click', fireAsk)
+document.querySelectorAll('.people-ask-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    askAboutNetwork(chip.dataset.prompt, chip.textContent.trim())
+  })
 })
 
 export {

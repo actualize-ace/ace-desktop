@@ -1,5 +1,45 @@
 /* ── PEOPLE VIEW ── */
-.people-body { flex: 1; display: flex; overflow: hidden; }
+/* Note: base `.view` is already flex-column — no override needed here,
+   otherwise it would defeat the `.view { display:none }` / `.active { display:flex }` toggle. */
+.people-body { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+
+/* Persistent ask bar — always visible, works in graph and profile mode.
+   Makes the view feel interactive instead of static. */
+.people-ask-bar {
+  flex-shrink: 0; border-top: 1px solid var(--border);
+  background: rgba(136,120,255,0.02); padding: 12px 24px 14px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+body.light .people-ask-bar { background: rgba(90,72,192,0.025); }
+.people-ask-chips {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.people-ask-chip {
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.3px; padding: 5px 10px; border-radius: 12px;
+  cursor: pointer; transition: all 0.14s;
+}
+.people-ask-chip:hover {
+  background: rgba(136,120,255,0.08); border-color: rgba(136,120,255,0.25);
+  color: var(--gold);
+}
+.people-ask-input-row {
+  display: flex; gap: 8px; align-items: center;
+}
+#people-ask-input {
+  flex: 1; padding: 9px 14px; border-radius: 8px;
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  color: var(--text-primary); outline: none;
+  font-family: inherit; font-size: 12px;
+  transition: border-color 0.14s, box-shadow 0.14s;
+}
+#people-ask-input:focus {
+  border-color: rgba(136,120,255,0.4);
+  box-shadow: 0 0 0 3px rgba(136,120,255,0.08);
+}
+#people-ask-input::placeholder { color: var(--text-dim); }
+#people-ask-send { padding: 8px 16px; }
 .people-list {
   width: 240px; flex-shrink: 0; overflow-y: auto; overflow-x: hidden;
   border-right: 1px solid var(--border); padding: 6px 0;
