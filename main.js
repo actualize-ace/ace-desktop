@@ -332,6 +332,66 @@ ipcMain.handle(ch.GET_USAGE, () => {
   catch (e) { return { session: null, weekly: null, error: e.message } }
 })
 
+// ─── Cockpit ───────────────────────────────────────────────────────────────
+ipcMain.handle(ch.GET_NORTHSTAR, () => {
+  try {
+    const reader = require('./src/vault-reader')
+    return reader.parseDCAFrontmatter(global.VAULT_PATH)
+  } catch (e) { return { error: e.message } }
+})
+
+ipcMain.handle(ch.GET_DAILY_FOCUS, () => {
+  try {
+    return require('./src/vault-reader').parseDailyFocus(global.VAULT_PATH)
+  } catch (e) { return [] }
+})
+
+ipcMain.handle(ch.GET_BUILD_BLOCKS, () => {
+  try {
+    return require('./src/vault-reader').parseBuildBlocks(global.VAULT_PATH)
+  } catch (e) { return [] }
+})
+
+ipcMain.handle(ch.MARK_DONE, (_, item) => {
+  // item: { type, label, _raw: {...} }
+  try {
+    const writer = require('./src/vault-writer')
+    if (item.type === 'outcome') {
+      return writer.markOutcomeComplete(global.VAULT_PATH, item._raw?.title || item.label)
+    }
+    if (item.type === 'target') {
+      return writer.toggleWeeklyTarget(global.VAULT_PATH, item._raw?.text || item.label, true)
+    }
+    if (item.type === 'followup') {
+      return writer.updateFollowUp(
+        global.VAULT_PATH,
+        item._raw?.person,
+        item._raw?.topic,
+        { status: 'Done' }
+      )
+    }
+    return { error: `Mark-done not supported for type: ${item.type}` }
+  } catch (e) { return { error: e.message } }
+})
+
+ipcMain.handle(ch.SNOOZE_ITEM, (_, item, days) => {
+  try {
+    const writer = require('./src/vault-writer')
+    if (item.type === 'followup') {
+      const newDate = new Date()
+      newDate.setDate(newDate.getDate() + (days || 3))
+      const dueStr = newDate.toISOString().slice(0, 10)
+      return writer.updateFollowUp(
+        global.VAULT_PATH,
+        item._raw?.person,
+        item._raw?.topic,
+        { due: dueStr }
+      )
+    }
+    return { error: `Snooze not supported for type: ${item.type}` }
+  } catch (e) { return { error: e.message } }
+})
+
 // ─── Vault Health ──────────────────────────────────────────────────────────
 ipcMain.handle(ch.VAULT_HEALTH_CHECK, () => {
   try { return require('./src/vault-health').checkVaultHealth(global.VAULT_PATH) }
