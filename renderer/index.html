@@ -84,7 +84,6 @@
         <span class="atm-audio-label" id="atm-audio-label">♪ Off</span>
       </div>
       <div class="attention-badge" id="attention-badge" title="Sessions need attention">0</div>
-      <div class="attention-menu" id="attention-menu" role="menu" aria-label="Sessions needing attention" aria-hidden="true"></div>
       <div class="coherence-chip">
         <div class="coherence-dot"></div>
         <div class="coherence-label">Active</div>
@@ -662,6 +661,10 @@
 </div>
 
 <script src="../node_modules/marked/lib/marked.umd.js"></script>
+<!-- Attention menu — mounted at body level so it escapes the titlebar's
+     -webkit-app-region:drag region. Clicks must reach JS handlers. -->
+<div class="attention-menu" id="attention-menu" role="menu" aria-label="Sessions needing attention" aria-hidden="true"></div>
+
 <script src="../node_modules/dompurify/dist/purify.min.js"></script>
 <script src="../node_modules/d3/dist/d3.min.js"></script>
 <script src="../node_modules/xterm/lib/xterm.js"></script>
