@@ -71,18 +71,12 @@ export default {
 
     const areaPath = `${linePath} L${points[n - 1].x},52 L${points[0].x},52 Z`
 
-    // Invisible rollover hit-markers per data point
-    const markers = points.map((p, i) =>
+    // Invisible hover hit-markers per data point (8px radius for easy hover)
+    const markers = points.map(p =>
       `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="8"
-               fill="transparent" class="velocity-hit" data-i="${i}">
+               fill="transparent" stroke="none">
          <title>${p.label}: ${p.v} action${p.v === 1 ? '' : 's'}</title>
        </circle>`
-    ).join('')
-    // Visible dots at each point for visual affordance
-    const dots = points.map((p, i) =>
-      `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2"
-               fill="var(--gold)" opacity="${p.v > 0 ? 0.6 : 0.2}"
-               class="velocity-dot"/>`
     ).join('')
 
     el.innerHTML = `

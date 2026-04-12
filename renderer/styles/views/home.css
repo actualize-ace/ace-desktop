@@ -642,7 +642,22 @@
   font-family: 'Space Grotesk', sans-serif;
   font-size: 13px; color: var(--text-primary);
   margin-bottom: 4px; line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
 }
+.cockpit-triad-deck .action-card:hover .move-label {
+  -webkit-line-clamp: 2; /* reveal full text on hover */
+}
+.cockpit-triad-deck { align-items: stretch; }
+.cockpit-triad-deck .triad-leg {
+  display: flex; flex-direction: column;
+}
+.cockpit-triad-deck .signal-decode { flex: 0 0 auto; }
+.cockpit-triad-deck .action-card   { flex: 0 0 auto; }
 .cockpit-triad-deck .move-context {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px; color: var(--text-dim);

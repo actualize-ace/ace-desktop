@@ -18,7 +18,7 @@ export default {
   render(allData, el) {
     const ctx = this._buildContext(allData)
     this._lastCtx = ctx // stash for Inner Move widget (_buildCoachingPrompt)
-    const structural = this._buildStructural(ctx)
+    const narrative = this._buildCockpitNarrative(ctx, allData)
 
     const signalKeys = ['A1','A2','A3','C1','C2','C3','E1','E2','E3']
 
@@ -28,17 +28,22 @@ export default {
     const sig = (i) => ctx.signals[i] || 'dim'
     const dotHtml = (i) => `<div class="cockpit-signal-dot ${sig(i)}" title="${signalKeys[i]}: ${SIGNAL_NAMES[signalKeys[i]]}"></div>`
 
+    // Risen leg indicator + energy replaces the static operating-mode pill
+    const risenLeg = allData._risenLeg
+    const risenLabel = risenLeg ? `${risenLeg} rising` : 'in flow'
+    const energyTag = ctx.energy ? `energy ${ctx.energy}` : ''
+
     el.innerHTML = `
       <div class="cockpit-synthesis">
-        <div class="cockpit-synthesis-line" id="cc-synthesis-text">${escapeHtml(structural)}</div>
+        <div class="cockpit-synthesis-line" id="cc-synthesis-text">${narrative}</div>
         <div class="cockpit-synthesis-signals">
           <div class="cockpit-signal-cluster" data-leg="A">${dotHtml(0)}${dotHtml(1)}${dotHtml(2)}</div>
           <div class="cockpit-signal-cluster" data-leg="C">${dotHtml(3)}${dotHtml(4)}${dotHtml(5)}</div>
           <div class="cockpit-signal-cluster" data-leg="E">${dotHtml(6)}${dotHtml(7)}${dotHtml(8)}</div>
         </div>
         <div class="cockpit-synthesis-mode">
-          <span class="tag">${escapeHtml(ctx.mode || '\u2014')}</span>
-          <span class="tag energy">${escapeHtml(ctx.energy || '\u2014')}</span>
+          <span class="tag">${escapeHtml(risenLabel)}</span>
+          ${energyTag ? `<span class="tag energy">${escapeHtml(energyTag)}</span>` : ''}
         </div>
         <div class="cockpit-affirmation" id="cc-affirmation">${escapeHtml(initialAff)}</div>
       </div>`
@@ -421,6 +426,50 @@ export default {
       todaySessions,
       patterns: patterns || { counts: [], tensions: [], coOccurrences: [], descriptions: {} },
     }
+  },
+
+  // Narrative synthesis for cockpit — actionable, prescriptive, italic emphasis
+  _buildCockpitNarrative(ctx, allData) {
+    const score = ctx.coherenceScore || 0
+    const signals = ctx.signals || []
+    const red = signals.filter(s => s === 'red').length
+    const yellow = signals.filter(s => s === 'yellow').length
+    const risen = allData?._risenLeg
+    const weakest = allData?._weakestLeg
+
+    // Critical states first
+    if (red >= 3) {
+      return `Multiple signals are red. <em>Tend to the body before the work.</em>`
+    }
+    if (ctx.energy === 'depleted') {
+      return `Energy depleted. <em>Recovery is the work today.</em>`
+    }
+    if (allData?.state?.recovery_flag === true) {
+      return `You flagged recovery. <em>Honor it fully.</em>`
+    }
+
+    // High-coherence states
+    if (score >= 15) {
+      if (risen === 'authority')  return `Systems are aligned to you. <em>Author the next gate.</em>`
+      if (risen === 'expansion')  return `Momentum is on your side. <em>Ship the real thing.</em>`
+      if (risen === 'capacity')   return `Steady strength in the container. <em>Deepen what's already working.</em>`
+      return `Systems are aligning to you. <em>Hold the cadence.</em>`
+    }
+
+    // Mid-coherence — focus on weakest leg
+    if (score >= 11) {
+      if (weakest === 'authority') return `Outcomes need your voice. <em>Say what's true and move.</em>`
+      if (weakest === 'capacity')  return `Body and bonds want tending. <em>Start there, then build.</em>`
+      if (weakest === 'expansion') return `Rhythm has slipped. <em>One concrete block changes the week.</em>`
+      return `Some friction in the field. <em>Simplify to what matters.</em>`
+    }
+
+    // Lower coherence — regulation-first
+    if (yellow >= 4 || red >= 1) {
+      return `Multiple signals asking for attention. <em>One thing, done with care.</em>`
+    }
+
+    return `The container needs care before the work. <em>Regulate first.</em>`
   },
 
   _buildStructural(ctx) {
@@ -897,11 +946,20 @@ export default {
       if (synthesis) {
         const textEl = document.getElementById('cc-synthesis-text')
         if (textEl) {
-          textEl.style.opacity = '0'
-          setTimeout(() => {
-            textEl.textContent = synthesis
-            textEl.style.opacity = '1'
-          }, 400)
+          // Keep rule-based narrative if AI output is short/empty. Otherwise render
+          // the AI text and italicize the final sentence for prototype fidelity.
+          const txt = String(synthesis).trim()
+          if (txt.length > 20) {
+            const m = txt.match(/^([\s\S]*?[.!?])\s*([^.!?]*[.!?])\s*$/)
+            const html = m
+              ? `${escapeHtml(m[1].trim())} <em>${escapeHtml(m[2].trim())}</em>`
+              : escapeHtml(txt)
+            textEl.style.opacity = '0'
+            setTimeout(() => {
+              textEl.innerHTML = html
+              textEl.style.opacity = '1'
+            }, 400)
+          }
         }
       }
 

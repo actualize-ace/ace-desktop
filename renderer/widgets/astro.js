@@ -222,7 +222,6 @@ export default {
       } catch { /* not configured */ }
     }
 
-    // Graceful fallback: hide entirely if no astro data
     if (!_cachedTransits) {
       el.innerHTML = ''
       el.style.display = 'none'
@@ -230,27 +229,58 @@ export default {
     }
     el.style.display = ''
 
-    // Map moon phase → symbol + short label
     const phaseRaw = (_cachedTransits.moon?.phase?.phase || '').toLowerCase()
     const { symbol, label } = phaseToGlyph(phaseRaw)
-
-    // Tooltip: the full contextual message (click to remix)
-    const fullMessage = buildMessage(_cachedTransits)
+    const moonSign = SIGN_NAMES[_cachedTransits.moon?.sign] || _cachedTransits.moon?.sign || ''
 
     el.innerHTML = `
-      <div class="astro-block" id="astro-block" title="${escapeAttr(fullMessage)}">
-        <div class="astro-symbol">${symbol}</div>
-        <div class="astro-label">${label}</div>
+      <div class="astro-block" id="astro-block">
+        <div class="flow-label">
+          <span>Cosmos</span>
+          <span class="meta">${moonSign}</span>
+        </div>
+        <div class="astro-body">
+          <div class="astro-symbol">${symbol}</div>
+          <div class="astro-label">${label}</div>
+        </div>
       </div>`
 
-    // Click → remix the tooltip (for people who check it frequently)
     document.getElementById('astro-block')?.addEventListener('click', () => {
       _currentVariant++
-      const newMsg = buildMessage(_cachedTransits)
-      const block = el.querySelector('#astro-block')
-      if (block) block.setAttribute('title', newMsg)
+      showAstroOverlay(_cachedTransits)
     })
   }
+}
+
+function showAstroOverlay(transits) {
+  // Remove existing overlay if open
+  document.querySelectorAll('.cockpit-overlay').forEach(o => o.remove())
+
+  const msg = buildMessage(transits)
+  const sub = buildSubline(transits)
+
+  const overlay = document.createElement('div')
+  overlay.className = 'cockpit-overlay'
+  overlay.innerHTML = `
+    <div class="cockpit-overlay-panel">
+      <div class="cockpit-overlay-header">
+        <span class="cockpit-overlay-label">Today's Cosmos</span>
+        <button class="cockpit-overlay-close" aria-label="Close">×</button>
+      </div>
+      <div class="cockpit-overlay-body">
+        <div class="cockpit-overlay-text">${escapeAttr(msg)}</div>
+        <div class="cockpit-overlay-sub">${escapeAttr(sub)}</div>
+      </div>
+    </div>`
+
+  const close = () => overlay.remove()
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close() })
+  overlay.querySelector('.cockpit-overlay-close').addEventListener('click', close)
+  document.addEventListener('keydown', function esc(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc) }
+  })
+
+  document.body.appendChild(overlay)
 }
 
 function escapeAttr(s) {

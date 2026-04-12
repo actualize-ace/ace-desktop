@@ -296,14 +296,13 @@ body.light .vbody.cockpit .orb-score { text-shadow: 0 0 20px rgba(255,255,255,0.
 /* ═══ FLOW LAYER (velocity + rhythm + astro) ═══════════════════════ */
 .vbody.cockpit .cockpit-flow-row {
   display: grid;
-  grid-template-columns: 1.4fr 1.4fr 0.6fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 14px;
   padding: 18px 0;
   margin-bottom: 28px;
 }
 @media (max-width: 1100px) {
-  .vbody.cockpit .cockpit-flow-row { grid-template-columns: 1fr 1fr; }
-  .vbody.cockpit .cockpit-flow-row #widget-astro { grid-column: span 2; }
+  .vbody.cockpit .cockpit-flow-row { grid-template-columns: 1fr; }
 }
 
 .vbody.cockpit .flow-block {
@@ -365,19 +364,24 @@ body.light .vbody.cockpit .orb-score { text-shadow: 0 0 20px rgba(255,255,255,0.
 .vbody.cockpit .rhythm-cell.active-3 { background: var(--green);          opacity: 1; box-shadow: 0 0 5px var(--glow-mint); }
 
 .vbody.cockpit .astro-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 12px;
+  padding: 14px 16px 16px;
   background: var(--glass-bg);
   border: 1px solid var(--border);
   border-radius: 10px;
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
+  display: flex; flex-direction: column;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.vbody.cockpit .astro-block:hover { border-color: var(--border-hover); transform: translateY(-1px); }
+.vbody.cockpit .astro-body {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center;
 }
 .vbody.cockpit .astro-symbol {
-  font-size: 26px;
+  font-size: 34px;
   color: var(--ark);
   text-shadow: 0 0 14px rgba(176,128,224,0.5);
   margin-bottom: 4px;
@@ -395,4 +399,108 @@ body.light .vbody.cockpit .orb-score { text-shadow: 0 0 20px rgba(255,255,255,0.
   text-transform: uppercase;
   text-align: center;
   line-height: 1.4;
+}
+.vbody.cockpit .astro-body > .astro-label { margin-top: 6px; }
+
+/* ═══ Cockpit overlay (astro / compass / orb contextual panel) ══════ */
+.cockpit-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: cockpit-fade-in 0.25s ease;
+}
+@keyframes cockpit-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.cockpit-overlay-panel {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-hover);
+  border-radius: 12px;
+  padding: 24px 28px;
+  max-width: 520px;
+  width: 88%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(200,160,240,0.18);
+  color: var(--text-primary);
+  font-family: 'Space Grotesk', sans-serif;
+}
+.cockpit-overlay-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.cockpit-overlay-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--gold);
+}
+.cockpit-overlay-close {
+  background: transparent; border: none;
+  font-size: 22px; line-height: 1;
+  color: var(--text-dim); cursor: pointer;
+  padding: 0 4px;
+}
+.cockpit-overlay-close:hover { color: var(--gold); }
+.cockpit-overlay-body {
+  font-size: 14px; line-height: 1.55;
+}
+.cockpit-overlay-text {
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+.cockpit-overlay-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+}
+.cockpit-overlay-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 12px;
+}
+.cockpit-overlay-row:last-child { border-bottom: none; }
+.cockpit-overlay-row-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--text-dim);
+}
+.cockpit-overlay-row-value {
+  color: var(--text-primary); text-align: right;
+}
+.cockpit-overlay-row-value.active { color: var(--gold); font-weight: 500; }
+.cockpit-overlay-footer {
+  margin-top: 16px;
+  display: flex; gap: 10px; justify-content: flex-end;
+}
+.cockpit-overlay-btn {
+  background: rgba(96,216,168,0.1);
+  border: 1px solid rgba(96,216,168,0.3);
+  color: var(--green);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.cockpit-overlay-btn:hover {
+  background: rgba(96,216,168,0.2);
+  border-color: var(--green);
+}
+.cockpit-overlay-btn.secondary {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-dim);
+}
+.cockpit-overlay-btn.secondary:hover {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
 }
