@@ -101,6 +101,7 @@ module.exports = {
   GET_NORTHSTAR:   'get-northstar',
   GET_DAILY_FOCUS: 'get-daily-focus',
   GET_BUILD_BLOCKS:'get-build-blocks',
+  GET_COMPASS:     'get-compass',
   MARK_DONE:       'mark-done',
   SNOOZE_ITEM:     'snooze-item',
 }

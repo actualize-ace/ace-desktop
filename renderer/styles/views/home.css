@@ -383,3 +383,85 @@
   0%, 100% { transform: scale(1); opacity: 1; }
   50%      { transform: scale(1.6); opacity: 0.85; }
 }
+
+/* ── COCKPIT — Brain Row layout (synthesis + compass side by side) ── */
+.cockpit-brain-row {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+@media (max-width: 1100px) {
+  .cockpit-brain-row { grid-template-columns: 1fr; }
+}
+
+/* ── COCKPIT — Compass ───────────────────────────────────────── */
+.cockpit-compass {
+  position: relative;
+  width: 220px; height: 220px;
+  margin: 0 auto;
+}
+.cmp-rose {
+  position: absolute; inset: 8px;
+  border: 1px solid var(--border-hover);
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(200,160,240,0.04) 0%, transparent 70%);
+}
+.cmp-rose::before {
+  content: ''; position: absolute; inset: 30px;
+  border: 1px dashed var(--border); border-radius: 50%;
+}
+.cmp-cross::before, .cmp-cross::after {
+  content: ''; position: absolute;
+  background: linear-gradient(to right, transparent, rgba(140,120,255,0.12) 50%, transparent);
+}
+.cmp-cross::before { left: 8px; right: 8px; top: 50%; height: 1px; transform: translateY(-50%); }
+.cmp-cross::after  { top: 8px; bottom: 8px; left: 50%; width: 1px; transform: translateX(-50%);
+  background: linear-gradient(to bottom, transparent, rgba(140,120,255,0.12) 50%, transparent); }
+.cmp-needle {
+  position: absolute; top: 50%; left: 50%;
+  width: 2px; height: 88px;
+  background: linear-gradient(to top, transparent, rgba(200,160,240,0.6) 30%, var(--gold));
+  transform-origin: bottom center;
+  box-shadow: 0 0 10px var(--glow-accent);
+  z-index: 2;
+  transition: transform 1.5s ease;
+}
+.cmp-needle::after {
+  content: ''; position: absolute; top: -3px; left: 50%; transform: translateX(-50%);
+  width: 6px; height: 6px; background: var(--gold); border-radius: 50%;
+  box-shadow: 0 0 12px var(--gold);
+}
+.cmp-center {
+  position: absolute; top: 50%; left: 50%;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #c8b8ff, #7060e0);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 14px rgba(140,120,255,0.7);
+  z-index: 3; cursor: pointer;
+  animation: cmp-breathe 2.5s ease-in-out infinite;
+}
+@keyframes cmp-breathe {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50%      { transform: translate(-50%, -50%) scale(1.25); }
+}
+.cmp-dir {
+  position: absolute; text-align: center; cursor: default;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px; letter-spacing: 0.2em; text-transform: uppercase;
+}
+.cmp-dir .cmp-letter {
+  display: block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px; color: var(--text-secondary);
+  margin-bottom: 2px; letter-spacing: 0.1em;
+}
+.cmp-dir .cmp-label {
+  display: block; font-size: 7px; color: var(--text-dim); max-width: 90px;
+}
+.cmp-dir.active .cmp-letter { color: var(--gold); text-shadow: 0 0 14px var(--glow-accent); }
+.cmp-north { top: -10px; left: 50%; transform: translateX(-50%); }
+.cmp-east  { right: -34px; top: 50%; transform: translateY(-50%); }
+.cmp-south { bottom: -10px; left: 50%; transform: translateX(-50%); }
+.cmp-west  { left: -34px; top: 50%; transform: translateY(-50%); }

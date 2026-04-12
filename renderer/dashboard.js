@@ -38,6 +38,7 @@ async function loadDashboard() {
     getNorthStar:    () => window.ace.dash.getNorthStar(),
     getDailyFocus:   () => window.ace.dash.getDailyFocus(),
     getBuildBlocks:  () => window.ace.dash.getBuildBlocks(),
+    getCompass:      () => window.ace.dash.getCompass(),
   }
   // Patterns: optional, don't break dashboard if unavailable
   if (typeof window.ace.dash.getPatterns === 'function') {
@@ -68,6 +69,7 @@ async function loadDashboard() {
   if (!data.getNorthStar)   data.getNorthStar   = await window.ace.dash.getNorthStar()
   if (!data.getDailyFocus)  data.getDailyFocus  = await window.ace.dash.getDailyFocus()
   if (!data.getBuildBlocks) data.getBuildBlocks = await window.ace.dash.getBuildBlocks()
+  if (!data.getCompass)     data.getCompass     = await window.ace.dash.getCompass()
 
   // Bundle allData for composite widgets (dataSource: null)
   const allData = {
@@ -81,6 +83,7 @@ async function loadDashboard() {
     northStar:    data.getNorthStar,
     dailyFocus:   data.getDailyFocus,
     buildBlocks:  data.getBuildBlocks,
+    compass:      data.getCompass,
   }
 
   // ─── Vault health banner ──────────────────────────────────

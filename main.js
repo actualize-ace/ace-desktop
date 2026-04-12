@@ -352,6 +352,15 @@ ipcMain.handle(ch.GET_BUILD_BLOCKS, () => {
   } catch (e) { return [] }
 })
 
+ipcMain.handle(ch.GET_COMPASS, () => {
+  try {
+    const reader = require('./src/vault-reader')
+    const synth = require('./src/synthesizer')
+    const dca = reader.parseDCAFrontmatter(global.VAULT_PATH)
+    return synth.computeCompassDirection(global.VAULT_PATH, dca.compass_directions)
+  } catch (e) { return { direction: null, strength: 0, error: e.message } }
+})
+
 ipcMain.handle(ch.MARK_DONE, (_, item) => {
   // item: { type, label, _raw: {...} }
   try {

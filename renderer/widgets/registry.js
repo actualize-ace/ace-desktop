@@ -3,6 +3,7 @@
 // Each widget: { id, label, description, dataSource, defaultEnabled, render(data, el) }
 
 import northstar   from './northstar.js'
+import compass      from './compass.js'
 import synthesis    from './synthesis.js'
 import identity     from './identity.js'
 import metrics      from './metrics.js'
@@ -16,7 +17,7 @@ import followups    from './followups.js'
 import quickactions from './quickactions.js'
 import astro        from './astro.js'
 
-export const WIDGETS = [northstar, synthesis, identity, astro, metrics, rhythm, velocity, state, outcomes, targets, pipeline, followups, quickactions]
+export const WIDGETS = [northstar, synthesis, compass, identity, astro, metrics, rhythm, velocity, state, outcomes, targets, pipeline, followups, quickactions]
 
 // Zone assignment for cockpit layout
 // 'cockpit-*' = sacred ACE framework zones (fixed order, framework-defined)
@@ -25,6 +26,7 @@ export const WIDGETS = [northstar, synthesis, identity, astro, metrics, rhythm, 
 export const WIDGET_ZONES = {
   northstar:    'cockpit-top',
   synthesis:    'cockpit-brain',
+  compass:      'cockpit-brain',
   velocity:     'cockpit-flow',
   rhythm:       'cockpit-flow',
   astro:        'cockpit-flow',
