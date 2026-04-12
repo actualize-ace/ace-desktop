@@ -108,6 +108,177 @@ body.light .vbody.cockpit::after {
   .vbody.cockpit .cockpit-brain-row { grid-template-columns: 1fr; gap: 24px; }
 }
 
+/* ═══ BRAIN ORB COLUMN (orb stacked with pulse chip below) ═════════ */
+.vbody.cockpit .brain-col-orb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ═══ PULSE CHIP ═══════════════════════════════════════════════════ */
+.vbody.cockpit .pulse-chip {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  transition: all 0.2s ease;
+}
+.vbody.cockpit .pulse-chip:hover {
+  border-color: var(--border-hover);
+  color: var(--gold);
+  background: rgba(200,160,240,0.06);
+}
+.vbody.cockpit .pulse-chip .pulse-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--glow-mint);
+}
+.vbody.cockpit .pulse-chip.fresh .pulse-dot { background: var(--green); box-shadow: 0 0 6px var(--glow-mint); }
+.vbody.cockpit .pulse-chip.aging .pulse-dot { background: var(--amber); box-shadow: 0 0 6px rgba(212,165,116,0.5); }
+.vbody.cockpit .pulse-chip.stale .pulse-dot { background: var(--red); box-shadow: 0 0 6px var(--glow-rose); }
+.vbody.cockpit .pulse-chip.aging .pulse-text { color: var(--amber); }
+.vbody.cockpit .pulse-chip.stale .pulse-text { color: var(--red); opacity: 0.9; }
+.vbody.cockpit .pulse-chip .pulse-refresh {
+  opacity: 0.6;
+  font-size: 11px;
+  transition: transform 0.3s ease;
+}
+.vbody.cockpit .pulse-chip:hover .pulse-refresh {
+  transform: rotate(180deg);
+  opacity: 1;
+}
+
+/* ═══ SYSTEM INTEGRITY BAR ══════════════════════════════════════════ */
+.vbody.cockpit #widget-integrity {
+  margin-bottom: 14px;
+}
+.vbody.cockpit .integrity-bar {
+  background: var(--glass-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transition: all 0.3s ease;
+}
+
+/* Stable — single thin line */
+.vbody.cockpit .integrity-bar.integrity-stable {
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-color: rgba(96,216,168,0.16);
+}
+
+/* Expanded (watch / critical) */
+.vbody.cockpit .integrity-bar.integrity-watch,
+.vbody.cockpit .integrity-bar.integrity-critical {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.vbody.cockpit .integrity-bar.integrity-watch    { border-color: rgba(212,165,116,0.28); }
+.vbody.cockpit .integrity-bar.integrity-critical { border-color: rgba(224,112,128,0.32); box-shadow: 0 0 18px rgba(224,112,128,0.08); }
+
+.vbody.cockpit .integrity-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.vbody.cockpit .integrity-pip {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.vbody.cockpit .integrity-bar.integrity-stable   .integrity-pip { background: var(--green); box-shadow: 0 0 6px var(--glow-mint); }
+.vbody.cockpit .integrity-bar.integrity-watch    .integrity-pip { background: var(--amber); box-shadow: 0 0 6px rgba(212,165,116,0.5); }
+.vbody.cockpit .integrity-bar.integrity-critical .integrity-pip { background: var(--red);   box-shadow: 0 0 6px var(--glow-rose); animation: integrity-pulse 3s ease-in-out infinite; }
+@keyframes integrity-pulse {
+  0%, 100% { opacity: 0.85; }
+  50%      { opacity: 1; transform: scale(1.2); }
+}
+.vbody.cockpit .integrity-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.vbody.cockpit .integrity-bar.integrity-watch    .integrity-label { color: var(--amber); }
+.vbody.cockpit .integrity-bar.integrity-critical .integrity-label { color: var(--red); }
+.vbody.cockpit .integrity-meta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  margin-left: auto;
+}
+
+/* Regeneration row */
+.vbody.cockpit .integrity-regen {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0 2px;
+  border-top: 1px dashed var(--border);
+}
+.vbody.cockpit .integrity-regen-text {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.vbody.cockpit .integrity-regen-cause {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+.vbody.cockpit .integrity-regen-arrow {
+  color: var(--text-dim);
+}
+.vbody.cockpit .integrity-regen-skill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+}
+.vbody.cockpit .integrity-regen-desc {
+  font-family: var(--font-script);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.vbody.cockpit .integrity-regen-btn {
+  background: rgba(96,216,168,0.1);
+  border: 1px solid rgba(96,216,168,0.3);
+  color: var(--green);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.vbody.cockpit .integrity-regen-btn:hover {
+  background: rgba(96,216,168,0.2);
+  border-color: var(--green);
+}
+
 /* ═══ ORB ═══════════════════════════════════════════════════════════ */
 .vbody.cockpit .orb-wrap {
   position: relative;

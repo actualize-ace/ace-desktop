@@ -479,6 +479,26 @@ function daysSinceLastPulse(vaultPath) {
   } catch { return -1 }
 }
 
+// Return { timestamp: Date | null, hoursAgo: number | null } for the most recent pulse entry.
+// system-metrics.md entries look like "## 2026-04-10 14:23" — we preserve hour granularity.
+function parseLastPulse(vaultPath) {
+  try {
+    const text = fs.readFileSync(path.join(vaultPath, '00-System', 'system-metrics.md'), 'utf8')
+    const entries = [...text.matchAll(/^##\s+(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}):(\d{2}))?/gm)]
+    if (!entries.length) return { timestamp: null, hoursAgo: null }
+    // Parse to Date and pick the latest
+    let latest = null
+    for (const m of entries) {
+      const [, dateStr, hh, mm] = m
+      const d = new Date(`${dateStr}T${hh || '00'}:${mm || '00'}:00`)
+      if (!isNaN(d.getTime()) && (!latest || d > latest)) latest = d
+    }
+    if (!latest) return { timestamp: null, hoursAgo: null }
+    const hoursAgo = Math.max(0, Math.round((Date.now() - latest.getTime()) / (1000 * 60 * 60)))
+    return { timestamp: latest.toISOString(), hoursAgo }
+  } catch { return { timestamp: null, hoursAgo: null } }
+}
+
 // ─── Ritual Rhythm (execution-log.md) ────────────────────────────────────────
 
 function parseRitualRhythm(vaultPath) {
@@ -886,4 +906,4 @@ function parsePatterns(vaultPath) {
   } catch (e) { return { counts: [], tensions: [], coOccurrences: [], descriptions: {}, error: e.message } }
 }
 
-module.exports = { parseState, parseFollowUps, listDir, parseExecutionLog, parseRitualRhythm, parsePeople, parseArtifacts, getArtifactDetail, updateArtifactStatus, parsePatterns, parseDCAFrontmatter, parseDailyFocus, parseRecoveryFlag, parseBuildBlocks }
+module.exports = { parseState, parseFollowUps, listDir, parseExecutionLog, parseRitualRhythm, parsePeople, parseArtifacts, getArtifactDetail, updateArtifactStatus, parsePatterns, parseDCAFrontmatter, parseDailyFocus, parseRecoveryFlag, parseBuildBlocks, parseLastPulse }

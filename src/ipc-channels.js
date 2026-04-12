@@ -102,6 +102,7 @@ module.exports = {
   GET_DAILY_FOCUS: 'get-daily-focus',
   GET_BUILD_BLOCKS:'get-build-blocks',
   GET_COMPASS:     'get-compass',
+  GET_LAST_PULSE:  'get-last-pulse',
   MARK_DONE:       'mark-done',
   SNOOZE_ITEM:     'snooze-item',
 }

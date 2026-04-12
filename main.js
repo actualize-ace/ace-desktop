@@ -361,6 +361,12 @@ ipcMain.handle(ch.GET_COMPASS, () => {
   } catch (e) { return { direction: null, strength: 0, error: e.message } }
 })
 
+ipcMain.handle(ch.GET_LAST_PULSE, () => {
+  try {
+    return require('./src/vault-reader').parseLastPulse(global.VAULT_PATH)
+  } catch (e) { return { timestamp: null, hoursAgo: null, error: e.message } }
+})
+
 ipcMain.handle(ch.MARK_DONE, (_, item) => {
   // item: { type, label, _raw: {...} }
   try {
