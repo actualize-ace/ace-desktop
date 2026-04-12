@@ -96,7 +96,6 @@ export default {
             </defs>
             <path fill="url(#velArea)" stroke="none" d="${areaPath}" />
             <path class="line" d="${linePath}" />
-            ${dots}
             ${markers}
           </svg>
         </div>
