@@ -28,6 +28,7 @@
   <link rel="stylesheet" href="styles/views/breath.css">
   <link rel="stylesheet" href="styles/views/insight.css">
   <link rel="stylesheet" href="styles/views/astro.css">
+  <link rel="stylesheet" href="styles/views/learn.css">
   <link rel="stylesheet" href="styles/command-bar.css">
 </head>
 <body>
@@ -221,6 +222,15 @@
         <button class="cmd-btn" data-cmd="/pulse"><div class="cmd-dot" style="background:var(--green)"></div>/pulse</button>
         <button class="cmd-btn" data-cmd="/eod"><div class="cmd-dot" style="background:var(--ark)"></div>/eod</button>
         <button class="cmd-btn" data-cmd="/coach"><div class="cmd-dot" style="background:var(--ark)"></div>/coach</button>
+      </div>
+      <div class="sidebar-div"></div>
+      <div class="nav-item" data-view="learn" id="nav-learn">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4v16M4 4h10a4 4 0 014 4v12a4 4 0 00-4-4H4"/>
+          <path d="M20 4v16M20 4H10a4 4 0 00-4 4v12a4 4 0 014-4h10"/>
+        </svg>
+        <span>Learn</span>
+        <span class="nav-learn-dot" id="learn-dot" hidden></span>
       </div>
       </div><!-- /.sidebar-scroll -->
       <div class="sidebar-pinned">
@@ -575,6 +585,16 @@
       <!-- ASTRO VIEW -->
       <div class="view" id="view-astro"></div>
 
+      <!-- LEARN VIEW -->
+      <div class="view" id="view-learn">
+        <div class="learn-container">
+          <aside class="learn-sidebar" id="learn-sidebar"></aside>
+          <section class="learn-content" id="learn-content">
+            <p class="learn-empty">Loading lessons…</p>
+          </section>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -741,6 +761,7 @@ import { initAtmosphere } from './modules/atmosphere.js'
 import { initBreath, onBreathEnter, onBreathExit } from './views/breath.js'
 import { initInsight, onInsightExit } from './views/insight.js'
 import { initAstro, onAstroExit } from './views/astro.js'
+import { initLearn, updateLearnDot } from './views/learn.js'
 import { open as openAttentionMenu } from './modules/attention-menu.js'
 
 // ─── Theme, Zoom, Time, Sidebar (from module) ──────────────────────────────
@@ -777,6 +798,7 @@ navItems.forEach(item => {
     else if (view === 'insight' && !state.insightInitialized) initInsight()
     else if (view === 'astro' && !state.astroInitialized) { state.astroInitialized = true; initAstro() }
     else if (view === 'history' && !state.historyInitialized) initHistory()
+    else if (view === 'learn') { initLearn() }
     else if (view === 'artifacts') { if (!state.artifactsInitialized) initArtifacts(); else renderArtifactsList(); }
     else if (view === 'agents' && !state.agentsInitialized) {
       state.agentsInitialized = true
@@ -823,6 +845,16 @@ document.querySelectorAll('[data-cmd]').forEach(el => {
       vEl.textContent = `v${window.ace.appVersion} · ${window.ace.appStage || 'alpha'}`
     }
   } catch {}
+
+  // First-run: route to Learn view if user hasn't completed or dismissed essentials.
+  try {
+    const learnState = await window.ace.learn?.state?.()
+    const dot = document.getElementById('learn-dot')
+    if (dot) dot.hidden = !!learnState?.firstRunComplete
+    if (learnState && !learnState.firstRunComplete && !learnState.dismissedFirstRun) {
+      document.querySelector('.nav-item[data-view="learn"]')?.click()
+    }
+  } catch (e) { console.warn('[learn] first-run routing failed:', e) }
 
   try {
     const cfg = await window.ace.setup.getConfig()
