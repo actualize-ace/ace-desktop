@@ -238,6 +238,14 @@ export default {
       ? `<span class="astro-retro" title="${retros.join(', ')} retrograde">℞ ${retros[0]}${retros.length > 1 ? ` +${retros.length - 1}` : ''}</span>`
       : ''
 
+    // Surface the tightest transit-to-natal aspect + mood
+    const aspects = _cachedTransits.transit_to_natal_aspects || []
+    const topAspect = aspects[0]
+    const aspectLine = topAspect
+      ? `${topAspect.transit_planet} ${(topAspect.aspect || '').toLowerCase()} ${topAspect.natal_planet}`
+      : ''
+    const mood = deriveMood(aspects, retros)
+
     el.innerHTML = `
       <div class="astro-block" id="astro-block">
         <div class="flow-label">
@@ -247,6 +255,10 @@ export default {
         <div class="astro-body">
           <div class="astro-symbol">${symbol}</div>
           <div class="astro-label">${label}${moonSign ? `<br/><span style="opacity:0.7">in ${moonSign}</span>` : ''}</div>
+        </div>
+        <div class="astro-telemetry">
+          ${aspectLine ? `<div class="astro-aspect" title="Tightest transit-to-natal aspect">${escapeAttr(aspectLine)}</div>` : ''}
+          ${mood ? `<div class="astro-mood ${mood.tone}">${escapeAttr(mood.label)}</div>` : ''}
         </div>
         <div class="astro-footer-hint">click for today's weather</div>
       </div>`
@@ -291,6 +303,27 @@ function showAstroOverlay(transits) {
 
 function escapeAttr(s) {
   return String(s || '').replace(/"/g, '&quot;').replace(/\n/g, ' ')
+}
+
+// Derive an overall "mood" descriptor from the day's aspects and retrogrades.
+// Hard aspects (square, opposition) + retrogrades tilt tense; soft aspects (trine, sextile, conjunction) tilt open.
+function deriveMood(aspects, retros) {
+  if (!aspects || !aspects.length) return null
+  let score = 0
+  for (const a of aspects.slice(0, 6)) {
+    const t = (a.aspect || '').toLowerCase()
+    if (t === 'trine' || t === 'sextile')     score += 2
+    else if (t === 'conjunction')             score += 1
+    else if (t === 'square' || t === 'opposition') score -= 2
+    else if (t === 'quincunx')                score -= 1
+  }
+  if (retros && retros.length) score -= retros.length * 0.5
+
+  if (score >= 3) return { tone: 'open',     label: 'open · ride the current' }
+  if (score >= 1) return { tone: 'flowing',  label: 'flowing · favored directions' }
+  if (score >= -1) return { tone: 'neutral', label: 'mixed · choose your hill' }
+  if (score >= -3) return { tone: 'tense',   label: 'tense · move carefully' }
+  return { tone: 'dense', label: 'dense · rest where you can' }
 }
 
 function phaseToGlyph(phase) {

@@ -85,6 +85,8 @@ function showDCAOverlay(ns, alignment) {
 
   const anchors = ns.north_star_anchors || []
   const affirmations = ns.affirmations || []
+  const body = ns.body || ''
+  const filePath = ns.filePath || ''
   const gateDate = ns.gate_date
   const daysRemaining = (ns.daysTotal != null && ns.daysElapsed != null)
     ? ns.daysTotal - ns.daysElapsed : null
@@ -102,22 +104,37 @@ function showDCAOverlay(ns, alignment) {
     ? affirmations.map(a => `<div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;padding:5px 0;color:var(--text-primary);opacity:0.85;">“${escapeAttr(a)}”</div>`).join('')
     : `<div style="font-style:italic;color:var(--text-dim);font-size:12px;">No affirmations set.</div>`
 
+  // Full DCA body: render markdown-ish (#, paragraphs). Skip the H1 since we show it elsewhere.
+  const bodyParas = body
+    .split(/\n\n+/)
+    .map(p => p.trim())
+    .filter(p => p && !p.match(/^#\s/)) // drop H1
+    .map(p => {
+      if (p.startsWith('# ')) return `<h3 style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:500;color:var(--gold);margin:14px 0 6px;">${escapeAttr(p.slice(2))}</h3>`
+      return `<p style="font-family:'Space Grotesk',sans-serif;font-size:13px;line-height:1.65;color:var(--text-primary);margin:0 0 12px;">${escapeAttr(p)}</p>`
+    })
+    .join('')
+
   const overlay = document.createElement('div')
   overlay.className = 'cockpit-overlay'
   overlay.innerHTML = `
-    <div class="cockpit-overlay-panel" style="max-width:640px;">
+    <div class="cockpit-overlay-panel" style="max-width:720px;max-height:86vh;display:flex;flex-direction:column;">
       <div class="cockpit-overlay-header">
-        <span class="cockpit-overlay-label">North Star · ${escapeAttr(alignLabel)}</span>
+        <span class="cockpit-overlay-label">Definite Chief Aim · ${escapeAttr(alignLabel)}</span>
         <button class="cockpit-overlay-close" aria-label="Close">×</button>
       </div>
-      <div class="cockpit-overlay-body">
-        <div style="margin-bottom:18px;">
+      <div class="cockpit-overlay-body" style="overflow-y:auto;padding-right:4px;">
+        <div style="margin-bottom:22px;">
           <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;">Anchors</div>
           ${anchorsHtml}
         </div>
-        <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px dashed var(--border);">
+        <div style="margin-bottom:22px;padding-bottom:14px;border-bottom:1px dashed var(--border);">
           <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:6px;">Gate</div>
           <div style="font-family:'Space Grotesk',sans-serif;font-size:14px;">${escapeAttr(gateLabel)}${daysRemaining != null ? ` <span style="color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:11px;margin-left:8px;">${daysRemaining} days remain · Day ${ns.daysElapsed} / ${ns.daysTotal}</span>` : ''}</div>
+        </div>
+        <div style="margin-bottom:22px;padding-bottom:14px;border-bottom:1px dashed var(--border);">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;">Full Statement</div>
+          ${bodyParas || '<div style="font-style:italic;color:var(--text-dim);font-size:12px;">No body text.</div>'}
         </div>
         <div>
           <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;">Affirmations</div>
@@ -126,7 +143,7 @@ function showDCAOverlay(ns, alignment) {
       </div>
       <div class="cockpit-overlay-footer">
         <button class="cockpit-overlay-btn secondary" data-action="close">Close</button>
-        <button class="cockpit-overlay-btn" data-action="edit-dca">Edit DCA</button>
+        <button class="cockpit-overlay-btn" data-action="edit-dca">Open dca.md</button>
       </div>
     </div>`
 
@@ -134,9 +151,13 @@ function showDCAOverlay(ns, alignment) {
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close() })
   overlay.querySelector('.cockpit-overlay-close').addEventListener('click', close)
   overlay.querySelector('[data-action="close"]').addEventListener('click', close)
-  overlay.querySelector('[data-action="edit-dca"]').addEventListener('click', () => {
+  overlay.querySelector('[data-action="edit-dca"]').addEventListener('click', async () => {
     close()
-    document.querySelector('.nav-item[data-view="vault"]')?.click()
+    if (filePath && window.ace?.shell?.openPath) {
+      await window.ace.shell.openPath(filePath)
+    } else {
+      document.querySelector('.nav-item[data-view="vault"]')?.click()
+    }
   })
   document.addEventListener('keydown', function esc(e) {
     if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc) }

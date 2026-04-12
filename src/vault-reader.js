@@ -228,9 +228,11 @@ function parseDCA(vaultPath) {
 
 function parseDCAFrontmatter(vaultPath) {
   try {
-    const text = fs.readFileSync(path.join(vaultPath, '00-System', 'core', 'dca.md'), 'utf8')
-    const fmMatch = text.match(/^---\n([\s\S]*?)\n---/)
-    if (!fmMatch) return defaultDCAFrontmatter()
+    const dcaPath = path.join(vaultPath, '00-System', 'core', 'dca.md')
+    const text = fs.readFileSync(dcaPath, 'utf8')
+    const fmMatch = text.match(/^---\n([\s\S]*?)\n---\n?/)
+    const bodyText = fmMatch ? text.slice(fmMatch[0].length).trim() : text.trim()
+    if (!fmMatch) return { ...defaultDCAFrontmatter(), body: bodyText, filePath: dcaPath }
 
     const lines = fmMatch[1].split('\n')
     const result = {
@@ -337,6 +339,8 @@ function parseDCAFrontmatter(vaultPath) {
       result.daysElapsed = Math.max(0, Math.min(daysTotal, daysElapsed))
     }
 
+    result.body = bodyText
+    result.filePath = dcaPath
     return result
   } catch (e) {
     return { ...defaultDCAFrontmatter(), error: e.message }

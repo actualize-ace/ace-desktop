@@ -71,12 +71,21 @@ export default {
 
     const areaPath = `${linePath} L${points[n - 1].x},52 L${points[0].x},52 Z`
 
+    // Compute 3-day rolling average per point
+    const rolling3 = points.map((p, i) => {
+      const start = Math.max(0, i - 2)
+      const window = points.slice(start, i + 1).map(x => x.v)
+      return Math.round((window.reduce((s, v) => s + v, 0) / window.length) * 10) / 10
+    })
+
     // Invisible hover hit-markers per data point (8px radius for easy hover)
-    const markers = points.map(p =>
+    const markers = points.map((p, i) =>
       `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="8"
-               fill="transparent" stroke="none">
-         <title>${p.label}: ${p.v} action${p.v === 1 ? '' : 's'}</title>
-       </circle>`
+               fill="transparent" stroke="none"
+               class="velocity-hit"
+               data-label="${p.label}"
+               data-value="${p.v}"
+               data-avg="${rolling3[i]}"/>`
     ).join('')
 
     el.innerHTML = `
@@ -98,7 +107,31 @@ export default {
             <path class="line" d="${linePath}" />
             ${markers}
           </svg>
+          <div class="velocity-tooltip" id="velocity-tooltip"></div>
         </div>
       </div>`
+
+    // Wire custom DOM tooltip
+    const wave = el.querySelector('.velocity-wave')
+    const tooltip = el.querySelector('#velocity-tooltip')
+    if (wave && tooltip) {
+      el.querySelectorAll('.velocity-hit').forEach(hit => {
+        hit.addEventListener('mouseenter', (e) => {
+          const rect = wave.getBoundingClientRect()
+          const cx = parseFloat(hit.getAttribute('cx'))
+          // Map SVG cx (0-300) to pixel position inside wave
+          const px = (cx / 300) * rect.width
+          tooltip.innerHTML = `
+            <div class="vt-date">${hit.dataset.label}</div>
+            <div class="vt-value">${hit.dataset.value} action${hit.dataset.value === '1' ? '' : 's'}</div>
+            <div class="vt-avg">3-day avg: ${hit.dataset.avg}</div>`
+          tooltip.style.left = `${px}px`
+          tooltip.classList.add('show')
+        })
+        hit.addEventListener('mouseleave', () => {
+          tooltip.classList.remove('show')
+        })
+      })
+    }
   }
 }
