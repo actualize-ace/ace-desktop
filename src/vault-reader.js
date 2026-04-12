@@ -364,6 +364,101 @@ function defaultDCAFrontmatter() {
   }
 }
 
+// ─── Daily Focus (01-Journal/daily/YYYY-MM-DD.md) ──────────────────────────
+
+function parseDailyFocus(vaultPath) {
+  try {
+    const today = new Date()
+    const dateStr = today.toISOString().slice(0, 10)
+    const filePath = path.join(vaultPath, '01-Journal', 'daily', `${dateStr}.md`)
+    const text = fs.readFileSync(filePath, 'utf8')
+
+    const focusItems = []
+
+    // Pattern 1: "## Today's Focus" section with bullets
+    const sectionMatch = text.match(/## Today['']s Focus\s*\n([\s\S]*?)(?=\n## |$)/i)
+    if (sectionMatch) {
+      const bullets = sectionMatch[1].split('\n')
+        .filter(l => /^\s*-\s+\S/.test(l))
+        .map(l => l.replace(/^\s*-\s*\[?[x ]?\]?\s*/i, '').trim())
+        .filter(Boolean)
+      focusItems.push(...bullets)
+    }
+
+    // Pattern 2: "**Focus:**" inline
+    const inlineMatch = text.match(/\*\*Focus:\*\*\s*(.+)/i)
+    if (inlineMatch && inlineMatch[1].trim()) {
+      focusItems.push(inlineMatch[1].trim())
+    }
+
+    // Pattern 3: "## Top 3" or "## Priorities"
+    const prioritiesMatch = text.match(/## (?:Top 3|Priorities|Today's Top)\s*\n([\s\S]*?)(?=\n## |$)/i)
+    if (prioritiesMatch) {
+      const bullets = prioritiesMatch[1].split('\n')
+        .filter(l => /^\s*\d+\.\s+\S|^\s*-\s+\S/.test(l))
+        .map(l => l.replace(/^\s*\d+\.\s*|\s*-\s*\[?[x ]?\]?\s*/i, '').trim())
+        .filter(Boolean)
+      focusItems.push(...bullets)
+    }
+
+    return focusItems
+  } catch (e) {
+    return []
+  }
+}
+
+// ─── Recovery Flag (state.md) ──────────────────────────────────────────────
+
+function parseRecoveryFlag(vaultPath) {
+  try {
+    const text = fs.readFileSync(path.join(vaultPath, '00-System', 'state.md'), 'utf8')
+    const m = text.match(/## Recovery Flag\s*\n\s*(true|false)/i)
+    return m ? m[1].toLowerCase() === 'true' : false
+  } catch {
+    return false
+  }
+}
+
+// ─── Build Blocks (pulse-cache.md) ─────────────────────────────────────────
+
+function parseBuildBlocks(vaultPath) {
+  try {
+    const text = fs.readFileSync(path.join(vaultPath, '00-System', 'pulse-cache.md'), 'utf8')
+
+    const upcomingMatch = text.match(/build_blocks_upcoming:\s*\n((?:\s+-\s+[\s\S]*?(?=\n\s*-|\n[a-z_]+:|\n\n|$))+)/)
+    if (!upcomingMatch) return []
+
+    const blocks = []
+    const now = new Date()
+
+    const items = upcomingMatch[1].split(/\n\s*-\s+/).filter(Boolean)
+    for (const item of items) {
+      const titleMatch = item.match(/title:\s*"?([^"\n]+)"?/)
+      const startMatch = item.match(/start:\s*"?([^"\n]+)"?/)
+      const durationMatch = item.match(/duration_min:\s*(\d+)/)
+      if (!titleMatch || !startMatch) continue
+
+      const start = new Date(startMatch[1])
+      if (isNaN(start.getTime())) continue
+      if (start < now) continue
+      const hoursUntil = Math.round((start - now) / (1000 * 60 * 60))
+      if (hoursUntil > 24) continue
+
+      blocks.push({
+        title: titleMatch[1].trim(),
+        start: start.toISOString(),
+        hoursUntil,
+        duration: durationMatch ? parseInt(durationMatch[1]) : 0,
+      })
+    }
+
+    blocks.sort((a, b) => new Date(a.start) - new Date(b.start))
+    return blocks
+  } catch {
+    return []
+  }
+}
+
 // ─── Days Since Last Pulse (system-metrics.md) ──────────────────────────────
 
 function daysSinceLastPulse(vaultPath) {
@@ -725,4 +820,4 @@ function parsePatterns(vaultPath) {
   } catch (e) { return { counts: [], tensions: [], coOccurrences: [], descriptions: {}, error: e.message } }
 }
 
-module.exports = { parseState, parseFollowUps, listDir, parseExecutionLog, parseRitualRhythm, parsePeople, parseArtifacts, getArtifactDetail, updateArtifactStatus, parsePatterns, parseDCAFrontmatter }
+module.exports = { parseState, parseFollowUps, listDir, parseExecutionLog, parseRitualRhythm, parsePeople, parseArtifacts, getArtifactDetail, updateArtifactStatus, parsePatterns, parseDCAFrontmatter, parseDailyFocus, parseRecoveryFlag, parseBuildBlocks }
