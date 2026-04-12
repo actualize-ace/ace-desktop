@@ -96,4 +96,11 @@ module.exports = {
   // Preflight
   PREFLIGHT_RESULT:         'preflight-result',
   PREFLIGHT_RECHECK_BINARY: 'preflight-recheck-binary',
+
+  // Cockpit additions
+  GET_NORTHSTAR:   'get-northstar',
+  GET_DAILY_FOCUS: 'get-daily-focus',
+  GET_BUILD_BLOCKS:'get-build-blocks',
+  MARK_DONE:       'mark-done',
+  SNOOZE_ITEM:     'snooze-item',
 }
