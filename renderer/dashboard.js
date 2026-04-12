@@ -170,15 +170,6 @@ async function loadDashboard() {
     if (el) el.innerHTML = dots.map(c => `<div class="triad-dot ${c}"></div>`).join('')
   }
 
-  // Dynamic greeting from user.md
-  const userName = allData.state?.userName
-  if (userName) {
-    const hour = new Date().getHours()
-    const greet = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
-    const nameEl = document.getElementById('home-name')
-    if (nameEl) nameEl.textContent = `Good ${greet}, ${userName}.`
-  }
-
   // "Begin here" whisper — appears 1.2s after entry, fades after 5s
   setTimeout(() => {
     const whisper = document.getElementById('begin-whisper')
