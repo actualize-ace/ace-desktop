@@ -145,4 +145,13 @@ contextBridge.exposeInMainWorld('ace', {
     scaffoldAll:  (missing) => ipcRenderer.invoke(ch.VAULT_SCAFFOLD_ALL, missing),
     getColorMap:  ()        => ipcRenderer.invoke(ch.VAULT_GET_COLOR_MAP),
   },
+
+  // ─── Learn / Onboarding ───────────────────────────────────────────────────
+  learn: {
+    list:          ()        => ipcRenderer.invoke(ch.LEARN_LIST),
+    get:           (id)      => ipcRenderer.invoke(ch.LEARN_GET, id),
+    state:         ()        => ipcRenderer.invoke(ch.LEARN_STATE),
+    markCompleted: (id)      => ipcRenderer.invoke(ch.LEARN_MARK_COMPLETED, id),
+    dismiss:       ()        => ipcRenderer.invoke(ch.LEARN_DISMISS),
+  },
 })

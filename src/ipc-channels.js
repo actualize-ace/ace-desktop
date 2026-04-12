@@ -97,6 +97,13 @@ module.exports = {
   PREFLIGHT_RESULT:         'preflight-result',
   PREFLIGHT_RECHECK_BINARY: 'preflight-recheck-binary',
 
+  // Learn / onboarding tutorial
+  LEARN_LIST:            'learn-list',
+  LEARN_GET:             'learn-get',
+  LEARN_STATE:           'learn-state',
+  LEARN_MARK_COMPLETED:  'learn-mark-completed',
+  LEARN_DISMISS:         'learn-dismiss',
+
   // Cockpit additions
   GET_NORTHSTAR:   'get-northstar',
   GET_DAILY_FOCUS: 'get-daily-focus',

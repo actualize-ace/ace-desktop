@@ -285,6 +285,56 @@ ipcMain.handle(ch.PATCH_CONFIG, (_, partial) => {
 
 ipcMain.handle(ch.GET_CONFIG, () => loadConfig())
 
+// ─── Learn / Onboarding IPC Handlers ──────────────────────────────────────────
+
+const DEFAULT_LEARN_STATE = {
+  firstRunComplete: false,
+  lessonsCompleted: [],
+  lastOpenedLesson: null,
+  dismissedFirstRun: false,
+}
+
+function getLearnState() {
+  const config = loadConfig() || {}
+  return { ...DEFAULT_LEARN_STATE, ...(config.learn || {}) }
+}
+
+function saveLearnState(next) {
+  const config = loadConfig() || {}
+  config.learn = { ...DEFAULT_LEARN_STATE, ...(config.learn || {}), ...next }
+  saveConfig(config)
+  return config.learn
+}
+
+ipcMain.handle(ch.LEARN_LIST, () => {
+  try { return require('./src/learn-reader').listLessons() }
+  catch (e) { console.error('[learn] list failed:', e); return [] }
+})
+
+ipcMain.handle(ch.LEARN_GET, (_, id) => {
+  try { return require('./src/learn-reader').getLesson(id) }
+  catch (e) { console.error('[learn] get failed:', e); return null }
+})
+
+ipcMain.handle(ch.LEARN_STATE, () => getLearnState())
+
+ipcMain.handle(ch.LEARN_MARK_COMPLETED, (_, lessonId) => {
+  const state = getLearnState()
+  const completed = new Set(state.lessonsCompleted || [])
+  completed.add(lessonId)
+  const essentials = require('./src/learn-reader').listLessons()
+    .filter(l => l.track === 'essentials')
+    .map(l => l.id)
+  const firstRunComplete = essentials.every(id => completed.has(id))
+  return saveLearnState({
+    lessonsCompleted: [...completed],
+    lastOpenedLesson: lessonId,
+    firstRunComplete,
+  })
+})
+
+ipcMain.handle(ch.LEARN_DISMISS, () => saveLearnState({ dismissedFirstRun: true }))
+
 // ─── Dashboard IPC Handlers ───────────────────────────────────────────────────
 
 ipcMain.handle(ch.GET_STATE, () => {
