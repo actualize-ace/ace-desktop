@@ -319,6 +319,13 @@
 }
 .start-nudge:hover .start-nudge-arrow { opacity: 0.9; transform: translateX(3px); }
 
+/* ── COCKPIT — Container (prototype fidelity) ────────────────── */
+.vbody.cockpit {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px 32px 64px;
+}
+
 /* ── COCKPIT — North Star ────────────────────────────────────── */
 .cockpit-northstar {
   text-align: center;
@@ -399,10 +406,12 @@
 /* ── COCKPIT — Brain Row layout (synthesis + compass side by side) ── */
 .cockpit-brain-row {
   display: grid;
-  grid-template-columns: 1fr 240px;
-  gap: 24px;
+  grid-template-columns: 1fr 280px;
+  gap: 32px;
   align-items: center;
-  margin-bottom: 24px;
+  padding: 24px 0 36px;
+  min-height: 280px;
+  margin-bottom: 8px;
 }
 @media (max-width: 1100px) {
   .cockpit-brain-row { grid-template-columns: 1fr; }
