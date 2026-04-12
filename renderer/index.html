@@ -690,23 +690,13 @@ import { initAtmosphere } from './modules/atmosphere.js'
 import { initBreath, onBreathEnter, onBreathExit } from './views/breath.js'
 import { initInsight, onInsightExit } from './views/insight.js'
 import { initAstro, onAstroExit } from './views/astro.js'
+import { open as openAttentionMenu } from './modules/attention-menu.js'
 
 // ─── Theme, Zoom, Time, Sidebar (from module) ──────────────────────────────
 initTheme()
 
-// ─── Attention Badge Click ───────────────────────────────────────────────────
-document.getElementById('attention-badge').addEventListener('click', () => {
-  // Find first session or agent needing attention
-  const sessId = Object.keys(state.sessions).find(id => state.sessions[id].needsAttention)
-  const agentId = Object.keys(state.agentSessions).find(id => state.agentSessions[id].needsAttention)
-  if (sessId) {
-    document.querySelector('.nav-item[data-view="terminal"]').click()
-    setTimeout(() => { activateSession(sessId); clearAttention(sessId) }, 100)
-  } else if (agentId) {
-    document.querySelector('.nav-item[data-view="agents"]').click()
-    setTimeout(() => { focusAgentPane(agentId); clearAttention(agentId, state.agentSessions) }, 100)
-  }
-})
+// ─── Attention Badge Click — opens dropdown (or direct-jumps when count=1) ──
+document.getElementById('attention-badge').addEventListener('click', openAttentionMenu)
 
 // ─── Nav ─────────────────────────────────────────────────────────────────────
 const navItems = document.querySelectorAll('.nav-item[data-view]')
