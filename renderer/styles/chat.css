@@ -550,3 +550,88 @@ body.light .session-duration-select {
   color: #5a5a6e;
   border-color: #c8c8d4;
 }
+
+/* ── SLASH COMMAND MENU ── */
+.chat-input-area {
+  position: relative; /* anchor for absolute menu */
+}
+.slash-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 24px;
+  right: 24px;
+  max-height: 296px; /* ~8 items at 37px each */
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.25);
+  z-index: 100;
+  animation: slash-menu-in 0.1s ease;
+}
+@keyframes slash-menu-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.slash-menu::-webkit-scrollbar { width: 4px; }
+.slash-menu::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
+.slash-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: background 0.08s;
+}
+.slash-menu-item:hover {
+  background: rgba(255,255,255,0.03);
+}
+.slash-menu-item.active {
+  background: rgba(255,255,255,0.04);
+  border-left: 2px solid var(--gold);
+}
+.slash-menu-cmd {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13.5px;
+  font-weight: 450;
+  color: var(--text-primary);
+  min-width: 140px;
+}
+.slash-menu-pin {
+  font-size: 9px;
+  color: var(--gold-dim);
+  margin-right: 2px;
+}
+.slash-menu-desc {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.slash-menu-empty {
+  padding: 12px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* Light mode */
+body.light .slash-menu {
+  background: #f2f2f7;
+  border-color: #c8c8d4;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.1);
+}
+body.light .slash-menu-item:hover {
+  background: rgba(0,0,0,0.04);
+}
+body.light .slash-menu-item.active {
+  background: rgba(0,0,0,0.06);
+}

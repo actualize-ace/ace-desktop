@@ -1,7 +1,7 @@
 # ACE Desktop — Roadmap
 
 > Single source of truth for what's shipped, what's next, and what's parked.
-> Updated: 2026-04-10 — Locked. 49 features across 4 tiers.
+> Updated: 2026-04-11 — Locked. 49 features across 4 tiers.
 
 ---
 
@@ -45,11 +45,13 @@ Target: first client build for Joe Hawley (macOS). Windows follows after Mac is 
 | Setup screen polish | Done | — | Pre-flight module (binary health + vault structure), titlebar status indicator, spawn guards in chat-manager + pty-manager, `/start` placeholder, vault validation gate in setup screen, version display. [Design](docs/plans/2026-04-10-setup-screen-polish-design.md) |
 | Onboarding tutorial | Not started | Blocks client UX | Post-setup guided walkthrough shown once. Introduces the Triad, explains daily rituals (/start, /eod), tours the dashboard widgets and views, shows where to get help. Progressive disclosure — don't dump all 22 features at once. |
 | Rich output panel | Done | — | Chat mode already renders full markdown (marked.js), syntax-highlighted code blocks (18 languages, copy buttons), tool cards (Edit diffs, Bash commands, Write previews), permission approval cards, and question blocks. Agent Terminal stays raw xterm.js by design. |
+| Ops container + auto-scroll | Done | — | Tool calls collapse into `⚡ N operations` two-level accordion per burst. Auto-scroll on tool activity (120px) and finalize (300px), respects `autoScroll` setting. Commit `a878b3e`. [Design](docs/plans/2026-04-11-ops-container-autoscroll-design.md) |
 | Session containment + timer | Done | — | 3-per-pane limit with toast, countdown timer (15/30/60/90m) with warning→critical→expiry nudge, light+dark mode. Ritual entry (Feature B) deferred to next sprint. Commit `b990bc2`. [Design](docs/plans/2026-04-09-containment-ritual-ux.md) |
 | Process cleanup on exit | Done | — | `killAllChildren()` in main.js — covers `SIGINT`, `SIGTERM`, `process.on('exit')`, `uncaughtException`, `unhandledRejection`, and `before-quit`. Commit `9904225`. |
-| Native module bundling (ARM64) | Not started | Blocks dist | Verify better-sqlite3 + node-pty compile against Electron 28 headers for Apple Silicon |
+| Native module bundling (ARM64) | Done | — | Electron 28→34 (Node 18→20 LTS, Chrome 120→132). better-sqlite3 9.4.3→12.8.0, node-pty 1.0.0→1.1.0. Packaged app verified on Apple Silicon. Commit `a67daa7`. |
 | Code signing / notarization | Not started | Blocks clean install | **Path A (ideal):** Apple Developer ID ($99/yr) → electron-builder afterSign hook → notarized DMG, clean install. **Path B (day-one fallback):** Unsigned DMG, Joe bypasses Gatekeeper via right-click > Open or `xattr -cr` during build session. Document both. Get Apple Dev account set up either way. |
-| extraResources verification | Not started | — | Verify `../tools/ace-analytics` resolves correctly on build machine and bundles into DMG |
+| extraResources verification | Done | — | ace-analytics bundles into `Contents/Resources/ace-analytics/` correctly. Verified in packaged build. |
+| Slash command menu | Done | — | Inline `/` autocomplete in chat textarea. Upward menu, pinned-first, fuzzy filter, auto-send on select. Font-matched to Cmd+K. [Design](docs/plans/2026-04-11-slash-menu-design.md) · [Plan](docs/plans/2026-04-11-slash-menu.md) |
 | First client deploy test | Not started | Blocks ship | Joe Hawley macOS build verification |
 
 ---
@@ -76,18 +78,22 @@ Target: Marc Cooper (Windows). Sequential — don't start until Joe's Mac build 
 
 | Feature | Priority | Plan |
 |---------|----------|------|
-| Electron upgrade (28 → latest stable) | High | Ship on 28 first — don't destabilize before client deploy. Upgrade post-ship: new Chromium, new Node, security patches. Rebuild all native modules after. Test thoroughly — API changes may break IPC or preload. |
+| ~~Electron upgrade (28 → 34)~~ | ~~High~~ | Done — shipped pre-client deploy. Electron 34.5.8, Node 20 LTS, Chrome 132. Zero code changes. Commit `a67daa7`. |
 | Token economy Phase 2 — context lifecycle | High | Auto-effort at 80%, brevity injection at 70%, cache countdown + refresh button. [token-economy-overhaul.md](../ace-desktop-token-economy-overhaul.md) |
 | Auto-sync health system | High | Background sync keeps views (Artifacts, People, Dashboard) current with vault. Health check flags stale data, visible "last synced" indicator. Start with Artifacts, extend to other views. |
 | App auto-update (electron-updater) | High | GitHub Releases as update server. Signed builds, auto-check on launch, download + install prompt. First build clients manually install is the last one they manually install. Requires code signing (macOS notarization, Windows Authenticode). |
 | Vault sync from desktop (ace-core pull) | High | On launch: silent `git fetch upstream`, compare HEAD vs upstream. If behind → "ACE update available" badge in dashboard. One-click triggers /sync-core, shows diff summary of what changed. Requires Settings > GitHub config: client enters their repo URL + upstream (actualize-ace/core). Setup screen pre-flight checks git + SSH key. No new MCP — pure git over existing infra. |
+| Triad column redesign | High | Replace dead-weight Authority/Capacity/Expansion columns with signal decode (3 readable rows per leg) + one featured action per leg. Zero backend changes, zero new IPC. Graceful fallback on missing data. [Plan](docs/plans/2026-04-11-triad-column-redesign.md) |
 | Dashboard customization | Medium | Users pick, rearrange, resize, and hide dashboard widgets. Persist layout per user. Builds on existing modular widget architecture. |
 | Living orb | Medium | Animated orb reacting to PTY activity / session state |
 | Scratchpad | Medium | Persistent markdown notepad sidebar |
 | Notification system redesign | Medium | Replace red dot with non-social-media color (amber/accent). Click notification → jump to correct session pane with pulsing dot on tab. Multiple notifications → dropdown to pick which chat. |
 | Terminal session naming | Medium | Sessions created from Agent Terminal default to "ACE" — should auto-name from first prompt or vault context. |
 | Client feedback integration | Medium | Incorporate Joe + Marc usage patterns |
-| Tool result previews (master accordion) | Medium | Wrap consecutive tool calls in a single collapsible "Claude used N tools" bar. Click expands group, each tool card independently expandable. Keeps chat clean for clients, lets builders drill in. ~30-40 lines in chat-renderer.js. |
+| Operations container + auto-scroll | High | Replace expanded tool blocks with collapsed `⚡ N operations` two-level accordion (container → item list → item detail). Auto-scroll on tool activity (120px threshold) + finalize (300px generous 300px threshold). Wire dead `autoScroll` setting. AskUserQuestion/permission cards stay outside container. [Design](docs/plans/2026-04-11-ops-container-autoscroll-design.md) · [Plan](docs/plans/2026-04-11-ops-container-autoscroll.md) |
+| ~~Slash command menu in chat input~~ | ~~High~~ | Done — shipped to Phase 1. [Design](docs/plans/2026-04-11-slash-menu-design.md) · [Plan](docs/plans/2026-04-11-slash-menu.md) |
+| Dynamic command registry | High | `command-registry.js` reads `.claude/skills/*/SKILL.md` from vault at runtime via existing `vault.listDir` + `vault.readFile` IPC. Merges with static COMMANDS. Both Cmd+K and slash menu auto-discover custom skills. ~30 lines, no new IPC. |
+| Self-healing renderer refresh | Medium | Periodic `webContents.reload()` to prevent memory leaks and sluggishness from long-running sessions. **Already have:** activity detector in `atmosphere.js` (idle thresholds at 8m/30m, tracks `lastActivity`), config persistence via `patchConfig()`, localStorage for UI prefs, `killAllChildren()` on exit. **Need to add:** (1) `bootedAt` timestamp in `state.js`, (2) refresh-window config (e.g. idle > 30min + uptime > 12h, or 2am–6am quiet hours), (3) state audit — verify all critical state survives reload (chat sessions need graceful teardown, PTY connections need cleanup before refresh, atmosphere counters already persist), (4) IPC channel `RENDERER_REFRESH` from main process calling `webContents.reload()`, (5) post-reload hydration path (config + localStorage already cover this). **Side benefit:** forces formal persist-or-lose discipline on all renderer state — makes app resilient to crashes, not just planned refreshes. Half-day implementation given existing infra. |
 | HeartMath calibration | Low | Side-by-side session (ACE vs HeartMath app) to fix coherence thresholds |
 
 ---
@@ -125,6 +131,7 @@ Goal: First-launch experience that configures the entire system from a guided co
 | Client backup/restore | — |
 | Permission gate | Core vs client-specific skills |
 | Client health dashboard | Aggregate pulse across clients |
+| Auto-close on window exit | Wire Electron `window.on('close')` / `app.on('before-quit')` to run lightweight session extraction (what shipped, corrections, decisions) and persist to memory files before the chat dies. Solves the "forgot /close" memory leak without relying on Claude Code hooks (which clients don't have). |
 
 ---
 
@@ -169,6 +176,11 @@ Depends on: Desktop shipped to clients + onboarding flow includes integration wi
 
 | File | Status |
 |------|--------|
+| [2026-04-11-slash-menu-design.md](docs/plans/2026-04-11-slash-menu-design.md) | Shipped |
+| [2026-04-11-slash-menu.md](docs/plans/2026-04-11-slash-menu.md) | Shipped |
+| [2026-04-11-ops-container-autoscroll-design.md](docs/plans/2026-04-11-ops-container-autoscroll-design.md) | Shipped |
+| [2026-04-11-ops-container-autoscroll.md](docs/plans/2026-04-11-ops-container-autoscroll.md) | Shipped |
+| [2026-04-11-triad-column-redesign.md](docs/plans/2026-04-11-triad-column-redesign.md) | Ready to build |
 | [2026-04-09-containment-ritual-ux.md](docs/plans/2026-04-09-containment-ritual-ux.md) | Ready to build |
 | [2026-03-18-modular-dashboard-plan.md](docs/plans/2026-03-18-modular-dashboard-plan.md) | Shipped |
 | [2026-03-18-modular-dashboard-design.md](docs/plans/2026-03-18-modular-dashboard-design.md) | Shipped |

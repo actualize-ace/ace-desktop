@@ -7,6 +7,7 @@ import { setAttention, clearAttention, updateAttentionBadge } from './attention.
 import { onSessionClose } from './atmosphere.js'
 import { initSplitPane, moveToOtherGroup } from './split-pane-manager.js'
 import { startTimer, clearTimer } from './session-timer.js'
+import { attach as attachSlashMenu } from './slash-menu.js'
 
 // ─── Chat System ─────────────────────────────────────────────────────────────
 
@@ -930,8 +931,11 @@ export function spawnSession(opts) {
   const inputEl = document.getElementById('chat-input-' + id)
   const sendBtn = document.getElementById('chat-send-' + id)
 
+  attachSlashMenu(inputEl, { send: (prompt) => sendChatMessage(id, prompt) })
+
   inputEl.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) {
+      if (e.__slashMenuHandled) return  // slash menu consumed this
       e.preventDefault()
       const prompt = inputEl.value
       if (!prompt.trim()) return
@@ -940,6 +944,7 @@ export function spawnSession(opts) {
       sendChatMessage(id, prompt)
     }
     if (e.key === 'Escape' && state.sessions[id].isStreaming) {
+      if (e.__slashMenuHandled) return
       window.ace.chat.cancel(id)
     }
   })
