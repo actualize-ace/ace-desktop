@@ -55,7 +55,7 @@ function route(item) {
     document.querySelector('.nav-item[data-view="terminal"]')?.click()
     setTimeout(() => {
       activateSession(item.id)
-      clearAttention(item.id)
+      clearAttention(item.id, state.sessions)
       pulseArrival(item.id, 'session')
     }, 100)
   } else {
@@ -72,7 +72,7 @@ function render(items) {
   const menu = document.getElementById('attention-menu')
   if (!menu) return
   menu.innerHTML = items.map(it => `
-    <div class="attention-menu-item" data-id="${it.id}" data-kind="${it.kind}" role="menuitem" tabindex="0">
+    <div class="attention-menu-item" data-id="${it.id}" data-kind="${it.kind}" role="menuitem" tabindex="-1">
       <span class="attention-menu-label">${escapeHtml(it.label)}</span>
       <span class="attention-menu-reason">${REASON_LABEL[it.reason] || REASON_LABEL.notice}</span>
       <span class="attention-menu-pane">${it.pane}</span>
@@ -81,7 +81,7 @@ function render(items) {
   `).join('')
   menu.querySelectorAll('.attention-menu-item').forEach(el => {
     el.addEventListener('click', () => {
-      const item = items.find(i => i.id === el.dataset.id && i.kind === el.dataset.kind)
+      const item = currentItems.find(i => i.id === el.dataset.id && i.kind === el.dataset.kind)
       if (item) { close(); route(item) }
     })
   })
@@ -97,6 +97,7 @@ let activeIdx = 0
 let currentItems = []
 
 export function open() {
+  close()
   currentItems = collectFlagged()
   if (currentItems.length === 0) return
   if (currentItems.length === 1) {
@@ -129,7 +130,10 @@ export function open() {
 function highlight() {
   const menu = document.getElementById('attention-menu')
   menu?.querySelectorAll('.attention-menu-item').forEach((el, i) => {
-    el.classList.toggle('active', i === activeIdx)
+    const isActive = i === activeIdx
+    el.classList.toggle('active', isActive)
+    el.setAttribute('tabindex', isActive ? '0' : '-1')
+    if (isActive) el.focus()
   })
 }
 
