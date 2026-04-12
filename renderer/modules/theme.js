@@ -37,7 +37,7 @@ export function applyTheme(t) {
 }
 
 export function applyZoom(z) {
-  state.uiZoom = Math.max(0.75, Math.min(1.5, z))
+  state.uiZoom = Math.max(0.5, Math.min(2.0, z))
   document.documentElement.style.setProperty('--ui-zoom', state.uiZoom)
   document.getElementById('zoom-label').textContent = Math.round(state.uiZoom * 100) + '%'
   localStorage.setItem('ace-zoom', state.uiZoom)

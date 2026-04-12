@@ -1,5 +1,10 @@
 /* ── APP SHELL ── */
-.app-shell { display:flex; flex-direction:column; height:100vh; zoom: var(--ui-zoom); }
+.app-shell {
+  display:flex; flex-direction:column;
+  height: calc(100vh / var(--ui-zoom));
+  width: calc(100vw / var(--ui-zoom));
+  zoom: var(--ui-zoom);
+}
 
 /* Titlebar */
 .titlebar {
