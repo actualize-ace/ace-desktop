@@ -17,28 +17,29 @@ export default {
 
   render(allData, el) {
     const ctx = this._buildContext(allData)
-    this._lastCtx = ctx // stash for _renderNowView → _buildCoachingPrompt
+    this._lastCtx = ctx // stash for Inner Move widget (_buildCoachingPrompt)
     const structural = this._buildStructural(ctx)
-    const priorities = this._buildPriorities(allData, ctx)
-    const momentum = this._buildMomentum(ctx)
     const label = this._stateLabel(ctx.coherenceScore)
 
     const signalKeys = ['A1','A2','A3','C1','C2','C3','E1','E2','E3']
     const signalLabels = ['A','C','E']
 
+    const affirmations = allData.northStar?.affirmations || []
+    const initialAff = affirmations[0] || ''
+
     el.innerHTML = `
-      <div class="command-center">
+      <div class="command-center cockpit-mode">
         <div class="cc-pulse">
-          <div class="cc-orb ${label}">
+          <div class="cc-orb ${label}" data-action="threshold">
             <span class="cc-orb-score">${ctx.coherenceScore}</span>
             <span class="cc-orb-label">${label}</span>
           </div>
-          <div class="cc-synthesis" id="cc-synthesis-text">${escapeHtml(structural)}</div>
-          <div class="cc-synth-loading" id="cc-synth-loading">
-            <span>Synthesizing</span>
-            <div class="cc-synth-loading-bar"></div>
-          </div>
-          <div class="cc-right">
+          <div class="cc-center">
+            <div class="cc-synthesis" id="cc-synthesis-text">${escapeHtml(structural)}</div>
+            <div class="cc-synth-loading" id="cc-synth-loading">
+              <span>Synthesizing</span>
+              <div class="cc-synth-loading-bar"></div>
+            </div>
             <div class="cc-signals">
               ${[0,1,2].map(row => {
                 const offset = row * 3
@@ -50,45 +51,44 @@ export default {
               }).join('')}
             </div>
             <div class="cc-mode-tag">${escapeHtml(ctx.mode || '\u2014')} \u00b7 ${escapeHtml(ctx.energy || '\u2014')}</div>
+            <div class="cc-affirmation" id="cc-affirmation">${escapeHtml(initialAff)}</div>
           </div>
-        </div>
-
-        <div class="cc-divider">
-          <span class="cc-divider-label">
-            <span class="cc-view-switcher">
-              <button class="cc-view-pill active" data-view="now">Now</button>
-              <button class="cc-view-pill" data-view="week">This Week</button>
-              <button class="cc-view-pill" data-view="signals">Signals</button>
-            </span>
-          </span>
-        </div>
-
-        <div class="cc-view-content" id="cc-view-content">
-          ${this._renderNowView(momentum, priorities)}
         </div>
       </div>`
 
-    // Wire view switcher
-    this._wireViewSwitcher(el, ctx, allData, momentum, priorities)
+    // Orb click → Threshold Mode placeholder
+    el.querySelector('[data-action="threshold"]')?.addEventListener('click', () => {
+      alert("Threshold Mode opens here:\n\n\u2192 3 coherence breaths\n\u2192 North Star anchors recited\n\u2192 \u2018What wants to be created today?\u2019\n\u2192 Your answer becomes today\u2019s intent\n\u2192 Cockpit shapes around it")
+    })
 
-    // Wire signal matrix click → switch to Signals view
+    // Signal matrix click → terminal (coaching)
     const signalGrid = el.querySelector('.cc-signals')
     if (signalGrid) {
       signalGrid.addEventListener('click', () => {
-        const pill = el.querySelector('.cc-view-pill[data-view="signals"]')
-        if (pill) pill.click()
+        document.querySelector('.nav-item[data-view="terminal"]')?.click()
       })
     }
 
-    // Wire next move actions (Agree/Ask Oracle/Skip/expand/titlebar/FAB)
-    this._wireNextMoveActions(el, priorities, allData, ctx)
+    // Affirmation rotation (every 11s)
+    if (affirmations.length > 1) {
+      let idx = 0
+      if (this._affInterval) clearInterval(this._affInterval)
+      this._affInterval = setInterval(() => {
+        const affEl = document.getElementById('cc-affirmation')
+        if (!affEl) { clearInterval(this._affInterval); return }
+        affEl.style.opacity = '0'
+        setTimeout(() => {
+          idx = (idx + 1) % affirmations.length
+          affEl.textContent = affirmations[idx]
+          affEl.style.opacity = '0.75'
+        }, 1500)
+      }, 11000)
+    }
 
-    // Show synthesis loading indicator
+    // Show synthesis loading + async AI
     const loadingEl = document.getElementById('cc-synth-loading')
     if (loadingEl) loadingEl.classList.add('active')
-
-    // Async AI layer
-    this._fetchAI(ctx, allData, el, priorities)
+    this._fetchAI(ctx, allData, el, [])
   },
 
   _stateLabel(score) {

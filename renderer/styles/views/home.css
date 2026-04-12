@@ -711,3 +711,28 @@
 }
 .begin-whisper.show { opacity: 0.9; transform: translateY(-2px); }
 .begin-whisper.fade { opacity: 0; }
+
+/* ── COCKPIT — Synthesis brain-bar layout ──────────────────── */
+.command-center.cockpit-mode .cc-pulse {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 24px;
+  align-items: center;
+  padding: 24px 0;
+}
+.command-center.cockpit-mode .cc-center {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.command-center.cockpit-mode .cc-orb { cursor: pointer; }
+.cc-affirmation {
+  margin-top: 6px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 14px; font-style: italic;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+  min-height: 22px;
+  transition: opacity 1.5s ease;
+}
