@@ -84,6 +84,62 @@ function scoreItem(query, item) {
   return best
 }
 
+// ─── Dynamic skill discovery ──────────────────────────────────
+// Reads .claude/skills/*/SKILL.md from the active vault at runtime so
+// user-authored skills appear in Cmd+K and the slash menu without a rebuild.
+
+let DISCOVERED = []
+let _vaultPath = null       // stashed on first load so rescanCommands() can reuse
+let _lastScan = 0           // throttle rescans so rapid menu opens don't thrash disk
+const RESCAN_INTERVAL_MS = 1500
+
+function parseSkillFrontmatter(md) {
+  const m = md.match(/^---\n([\s\S]*?)\n---/)
+  if (!m) return null
+  const name = (m[1].match(/^name:\s*(.+)$/m) || [])[1]?.trim()
+  const description = (m[1].match(/^description:\s*(.+)$/m) || [])[1]?.trim()
+  return name ? { name, description: description || '' } : null
+}
+
+export async function loadDiscoveredCommands(vaultPath) {
+  if (!vaultPath || !window.ace?.vault) { DISCOVERED = []; return [] }
+  _vaultPath = vaultPath
+  try {
+    const entries = await window.ace.vault.listDir(`${vaultPath}/.claude/skills`)
+    if (!Array.isArray(entries)) { DISCOVERED = []; _lastScan = Date.now(); return [] }
+    const existing = new Set(COMMANDS.map(c => c.cmd))
+    const found = []
+    for (const entry of entries) {
+      if (!entry.isDir) continue
+      try {
+        const md = await window.ace.vault.readFile(`${entry.path}/SKILL.md`)
+        if (!md) continue
+        const fm = parseSkillFrontmatter(md)
+        if (!fm) continue
+        const cmd = `/${fm.name}`
+        if (existing.has(cmd)) continue
+        found.push({ type: 'command', cmd, label: fm.name, description: fm.description, discovered: true })
+      } catch {}
+    }
+    DISCOVERED = found
+    _lastScan = Date.now()
+    return found
+  } catch { DISCOVERED = []; _lastScan = Date.now(); return [] }
+}
+
+// Lazy rescan — called when a menu opens. Throttled so rapid opens don't thrash.
+// Returns true if DISCOVERED changed (caller should re-render), false otherwise.
+export async function rescanCommands() {
+  if (!_vaultPath) return false
+  if (Date.now() - _lastScan < RESCAN_INTERVAL_MS) return false
+  const before = DISCOVERED.map(c => c.cmd).join('|')
+  await loadDiscoveredCommands(_vaultPath)
+  const after = DISCOVERED.map(c => c.cmd).join('|')
+  return before !== after
+}
+
+export function getAllCommands() { return [...COMMANDS, ...DISCOVERED] }
+
 // ─── Search (returns grouped results) ─────────────────────────
 
 export function search(query) {
@@ -95,7 +151,7 @@ export function search(query) {
     const s = scoreItem(q, v)
     if (s > 0) viewResults.push({ ...v, score: s })
   }
-  for (const c of COMMANDS) {
+  for (const c of getAllCommands()) {
     const s = scoreItem(q, c)
     if (s > 0) cmdResults.push({ ...c, score: s })
   }
@@ -108,4 +164,5 @@ export function search(query) {
 
 // ─── Flat command list (for settings.js compatibility) ────────
 
-export const ALL_COMMAND_NAMES = COMMANDS.map(c => c.cmd)
+export function getAllCommandNames() { return getAllCommands().map(c => c.cmd) }
+export const ALL_COMMAND_NAMES = COMMANDS.map(c => c.cmd)  // static fallback; prefer getAllCommandNames()

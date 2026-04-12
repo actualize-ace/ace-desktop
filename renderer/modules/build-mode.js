@@ -71,12 +71,12 @@ export async function toggleBuildMode(forceState) {
 
 export function updateBuildModeUI() {
   const statusEl = document.getElementById('sidebarStatus')
-  const labelEl = document.getElementById('statusLabel')
+  const labelEl = document.getElementById('buildModeLabel')
   const toggleEl = document.getElementById('buildToggle')
   const settingsToggle = document.getElementById('settings-build-toggle')
 
   if (statusEl) statusEl.classList.toggle('build-mode', state.buildModeOn)
-  if (labelEl) labelEl.textContent = state.buildModeOn ? 'Build Mode' : 'ACE Online'
+  if (labelEl) labelEl.classList.toggle('on', state.buildModeOn)
   if (toggleEl) toggleEl.classList.toggle('on', state.buildModeOn)
   if (settingsToggle) settingsToggle.classList.toggle('on', state.buildModeOn)
 }

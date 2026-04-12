@@ -3,11 +3,9 @@ import { state } from '../state.js'
 import { applyTheme, applyZoom } from '../modules/theme.js'
 import { toggleBuildMode, updateBuildModeUI } from '../modules/build-mode.js'
 import { fitActive, sendToActive } from '../modules/session-manager.js'
-import { ALL_COMMAND_NAMES } from '../modules/command-registry.js'
+import { getAllCommandNames } from '../modules/command-registry.js'
 
 let _settingsConfig = null
-
-const ALL_COMMANDS = ALL_COMMAND_NAMES
 const CMD_COLORS = [
   { name: 'Gold', css: 'var(--gold)' },
   { name: 'Green', css: 'var(--green)' },
@@ -303,7 +301,7 @@ export function showCommandSelector(btnEl, commands) {
   document.querySelectorAll('.settings-cmd-selector').forEach(s => s.remove())
 
   const currentCmds = commands.map(c => c.cmd)
-  const available = ALL_COMMANDS.filter(c => !currentCmds.includes(c))
+  const available = getAllCommandNames().filter(c => !currentCmds.includes(c))
   if (!available.length) return
 
   const selector = document.createElement('div')

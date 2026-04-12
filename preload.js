@@ -3,6 +3,10 @@ const ch = require('./src/ipc-channels')
 
 contextBridge.exposeInMainWorld('ace', {
 
+  // ─── App metadata ────────────────────────────────────────────────────────────
+  appVersion: require('./package.json').version,
+  appStage: 'alpha',
+
   // ─── Config / Setup ──────────────────────────────────────────────────────────
   setup: {
     detectBinary:  ()       => ipcRenderer.invoke(ch.DETECT_BINARY),

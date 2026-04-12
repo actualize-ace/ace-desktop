@@ -124,7 +124,7 @@
 .sidebar.collapsed .nav-item.active::before { height: 24px; }
 .sidebar.collapsed .cmd-section { display: flex; flex-direction: column; align-items: center; padding: 0 4px; }
 .sidebar.collapsed .cmd-btn {
-  justify-content: center; padding: 8px 0; font-size: 0; gap: 0;
+  justify-content: center; padding: 8px 0; font-size: 0; letter-spacing: 0; gap: 0;
   width: 100%; border-radius: 4px;
 }
 .sidebar.collapsed .cmd-dot { margin: 0; width: 7px; height: 7px; }
@@ -256,10 +256,10 @@ body.streaming .stab.active .stab-dot {
 .sidebar-bottom { margin-top: auto; padding: 0; border-top: 1px solid var(--border); }
 .sidebar-status { display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 7.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-dim); padding: 8px 16px; }
 .status-pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 5px rgba(109,184,143,0.5); animation: breathe 2.5s ease-in-out infinite; }
-/* Build mode status */
-.sidebar-status.build-mode .status-pulse { background: var(--gold, #d4a843); box-shadow: 0 0 5px rgba(212,168,67,0.5); }
-.sidebar-status.build-mode .status-label { color: var(--gold, #d4a843); }
-.build-toggle { width: 28px; height: 14px; border-radius: 7px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); cursor: pointer; position: relative; margin-left: auto; flex-shrink: 0; transition: background 0.2s, border-color 0.2s; }
+/* Build mode label — sits next to the toggle, dim when off, gold when on */
+.build-mode-label { margin-left: auto; color: var(--text-dim); opacity: 0.55; transition: color 0.2s, opacity 0.2s; }
+.build-mode-label.on { color: var(--gold, #d4a843); opacity: 1; }
+.build-toggle { width: 28px; height: 14px; border-radius: 7px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); cursor: pointer; position: relative; flex-shrink: 0; transition: background 0.2s, border-color 0.2s; }
 .build-toggle::after { content:''; position: absolute; top: 1px; left: 1px; width: 10px; height: 10px; border-radius: 50%; background: var(--text-dim); transition: transform 0.2s, background 0.2s; }
 .build-toggle.on { background: rgba(212,168,67,0.15); border-color: rgba(212,168,67,0.3); }
 .build-toggle.on::after { transform: translateX(13px); background: var(--gold, #d4a843); }
@@ -552,6 +552,33 @@ body.streaming .stab.active .stab-dot {
 }
 .settings-btn:hover { color: var(--text-primary); }
 .sidebar.collapsed .settings-btn { justify-content: center; padding: 8px; }
+
+/* Footer row: heart + settings icons inline, version badge on the right */
+.sidebar-footer-row {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 8px;
+}
+.sidebar-footer-row .hrv-btn,
+.sidebar-footer-row .settings-btn {
+  width: auto; padding: 8px; flex: 0 0 auto;
+}
+/* System metadata cluster: pulse + version, grouped on the right */
+.sidebar-meta {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 6px;
+  padding-right: 4px;
+}
+.sidebar-version {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; letter-spacing: 1px;
+  color: var(--text-dim); opacity: 0.45;
+  text-transform: uppercase;
+  user-select: none;
+}
+.sidebar.collapsed .sidebar-footer-row {
+  flex-direction: column; padding: 0;
+}
+.sidebar.collapsed .sidebar-version { display: none; }
 
 /* ─── Preflight Binary Status ────────────────────────────────────────────── */
 .preflight-status {

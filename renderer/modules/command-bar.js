@@ -2,7 +2,7 @@
 // Cmd+K command bar — overlay UI, keyboard navigation, dispatch.
 
 import { state } from '../state.js'
-import { search } from './command-registry.js'
+import { search, rescanCommands } from './command-registry.js'
 import { sendToActive, spawnSession } from './session-manager.js'
 
 const overlay = document.getElementById('cmdk-overlay')
@@ -31,6 +31,9 @@ function open() {
   activeIndex = 0
   render('')
   requestAnimationFrame(() => input.focus())
+
+  // Fire-and-forget rescan: only re-render if the skill set actually changed.
+  rescanCommands().then(changed => { if (changed && overlay.classList.contains('open')) render(input.value || '') })
 }
 
 function close() {

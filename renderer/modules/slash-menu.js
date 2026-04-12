@@ -1,14 +1,15 @@
 // renderer/modules/slash-menu.js
 // In-chat slash command autocomplete — upward-growing menu triggered by / at position 0.
 
-import { COMMANDS, search } from './command-registry.js'
+import { COMMANDS, search, rescanCommands } from './command-registry.js'
 
 let menuEl = null        // current menu DOM element
 let activeIndex = 0      // keyboard selection index (0 = bottom item, nearest input)
 let flatItems = []       // current filtered + ordered items
 let attachedInput = null // the textarea the menu is anchored to
 let cachedPinnedCmds = [] // pinned commands cached per menu open
-let onSend = null        // callback to send command: (prompt) => void
+// Note: send callback is stored per-input (inputEl._slashMenuSend) so multiple
+// chat sessions don't clobber each other's callbacks.
 
 // ─── Show / Dismiss ─────────────────────────────────────────
 
@@ -28,6 +29,15 @@ async function show(inputEl) {
 
   updateFilter('')
   document.addEventListener('click', onOutsideClick, true)
+
+  // Fire-and-forget rescan: only re-filter if the skill set actually changed.
+  rescanCommands().then(changed => { if (changed && menuEl) updateFilter(currentQuery()) })
+}
+
+function currentQuery() {
+  if (!attachedInput) return ''
+  const v = attachedInput.value || ''
+  return v.startsWith('/') ? v.slice(1) : ''
 }
 
 function dismiss() {
@@ -116,12 +126,13 @@ function selectCurrent() {
   if (!item) return
 
   const input = attachedInput
+  const send = input._slashMenuSend
   input.value = ''
   input.style.height = 'auto'
   dismiss()
 
-  // Auto-send the command
-  if (onSend) onSend(item.cmd)
+  // Auto-send the command — use per-input callback so multi-session doesn't clobber
+  if (send) send(item.cmd)
 }
 
 // ─── Keyboard Navigation ────────────────────────────────────
@@ -150,7 +161,8 @@ function onMenuClick(e) {
 // ─── Attach to a textarea ───────────────────────────────────
 
 export function attach(inputEl, { send } = {}) {
-  onSend = send || null
+  // Store per-input so each chat session keeps its own callback.
+  inputEl._slashMenuSend = send || null
 
   inputEl.addEventListener('input', async () => {
     const val = inputEl.value
