@@ -1,6 +1,6 @@
 // renderer/dashboard.js
 // Orchestrates widget rendering based on layout config from ace-config.json.
-import { WIDGETS, DEFAULT_LAYOUT } from './widgets/registry.js'
+import { WIDGETS, DEFAULT_LAYOUT, WIDGET_ZONES } from './widgets/registry.js'
 
 async function getLayout() {
   const saved = await window.ace.dash.getLayout()
@@ -14,7 +14,13 @@ async function getLayout() {
   for (const w of WIDGETS) {
     if (!savedIds.has(w.id)) merged.push({ id: w.id, enabled: w.defaultEnabled ?? true })
   }
-  return merged
+  // Cockpit mode: force-disable any widget in the 'legacy' zone, regardless of saved state.
+  // The cockpit replaces these widgets with triad cards; saved layouts from the pre-cockpit era
+  // would otherwise re-enable them and double the home view.
+  return merged.map(l => {
+    if (WIDGET_ZONES[l.id] === 'legacy') return { ...l, enabled: false }
+    return l
+  })
 }
 
 async function loadDashboard() {
