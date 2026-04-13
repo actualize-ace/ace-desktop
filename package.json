@@ -37,6 +37,18 @@
       "target": "dmg",
       "icon": "assets/ace.icns"
     },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/ace.ico",
+      "artifactName": "ACE-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "ACE"
+    },
     "extraResources": [
       {
         "from": "../tools/ace-analytics",
