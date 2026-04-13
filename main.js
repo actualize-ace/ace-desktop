@@ -74,11 +74,22 @@ function saveConfig(config) {
 
 // ─── Binary Detection ─────────────────────────────────────────────────────────
 
-const KNOWN_PATHS = [
+// Platform-specific known install paths. GUI-launched Electron apps inherit
+// a minimal PATH that excludes user binary dirs (Homebrew on macOS, %APPDATA%
+// installs on Windows), so `which`/`where.exe` lookup can fail in packaged
+// builds that work fine in `npm start` dev mode. Always try PATH first, fall
+// back to these.
+const MACOS_CLAUDE_PATHS = [
   '/Users/' + require('os').userInfo().username + '/.local/bin/claude',
   '/usr/local/bin/claude',
   '/opt/homebrew/bin/claude',
 ]
+const WINDOWS_CLAUDE_PATHS = [
+  path.join(process.env.LOCALAPPDATA || '', 'Programs', 'claude', 'claude.exe'),
+  path.join(process.env.APPDATA || '', 'npm', 'claude.cmd'),
+  path.join(process.env.APPDATA || '', 'npm', 'claude.ps1'),
+]
+const KNOWN_PATHS = process.platform === 'win32' ? WINDOWS_CLAUDE_PATHS : MACOS_CLAUDE_PATHS
 
 function detectClaudeBinary() {
   // Try which first
@@ -244,16 +255,28 @@ ipcMain.handle(ch.DETECT_BINARY, () => {
 
 // Known binary paths for packaged-app fallback — GUI-launched Electron apps
 // inherit a minimal PATH that doesn't include Homebrew or nvm directories.
-const NODE_PATHS = [
+const MACOS_NODE_PATHS = [
   '/opt/homebrew/bin/node',
   '/usr/local/bin/node',
   '/usr/bin/node',
 ]
-const GIT_PATHS = [
+const MACOS_GIT_PATHS = [
   '/opt/homebrew/bin/git',
   '/usr/local/bin/git',
   '/usr/bin/git',
 ]
+const WINDOWS_NODE_PATHS = [
+  path.join(process.env.ProgramFiles || 'C:\\Program Files', 'nodejs', 'node.exe'),
+  path.join(process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'nodejs', 'node.exe'),
+  path.join(process.env.APPDATA || '', 'npm', 'node.exe'),
+]
+const WINDOWS_GIT_PATHS = [
+  path.join(process.env.ProgramFiles || 'C:\\Program Files', 'Git', 'bin', 'git.exe'),
+  path.join(process.env.ProgramFiles || 'C:\\Program Files', 'Git', 'cmd', 'git.exe'),
+  path.join(process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'Git', 'bin', 'git.exe'),
+]
+const NODE_PATHS = process.platform === 'win32' ? WINDOWS_NODE_PATHS : MACOS_NODE_PATHS
+const GIT_PATHS = process.platform === 'win32' ? WINDOWS_GIT_PATHS : MACOS_GIT_PATHS
 
 function runBinary(bin, args, timeoutMs = 3000) {
   return execSync(`"${bin}" ${args.join(' ')}`, {
