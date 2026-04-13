@@ -227,6 +227,71 @@ export function finalizeMessage(id, sessionsObj) {
   }
 }
 
+// ─── Memory card rendering ───────────────────────────────────────────────────
+// When auto-memory writes to `memory/*.md` via the Write tool, render an
+// ambient card in the chat stream alongside the tool ops. Makes the
+// compounding-intelligence loop visible instead of invisible. V2 · Standard
+// variant — see docs/plans/2026-04-12-memory-card-prototype.html.
+
+const MEMORY_TYPES = new Set(['user', 'feedback', 'project', 'reference'])
+
+function isMemoryWritePath(filePath) {
+  if (!filePath) return false
+  // Match any path that contains a memory/ segment and ends in .md,
+  // excluding the MEMORY.md index itself.
+  const basename = filePath.split('/').pop() || ''
+  if (basename === 'MEMORY.md') return false
+  return /(^|\/)memory\/[^/]+\.md$/.test(filePath) && basename.endsWith('.md')
+}
+
+function parseMemoryFrontmatter(content) {
+  if (!content || typeof content !== 'string') return null
+  const m = content.match(/^---\s*\n([\s\S]*?)\n---\s*\n?([\s\S]*)$/)
+  if (!m) return null
+  const frontmatter = m[1]
+  const body = (m[2] || '').trim()
+  const fields = {}
+  frontmatter.split('\n').forEach(line => {
+    const kv = line.match(/^([a-zA-Z_][\w-]*)\s*:\s*(.*)$/)
+    if (!kv) return
+    let val = kv[2].trim()
+    // Strip surrounding quotes
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      val = val.slice(1, -1)
+    }
+    fields[kv[1]] = val
+  })
+  const type = MEMORY_TYPES.has(fields.type) ? fields.type : 'reference'
+  const description = fields.description || ''
+  // Prefer description for the hook; fall back to first non-heading body line.
+  let hook = description
+  if (!hook && body) {
+    const firstLine = body.split('\n').find(l => l.trim() && !l.trim().startsWith('#'))
+    hook = (firstLine || '').trim()
+  }
+  return { type, description, hook, name: fields.name || '' }
+}
+
+function renderMemoryCard(contentEl, parsed) {
+  const meta = parseMemoryFrontmatter(parsed.content)
+  if (!meta || !meta.hook) return
+  const card = document.createElement('div')
+  card.className = 'chat-memory-card'
+  card.innerHTML = `
+    <div class="chat-memory-header">
+      <span class="chat-memory-icon">🧠</span>
+      <span class="chat-memory-title">Memory saved</span>
+      <span class="chat-memory-type ${meta.type}">${meta.type}</span>
+      <span class="chat-memory-time">just now</span>
+    </div>
+    <div class="chat-memory-body">${escapeHtml(meta.hook)}</div>
+  `
+  // Insert before the current tail so the card sits after tool ops in reading order.
+  const tailEl = contentEl.querySelector('.chat-tail:last-of-type')
+  if (tailEl) contentEl.insertBefore(card, tailEl)
+  else contentEl.appendChild(card)
+}
+
 // Tools that need user input (questions) — render outside ops container
 const QUESTION_TOOLS = new Set(['AskUserQuestion'])
 
@@ -358,6 +423,15 @@ export function appendToolInput(id, partialJson, sessionsObj) {
       const file = parsed.file_path ? `<div class="tool-item" style="font-weight:500">${escapeHtml(parsed.file_path.split('/').slice(-3).join('/'))}</div>` : ''
       const preview = parsed.content.length > 500 ? parsed.content.slice(0, 500) + '...' : parsed.content
       detailEl.innerHTML = `${file}<pre>${escapeHtml(preview)}</pre>`
+      // Memory surfacing — if this Write lands in memory/*.md, render an
+      // ambient card once the content has a valid frontmatter block.
+      if (isMemoryWritePath(parsed.file_path) && !s._currentToolBlock.dataset.memoryRendered) {
+        const contentEl = s._currentAssistantEl && s._currentAssistantEl.querySelector('.chat-msg-content')
+        if (contentEl && /^---[\s\S]*?\n---/.test(parsed.content)) {
+          renderMemoryCard(contentEl, parsed)
+          s._currentToolBlock.dataset.memoryRendered = '1'
+        }
+      }
     } else {
       // Generic — show key info
       const label = parsed.file_path || parsed.path || parsed.pattern || parsed.query || JSON.stringify(parsed, null, 2).slice(0, 200)
@@ -838,7 +912,7 @@ export function spawnSession(opts) {
       <button class="mode-toggle-btn" id="mode-toggle-${id}">Terminal</button>
       <div class="term-hdr-path" id="hdr-path-${id}">Chat Mode</div>
       <span class="session-timer" id="session-timer-${id}" style="display:none"></span>
-      <select class="session-duration-select" id="session-duration-${id}" title="Set session timer">
+      <select class="session-duration-select" id="session-duration-${id}" title="Set session timer" data-learn-target="session-timer">
         <option value="">Timer</option>
         <option value="15">15m</option>
         <option value="30">30m</option>
@@ -857,7 +931,7 @@ export function spawnSession(opts) {
       <div class="chat-status" id="chat-status-${id}">
         <span class="chat-cost-label">$0.00</span>
         <span class="chat-tokens-label">0 tokens</span>
-        <div class="ctx-bar" id="ctx-bar-${id}" title="Context usage">
+        <div class="ctx-bar" id="ctx-bar-${id}" title="Context usage" data-learn-target="ctx-bar">
           <div class="ctx-bar-fill" id="ctx-fill-${id}"></div>
         </div>
         <span class="ctx-bar-pct" id="ctx-label-${id}">0%</span>
@@ -881,8 +955,8 @@ export function spawnSession(opts) {
         </select>
       </div>
       <div class="chat-input-area">
-        <textarea class="chat-input" id="chat-input-${id}" placeholder="${window.__preflightResult?.binary?.ok && window.__preflightResult?.vault?.ok ? 'Type /start to begin your day' : 'Message ACE...'}" rows="1"></textarea>
-        <button class="chat-send-btn" id="chat-send-${id}">↑</button>
+        <textarea class="chat-input" id="chat-input-${id}" data-learn-target="chat-composer" placeholder="${window.__preflightResult?.binary?.ok && window.__preflightResult?.vault?.ok ? 'Type /start to begin your day' : 'Message ACE...'}" rows="1"></textarea>
+        <button class="chat-send-btn" id="chat-send-${id}" data-learn-target="send-button">↑</button>
       </div>
     </div>
     <div class="term-xterm" id="xterm-${id}" style="display:none"></div>

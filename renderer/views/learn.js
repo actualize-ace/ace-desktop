@@ -1,10 +1,89 @@
 // renderer/views/learn.js
 // Onboarding tutorial + persistent knowledge base.
 
+import { startSpotlight } from '../modules/learn-coach.js'
+
 const state = {
   lessons: [],
   progress: null,
   currentLessonId: null,
+}
+
+// Checks runtime conditions required before a Try-it can run.
+// Returns { met: true } or { met: false, hint: string }.
+function checkPrerequisite(prereq) {
+  if (!prereq) return { met: true }
+  if (prereq === 'send-message') {
+    // Any session with at least one user message counts.
+    const sessions = window.__aceState?.sessions || {}
+    const hasMessage = Object.values(sessions).some(s => {
+      const msgs = s?.messages || s?.chatMessages || []
+      return Array.isArray(msgs) ? msgs.length > 0 : false
+    })
+    if (hasMessage) return { met: true }
+    return {
+      met: false,
+      hint: 'Send a message in chat first, then come back to this lesson.',
+    }
+  }
+  return { met: true }
+}
+
+function switchToView(view) {
+  const nav = document.querySelector(`.nav-item[data-view="${view}"]`)
+  if (nav) nav.click()
+}
+
+async function runTryIt(lesson) {
+  const cfg = lesson.tryIt
+  if (!cfg) return
+
+  if (cfg.view) {
+    switchToView(cfg.view)
+    // Let the view switch settle before targeting elements.
+    await new Promise(r => setTimeout(r, 200))
+  }
+
+  if (cfg.type === 'spotlight') {
+    startSpotlight({
+      targets: cfg.targets || [],
+      onComplete: async () => {
+        await window.ace.learn.markCompleted(lesson.id)
+        state.progress = await window.ace.learn.state()
+        updateLearnDot()
+        // Return to Learn so the user sees they're progressing.
+        switchToView('learn')
+        setTimeout(() => initLearn(), 120)
+      },
+      onCancel: () => { /* no-op — user can re-open the lesson */ },
+    })
+    return
+  }
+
+  if (cfg.type === 'action' && cfg.action === 'prefill-composer') {
+    const composer = await waitForSelectorOnce('[data-learn-target="chat-composer"]', 3000)
+    if (!composer) {
+      console.warn('[learn] prefill-composer: composer not found')
+      return
+    }
+    composer.value = cfg.text || ''
+    composer.focus()
+    composer.dispatchEvent(new Event('input', { bubbles: true }))
+    await window.ace.learn.markCompleted(lesson.id)
+    state.progress = await window.ace.learn.state()
+    updateLearnDot()
+    return
+  }
+}
+
+async function waitForSelectorOnce(selector, timeoutMs = 3000) {
+  const start = Date.now()
+  while (Date.now() - start < timeoutMs) {
+    const el = document.querySelector(selector)
+    if (el) return el
+    await new Promise(r => setTimeout(r, 100))
+  }
+  return null
 }
 
 async function loadLessons() {
@@ -129,9 +208,19 @@ async function renderContent(lesson) {
     })
   })
 
-  content.querySelector('.learn-try-it')?.addEventListener('click', () => {
-    console.warn('[learn] Try-it clicked — spotlight module arrives in Task 8')
-  })
+  const tryBtn = content.querySelector('.learn-try-it')
+  if (tryBtn && lesson.tryIt) {
+    const check = checkPrerequisite(lesson.tryIt.prerequisite)
+    if (!check.met) {
+      tryBtn.disabled = true
+      const hint = document.createElement('p')
+      hint.className = 'learn-try-hint'
+      hint.textContent = check.hint
+      tryBtn.after(hint)
+    } else {
+      tryBtn.addEventListener('click', () => runTryIt(lesson))
+    }
+  }
 }
 
 async function selectLesson(id) {

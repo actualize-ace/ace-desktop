@@ -1,0 +1,122 @@
+/* Learn coach — tutorial spotlight overlay */
+
+.learn-coach-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: auto;
+  animation: learn-coach-fade 0.2s ease-out;
+}
+
+@keyframes learn-coach-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.learn-coach-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.learn-coach-tooltip {
+  position: absolute;
+  background: var(--surface, #1a1a1f);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px 14px;
+  max-width: 340px;
+  min-width: 220px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5), 0 2px 12px rgba(212,165,116,0.15);
+  color: var(--text-primary);
+  font-size: 13.5px;
+  line-height: 1.55;
+  pointer-events: auto;
+}
+
+.learn-coach-tip-body {
+  margin-bottom: 14px;
+}
+
+.learn-coach-tip-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.learn-coach-progress {
+  color: var(--text-dim);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  flex: 1;
+}
+
+.learn-coach-skip {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.learn-coach-skip:hover {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.05);
+}
+
+.learn-coach-next {
+  background: #d4a574;
+  color: #1a1a1a;
+  border: none;
+  padding: 7px 16px;
+  border-radius: 7px;
+  font-weight: 600;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.learn-coach-next:hover {
+  filter: brightness(1.1);
+}
+
+/* Light mode */
+body.light .learn-coach-next {
+  color: #fff;
+}
+
+body.light .learn-coach-tooltip {
+  background: #fafafa;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.18), 0 2px 12px rgba(212,165,116,0.2);
+}
+
+body.light .learn-coach-skip:hover {
+  background: rgba(0,0,0,0.04);
+}
+
+/* Toast for missing targets */
+.learn-coach-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface, #1a1a1f);
+  border: 1px solid var(--border);
+  padding: 10px 20px;
+  border-radius: 10px;
+  z-index: 10001;
+  color: var(--text-primary);
+  font-size: 13px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.learn-coach-toast.leaving {
+  opacity: 0;
+}
