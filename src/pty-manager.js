@@ -12,6 +12,13 @@ function create(win, id, cwd, claudeBin, cols, rows) {
     return null
   }
 
+  const augmentedPath = [
+    '/opt/homebrew/bin',
+    '/usr/local/bin',
+    '/usr/bin',
+    process.env.PATH || '',
+  ].filter(Boolean).join(process.platform === 'win32' ? ';' : ':')
+
   const shell = pty.spawn(claudeBin, [], {
     name: 'xterm-256color',
     cols: cols || 120,
@@ -19,6 +26,7 @@ function create(win, id, cwd, claudeBin, cols, rows) {
     cwd,
     env: {
       ...process.env,
+      PATH:      augmentedPath,
       TERM:      'xterm-256color',
       COLORTERM: 'truecolor',
     },
@@ -71,6 +79,13 @@ function resume(win, id, cwd, claudeBin, cols, rows, sessionId) {
     return null
   }
 
+  const augmentedPath = [
+    '/opt/homebrew/bin',
+    '/usr/local/bin',
+    '/usr/bin',
+    process.env.PATH || '',
+  ].filter(Boolean).join(process.platform === 'win32' ? ';' : ':')
+
   const shell = pty.spawn(claudeBin, ['--resume', sessionId], {
     name: 'xterm-256color',
     cols: cols || 120,
@@ -78,6 +93,7 @@ function resume(win, id, cwd, claudeBin, cols, rows, sessionId) {
     cwd,
     env: {
       ...process.env,
+      PATH:      augmentedPath,
       TERM:      'xterm-256color',
       COLORTERM: 'truecolor',
     },

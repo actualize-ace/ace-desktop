@@ -80,10 +80,19 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
     }
   }
 
+  // Augment PATH so the Claude binary (a Node.js script) can find `node`
+  // in packaged Electron apps that inherit a minimal system PATH.
+  const augmentedPath = [
+    '/opt/homebrew/bin',
+    '/usr/local/bin',
+    '/usr/bin',
+    process.env.PATH || '',
+  ].filter(Boolean).join(process.platform === 'win32' ? ';' : ':')
+
   const proc = spawn(claudeBin, args, {
     cwd,
     stdio: ['pipe', 'pipe', 'pipe'],
-    env: { ...process.env, TERM: 'xterm-256color', COLORTERM: 'truecolor' },
+    env: { ...process.env, PATH: augmentedPath, TERM: 'xterm-256color', COLORTERM: 'truecolor' },
   })
 
   sessions.set(chatId, { proc, claudeSessionId })
