@@ -4,6 +4,13 @@ title: Going deeper
 track: essentials
 order: 8
 estimatedMinutes: 1
+tryIt:
+  type: action
+  view: terminal
+  action: prefill-composer
+  text: ''
+  label: "Step into chat"
+  tooltip: "Start a conversation. Try /brief for a daily orientation, or just ask ACE something."
 ---
 
 # Going deeper

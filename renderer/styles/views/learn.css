@@ -286,6 +286,18 @@
   cursor: not-allowed;
 }
 
+.learn-try-it.learn-try-it-redirect {
+  background: transparent;
+  color: #d4a574;
+  border: 1px solid rgba(212,165,116,0.4);
+}
+
+.learn-try-it.learn-try-it-redirect:hover {
+  filter: none;
+  background: rgba(212,165,116,0.08);
+  border-color: #d4a574;
+}
+
 .learn-try-hint {
   color: var(--text-dim);
   font-size: 13px;

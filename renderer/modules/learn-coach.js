@@ -25,6 +25,7 @@ export function startSpotlight({ targets, onComplete, onCancel }) {
         </mask>
       </defs>
       <rect x="0" y="0" width="100%" height="100%" fill="rgba(0,0,0,0.62)" mask="url(#learn-coach-mask)"/>
+      <rect id="learn-coach-ring" class="learn-coach-ring" fill="none" rx="10" ry="10"/>
     </svg>
     <div class="learn-coach-tooltip" role="dialog" aria-live="polite">
       <div class="learn-coach-tip-body"></div>
@@ -52,25 +53,65 @@ export function startSpotlight({ targets, onComplete, onCancel }) {
   backdrop.querySelector('.learn-coach-skip').addEventListener('click', cancel)
 
   active = { backdrop, cleanup }
+  console.log('[learn-coach] startSpotlight: targets=', targets.map(t => t.selector))
   positionStep()
 
   async function positionStep() {
     const target = targets[idx]
     if (!target || !target.selector) return advance()
 
+    console.log(`[learn-coach] step ${idx + 1}/${targets.length} — waiting for`, target.selector)
     const el = await waitForSelector(target.selector, 3000)
     if (!el) {
+      console.warn('[learn-coach] target not found:', target.selector)
       showToast(`Spotlight target missing: ${target.selector}`)
       return advance()
     }
 
+    // Scroll target into view if it's off-screen (below the fold / above),
+    // then wait for the scroll to settle before measuring.
+    const firstRect = el.getBoundingClientRect()
+    const vh = window.innerHeight
+    const offscreen = firstRect.bottom > vh || firstRect.top < 0
+    if (offscreen) {
+      console.log('[learn-coach] target off-screen, scrolling into view')
+      el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' })
+      await new Promise(r => setTimeout(r, 120))
+    }
+
     const rect = el.getBoundingClientRect()
+    console.log('[learn-coach] target found. rect=', {
+      x: Math.round(rect.left), y: Math.round(rect.top),
+      w: Math.round(rect.width), h: Math.round(rect.height),
+    })
+
+    // Guard against zero-dimension targets (element exists but isn't laid out).
+    if (rect.width < 2 || rect.height < 2) {
+      console.warn('[learn-coach] target has zero dimensions, skipping step')
+      showToast(`Spotlight target "${target.selector}" not visible yet — skipping.`)
+      return advance()
+    }
+
     const pad = 8
     const cutout = backdrop.querySelector('#learn-coach-cutout')
-    cutout.setAttribute('x', Math.max(0, rect.left - pad))
-    cutout.setAttribute('y', Math.max(0, rect.top - pad))
-    cutout.setAttribute('width', Math.max(0, rect.width + pad * 2))
-    cutout.setAttribute('height', Math.max(0, rect.height + pad * 2))
+    const ring = backdrop.querySelector('#learn-coach-ring')
+    const x = Math.max(0, rect.left - pad)
+    const y = Math.max(0, rect.top - pad)
+    const w = Math.max(0, rect.width + pad * 2)
+    const h = Math.max(0, rect.height + pad * 2)
+    cutout.setAttribute('x', x)
+    cutout.setAttribute('y', y)
+    cutout.setAttribute('width', w)
+    cutout.setAttribute('height', h)
+    ring.setAttribute('x', x)
+    ring.setAttribute('y', y)
+    ring.setAttribute('width', w)
+    ring.setAttribute('height', h)
+    // Retrigger the pulse animation for this step.
+    ring.classList.remove('learn-coach-ring-pulse')
+    // eslint-disable-next-line no-unused-expressions
+    void ring.getBoundingClientRect()
+    ring.classList.add('learn-coach-ring-pulse')
 
     const tip = backdrop.querySelector('.learn-coach-tooltip')
     backdrop.querySelector('.learn-coach-tip-body').textContent = target.tooltip || ''
@@ -80,7 +121,14 @@ export function startSpotlight({ targets, onComplete, onCancel }) {
 
     // Position tooltip twice: once with estimated, once after layout settles.
     positionTooltip(tip, rect)
-    requestAnimationFrame(() => positionTooltip(tip, rect))
+    requestAnimationFrame(() => {
+      positionTooltip(tip, rect)
+      const tr = tip.getBoundingClientRect()
+      console.log('[learn-coach] tooltip positioned at', {
+        left: Math.round(tr.left), top: Math.round(tr.top),
+        w: Math.round(tr.width), h: Math.round(tr.height),
+      })
+    })
   }
 
   function advance() {
@@ -150,15 +198,19 @@ function positionTooltip(tooltip, targetRect) {
 
 async function waitForSelector(selector, timeoutMs = 3000) {
   const start = Date.now()
-  // Fast path
-  const immediate = document.querySelector(selector)
-  if (immediate) return immediate
   while (Date.now() - start < timeoutMs) {
-    await new Promise(r => setTimeout(r, 100))
     const el = document.querySelector(selector)
-    if (el) return el
+    if (el) {
+      const rect = el.getBoundingClientRect()
+      // Require non-zero dimensions — otherwise the element exists in DOM but
+      // its parent view isn't visible yet (or layout hasn't settled).
+      if (rect.width >= 2 && rect.height >= 2) return el
+    }
+    await new Promise(r => setTimeout(r, 80))
   }
-  return null
+  // Final fallback: return the element even if zero-size, so the caller can
+  // decide what to do (positionStep will skip the step and toast).
+  return document.querySelector(selector)
 }
 
 function showToast(message) {

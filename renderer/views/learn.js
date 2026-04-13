@@ -69,11 +69,23 @@ async function runTryIt(lesson) {
     composer.value = cfg.text || ''
     composer.focus()
     composer.dispatchEvent(new Event('input', { bubbles: true }))
+    if (cfg.tooltip) showLearnToast(cfg.tooltip)
     await window.ace.learn.markCompleted(lesson.id)
     state.progress = await window.ace.learn.state()
     updateLearnDot()
     return
   }
+}
+
+function showLearnToast(message) {
+  const t = document.createElement('div')
+  t.className = 'learn-coach-toast'
+  t.textContent = message
+  document.body.appendChild(t)
+  setTimeout(() => {
+    t.classList.add('leaving')
+    setTimeout(() => t.remove(), 400)
+  }, 4200)
 }
 
 async function waitForSelectorOnce(selector, timeoutMs = 3000) {
@@ -179,8 +191,9 @@ async function renderContent(lesson) {
   }
 
   const bodyHtml = window.marked ? window.marked.parse(lesson.body) : `<pre>${escapeHtml(lesson.body)}</pre>`
+  const tryItLabel = lesson.tryIt?.label ? escapeHtml(lesson.tryIt.label) : 'Try it'
   const tryItBtn = lesson.tryIt
-    ? `<button class="learn-try-it" data-lesson-id="${lesson.id}">Try it</button>`
+    ? `<button class="learn-try-it" data-lesson-id="${lesson.id}">${tryItLabel}</button>`
     : ''
 
   const allIds = state.lessons.map(l => l.id)
@@ -212,10 +225,21 @@ async function renderContent(lesson) {
   if (tryBtn && lesson.tryIt) {
     const check = checkPrerequisite(lesson.tryIt.prerequisite)
     if (!check.met) {
-      tryBtn.disabled = true
+      // Don't dead-end — re-label the button so it takes the user where
+      // they need to go to satisfy the prereq, then the lesson re-checks
+      // when they return.
+      tryBtn.textContent = 'Open chat first'
+      tryBtn.classList.add('learn-try-it-redirect')
+      tryBtn.addEventListener('click', async () => {
+        switchToView('terminal')
+        // Focus the composer so they can just type.
+        await new Promise(r => setTimeout(r, 250))
+        const composer = document.querySelector('[data-learn-target="chat-composer"]')
+        composer?.focus()
+      })
       const hint = document.createElement('p')
       hint.className = 'learn-try-hint'
-      hint.textContent = check.hint
+      hint.textContent = check.hint + ' This button takes you there.'
       tryBtn.after(hint)
     } else {
       tryBtn.addEventListener('click', () => runTryIt(lesson))

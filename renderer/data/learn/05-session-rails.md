@@ -7,12 +7,11 @@ estimatedMinutes: 3
 tryIt:
   type: spotlight
   view: terminal
-  prerequisite: send-message
   targets:
     - selector: '[data-learn-target="ctx-bar"]'
-      tooltip: "Your context bar. Green = plenty of room. Gold = breathing warning. Red = wrap up."
+      tooltip: "Your context bar. Tracks tokens this session. Green = plenty of room. Gold = warning. Red = wrap up."
     - selector: '[data-learn-target="session-timer"]'
-      tooltip: "Your session timer. Set a duration, ACE nudges at 80% warning, 95% critical, then expires."
+      tooltip: "Your session timer. Set a duration. ACE nudges at 80% warning, 95% critical, then expires."
 ---
 
 # Your session rails

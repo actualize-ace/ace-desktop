@@ -8,12 +8,12 @@ tryIt:
   type: spotlight
   view: home
   targets:
-    - selector: '[data-learn-target="triad-deck"]'
-      tooltip: "Your Triad deck. Authority, Capacity, Expansion — the three pillars of coherence."
     - selector: '[data-learn-target="north-star"]'
       tooltip: "Your North Star. The single aim this system is serving right now."
     - selector: '[data-learn-target="dashboard-widgets"]'
       tooltip: "Widgets reflect your real state — outcomes, pipeline, follow-ups. Not a template."
+    - selector: '[data-learn-target="triad-deck"]'
+      tooltip: "Your Triad deck. Authority, Capacity, Expansion — the three pillars of coherence."
 ---
 
 # The Command Center

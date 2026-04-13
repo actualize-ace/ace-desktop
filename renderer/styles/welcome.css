@@ -1,0 +1,100 @@
+/* First-boot welcome overlay */
+
+.ace-welcome-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background: radial-gradient(ellipse at center,
+    rgba(26, 22, 40, 0.98) 0%,
+    rgba(16, 14, 24, 1) 70%);
+  opacity: 0;
+  transition: opacity 0.6s ease-out;
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+.ace-welcome-overlay.ace-welcome-in {
+  opacity: 1;
+}
+
+.ace-welcome-overlay.ace-welcome-out {
+  opacity: 0;
+  transition: opacity 0.9s ease-in;
+}
+
+/* Breathing gold halo behind the mark */
+.ace-welcome-halo {
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center,
+    rgba(212, 165, 116, 0.18) 0%,
+    rgba(200, 160, 240, 0.10) 35%,
+    rgba(200, 160, 240, 0.02) 60%,
+    transparent 80%);
+  filter: blur(20px);
+  animation: ace-welcome-breath 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes ace-welcome-breath {
+  0%, 100% {
+    transform: scale(0.92);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+/* ACE mark bloom */
+.ace-welcome-mark {
+  position: relative;
+  transform: scale(0.9);
+  opacity: 0;
+  transition: transform 1.1s cubic-bezier(.22,1,.36,1),
+              opacity 0.7s ease-out;
+  filter: drop-shadow(0 0 32px rgba(200, 160, 240, 0.4));
+}
+
+.ace-welcome-overlay.ace-welcome-in .ace-welcome-mark {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Caption — barely-there italic */
+.ace-welcome-caption {
+  position: relative;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 22px;
+  color: rgba(232, 226, 245, 0.72);
+  letter-spacing: 0.04em;
+  transform: translateY(8px);
+  opacity: 0;
+  transition: transform 1s ease-out 0.3s,
+              opacity 0.9s ease-out 0.3s;
+}
+
+.ace-welcome-overlay.ace-welcome-in .ace-welcome-caption {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Light mode */
+body.light .ace-welcome-overlay {
+  background: radial-gradient(ellipse at center,
+    rgba(250, 247, 242, 0.98) 0%,
+    rgba(240, 236, 228, 1) 70%);
+}
+
+body.light .ace-welcome-caption {
+  color: rgba(50, 40, 70, 0.72);
+}
