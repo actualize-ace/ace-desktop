@@ -1,7 +1,7 @@
 {
   "name": "ace-desktop",
   "productName": "ACE",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "ACE Desktop — control plane for the Actualize Coherence Engine",
   "main": "main.js",
   "scripts": {
@@ -55,6 +55,11 @@
         "from": "../tools/ace-analytics",
         "to": "ace-analytics"
       }
+    ],
+    "files": [
+      "**/*",
+      "!renderer/data/natal-chart.json",
+      "!renderer/data/interpretations.json"
     ]
   }
 }

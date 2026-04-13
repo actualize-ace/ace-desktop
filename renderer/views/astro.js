@@ -25,13 +25,19 @@ window.addEventListener('ace-theme-change', () => {
 // ── Data Loading ─────────────────────────────────────────────────────────────
 
 async function loadNatalChart() {
-  const resp = await fetch('./data/natal-chart.json')
-  return resp.json()
+  try {
+    const resp = await fetch('./data/natal-chart.json')
+    if (!resp.ok) return null
+    return await resp.json()
+  } catch { return null }
 }
 
 async function loadInterpretations() {
-  const resp = await fetch('./data/interpretations.json')
-  return resp.json()
+  try {
+    const resp = await fetch('./data/interpretations.json')
+    if (!resp.ok) return null
+    return await resp.json()
+  } catch { return null }
 }
 
 async function loadTransits() {
@@ -610,6 +616,29 @@ export async function initAstro() {
   // Load data
   ;[natalData, interpretations] = await Promise.all([loadNatalChart(), loadInterpretations()])
   transitData = await loadTransits()
+
+  // Empty state — no natal chart configured (v0.1.6 ships without bundled charts;
+  // v0.1.7 will add the birth-details Settings UI that generates per-user charts).
+  if (!natalData) {
+    el.innerHTML = `<div class="view-header">
+      <div class="view-title">Astro</div>
+    </div>
+    <div class="vbody" style="display:flex;align-items:center;justify-content:center;min-height:400px">
+      <div style="max-width:420px;text-align:center;padding:40px 32px">
+        <div style="font-size:48px;margin-bottom:20px;opacity:0.4">✦</div>
+        <div style="font-size:15px;color:var(--text);margin-bottom:12px;font-weight:500">
+          Birth chart not configured
+        </div>
+        <div style="font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:20px">
+          Astrology features — natal wheel, daily transits, cosmic weather — require your birth details. Add them in Settings to generate your chart.
+        </div>
+        <div style="font-size:11px;color:var(--text-dim);opacity:0.6;letter-spacing:0.04em">
+          Birth details input ships in v0.1.7
+        </div>
+      </div>
+    </div>`
+    return
+  }
 
   // Update birth info label
   const info = el.querySelector('.astro-birth-info')

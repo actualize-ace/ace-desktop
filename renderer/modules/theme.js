@@ -58,7 +58,7 @@ export function updateTime() {
   const homeNameEl = document.getElementById('home-name')
   if (liveEl) liveEl.textContent = t
   if (homeTimeEl) homeTimeEl.textContent = d.toUpperCase()
-  if (homeNameEl) homeNameEl.textContent = `Good ${greet}, Nikhil.`
+  if (homeNameEl) homeNameEl.textContent = `Good ${greet}.`
 }
 
 export function initTheme() {
