@@ -6,8 +6,8 @@
   "main": "main.js",
   "scripts": {
     "postinstall": "electron-rebuild -f -w node-pty,better-sqlite3",
-    "start": "env -u ELECTRON_RUN_AS_NODE electron .",
-    "start:debug": "env -u ELECTRON_RUN_AS_NODE electron --inspect=5858 .",
+    "start": "node scripts/start.js",
+    "start:debug": "node scripts/start.js --inspect=5858",
     "dist": "electron-builder"
   },
   "devDependencies": {
