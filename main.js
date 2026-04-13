@@ -242,29 +242,65 @@ ipcMain.handle(ch.DETECT_BINARY, () => {
   return detectClaudeBinary()
 })
 
-// Detect Node.js — parses `node --version` output, reports major version.
-ipcMain.handle(ch.DETECT_NODE, () => {
+// Known binary paths for packaged-app fallback — GUI-launched Electron apps
+// inherit a minimal PATH that doesn't include Homebrew or nvm directories.
+const NODE_PATHS = [
+  '/opt/homebrew/bin/node',
+  '/usr/local/bin/node',
+  '/usr/bin/node',
+]
+const GIT_PATHS = [
+  '/opt/homebrew/bin/git',
+  '/usr/local/bin/git',
+  '/usr/bin/git',
+]
+
+function runBinary(bin, args, timeoutMs = 3000) {
+  return execSync(`"${bin}" ${args.join(' ')}`, {
+    encoding: 'utf8',
+    timeout: timeoutMs,
+    env: process.env,
+  }).trim()
+}
+
+function findBinary(name, knownPaths) {
+  // Try PATH lookup first (works in dev mode with full shell env)
   try {
-    const raw = execSync('node --version', { encoding: 'utf8', timeout: 3000, env: process.env }).trim()
-    // Output format: "v20.11.0"
+    const result = execSync(`which ${name}`, { encoding: 'utf8', env: process.env }).trim()
+    if (result && fs.existsSync(result)) return result
+  } catch {}
+  // Fall back to known install locations (covers packaged-app case)
+  for (const p of knownPaths) {
+    if (fs.existsSync(p)) return p
+  }
+  return null
+}
+
+// Detect Node.js — parses `node --version`, requires major ≥ 20.
+ipcMain.handle(ch.DETECT_NODE, () => {
+  const bin = findBinary('node', NODE_PATHS)
+  if (!bin) return { ok: false, error: 'not-found' }
+  try {
+    const raw = runBinary(bin, ['--version'])
     const match = raw.match(/^v(\d+)\.(\d+)\.(\d+)/)
-    if (!match) return { ok: false, error: 'unparseable', raw }
+    if (!match) return { ok: false, error: 'unparseable', raw, path: bin }
     const major = parseInt(match[1], 10)
-    return { ok: major >= 20, version: raw, major, min: 20 }
-  } catch (e) {
-    return { ok: false, error: 'not-found' }
+    return { ok: major >= 20, version: raw, major, min: 20, path: bin }
+  } catch {
+    return { ok: false, error: 'not-responding', path: bin }
   }
 })
 
 // Detect Git — any modern version is fine.
 ipcMain.handle(ch.DETECT_GIT, () => {
+  const bin = findBinary('git', GIT_PATHS)
+  if (!bin) return { ok: false, error: 'not-found' }
   try {
-    const raw = execSync('git --version', { encoding: 'utf8', timeout: 3000, env: process.env }).trim()
-    // Output format: "git version 2.39.5 (Apple Git-154)"
+    const raw = runBinary(bin, ['--version'])
     const match = raw.match(/git version (\S+)/)
-    return { ok: true, version: match ? match[1] : raw, raw }
-  } catch (e) {
-    return { ok: false, error: 'not-found' }
+    return { ok: true, version: match ? match[1] : raw, raw, path: bin }
+  } catch {
+    return { ok: false, error: 'not-responding', path: bin }
   }
 })
 
