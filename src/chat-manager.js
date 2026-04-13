@@ -21,16 +21,32 @@ function killProc(proc) {
   }
 }
 
+// Classify binary-path failure so the error card explains the actual problem.
+// Returns null if the path looks usable; otherwise { reason, path }.
+function diagnoseBinary(claudeBin) {
+  if (!claudeBin) return { reason: 'unconfigured', path: null }
+  if (typeof claudeBin !== 'string') return { reason: 'invalid-type', path: String(claudeBin) }
+  if (!fs.existsSync(claudeBin)) return { reason: 'path-missing', path: claudeBin }
+  try {
+    fs.accessSync(claudeBin, fs.constants.X_OK)
+  } catch {
+    return { reason: 'not-executable', path: claudeBin }
+  }
+  return null
+}
+
 function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   // Kill any existing process for this chatId
   cancel(chatId)
   opts = opts || {}
 
-  // Pre-spawn binary guard
-  if (!fs.existsSync(claudeBin)) {
+  // Pre-spawn binary guard — classify the failure so the error card can
+  // show the actual cause (undefined vs missing vs unreadable).
+  const binaryIssue = diagnoseBinary(claudeBin)
+  if (binaryIssue) {
     if (!win.isDestroyed()) {
       win.webContents.send(`${ch.CHAT_ERROR}:${chatId}`,
-        JSON.stringify({ type: 'binary-missing', path: claudeBin }))
+        JSON.stringify({ type: 'binary-missing', ...binaryIssue }))
     }
     return
   }
@@ -93,6 +109,20 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
     cwd,
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env, PATH: augmentedPath, TERM: 'xterm-256color', COLORTERM: 'truecolor' },
+  })
+
+  // Spawn-level failures (ENOENT for node, EACCES, etc.) are emitted on the
+  // proc itself — without this listener they'd surface only as an exit with
+  // no stderr and the renderer would show nothing.
+  proc.on('error', err => {
+    if (win.isDestroyed()) return
+    win.webContents.send(`${ch.CHAT_ERROR}:${chatId}`,
+      JSON.stringify({
+        type: 'spawn-failed',
+        code: err.code,
+        message: err.message,
+        path: claudeBin,
+      }))
   })
 
   sessions.set(chatId, { proc, claudeSessionId })

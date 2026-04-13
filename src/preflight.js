@@ -19,11 +19,18 @@ function checkBinary(binaryPath) {
     return { ok: false, error: 'not-executable', path: binaryPath }
   }
 
+  const augmentedPath = [
+    '/opt/homebrew/bin',
+    '/usr/local/bin',
+    '/usr/bin',
+    process.env.PATH || '',
+  ].filter(Boolean).join(process.platform === 'win32' ? ';' : ':')
+
   try {
     const version = execSync(`"${binaryPath}" --version`, {
       encoding: 'utf8',
       timeout: 5000,
-      env: process.env,
+      env: { ...process.env, PATH: augmentedPath },
     }).trim()
     return { ok: true, path: binaryPath, version }
   } catch {

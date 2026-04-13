@@ -96,10 +96,20 @@ const KNOWN_PATHS = process.platform === 'win32' ? WINDOWS_CLAUDE_PATHS : MACOS_
 const WHICH_CMD = process.platform === 'win32' ? 'where.exe' : 'which'
 
 function detectClaudeBinary() {
+  // Augment PATH so packaged Electron (minimal system PATH) can still find
+  // Homebrew-installed binaries via `which`.
+  const augmentedPath = [
+    '/opt/homebrew/bin',
+    '/usr/local/bin',
+    '/usr/bin',
+    process.env.PATH || '',
+  ].filter(Boolean).join(process.platform === 'win32' ? ';' : ':')
+  const augmentedEnv = { ...process.env, PATH: augmentedPath }
+
   // Try PATH lookup first
   let found = null
   try {
-    const result = execSync(`${WHICH_CMD} claude`, { encoding: 'utf8', env: process.env }).trim().split(/\r?\n/)[0]
+    const result = execSync(`${WHICH_CMD} claude`, { encoding: 'utf8', env: augmentedEnv }).trim().split(/\r?\n/)[0]
     if (result && fs.existsSync(result)) found = result
   } catch {}
 
@@ -117,7 +127,7 @@ function detectClaudeBinary() {
     const version = execSync(`"${found}" --version`, {
       encoding: 'utf8',
       timeout: 5000,
-      env: process.env,
+      env: augmentedEnv,
     }).trim()
     return { path: found, version }
   } catch {
@@ -229,24 +239,46 @@ app.on('before-quit', () => {
   killAllChildren()
 })
 
+// Self-heal runtime globals from on-disk config if they've gone missing.
+// Catches any path where CLAUDE_BIN/VAULT_PATH become undefined between
+// launch and chat send (partial setup, race conditions, etc.).
+function resolveClaudeBin() {
+  if (global.CLAUDE_BIN) return global.CLAUDE_BIN
+  const config = loadConfig()
+  if (config?.claudeBinaryPath) {
+    global.CLAUDE_BIN = config.claudeBinaryPath
+    return global.CLAUDE_BIN
+  }
+  return null
+}
+function resolveVaultPath() {
+  if (global.VAULT_PATH) return global.VAULT_PATH
+  const config = loadConfig()
+  if (config?.vaultPath) {
+    global.VAULT_PATH = config.vaultPath
+    return global.VAULT_PATH
+  }
+  return null
+}
+
 // ─── PTY IPC Handlers ────────────────────────────────────────────────────────
 
 ipcMain.handle('pty-create', (_, id, cwd, cols, rows) => {
-  return require('./src/pty-manager').create(mainWindow, id, cwd || global.VAULT_PATH, global.CLAUDE_BIN, cols, rows)
+  return require('./src/pty-manager').create(mainWindow, id, cwd || resolveVaultPath(), resolveClaudeBin(), cols, rows)
 })
 
 ipcMain.on('pty-write',  (_, id, data)       => require('./src/pty-manager').write(id, data))
 ipcMain.on('pty-resize', (_, id, cols, rows) => require('./src/pty-manager').resize(id, cols, rows))
 ipcMain.on('pty-kill',   (_, id)             => require('./src/pty-manager').kill(id))
 ipcMain.handle(ch.PTY_RESUME, (_, id, cwd, cols, rows, sessionId) => {
-  return require('./src/pty-manager').resume(mainWindow, id, cwd || global.VAULT_PATH, global.CLAUDE_BIN, cols, rows, sessionId)
+  return require('./src/pty-manager').resume(mainWindow, id, cwd || resolveVaultPath(), resolveClaudeBin(), cols, rows, sessionId)
 })
 
 // ─── Chat IPC Handlers (stream-json mode) ────────────────────────────────────
 
 ipcMain.handle(ch.CHAT_SEND, (_, chatId, prompt, claudeSessionId, opts) => {
   return require('./src/chat-manager').send(mainWindow, chatId, prompt,
-    global.VAULT_PATH, global.CLAUDE_BIN, claudeSessionId, opts)
+    resolveVaultPath(), resolveClaudeBin(), claudeSessionId, opts)
 })
 ipcMain.on(ch.CHAT_CANCEL, (_, chatId) => require('./src/chat-manager').cancel(chatId))
 ipcMain.on(ch.CHAT_RESPOND, (_, chatId, text) => require('./src/chat-manager').respond(chatId, text))
@@ -370,6 +402,10 @@ ipcMain.handle(ch.PATCH_CONFIG, (_, partial) => {
     }
   }
   saveConfig(config)
+  // Sync runtime globals when critical paths change — otherwise chat/pty
+  // keep using the stale path and emit "not found at configured path".
+  if ('claudeBinaryPath' in partial) global.CLAUDE_BIN = config.claudeBinaryPath
+  if ('vaultPath' in partial) global.VAULT_PATH = config.vaultPath
   return true
 })
 
@@ -566,8 +602,8 @@ ipcMain.handle(ch.VAULT_GET_COLOR_MAP, () => {
 })
 
 ipcMain.handle(ch.GET_SYNTHESIS_AI, async (_, context) => {
-  const voicePath = require('path').join(global.VAULT_PATH, '00-System', 'core', 'voice-profile.md')
-  try { return await require('./src/synthesizer').getAISynthesis(context, voicePath, global.CLAUDE_BIN) }
+  const voicePath = require('path').join(resolveVaultPath(), '00-System', 'core', 'voice-profile.md')
+  try { return await require('./src/synthesizer').getAISynthesis(context, voicePath, resolveClaudeBin()) }
   catch (e) { return null }
 })
 

@@ -673,11 +673,31 @@ export function wireChatListeners(id, sessionsObj) {
     try { parsed = JSON.parse(msg) } catch {}
 
     if (parsed?.type === 'binary-missing') {
+      const reasonCopy = {
+        'unconfigured': 'No Claude CLI path is configured. Open Settings → Re-detect.',
+        'invalid-type': 'Configured path is not a string (got: ' + parsed.path + ').',
+        'path-missing': 'Path <code>' + (parsed.path || '?') + '</code> does not exist on disk.',
+        'not-executable': 'Path <code>' + (parsed.path || '?') + '</code> exists but is not executable.',
+      }
+      const line = reasonCopy[parsed.reason] || ('Claude CLI not found at <code>' + (parsed.path || 'configured path') + '</code>.')
       const card = document.createElement('div')
       card.className = 'chat-error binary-missing-card'
       card.innerHTML = `
-        <div style="margin-bottom:8px">Claude CLI not found at <code>${parsed.path || 'configured path'}</code>.</div>
-        <div style="margin-bottom:10px;opacity:0.7">It may have been moved or uninstalled.</div>
+        <div style="margin-bottom:6px"><strong>Claude CLI issue</strong></div>
+        <div style="margin-bottom:8px">${line}</div>
+        <div style="margin-bottom:10px;opacity:0.55;font-size:11px">reason: ${parsed.reason || 'unknown'}</div>
+        <div style="display:flex;gap:8px">
+          <button class="preflight-btn" onclick="window.ace.preflight.recheckBinary()">Re-detect</button>
+          <button class="preflight-btn" onclick="document.getElementById('settings-overlay')?.classList.add('open')">Open Settings</button>
+        </div>`
+      msgsEl.appendChild(card)
+    } else if (parsed?.type === 'spawn-failed') {
+      const card = document.createElement('div')
+      card.className = 'chat-error binary-missing-card'
+      card.innerHTML = `
+        <div style="margin-bottom:6px"><strong>Claude CLI failed to start</strong></div>
+        <div style="margin-bottom:8px">${parsed.message || 'spawn error'}</div>
+        <div style="margin-bottom:10px;opacity:0.55;font-size:11px">code: ${parsed.code || '?'} · path: <code>${parsed.path || '?'}</code></div>
         <div style="display:flex;gap:8px">
           <button class="preflight-btn" onclick="window.ace.preflight.recheckBinary()">Re-detect</button>
           <button class="preflight-btn" onclick="document.getElementById('settings-overlay')?.classList.add('open')">Open Settings</button>
