@@ -91,11 +91,15 @@ const WINDOWS_CLAUDE_PATHS = [
 ]
 const KNOWN_PATHS = process.platform === 'win32' ? WINDOWS_CLAUDE_PATHS : MACOS_CLAUDE_PATHS
 
+// `which` is a POSIX tool; `where.exe` is the Windows equivalent. Windows
+// output can list multiple matches across lines — take the first.
+const WHICH_CMD = process.platform === 'win32' ? 'where.exe' : 'which'
+
 function detectClaudeBinary() {
-  // Try which first
+  // Try PATH lookup first
   let found = null
   try {
-    const result = execSync('which claude', { encoding: 'utf8', env: process.env }).trim()
+    const result = execSync(`${WHICH_CMD} claude`, { encoding: 'utf8', env: process.env }).trim().split(/\r?\n/)[0]
     if (result && fs.existsSync(result)) found = result
   } catch {}
 
@@ -287,9 +291,10 @@ function runBinary(bin, args, timeoutMs = 3000) {
 }
 
 function findBinary(name, knownPaths) {
-  // Try PATH lookup first (works in dev mode with full shell env)
+  // Try PATH lookup first (works in dev mode with full shell env).
+  // On Windows, `where.exe` may list multiple paths across lines — take the first.
   try {
-    const result = execSync(`which ${name}`, { encoding: 'utf8', env: process.env }).trim()
+    const result = execSync(`${WHICH_CMD} ${name}`, { encoding: 'utf8', env: process.env }).trim().split(/\r?\n/)[0]
     if (result && fs.existsSync(result)) return result
   } catch {}
   // Fall back to known install locations (covers packaged-app case)
