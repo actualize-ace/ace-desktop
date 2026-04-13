@@ -1,0 +1,41 @@
+name: Bug report
+description: Something broken in ACE Desktop
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please include OS + version + steps to reproduce.
+  - type: input
+    id: version
+    attributes:
+      label: ACE version
+      description: "Check the footer badge inside the app, or the filename you downloaded."
+      placeholder: "0.1.3"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Windows 10
+        - Windows 11
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Include steps to reproduce, what you expected, what actually happened.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console output (optional)
+      description: "Open DevTools (Cmd/Ctrl+Shift+I) → Console tab → copy any red error lines."
+      render: shell
