@@ -772,6 +772,8 @@ body.light .alpha-pop-link:hover { color: #3a288a; background: rgba(100,90,160,0
   flex-direction: column; padding: 0;
 }
 .sidebar.collapsed .sidebar-version { display: none; }
+.sidebar.collapsed .sidebar-meta { display: none; }
+.sidebar.collapsed .nav-learn-dot { display: none; }
 
 /* ─── Preflight Binary Status ────────────────────────────────────────────── */
 .preflight-status {
