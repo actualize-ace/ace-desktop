@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Memory Card — Prototype</title>
+<style>
+  :root {
+    --bg-deep:    #080a12;
+    --bg-surface: #0c0e18;
+    --bg-elevated:#141828;
+    --bg-card:    #101420;
+    --border:      rgba(140,120,255,0.10);
+    --border-hover:rgba(140,120,255,0.22);
+    --gold:       #c8a0f0;
+    --gold-dim:   #a080c8;
+    --warm-gold:  #d4a574;
+    --text-primary:   #d8d4e4;
+    --text-secondary: #b8b0cc;
+    --text-dim:       #8c8ca8;
+    --authority: #c8a0f0;
+    --capacity:  #60d8a8;
+    --expansion: #e080a0;
+    --green:     #60d8a8;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'DM Sans', -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--sans);
+    padding: 40px 20px;
+  }
+
+  .page-title {
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin: 0 0 4px;
+    text-align: center;
+  }
+  .page-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: center;
+    margin: 0 0 40px;
+    font-family: var(--mono);
+  }
+
+  .chat-scroll {
+    max-width: 640px;
+    margin: 0 auto 40px;
+    padding: 24px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .variant-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--warm-gold);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin: 0 0 14px;
+  }
+
+  /* ───── real chat-message styling for context ───── */
+  .chat-msg {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+  }
+  .chat-msg.user {
+    padding: 10px 14px;
+    background: rgba(200,160,240,0.06);
+    border: 1px solid rgba(200,160,240,0.12);
+    border-radius: 12px 12px 4px 12px;
+    color: var(--text-primary);
+    margin-left: auto;
+    max-width: 80%;
+    width: fit-content;
+  }
+  .chat-msg.ace {
+    color: var(--text-primary);
+  }
+
+  /* ───── real tool-card styling (matches chat-tool-block) ───── */
+  .chat-tool-block {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 8px 0;
+    overflow: hidden;
+    background: rgba(16,20,32,0.4);
+  }
+  .chat-tool-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px;
+    font-family: var(--mono); font-size: 9px; color: var(--text-secondary);
+  }
+  .chat-tool-icon { font-size: 11px; }
+  .chat-tool-name { font-weight: 500; letter-spacing: 0.02em; }
+  .chat-tool-path { color: var(--text-dim); }
+  .chat-tool-check { margin-left: auto; color: var(--capacity); font-size: 10px; }
+
+  /* ═════════════════════════════════════════════════════════ */
+  /*  MEMORY CARD — V1: Minimal ambient whisper                */
+  /* ═════════════════════════════════════════════════════════ */
+  .memory-v1 {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 2px;
+    margin: 10px 0;
+    font-family: var(--mono); font-size: 10px;
+    color: var(--text-dim);
+    opacity: 0;
+    animation: memory-whisper 2.4s ease-out 0.2s forwards;
+  }
+  .memory-v1 .brain { font-size: 11px; filter: saturate(0.7); }
+  .memory-v1 .type {
+    color: var(--capacity);
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .memory-v1 .hook {
+    color: var(--text-secondary);
+    font-family: var(--sans);
+    font-size: 12px;
+  }
+  @keyframes memory-whisper {
+    0%   { opacity: 0; transform: translateY(4px); }
+    20%  { opacity: 0.9; }
+    70%  { opacity: 0.9; }
+    100% { opacity: 0.55; transform: translateY(0); }
+  }
+
+  /* ═════════════════════════════════════════════════════════ */
+  /*  MEMORY CARD — V2: Standard (tool-card rhythm)            */
+  /* ═════════════════════════════════════════════════════════ */
+  .memory-v2 {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 8px 0;
+    overflow: hidden;
+    background: rgba(16,20,32,0.4);
+    animation: memory-bloom 1.8s ease-out 0.2s;
+  }
+  .memory-v2-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px;
+    font-family: var(--mono); font-size: 9px; color: var(--text-secondary);
+  }
+  .memory-v2 .brain-icon { font-size: 11px; }
+  .memory-v2 .title { font-weight: 500; }
+  .memory-v2 .type-badge {
+    font-size: 8px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-left: 4px;
+  }
+  .memory-v2 .type-badge.project { background: rgba(96,216,168,0.1); color: var(--capacity); border: 1px solid rgba(96,216,168,0.2); }
+  .memory-v2 .type-badge.feedback { background: rgba(212,165,116,0.1); color: var(--warm-gold); border: 1px solid rgba(212,165,116,0.2); }
+  .memory-v2 .type-badge.user { background: rgba(200,160,240,0.1); color: var(--authority); border: 1px solid rgba(200,160,240,0.2); }
+  .memory-v2 .type-badge.reference { background: rgba(140,140,168,0.06); color: var(--text-dim); border: 1px solid rgba(140,140,168,0.15); }
+  .memory-v2 .timestamp { margin-left: auto; color: var(--text-dim); font-size: 8px; }
+  .memory-v2-body {
+    padding: 0 12px 10px;
+    font-family: var(--sans); font-size: 12px; line-height: 1.5;
+    color: var(--text-primary);
+  }
+  @keyframes memory-bloom {
+    0%   { opacity: 0; transform: translateY(6px); box-shadow: 0 0 0 rgba(212,165,116,0); }
+    25%  { opacity: 1; transform: translateY(0); box-shadow: 0 0 14px rgba(212,165,116,0.22); }
+    100% { box-shadow: 0 0 0 rgba(212,165,116,0); }
+  }
+
+  /* ═════════════════════════════════════════════════════════ */
+  /*  MEMORY CARD — V3: Rich (header + body + filename row)    */
+  /* ═════════════════════════════════════════════════════════ */
+  .memory-v3 {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 8px 0;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(212,165,116,0.02), rgba(16,20,32,0.4));
+    animation: memory-bloom 1.8s ease-out 0.2s;
+    position: relative;
+  }
+  .memory-v3::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,165,116,0.4), transparent);
+    opacity: 0;
+    animation: memory-top-glint 1.8s ease-out 0.2s;
+  }
+  @keyframes memory-top-glint {
+    0%   { opacity: 0; }
+    25%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  .memory-v3-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px;
+    font-family: var(--mono); font-size: 9px; color: var(--text-secondary);
+  }
+  .memory-v3 .brain-icon { font-size: 11px; color: var(--warm-gold); }
+  .memory-v3 .title { font-weight: 500; color: var(--warm-gold); letter-spacing: 0.02em; }
+  .memory-v3 .type-badge {
+    font-size: 8px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-left: 4px;
+  }
+  .memory-v3 .type-badge.project { background: rgba(96,216,168,0.1); color: var(--capacity); border: 1px solid rgba(96,216,168,0.2); }
+  .memory-v3 .timestamp { margin-left: auto; color: var(--text-dim); font-size: 8px; }
+  .memory-v3-body {
+    padding: 0 12px 8px;
+    font-family: var(--sans); font-size: 12px; line-height: 1.5;
+    color: var(--text-primary);
+  }
+  .memory-v3-footer {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 12px 8px;
+    font-family: var(--mono); font-size: 8px;
+    color: var(--text-dim);
+    border-top: 1px solid rgba(140,120,255,0.05);
+  }
+  .memory-v3-footer .path { flex: 1; }
+  .memory-v3-footer .action {
+    color: var(--gold-dim); cursor: pointer;
+    text-decoration: none;
+    transition: color 0.12s;
+  }
+  .memory-v3-footer .action:hover { color: var(--gold); }
+
+  /* ═════════════════════════════════════════════════════════ */
+  /*  MEMORY CARD — V4: Inline badge (single-line chip)        */
+  /* ═════════════════════════════════════════════════════════ */
+  .memory-v4 {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 10px 5px 8px;
+    margin: 8px 0;
+    background: rgba(212,165,116,0.05);
+    border: 1px solid rgba(212,165,116,0.2);
+    border-radius: 999px;
+    font-family: var(--mono); font-size: 9px;
+    color: var(--text-secondary);
+    animation: memory-chip-pop 2s ease-out 0.2s;
+  }
+  .memory-v4 .brain-icon { font-size: 10px; }
+  .memory-v4 .type {
+    font-size: 7px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    background: rgba(96,216,168,0.12);
+    color: var(--capacity);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .memory-v4 .hook {
+    font-family: var(--sans); font-size: 12px;
+    color: var(--text-primary);
+  }
+  @keyframes memory-chip-pop {
+    0%   { opacity: 0; transform: translateY(4px) scale(0.96); box-shadow: 0 0 0 rgba(212,165,116,0); }
+    25%  { opacity: 1; transform: translateY(0) scale(1); box-shadow: 0 0 12px rgba(212,165,116,0.28); }
+    100% { box-shadow: 0 0 0 rgba(212,165,116,0); }
+  }
+
+  /* ═════════════════════════════════════════════════════════ */
+  /*  Type comparison strip                                    */
+  /* ═════════════════════════════════════════════════════════ */
+  .type-strip {
+    max-width: 640px;
+    margin: 0 auto 40px;
+    padding: 20px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .type-strip .variant-label { margin-bottom: 14px; }
+  .type-row + .type-row { margin-top: 10px; }
+
+  /* Motion-shy: replay button triggers animation */
+  .replay {
+    display: block; margin: 24px auto 0;
+    padding: 6px 14px; background: transparent;
+    border: 1px solid var(--border-hover); border-radius: 4px;
+    color: var(--text-secondary); cursor: pointer;
+    font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em;
+    transition: all 0.12s;
+  }
+  .replay:hover { border-color: var(--warm-gold); color: var(--warm-gold); }
+
+  .divider {
+    max-width: 640px;
+    margin: 36px auto;
+    border: 0;
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<p class="page-title">Memory Card · Prototype v1</p>
+<p class="page-sub">2026-04-12 · 4 variants · matched to real chat tokens</p>
+
+<div class="chat-scroll" id="scroll">
+  <p class="variant-label">V1 · Minimal whisper — lowest chrome, ambient fade</p>
+
+  <div class="chat-msg user">Draft the Aurora partnership memo. Reference last week's revenue and her positioning notes.</div>
+
+  <div class="chat-msg ace">On it. Pulling your context.</div>
+
+  <div class="chat-tool-block">
+    <div class="chat-tool-header">
+      <span class="chat-tool-icon">📁</span>
+      <span class="chat-tool-name">Read</span>
+      <span class="chat-tool-path">04-Network/people/aurora.md</span>
+      <span class="chat-tool-check">✓</span>
+    </div>
+  </div>
+
+  <div class="chat-tool-block">
+    <div class="chat-tool-header">
+      <span class="chat-tool-icon">📝</span>
+      <span class="chat-tool-name">Write</span>
+      <span class="chat-tool-path">11-Artifacts/aurora-memo.md</span>
+      <span class="chat-tool-check">✓</span>
+    </div>
+  </div>
+
+  <div class="chat-msg ace">Saved — 4 paragraphs, 3 sections.</div>
+
+  <div class="memory-v1">
+    <span class="brain">🧠</span>
+    <span class="type">project</span>
+    <span class="hook">Aurora deal closing week of Apr 13 — bump follow-up priority until Thursday.</span>
+  </div>
+</div>
+
+<div class="chat-scroll">
+  <p class="variant-label">V2 · Standard — matches tool-card rhythm exactly</p>
+
+  <div class="chat-msg ace">Saved the memo. Noting a pattern too.</div>
+
+  <div class="memory-v2">
+    <div class="memory-v2-header">
+      <span class="brain-icon">🧠</span>
+      <span class="title">Memory saved</span>
+      <span class="type-badge project">project</span>
+      <span class="timestamp">just now</span>
+    </div>
+    <div class="memory-v2-body">
+      Aurora deal closing week of Apr 13 — bump follow-up priority until Thursday.
+    </div>
+  </div>
+</div>
+
+<div class="chat-scroll">
+  <p class="variant-label">V3 · Rich — top glint + footer with path + "view" action</p>
+
+  <div class="chat-msg ace">Saved the memo. Logging what I learned.</div>
+
+  <div class="memory-v3">
+    <div class="memory-v3-header">
+      <span class="brain-icon">🧠</span>
+      <span class="title">Memory saved</span>
+      <span class="type-badge project">project</span>
+      <span class="timestamp">just now</span>
+    </div>
+    <div class="memory-v3-body">
+      Aurora deal closing week of Apr 13 — bump follow-up priority until Thursday.
+    </div>
+    <div class="memory-v3-footer">
+      <span class="path">memory/project_aurora_deal_april.md</span>
+      <a class="action">view →</a>
+    </div>
+  </div>
+</div>
+
+<div class="chat-scroll">
+  <p class="variant-label">V4 · Inline chip — pill-shaped, single-line, most compact</p>
+
+  <div class="chat-msg ace">Saved the memo.</div>
+
+  <div class="memory-v4">
+    <span class="brain-icon">🧠</span>
+    <span class="type">project</span>
+    <span class="hook">Aurora deal closing week of Apr 13 — bump follow-up until Thursday.</span>
+  </div>
+</div>
+
+<hr class="divider" />
+
+<div class="type-strip">
+  <p class="variant-label">Type palette — applied to V2 shell</p>
+
+  <div class="type-row memory-v2">
+    <div class="memory-v2-header">
+      <span class="brain-icon">🧠</span>
+      <span class="title">Memory saved</span>
+      <span class="type-badge user">user</span>
+      <span class="timestamp">just now</span>
+    </div>
+    <div class="memory-v2-body">Nikhil prefers terse summaries with no trailing recap — confirmed again.</div>
+  </div>
+
+  <div class="type-row memory-v2">
+    <div class="memory-v2-header">
+      <span class="brain-icon">🧠</span>
+      <span class="title">Memory saved</span>
+      <span class="type-badge feedback">feedback</span>
+      <span class="timestamp">just now</span>
+    </div>
+    <div class="memory-v2-body">Always verify recency claims against execution log before parroting old observations.</div>
+  </div>
+
+  <div class="type-row memory-v2">
+    <div class="memory-v2-header">
+      <span class="brain-icon">🧠</span>
+      <span class="title">Memory saved</span>
+      <span class="type-badge project">project</span>
+      <span class="timestamp">just now</span>
+    </div>
+    <div class="memory-v2-body">Aurora deal closing week of Apr 13 — bump follow-up priority until Thursday.</div>
+  </div>
+
+  <div class="type-row memory-v2">
+    <div class="memory-v2-header">
+      <span class="brain-icon">🧠</span>
+      <span class="title">Memory saved</span>
+      <span class="type-badge reference">reference</span>
+      <span class="timestamp">just now</span>
+    </div>
+    <div class="memory-v2-body">Linear project "INGEST" tracks all pipeline bugs — check there for context.</div>
+  </div>
+</div>
+
+<button class="replay" onclick="document.querySelectorAll('[class^=memory-]').forEach(el => { const anims = el.getAnimations ? el.getAnimations() : []; anims.forEach(a => { a.cancel(); a.play(); }); });">↻ Replay animations</button>
+
+</body>
+</html>
