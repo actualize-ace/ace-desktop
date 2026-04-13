@@ -48,11 +48,14 @@ Target: first client build for Joe Hawley (macOS). Windows follows after Mac is 
 | Session containment + timer | Done | — | 3-per-pane limit with toast, countdown timer (15/30/60/90m) with warning→critical→expiry nudge, light+dark mode. Ritual entry (Feature B) deferred to next sprint. Commit `b990bc2`. [Design](docs/plans/2026-04-09-containment-ritual-ux.md) |
 | Process cleanup on exit | Done | — | `killAllChildren()` in main.js — covers `SIGINT`, `SIGTERM`, `process.on('exit')`, `uncaughtException`, `unhandledRejection`, and `before-quit`. Commit `9904225`. |
 | Native module bundling (ARM64) | Done | — | Electron 28→34 (Node 18→20 LTS, Chrome 120→132). better-sqlite3 9.4.3→12.8.0, node-pty 1.0.0→1.1.0. Packaged app verified on Apple Silicon. Commit `a67daa7`. |
-| Code signing / notarization | Not started | Blocks clean install | **Path A (ideal):** Apple Developer ID ($99/yr) → electron-builder afterSign hook → notarized DMG, clean install. **Path B (day-one fallback):** Unsigned DMG, Joe bypasses Gatekeeper via right-click > Open or `xattr -cr` during build session. Document both. Get Apple Dev account set up either way. |
+| Code signing / notarization | Deferred | Optional for Path B distribution | **Path A (later):** Apple Developer ID ($99/yr) → electron-builder afterSign hook → notarized DMG, clean install. **Path B (current):** Unsigned DMG shipped via GitHub Releases. Clients right-click → Open on first launch (Gatekeeper bypass). Good enough for Joe/Marc/early cohort. Upgrade when Apple Dev account is set up. |
 | extraResources verification | Done | — | ace-analytics bundles into `Contents/Resources/ace-analytics/` correctly. Verified in packaged build. |
 | Slash command menu | Done | — | Inline `/` autocomplete in chat textarea. Upward menu, pinned-first, fuzzy filter, auto-send on select. Font-matched to Cmd+K. [Design](docs/plans/2026-04-11-slash-menu-design.md) · [Plan](docs/plans/2026-04-11-slash-menu.md) |
-| Onboarding tutorial | Done | — | Learn tab with 8-lesson Essentials track (~12 min): Triad intro, Vault, Command Center, Chat, Session Rails, /start, /eod, Going Deeper. Spotlight overlay with edge detection + waitForSelector on key lessons, prefill-composer action for /start + /eod, prerequisite gating for Lesson 5 (send-message), first-run auto-routing, skip + resume, persistent knowledge base after. Content in `renderer/data/learn/*.md` with YAML frontmatter. [Design](docs/plans/2026-04-12-onboarding-tutorial-design.md) · [Plan](docs/plans/2026-04-12-onboarding-tutorial.md) |
-| First client deploy test | Not started | Blocks ship | Joe Hawley macOS build verification |
+| Onboarding tutorial | Done | — | Learn tab with 8-lesson Essentials track (~12 min): Triad intro, Vault, Command Center, Chat, Session Rails, /start, /eod, Going Deeper. Spotlight overlay with pulsing gold ring + scroll-into-view + edge-detection on key lessons, prefill-composer action for /start + /eod + Going Deeper CTA, first-run auto-routing, skip + resume, welcome bloom on fresh install, persistent knowledge base. Content in `renderer/data/learn/*.md` with YAML frontmatter. [Design](docs/plans/2026-04-12-onboarding-tutorial-design.md) · [Plan](docs/plans/2026-04-12-onboarding-tutorial.md) |
+| App renamed to ACE | Done | — | `build.productName` + window title: "ACE Desktop" → "ACE". Top-level productName + `app.setName('ACE')` were already "ACE" so userData path unchanged. DMG filename: `ACE-0.1.0-arm64.dmg`. Commit `fece39d`. |
+| App icon regenerated | Done | — | `ace.icns` still contained the old gold-spade logo; regenerated from current `ace.png` (concave triangle + orb) at all 10 standard icns sizes via iconutil. Commit `c1a2fdd`. |
+| Mac DMG distribution (unsigned) | Done | — | First packaged v0.1.0 build published to GitHub Releases on 2026-04-12 — tag `ace-desktop-v0.1.0`. Clients download, drag to Applications, right-click → Open on first launch (Gatekeeper bypass). Build command: `cd ace-desktop && npm run dist` → `dist/ACE-{version}-arm64.dmg`. |
+| First client deploy test | Not started | Blocks ship | Joe Hawley macOS build verification — install from GitHub Releases link. |
 
 ---
 
@@ -211,6 +214,42 @@ Depends on: Desktop shipped to clients + onboarding flow includes integration wi
 Target: ~$292K across 5 betas. App subscription ARR layered on top starting Beta 3.
 
 ---
+
+## Release Workflow
+
+Current approach until `electron-updater` ships: GitHub Releases + manual install.
+
+**To cut a new release:**
+
+```bash
+cd ~/Documents/Actualize/ace-desktop
+
+# 1. Verify your changes work in dev
+npm start
+
+# 2. Bump version in package.json (semver: major.minor.patch)
+#    Fix → patch (0.1.0 → 0.1.1)
+#    Feature → minor (0.1.0 → 0.2.0)
+#    Breaking → major (0.1.0 → 1.0.0)
+
+# 3. Commit + push
+git add package.json && git commit -m "chore: bump version to X.Y.Z" && git push
+
+# 4. Build
+npm run dist
+# Output: dist/ACE-X.Y.Z-arm64.dmg
+
+# 5. Publish to GitHub Releases
+#    https://github.com/mythopoetix/nikhil/releases/new
+#    Tag: ace-desktop-vX.Y.Z · Target: main · Attach DMG
+```
+
+**Install instructions for clients** (include in release notes):
+1. Download the `.dmg` → drag to Applications
+2. **Right-click** the app in Applications → **Open** (first launch only, Gatekeeper bypass)
+3. Confirm the security prompt
+
+**Future:** once `electron-updater` is wired (see Phase 2 "App auto-update"), clients never download manually again — the app auto-pulls from GitHub Releases.
 
 ## How to Use This File
 
