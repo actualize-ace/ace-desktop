@@ -2,12 +2,24 @@
 // parses NDJSON output, forwards structured events to renderer via IPC.
 // Each message is a separate process invocation. Multi-turn via --resume.
 
-const { spawn } = require('child_process')
+const { spawn, spawnSync } = require('child_process')
 const path = require('path')
 const fs = require('fs')
 const ch = require('./ipc-channels')
 
 const sessions = new Map() // chatId → { proc, claudeSessionId }
+
+// Windows ignores SIGTERM for non-console apps and has no concept of signal-
+// based graceful shutdown. `taskkill /T /F` force-kills the process tree,
+// matching the behavior we already get from SIGTERM on Unix.
+function killProc(proc) {
+  if (!proc || !proc.pid) return
+  if (process.platform === 'win32') {
+    try { spawnSync('taskkill', ['/pid', String(proc.pid), '/T', '/F']) } catch {}
+  } else {
+    try { proc.kill('SIGTERM') } catch {}
+  }
+}
 
 function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   // Kill any existing process for this chatId
@@ -111,14 +123,14 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
 function cancel(chatId) {
   const s = sessions.get(chatId)
   if (s?.proc) {
-    try { s.proc.kill('SIGTERM') } catch {}
+    killProc(s.proc)
     sessions.delete(chatId)
   }
 }
 
 function cancelAll() {
   for (const [, s] of sessions) {
-    try { s.proc.kill('SIGTERM') } catch {}
+    killProc(s.proc)
   }
   sessions.clear()
 }
