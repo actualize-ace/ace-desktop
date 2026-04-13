@@ -7,18 +7,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-deep: #060504;
-      --bg-surface: #0a0806;
-      --bg-elevated: #1a1612;
-      --bg-card: #12100c;
-      --border: rgba(212,165,116,0.08);
-      --border-hover: rgba(212,165,116,0.18);
-      --gold: #d4a574;
-      --gold-dim: #8a6a44;
-      --green: #6db88f;
-      --text-primary: #e8ddd0;
-      --text-secondary: #8a7d6f;
-      --text-dim: #5a5248;
+      --bg-deep:    #080a12;
+      --bg-surface: #0c0e18;
+      --bg-elevated:#141828;
+      --bg-card:    rgba(16,20,32,0.72);
+      --border:      rgba(140,120,255,0.10);
+      --border-hover:rgba(140,120,255,0.22);
+      --purple:     #c8a0f0;
+      --purple-deep:#8878ff;
+      --ark:        #b080e0;
+      --green:      #60d8a8;
+      --blue-grey:  #70b0e0;
+      --gold-warm:  #d4a574;
+      --text-primary:   #d8d4e4;
+      --text-secondary: #9898b8;
+      --text-dim:       #6e6e88;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -31,91 +34,324 @@
       align-items: center;
       justify-content: center;
       -webkit-app-region: drag;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── Atmospheric layer — slow-drifting nebula ── */
+    .atmosphere {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .nebula {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.55;
+      mix-blend-mode: screen;
+    }
+    .nebula-1 {
+      width: 640px; height: 640px;
+      background: radial-gradient(circle, rgba(136,120,255,0.55) 0%, rgba(136,120,255,0.12) 40%, transparent 70%);
+      top: -20%; left: -15%;
+      animation: drift-1 38s ease-in-out infinite;
+    }
+    .nebula-2 {
+      width: 560px; height: 560px;
+      background: radial-gradient(circle, rgba(96,216,168,0.38) 0%, rgba(96,216,168,0.08) 40%, transparent 70%);
+      bottom: -18%; right: -12%;
+      animation: drift-2 44s ease-in-out infinite;
+    }
+    .nebula-3 {
+      width: 480px; height: 480px;
+      background: radial-gradient(circle, rgba(200,160,240,0.32) 0%, rgba(200,160,240,0.08) 40%, transparent 70%);
+      top: 30%; right: -8%;
+      animation: drift-3 52s ease-in-out infinite;
+    }
+    .nebula-4 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(112,176,224,0.25) 0%, rgba(112,176,224,0.05) 50%, transparent 75%);
+      bottom: 20%; left: -8%;
+      animation: drift-4 46s ease-in-out infinite;
+    }
+    @keyframes drift-1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(120px, 60px) scale(1.08); }
+      66% { transform: translate(-40px, 100px) scale(0.96); }
+    }
+    @keyframes drift-2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-100px, -80px) scale(1.12); }
+    }
+    @keyframes drift-3 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      40% { transform: translate(-60px, 80px) scale(0.92); }
+      80% { transform: translate(60px, -40px) scale(1.06); }
+    }
+    @keyframes drift-4 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(80px, -60px) scale(1.1); }
+    }
+
+    /* Starfield — subtle twinkle dots */
+    .starfield {
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 12% 22%, rgba(216,212,228,0.55), transparent 50%),
+        radial-gradient(1px 1px at 28% 68%, rgba(216,212,228,0.45), transparent 50%),
+        radial-gradient(1px 1px at 44% 14%, rgba(216,212,228,0.4), transparent 50%),
+        radial-gradient(1px 1px at 58% 82%, rgba(216,212,228,0.55), transparent 50%),
+        radial-gradient(1px 1px at 72% 40%, rgba(216,212,228,0.35), transparent 50%),
+        radial-gradient(1px 1px at 86% 74%, rgba(216,212,228,0.5), transparent 50%),
+        radial-gradient(1px 1px at 16% 88%, rgba(216,212,228,0.4), transparent 50%),
+        radial-gradient(1px 1px at 90% 18%, rgba(216,212,228,0.45), transparent 50%);
+      animation: twinkle 6s ease-in-out infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
     }
 
     .setup-card {
       -webkit-app-region: no-drag;
-      width: 520px;
+      width: 560px;
       background: var(--bg-card);
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 44px;
+      border-radius: 18px;
+      padding: 44px 52px 40px;
+      box-shadow:
+        0 32px 80px rgba(0,0,0,0.5),
+        0 0 0 1px rgba(140,120,255,0.04),
+        inset 0 1px 0 rgba(255,255,255,0.02);
+      position: relative;
+      z-index: 1;
     }
 
-    .logo {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 22px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    /* Large ACE mark integrated into the atmospheric backdrop */
+    .bg-mark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 420px;
+      height: 420px;
+      opacity: 0.22;
+      filter: blur(0.4px) drop-shadow(0 0 80px rgba(136,120,255,0.4));
+      animation: bg-mark-breath 9s ease-in-out infinite;
+      z-index: 0;
+      pointer-events: none;
     }
-    .logo-orb {
-      width: 18px; height: 18px; border-radius: 50%;
-      background: radial-gradient(circle at 38% 38%, var(--gold), var(--gold-dim));
-      box-shadow: 0 0 12px rgba(212,165,116,0.3);
-      flex-shrink: 0;
+    .bg-mark img { width: 100%; height: 100%; }
+    @keyframes bg-mark-breath {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.2; }
+      50% { transform: translate(-50%, -50%) scale(1.04); opacity: 0.28; }
+    }
+
+    /* In-card welcome heading */
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 26px;
+      font-weight: 300;
+      color: var(--text-primary);
+      letter-spacing: -0.005em;
+      margin: 0 0 6px;
+    }
+    h1 strong {
+      font-weight: 500;
+      background: linear-gradient(135deg, #c8a0f0 0%, #8878ff 50%, #60d8a8 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 300;
+      margin-bottom: 32px;
+      line-height: 1.55;
     }
 
     h1 {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 30px;
+      font-size: 28px;
       font-weight: 400;
       color: var(--text-primary);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
     }
 
     .subtitle {
-      font-size: 14px;
-      color: var(--text-primary);
+      font-size: 13px;
+      color: var(--text-secondary);
       font-weight: 300;
-      opacity: 0.65;
-      margin-bottom: 36px;
+      margin-bottom: 40px;
+      line-height: 1.55;
     }
 
-    .step { margin-bottom: 26px; }
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .step {
+      position: relative;
+    }
 
     .step-label {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
       font-weight: 500;
-      color: var(--text-primary);
-      margin-bottom: 8px;
-      opacity: 0.8;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-info {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0;
+      text-transform: none;
+      transition: border-color 0.14s, color 0.14s, background 0.14s;
+      position: relative;
+      top: -1px;
+    }
+    .step-info:hover {
+      border-color: var(--purple);
+      color: var(--purple);
+      background: rgba(200,160,240,0.06);
     }
 
     .step-row {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+    }
+
+    /* ── Popover tooltip (click-open, anchored to info icon) ── */
+    .info-popover {
+      position: absolute;
+      top: 26px;
+      left: 0;
+      z-index: 10;
+      min-width: 280px;
+      max-width: 340px;
+      background: rgba(16,20,32,0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-hover);
+      border-radius: 10px;
+      padding: 14px 16px;
+      box-shadow: 0 20px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(200,160,240,0.04);
+      opacity: 0;
+      transform: translateY(-4px);
+      pointer-events: none;
+      transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .info-popover.open {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .info-popover::before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: 14px;
+      width: 10px;
+      height: 10px;
+      background: rgba(16,20,32,0.95);
+      border-left: 1px solid var(--border-hover);
+      border-top: 1px solid var(--border-hover);
+      transform: rotate(45deg);
+    }
+    .info-popover p {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      font-weight: 300;
+      margin-bottom: 10px;
+    }
+    .info-popover p:last-child { margin-bottom: 0; }
+    .info-popover strong { color: var(--text-primary); font-weight: 500; }
+    .info-popover code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--purple);
+      background: rgba(200,160,240,0.08);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    .info-popover .pop-links {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .info-popover .pop-link {
+      font-size: 12px;
+      color: var(--purple);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: color 0.14s;
+    }
+    .info-popover .pop-link:hover { color: #e0c0ff; }
+    .info-popover .pop-link::before {
+      content: '↗';
+      font-size: 11px;
+      opacity: 0.7;
     }
 
     .step-value {
       flex: 1;
-      background: var(--bg-elevated);
-      border: 1px solid rgba(212,165,116,0.15);
-      border-radius: 6px;
+      background: rgba(20,24,40,0.5);
+      border: 1px solid var(--border);
+      border-radius: 7px;
       padding: 10px 14px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 12px;
-      color: rgba(232,221,208,0.5);
+      color: rgba(216,212,228,0.5);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       min-height: 42px;
       display: flex;
       align-items: center;
+      transition: border-color 0.2s, color 0.2s;
     }
-    .step-value.valid { color: var(--green); border-color: rgba(109,184,143,0.3); }
-    .step-value.error { color: #e08080; border-color: rgba(196,116,116,0.3); }
+    .step-value.valid { color: var(--green); border-color: rgba(96,216,168,0.3); }
+    .step-value.error { color: #e08080; border-color: rgba(224,112,128,0.28); }
 
     button {
-      background: var(--bg-elevated);
-      border: 1px solid rgba(212,165,116,0.3);
-      border-radius: 6px;
+      background: rgba(20,24,40,0.6);
+      border: 1px solid var(--border);
+      border-radius: 7px;
       color: var(--text-primary);
       font-family: 'DM Sans', sans-serif;
       font-size: 13px;
@@ -123,24 +359,68 @@
       padding: 10px 18px;
       cursor: pointer;
       white-space: nowrap;
-      transition: border-color 0.14s, background 0.14s;
+      transition: border-color 0.14s, background 0.14s, color 0.14s;
     }
-    button:hover { border-color: var(--gold); background: rgba(212,165,116,0.08); }
+    button:hover { border-color: var(--purple); background: rgba(200,160,240,0.08); color: var(--purple); }
 
     .status-dot {
-      width: 6px; height: 6px; border-radius: 50%;
+      width: 8px; height: 8px; border-radius: 50%;
       background: var(--text-dim); flex-shrink: 0;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
     }
-    .status-dot.green { background: var(--green); box-shadow: 0 0 7px rgba(109,184,143,0.5); }
-    .status-dot.amber { background: #d4c274; }
-    .status-dot.red   { background: #c47474; }
+    .status-dot.green {
+      background: var(--green);
+      box-shadow: 0 0 10px rgba(109,184,143,0.55), 0 0 20px rgba(109,184,143,0.25);
+      animation: status-breathe-green 2.8s ease-in-out infinite;
+    }
+    .status-dot.amber {
+      background: #d4c274;
+      box-shadow: 0 0 10px rgba(212,194,116,0.55), 0 0 20px rgba(212,194,116,0.22);
+      animation: status-breathe-amber 2.8s ease-in-out infinite;
+    }
+    .status-dot.red {
+      background: #c47474;
+      box-shadow: 0 0 10px rgba(196,116,116,0.55), 0 0 20px rgba(196,116,116,0.22);
+      animation: status-breathe-red 2.6s ease-in-out infinite;
+    }
+
+    @keyframes status-breathe-green {
+      0%, 100% {
+        box-shadow: 0 0 8px rgba(109,184,143,0.45), 0 0 14px rgba(109,184,143,0.18);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 14px rgba(109,184,143,0.85), 0 0 28px rgba(109,184,143,0.35);
+        transform: scale(1.15);
+      }
+    }
+    @keyframes status-breathe-amber {
+      0%, 100% {
+        box-shadow: 0 0 8px rgba(212,194,116,0.45), 0 0 14px rgba(212,194,116,0.15);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 14px rgba(212,194,116,0.85), 0 0 26px rgba(212,194,116,0.3);
+        transform: scale(1.12);
+      }
+    }
+    @keyframes status-breathe-red {
+      0%, 100% {
+        box-shadow: 0 0 8px rgba(196,116,116,0.45), 0 0 14px rgba(196,116,116,0.15);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 14px rgba(196,116,116,0.85), 0 0 26px rgba(196,116,116,0.3);
+        transform: scale(1.12);
+      }
+    }
 
     .install-guide {
       display: none;
-      background: var(--bg-elevated);
+      background: rgba(12,14,24,0.5);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 14px;
+      border-radius: 7px;
+      padding: 12px 14px;
       margin-top: 10px;
     }
     .install-guide.visible { display: block; }
@@ -149,132 +429,197 @@
       display: flex;
       align-items: flex-start;
       gap: 10px;
-      padding: 6px 0;
-      font-size: 13px;
-      color: var(--text-primary);
+      padding: 4px 0;
+      font-size: 12.5px;
+      color: var(--text-secondary);
       font-weight: 300;
-      opacity: 0.8;
+      line-height: 1.55;
     }
     .install-step .num {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      color: var(--gold);
-      width: 18px;
+      color: var(--purple);
+      width: 16px;
       flex-shrink: 0;
-      margin-top: 1px;
+      margin-top: 2px;
+      opacity: 0.75;
+    }
+    .install-step strong {
+      color: var(--text-primary);
+      font-weight: 500;
     }
     .install-step code {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      color: var(--gold);
-      background: rgba(212,165,116,0.08);
+      color: var(--purple);
+      background: rgba(200,160,240,0.08);
       padding: 2px 6px;
       border-radius: 3px;
     }
 
-    .warning {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 8px;
-      color: #d4c274;
-      letter-spacing: 0.5px;
-      margin-top: 5px;
-      display: none;
-    }
-
     .btn-primary {
       width: 100%;
-      background: var(--gold);
-      border: 1px solid var(--gold);
-      color: #060504;
+      background: linear-gradient(135deg, var(--gold-warm) 0%, #e0b888 100%);
+      border: 1px solid var(--gold-warm);
+      color: #1a1422;
       font-family: 'DM Sans', sans-serif;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 600;
       padding: 14px;
-      margin-top: 12px;
-      border-radius: 8px;
+      margin-top: 20px;
+      border-radius: 10px;
       cursor: pointer;
-      transition: background 0.14s, opacity 0.14s;
+      letter-spacing: 0.01em;
+      transition: filter 0.14s, opacity 0.14s, transform 0.1s;
+      box-shadow: 0 4px 24px rgba(212,165,116,0.28);
     }
-    .btn-primary:hover { background: #e0b888; border-color: #e0b888; }
-    .btn-primary:disabled { opacity: 0.25; cursor: not-allowed; }
+    .btn-primary:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
+    .btn-primary:active:not(:disabled) { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.25; cursor: not-allowed; box-shadow: none; }
   </style>
 </head>
 <body>
+  <div class="atmosphere">
+    <div class="starfield"></div>
+    <div class="nebula nebula-1"></div>
+    <div class="nebula nebula-2"></div>
+    <div class="nebula nebula-3"></div>
+    <div class="nebula nebula-4"></div>
+    <div class="bg-mark"><img src="../assets/ace.png" alt=""></div>
+  </div>
   <div class="setup-card">
-    <div class="logo">
-      <div class="logo-orb"></div>
-      ACE Desktop
-    </div>
-    <h1>Welcome</h1>
-    <p class="subtitle">Connect your vault and Claude Code to get started.</p>
+    <h1>Welcome to <strong>ACE</strong></h1>
+    <p class="subtitle">A few pieces need to be in place. We'll check each one.</p>
 
-    <div class="step">
-      <div class="step-label">01 — ACE Vault Folder</div>
-      <div class="step-row">
-        <div class="step-value" id="vault-path">No folder selected</div>
-        <div class="status-dot" id="vault-dot"></div>
-        <button id="vault-btn">Browse</button>
-      </div>
-      <div class="warning" id="vault-warning">Please select your ACE vault folder.</div>
-    </div>
-
-    <div class="step">
-      <div class="step-label">02 — Claude Code Binary</div>
-      <div class="step-row">
-        <div class="step-value" id="binary-path">Detecting…</div>
-        <div class="status-dot" id="binary-dot"></div>
-        <button id="recheck-btn">Check Again</button>
-      </div>
-
-      <div class="install-guide" id="install-guide">
-        <div class="install-step">
-          <span class="num">1.</span>
-          <span>Install Node.js from <strong>nodejs.org</strong></span>
+    <div class="steps">
+      <div class="step">
+        <div class="step-label">
+          01 · Vault folder
+          <span class="step-info" data-pop="vault">i</span>
         </div>
-        <div class="install-step">
-          <span class="num">2.</span>
-          <span>Run: <code>npm install -g @anthropic-ai/claude-code</code></span>
+        <div class="step-row">
+          <div class="step-value" id="vault-path">No folder selected</div>
+          <div class="status-dot" id="vault-dot"></div>
+          <button id="vault-btn">Browse</button>
         </div>
-        <div class="install-step">
-          <span class="num">3.</span>
-          <span>Run <code>claude</code> once to authenticate via browser</span>
+        <div class="info-popover" id="pop-vault">
+          <p>Your markdown-based ACE system — a folder containing <strong>00-System/</strong>, <strong>CLAUDE.md</strong>, and <code>.mcp.json</code>.</p>
+          <p>Don't have one? Your operator hands it off during your first session, or you receive it via Blueprint delivery.</p>
         </div>
       </div>
-    </div>
 
-    <div class="step">
-      <div class="step-label">03 — Anthropic API Key <span style="opacity:0.45;font-size:11px;font-weight:400">(optional — enables AI synthesis bar)</span></div>
-      <div class="step-row">
-        <input type="password" id="api-key-input" placeholder="sk-ant-..." style="
-          flex:1; background:var(--bg-elevated); border:1px solid rgba(212,165,116,0.15);
-          border-radius:6px; padding:10px 14px; font-family:'JetBrains Mono',monospace;
-          font-size:12px; color:var(--text-primary); min-height:42px; outline:none;
-          transition:border-color 0.14s;
-        " />
-        <div class="status-dot" id="api-dot"></div>
+      <div class="step">
+        <div class="step-label">
+          02 · Claude Code
+          <span class="step-info" data-pop="claude">i</span>
+        </div>
+        <div class="step-row">
+          <div class="step-value" id="binary-path">Detecting…</div>
+          <div class="status-dot" id="binary-dot"></div>
+          <button id="recheck-btn">Re-check</button>
+        </div>
+        <div class="info-popover" id="pop-claude">
+          <p>The CLI that powers ACE. Install via npm, then authenticate:</p>
+          <p><code>npm install -g @anthropic-ai/claude-code</code></p>
+          <p>Then run <code>claude</code> once to sign in through your browser.</p>
+          <div class="pop-links">
+            <a class="pop-link" data-url="https://docs.claude.com/en/docs/claude-code/overview">Claude Code docs</a>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <div class="step">
+        <div class="step-label">
+          03 · Node.js
+          <span class="step-info" data-pop="node">i</span>
+        </div>
+        <div class="step-row">
+          <div class="step-value" id="node-path">Detecting…</div>
+          <div class="status-dot" id="node-dot"></div>
+        </div>
+        <div class="info-popover" id="pop-node">
+          <p>Runtime for Claude CLI and MCP servers. Version <strong>20 or higher</strong>.</p>
+          <p>On macOS: <code>brew install node</code>. On Windows: download the LTS installer.</p>
+          <div class="pop-links">
+            <a class="pop-link" data-url="https://nodejs.org/en/download">Download Node.js</a>
+            <a class="pop-link" data-url="https://brew.sh">Install Homebrew (macOS)</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-label">
+          04 · Git
+          <span class="step-info" data-pop="git">i</span>
+        </div>
+        <div class="step-row">
+          <div class="step-value" id="git-path">Detecting…</div>
+          <div class="status-dot" id="git-dot"></div>
+        </div>
+        <div class="info-popover" id="pop-git">
+          <p>For vault syncing, updates, and pulling new skills from ace-core.</p>
+          <p>On macOS: <code>xcode-select --install</code>. On Windows: Git for Windows bundles everything.</p>
+          <div class="pop-links">
+            <a class="pop-link" data-url="https://git-scm.com/downloads">Download Git</a>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.steps -->
 
     <button class="btn-primary" id="launch-btn" disabled>Save &amp; Launch ACE</button>
-  </div>
+  </div><!-- /.setup-card -->
 
   <script>
-    let state = { vaultPath: null, vaultValid: false, binaryPath: null, apiKey: '' }
+    let state = { vaultPath: null, vaultValid: false, binaryPath: null }
 
     const $ = id => document.getElementById(id)
 
+    // ── Popover toggle ────────────────────────────────────────────────
+    document.querySelectorAll('.step-info').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const popId = 'pop-' + btn.dataset.pop
+        const pop = document.getElementById(popId)
+        if (!pop) return
+        // Close any other open popovers first.
+        document.querySelectorAll('.info-popover.open').forEach(el => {
+          if (el !== pop) el.classList.remove('open')
+        })
+        pop.classList.toggle('open')
+      })
+    })
+    // Close popovers on outside click or Escape.
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.info-popover') && !e.target.closest('.step-info')) {
+        document.querySelectorAll('.info-popover.open').forEach(el => el.classList.remove('open'))
+      }
+    })
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.info-popover.open').forEach(el => el.classList.remove('open'))
+      }
+    })
+    // External links open in the system browser, not inside Electron.
+    document.querySelectorAll('.pop-link[data-url]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault()
+        const url = link.dataset.url
+        if (url && window.ace?.shell?.openExternal) {
+          window.ace.shell.openExternal(url)
+        }
+      })
+    })
+
+    // ── Vault detection ───────────────────────────────────────────────
     $('vault-btn').addEventListener('click', async () => {
       const result = await window.ace.setup.pickVault()
       if (!result) return
       state.vaultPath = result.vaultPath
       state.vaultValid = result.hasMcp
       $('vault-path').textContent = result.vaultPath
-      $('vault-path').className = 'step-value ' + (result.hasMcp ? 'valid' : '')
+      $('vault-path').className = 'step-value ' + (result.hasMcp ? 'valid' : 'error')
       $('vault-dot').className = 'status-dot ' + (result.hasMcp ? 'green' : 'amber')
-      $('vault-warning').textContent = result.hasMcp
-        ? ''
-        : 'Please select your ACE vault folder. If you haven\'t received your vault yet, your operator will set it up during your first session.'
-      $('vault-warning').style.display = result.hasMcp ? 'none' : 'block'
       checkReady()
     })
 
@@ -288,41 +633,73 @@
         $('binary-path').textContent = label
         $('binary-path').className = 'step-value valid'
         $('binary-dot').className = 'status-dot green'
-        $('install-guide').classList.remove('visible')
       } else {
         state.binaryPath = null
         $('binary-path').textContent = 'Not found'
         $('binary-path').className = 'step-value error'
         $('binary-dot').className = 'status-dot red'
-        $('install-guide').classList.add('visible')
       }
       checkReady()
     }
 
-    $('recheck-btn').addEventListener('click', detectBinary)
+    async function detectNode() {
+      $('node-path').textContent = 'Detecting\u2026'
+      $('node-dot').className = 'status-dot'
+      const result = await window.ace.setup.detectNode()
+      if (result && result.ok) {
+        $('node-path').textContent = result.version
+        $('node-path').className = 'step-value valid'
+        $('node-dot').className = 'status-dot green'
+      } else if (result && result.version) {
+        $('node-path').textContent = result.version + ' — needs v' + (result.min || 20) + '+'
+        $('node-path').className = 'step-value error'
+        $('node-dot').className = 'status-dot amber'
+      } else {
+        $('node-path').textContent = 'Not found'
+        $('node-path').className = 'step-value error'
+        $('node-dot').className = 'status-dot amber'
+      }
+    }
 
-    $('api-key-input').addEventListener('input', () => {
-      state.apiKey = $('api-key-input').value.trim()
-      $('api-dot').className = 'status-dot ' + (state.apiKey.startsWith('sk-ant-') ? 'green' : state.apiKey ? 'amber' : '')
+    async function detectGit() {
+      $('git-path').textContent = 'Detecting\u2026'
+      $('git-dot').className = 'status-dot'
+      const result = await window.ace.setup.detectGit()
+      if (result && result.ok) {
+        $('git-path').textContent = 'git ' + result.version
+        $('git-path').className = 'step-value valid'
+        $('git-dot').className = 'status-dot green'
+      } else {
+        $('git-path').textContent = 'Not found'
+        $('git-path').className = 'step-value error'
+        $('git-dot').className = 'status-dot amber'
+      }
+    }
+
+    $('recheck-btn').addEventListener('click', () => {
+      detectBinary()
+      detectNode()
+      detectGit()
     })
 
     function checkReady() {
+      // Launch requires vault + binary. Node + Git are soft warnings.
       $('launch-btn').disabled = !(state.vaultPath && state.vaultValid && state.binaryPath)
     }
 
     $('launch-btn').addEventListener('click', async () => {
       $('launch-btn').disabled = true
       $('launch-btn').textContent = 'Launching…'
-      const cfg = {
+      await window.ace.setup.saveConfig({
         vaultPath: state.vaultPath,
         claudeBinaryPath: state.binaryPath,
         configVersion: 1,
-      }
-      if (state.apiKey) cfg.anthropicApiKey = state.apiKey
-      await window.ace.setup.saveConfig(cfg)
+      })
     })
 
     detectBinary()
+    detectNode()
+    detectGit()
   </script>
 </body>
 </html>

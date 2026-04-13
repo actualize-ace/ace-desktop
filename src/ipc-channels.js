@@ -37,6 +37,8 @@ module.exports = {
   SAVE_CONFIG:     'save-config',
   PATCH_CONFIG:    'patch-config',
   DETECT_BINARY:   'detect-binary',
+  DETECT_NODE:     'detect-node',
+  DETECT_GIT:      'detect-git',
   PICK_VAULT:      'pick-vault',
 
   // Dashboard: new channels

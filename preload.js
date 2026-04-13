@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('ace', {
   // ─── Config / Setup ──────────────────────────────────────────────────────────
   setup: {
     detectBinary:  ()       => ipcRenderer.invoke(ch.DETECT_BINARY),
+    detectNode:    ()       => ipcRenderer.invoke(ch.DETECT_NODE),
+    detectGit:     ()       => ipcRenderer.invoke(ch.DETECT_GIT),
     pickVault:     ()       => ipcRenderer.invoke(ch.PICK_VAULT),
     saveConfig:    (config) => ipcRenderer.invoke(ch.SAVE_CONFIG, config),
     patchConfig:   (partial) => ipcRenderer.invoke(ch.PATCH_CONFIG, partial),

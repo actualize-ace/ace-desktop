@@ -242,6 +242,32 @@ ipcMain.handle(ch.DETECT_BINARY, () => {
   return detectClaudeBinary()
 })
 
+// Detect Node.js — parses `node --version` output, reports major version.
+ipcMain.handle(ch.DETECT_NODE, () => {
+  try {
+    const raw = execSync('node --version', { encoding: 'utf8', timeout: 3000, env: process.env }).trim()
+    // Output format: "v20.11.0"
+    const match = raw.match(/^v(\d+)\.(\d+)\.(\d+)/)
+    if (!match) return { ok: false, error: 'unparseable', raw }
+    const major = parseInt(match[1], 10)
+    return { ok: major >= 20, version: raw, major, min: 20 }
+  } catch (e) {
+    return { ok: false, error: 'not-found' }
+  }
+})
+
+// Detect Git — any modern version is fine.
+ipcMain.handle(ch.DETECT_GIT, () => {
+  try {
+    const raw = execSync('git --version', { encoding: 'utf8', timeout: 3000, env: process.env }).trim()
+    // Output format: "git version 2.39.5 (Apple Git-154)"
+    const match = raw.match(/git version (\S+)/)
+    return { ok: true, version: match ? match[1] : raw, raw }
+  } catch (e) {
+    return { ok: false, error: 'not-found' }
+  }
+})
+
 ipcMain.on(ch.PREFLIGHT_RECHECK_BINARY, () => {
   require('./src/preflight').run(mainWindow, global.CLAUDE_BIN, global.VAULT_PATH)
 })

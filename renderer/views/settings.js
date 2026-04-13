@@ -17,7 +17,7 @@ const CMD_COLORS = [
 const DEFAULTS = {
   chat: { model: 'opus', permissions: 'default', effort: 'high' },
   display: { theme: 'dark', fontSize: 'medium', sidebarCollapsed: false },
-  guardrails: { sessionCostWarning: 2.00, dailySpendWarning: 10.00 },
+  guardrails: { sessionCostWarning: 2.00 },
   sidebar: {
     commands: [
       { cmd: '/start', color: 'var(--gold)' },
@@ -109,26 +109,11 @@ export async function renderSettingsPanel() {
         </select>
       </div>
       <div class="settings-row">
-        <div class="settings-label">Lean Mode <span style="opacity:0.5;font-size:11px">— strips ~60k overhead tokens</span></div>
+        <div>
+          <div class="settings-label">Lean Mode</div>
+          <div style="font-size:9px;color:var(--text-dim);margin-top:2px;">Strips MCP overhead. Faster, lower token cost.</div>
+        </div>
         <div class="settings-toggle${d.chat?.lean !== false ? ' on' : ''}" data-setting="chat.lean"></div>
-      </div>
-    </div>
-
-    <div class="settings-section">
-      <div class="settings-section-label">System</div>
-      <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:6px">
-        <div class="settings-label">Vault Path</div>
-        <div class="settings-path-row">
-          <div class="settings-path" id="settings-vault-path">${config.vaultPath || '\u2014'}</div>
-          <button class="settings-path-btn" id="settings-pick-vault">Change</button>
-        </div>
-      </div>
-      <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:6px">
-        <div class="settings-label">Claude Binary</div>
-        <div class="settings-path-row">
-          <div class="settings-path" id="settings-binary-path">${config.claudeBinary || '\u2014'}</div>
-          <button class="settings-path-btn" id="settings-detect-binary">Re-detect</button>
-        </div>
       </div>
     </div>
 
@@ -156,29 +141,6 @@ export async function renderSettingsPanel() {
     </div>
 
     <div class="settings-section">
-      <div class="settings-section-label">Permissions</div>
-      <div class="settings-row">
-        <div>
-          <div class="settings-label">Build Mode</div>
-          <div style="font-size:8px;color:var(--text-dim);margin-top:2px;">Broad dev command permissions</div>
-        </div>
-        <div class="settings-toggle${state.buildModeOn ? ' on' : ''}" id="settings-build-toggle" data-setting="buildMode"></div>
-      </div>
-    </div>
-
-    <div class="settings-section">
-      <div class="settings-section-label">Cost & Usage</div>
-      <div class="settings-row">
-        <div class="settings-label">Session Cost Warning ($)</div>
-        <input class="settings-input" type="number" step="0.5" min="0" data-setting="guardrails.sessionCostWarning" value="${d.guardrails?.sessionCostWarning ?? 2.00}">
-      </div>
-      <div class="settings-row">
-        <div class="settings-label">Daily Spend Warning ($)</div>
-        <input class="settings-input" type="number" step="1" min="0" data-setting="guardrails.dailySpendWarning" value="${d.guardrails?.dailySpendWarning ?? 10.00}">
-      </div>
-    </div>
-
-    <div class="settings-section">
       <div class="settings-section-label">Sidebar Commands</div>
       <div class="settings-cmd-list" id="settings-cmd-list"></div>
       <button class="settings-add-cmd" id="settings-add-cmd">+ Add Command</button>
@@ -189,16 +151,54 @@ export async function renderSettingsPanel() {
       <div class="settings-row">
         <div class="settings-label">Default View</div>
         <select class="settings-select" data-setting="startup.defaultView">
-          ${sel('startup.defaultView', 'home', 'Home')}
+          ${sel('startup.defaultView', 'home', 'Command (Home)')}
           ${sel('startup.defaultView', 'terminal', 'Terminal')}
-          ${sel('startup.defaultView', 'vault', 'Vault')}
-          ${sel('startup.defaultView', 'graph', 'Graph')}
           ${sel('startup.defaultView', 'agents', 'Agents')}
+          ${sel('startup.defaultView', 'people', 'People')}
+          ${sel('startup.defaultView', 'vault', 'Vault')}
+          ${sel('startup.defaultView', 'history', 'History')}
+          ${sel('startup.defaultView', 'artifacts', 'Artifacts')}
+          ${sel('startup.defaultView', 'insight', 'Insight')}
+          ${sel('startup.defaultView', 'astro', 'Astro')}
+          ${sel('startup.defaultView', 'learn', 'Learn')}
         </select>
       </div>
       <div class="settings-row">
         <div class="settings-label">Auto-scroll Chat</div>
         <div class="settings-toggle${d.startup?.autoScroll !== false ? ' on' : ''}" data-setting="startup.autoScroll"></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-label">Cost & Safety</div>
+      <div class="settings-row">
+        <div class="settings-label">Session Cost Warning ($)</div>
+        <input class="settings-input" type="number" step="0.5" min="0" data-setting="guardrails.sessionCostWarning" value="${d.guardrails?.sessionCostWarning ?? 2.00}">
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Build Mode</div>
+          <div style="font-size:9px;color:var(--text-dim);margin-top:2px;">Broad dev command permissions. Use for build sprints.</div>
+        </div>
+        <div class="settings-toggle${state.buildModeOn ? ' on' : ''}" id="settings-build-toggle" data-setting="buildMode"></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-label">System</div>
+      <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:6px">
+        <div class="settings-label">Vault Path</div>
+        <div class="settings-path-row">
+          <div class="settings-path" id="settings-vault-path">${config.vaultPath || '\u2014'}</div>
+          <button class="settings-path-btn" id="settings-pick-vault">Change</button>
+        </div>
+      </div>
+      <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:6px">
+        <div class="settings-label">Claude Binary</div>
+        <div class="settings-path-row">
+          <div class="settings-path" id="settings-binary-path">${config.claudeBinaryPath || '\u2014'}</div>
+          <button class="settings-path-btn" id="settings-detect-binary">Re-detect</button>
+        </div>
       </div>
     </div>
   `
@@ -392,11 +392,12 @@ export function wireSettingsHandlers() {
   if (pickVaultBtn) {
     pickVaultBtn.addEventListener('click', async () => {
       const result = await window.ace.setup.pickVault()
-      if (result) {
-        document.getElementById('settings-vault-path').textContent = result
-        // Vault change requires full save + reload
+      // pickVault returns { vaultPath, hasMcp } or null on cancel
+      if (result && result.vaultPath) {
+        document.getElementById('settings-vault-path').textContent = result.vaultPath
+        // Vault change triggers a full save + index.html reload in main.js
         const config = await window.ace.setup.getConfig()
-        config.vaultPath = result
+        config.vaultPath = result.vaultPath
         await window.ace.setup.saveConfig(config)
       }
     })
@@ -406,11 +407,10 @@ export function wireSettingsHandlers() {
   if (detectBinaryBtn) {
     detectBinaryBtn.addEventListener('click', async () => {
       const result = await window.ace.setup.detectBinary()
-      if (result) {
-        document.getElementById('settings-binary-path').textContent = result
-        const config = await window.ace.setup.getConfig()
-        config.claudeBinary = result
-        await window.ace.setup.patchConfig({ claudeBinary: result })
+      // detectBinary returns { path, version } or null
+      if (result && result.path) {
+        document.getElementById('settings-binary-path').textContent = result.path
+        await window.ace.setup.patchConfig({ claudeBinaryPath: result.path })
       }
     })
   }

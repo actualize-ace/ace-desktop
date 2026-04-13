@@ -61,6 +61,7 @@
       </div>
     </div>
     <div class="titlebar-right">
+      <button class="alpha-pill" id="alpha-pill" title="ACE v0.1.0 · alpha — click for details">ALPHA</button>
       <div class="preflight-status" id="preflight-status" style="display:none">
         <div class="preflight-dot"></div>
         <span class="preflight-label" id="preflight-label"></span>
@@ -285,7 +286,7 @@
         </button>
         <div class="sidebar-meta">
           <div class="status-pulse" title="ACE Online"></div>
-          <div class="sidebar-version" id="sidebarVersion" title="Version"></div>
+          <button class="sidebar-version" id="sidebarVersion" title="Click for version + release notes"></button>
         </div>
       </div>
       <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle sidebar">◂ <span>Collapse</span></button>
@@ -601,6 +602,35 @@
     </div>
   </div>
 
+  <!-- Alpha / version popover -->
+  <div class="alpha-popover" id="alpha-popover" hidden>
+    <div class="alpha-pop-head">
+      <div class="alpha-pop-title">ACE <span id="alpha-pop-version">v0.1.0</span></div>
+      <div class="alpha-pop-tag">alpha · experimental</div>
+    </div>
+    <p class="alpha-pop-body">
+      You're on an early build. Features may shift, rough edges exist, and some flows are still being polished. Your feedback shapes the next release.
+    </p>
+    <div class="alpha-pop-list">
+      <div class="alpha-pop-item">
+        <span class="alpha-pop-dot"></span>
+        <span>Unsigned build — macOS needs a right-click → Open on first launch</span>
+      </div>
+      <div class="alpha-pop-item">
+        <span class="alpha-pop-dot"></span>
+        <span>Auto-update not wired yet — new releases require a manual re-install</span>
+      </div>
+      <div class="alpha-pop-item">
+        <span class="alpha-pop-dot"></span>
+        <span>Windows build still in development</span>
+      </div>
+    </div>
+    <div class="alpha-pop-actions">
+      <a class="alpha-pop-link" data-url="https://gist.github.com/mythopoetix/aa39a1831b4358e0452e8aed777fda2a">Changelog</a>
+      <a class="alpha-pop-link" data-url="mailto:nikhil@asraya.io?subject=ACE%20Desktop%20bug%20(v0.1.0)&body=What%20happened%3A%0A%0AWhat%20you%20expected%3A%0A%0ASteps%20to%20reproduce%3A%0A">Report a bug</a>
+    </div>
+  </div>
+
   <!-- Graph Tooltip -->
   <div class="graph-tooltip" id="graph-tooltip">
     <div class="graph-tooltip-title" id="graph-tooltip-title"></div>
@@ -848,7 +878,45 @@ document.querySelectorAll('[data-cmd]').forEach(el => {
     if (vEl && window.ace?.appVersion) {
       vEl.textContent = `v${window.ace.appVersion} · ${window.ace.appStage || 'alpha'}`
     }
+    // Sync popover version display.
+    const popVEl = document.getElementById('alpha-pop-version')
+    if (popVEl && window.ace?.appVersion) {
+      popVEl.textContent = `v${window.ace.appVersion}`
+    }
   } catch {}
+
+  // Alpha popover wiring — both the titlebar pill and the footer badge open
+  // the same popover. Click-outside + Escape to dismiss.
+  try {
+    const pop = document.getElementById('alpha-popover')
+    const pill = document.getElementById('alpha-pill')
+    const footer = document.getElementById('sidebarVersion')
+    const togglePop = (e) => {
+      e?.stopPropagation()
+      if (pop.hasAttribute('hidden')) pop.removeAttribute('hidden')
+      else pop.setAttribute('hidden', '')
+    }
+    pill?.addEventListener('click', togglePop)
+    footer?.addEventListener('click', togglePop)
+    document.addEventListener('click', (e) => {
+      if (!pop.hasAttribute('hidden')
+          && !e.target.closest('#alpha-popover')
+          && !e.target.closest('#alpha-pill')
+          && !e.target.closest('#sidebarVersion')) {
+        pop.setAttribute('hidden', '')
+      }
+    })
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !pop.hasAttribute('hidden')) pop.setAttribute('hidden', '')
+    })
+    pop.querySelectorAll('.alpha-pop-link[data-url]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault()
+        const url = link.dataset.url
+        if (url && window.ace?.shell?.openExternal) window.ace.shell.openExternal(url)
+      })
+    })
+  } catch (e) { console.warn('[alpha] popover wiring failed:', e) }
 
   // First-run: route to Learn view if user hasn't completed or dismissed essentials.
   try {
