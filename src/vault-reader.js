@@ -348,12 +348,10 @@ function parseDCAFrontmatter(vaultPath) {
 }
 
 function defaultCompassDirections() {
-  return {
-    north: { label: 'Visible expression', keywords: ['content', 'post', 'publish', 'talk', 'podcast', 'video', 'share'] },
-    east:  { label: 'Sovereign infrastructure', keywords: ['build', 'code', 'ship', 'system', 'automation', 'integration', 'deploy'] },
-    south: { label: 'Liberation and overflow', keywords: ['recovery', 'regulate', 'breath', 'body', 'rest', 'integration', 'audit-energy'] },
-    west:  { label: 'Lineage and devotion', keywords: ['strategy', 'ritual', 'ancestry', 'decision', 'vision', 'threshold'] },
-  }
+  // Return empty so compass shows a blank state rather than hardcoded vocabulary
+  // when a vault has no DCA frontmatter. The compass widget's !directions.north
+  // guard will render nothing, preventing any bleed of example data onto clients.
+  return {}
 }
 
 function defaultDCAFrontmatter() {

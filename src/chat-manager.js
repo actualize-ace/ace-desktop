@@ -105,10 +105,16 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
     process.env.PATH || '',
   ].filter(Boolean).join(process.platform === 'win32' ? ';' : ':')
 
+  // On Windows, .cmd wrappers require shell:true so the OS routes the
+  // invocation through cmd.exe — without it, stdio pipes never connect
+  // and the process hangs silently (node-pty works because ConPTY handles
+  // this internally; bare spawn does not).
+  const needsShell = process.platform === 'win32' && /\.(cmd|bat)$/i.test(claudeBin)
   const proc = spawn(claudeBin, args, {
     cwd,
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env, PATH: augmentedPath, TERM: 'xterm-256color', COLORTERM: 'truecolor' },
+    shell: needsShell,
   })
 
   // Spawn-level failures (ENOENT for node, EACCES, etc.) are emitted on the

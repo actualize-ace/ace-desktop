@@ -151,9 +151,11 @@ System state:
 Return JSON only. No markdown, no code fences.`
 
   return new Promise(resolve => {
+    const needsShell = process.platform === 'win32' && /\.(cmd|bat)$/i.test(binaryPath)
     const proc = execFile(binaryPath, ['--model', 'sonnet', '-p', prompt], {
       timeout: 30000,
       env: process.env,
+      shell: needsShell,
     }, (err, stdout) => {
       if (err) { console.error('[synthesizer] claude call failed:', err.message); resolve(null); return }
       const text = (stdout || '').trim()
