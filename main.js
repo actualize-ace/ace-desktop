@@ -543,6 +543,12 @@ ipcMain.handle(ch.GET_LAST_PULSE, () => {
   } catch (e) { return { timestamp: null, hoursAgo: null, error: e.message } }
 })
 
+ipcMain.handle(ch.GET_RITUAL_STREAK, () => {
+  try {
+    return require('./src/vault-reader').parseRitualStreak(global.VAULT_PATH)
+  } catch (e) { return { streak: 0, todayActive: false, todayPending: false, last7: [], error: e.message } }
+})
+
 ipcMain.handle(ch.MARK_DONE, (_, item) => {
   // item: { type, label, _raw: {...} }
   try {
@@ -720,6 +726,23 @@ ipcMain.handle(ch.ASTRO_TRANSITS, async () => {
     })
   })
 })
+
+// Natal chart + interpretations live in the user's vault at {vault}/data/.
+// Returns null if the file is missing → astro view renders empty state.
+function readVaultJson(relPath) {
+  const config = loadConfig()
+  const vaultPath = config?.vaultPath
+  if (!vaultPath) return null
+  const fullPath = require('path').join(vaultPath, relPath)
+  try {
+    const fs = require('fs')
+    if (!fs.existsSync(fullPath)) return null
+    return JSON.parse(fs.readFileSync(fullPath, 'utf8'))
+  } catch { return null }
+}
+
+ipcMain.handle(ch.ASTRO_NATAL, async () => readVaultJson('data/natal-chart.json'))
+ipcMain.handle(ch.ASTRO_INTERPRETATIONS, async () => readVaultJson('data/interpretations.json'))
 
 // ─── Insight: Deepgram STT + TTS ─────────────────────────────────────────────
 

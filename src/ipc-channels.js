@@ -89,6 +89,8 @@ module.exports = {
 
   // Astro
   ASTRO_TRANSITS:         'astro-transits',
+  ASTRO_NATAL:            'astro-natal',
+  ASTRO_INTERPRETATIONS:  'astro-interpretations',
 
   // Insight voice
   INSIGHT_TRANSCRIBE:     'insight-transcribe',
@@ -110,8 +112,9 @@ module.exports = {
   GET_NORTHSTAR:   'get-northstar',
   GET_DAILY_FOCUS: 'get-daily-focus',
   GET_BUILD_BLOCKS:'get-build-blocks',
-  GET_COMPASS:     'get-compass',
-  GET_LAST_PULSE:  'get-last-pulse',
+  GET_COMPASS:        'get-compass',
+  GET_LAST_PULSE:     'get-last-pulse',
+  GET_RITUAL_STREAK:  'get-ritual-streak',
   MARK_DONE:       'mark-done',
   SNOOZE_ITEM:     'snooze-item',
 }

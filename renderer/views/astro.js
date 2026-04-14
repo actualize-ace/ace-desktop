@@ -26,17 +26,15 @@ window.addEventListener('ace-theme-change', () => {
 
 async function loadNatalChart() {
   try {
-    const resp = await fetch('./data/natal-chart.json')
-    if (!resp.ok) return null
-    return await resp.json()
+    const data = await window.ace.astro.getNatalChart()
+    return data || null
   } catch { return null }
 }
 
 async function loadInterpretations() {
   try {
-    const resp = await fetch('./data/interpretations.json')
-    if (!resp.ok) return null
-    return await resp.json()
+    const data = await window.ace.astro.getInterpretations()
+    return data || null
   } catch { return null }
 }
 

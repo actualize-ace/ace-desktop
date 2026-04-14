@@ -66,8 +66,9 @@ contextBridge.exposeInMainWorld('ace', {
     getNorthStar:   () => ipcRenderer.invoke(ch.GET_NORTHSTAR),
     getDailyFocus:  () => ipcRenderer.invoke(ch.GET_DAILY_FOCUS),
     getBuildBlocks: () => ipcRenderer.invoke(ch.GET_BUILD_BLOCKS),
-    getCompass:     () => ipcRenderer.invoke(ch.GET_COMPASS),
-    getLastPulse:   () => ipcRenderer.invoke(ch.GET_LAST_PULSE),
+    getCompass:       () => ipcRenderer.invoke(ch.GET_COMPASS),
+    getLastPulse:     () => ipcRenderer.invoke(ch.GET_LAST_PULSE),
+    getRitualStreak:  () => ipcRenderer.invoke(ch.GET_RITUAL_STREAK),
     markDone:       (item) => ipcRenderer.invoke(ch.MARK_DONE, item),
     snoozeItem:     (item, days) => ipcRenderer.invoke(ch.SNOOZE_ITEM, item, days),
   },
@@ -125,7 +126,9 @@ contextBridge.exposeInMainWorld('ace', {
 
   // ─── Astro ─────────────────────────────────────────────────────────────────
   astro: {
-    getTransits: () => ipcRenderer.invoke(ch.ASTRO_TRANSITS),
+    getTransits:        () => ipcRenderer.invoke(ch.ASTRO_TRANSITS),
+    getNatalChart:      () => ipcRenderer.invoke(ch.ASTRO_NATAL),
+    getInterpretations: () => ipcRenderer.invoke(ch.ASTRO_INTERPRETATIONS),
   },
 
   // ─── Insight voice ─────────────────────────────────────────────────────────
