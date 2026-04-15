@@ -52,10 +52,26 @@ export default {
     const pending     = d.todayPending ?? false
     const last7       = d.last7       || []
 
-    const dotsHtml = last7.map((day, i) => {
-      const cls = ['rs-dot', day.active ? 'active' : '', i === 0 ? 'today' : ''].filter(Boolean).join(' ')
-      return `<div class="${cls}" title="${day.date}"></div>`
-    }).join('')
+    // Streak state: active | at-risk | broken
+    const streakState = todayActive ? 'active' : (pending && streak > 0) ? 'at-risk' : 'broken'
+
+    // Week summary — count of active days in last 7
+    const weekDone  = last7.filter(day => day.active).length
+    const weekTotal = last7.length || 7
+    const weekColor = weekDone >= 6 ? 'green' : weekDone >= 4 ? 'yellow' : 'red'
+
+    // Streak display
+    let streakDisplay, streakTooltip
+    if (streakState === 'broken') {
+      streakDisplay = `<span class="rs-count broken">—</span>`
+      streakTooltip = 'No active streak — run /start to begin'
+    } else {
+      streakDisplay = `<span class="rs-count ${streakState === 'at-risk' ? 'at-risk' : ''}">${streak}</span>
+                       <span class="rs-unit ${streakState === 'at-risk' ? 'at-risk' : ''}">day${streak !== 1 ? 's' : ''}</span>`
+      streakTooltip = streakState === 'active'
+        ? `${streak}-day daily ritual streak · today complete`
+        : `${streak}-day streak at risk — run /start today to keep it`
+    }
 
     // ─── Cadence (bottom half) ───
     const c = allData.cadence || {}
@@ -66,10 +82,10 @@ export default {
     const wOverdue = wColor !== 'green' && wColor !== 'dim'
     const mOverdue = mColor !== 'green' && mColor !== 'dim'
 
-    // Ring state — worst of the two
+    // Ring state — worst of cadence overdue OR streak at-risk/broken
     let ringClass = ''
-    if (wColor === 'red' || mColor === 'red') ringClass = 'overdue-red'
-    else if (wColor === 'yellow' || mColor === 'yellow') ringClass = 'overdue-yellow'
+    if (wColor === 'red' || mColor === 'red' || streakState === 'broken') ringClass = 'overdue-red'
+    else if (wColor === 'yellow' || mColor === 'yellow' || streakState === 'at-risk') ringClass = 'overdue-yellow'
 
     const wLabel = wDays != null ? `${wDays}d` : '—'
     const mLabel = mDays != null ? `${mDays}d` : '—'
@@ -83,13 +99,15 @@ export default {
           <div class="rs-section">
             <div class="rs-streak-wrap">
               <div class="rs-top">
-                <span class="rs-count">${streak}</span>
-                <span class="rs-unit">day${streak !== 1 ? 's' : ''}</span>
+                ${streakDisplay}
               </div>
-              <div class="rs-tooltip">${streak}-day morning ritual streak${todayActive ? ' · today complete' : ' · run /start to keep it'}</div>
+              <div class="rs-tooltip">${streakTooltip}</div>
             </div>
             <div class="rs-label">ritual streak</div>
-            <div class="rs-dots">${dotsHtml}</div>
+            <div class="rs-week-summary ${weekColor}">
+              <span class="rs-week-count">${weekDone}/${weekTotal}</span>
+              <span class="rs-week-label">this week</span>
+            </div>
           </div>
           <div class="cadence-ring-divider"></div>
           <div class="cadence-section">

@@ -99,7 +99,7 @@ body.light .vbody.cockpit::after {
   display: grid;
   grid-template-columns: 280px 1fr 280px;
   gap: 32px;
-  align-items: center;
+  align-items: start;
   padding: 24px 0 36px;
   min-height: 280px;
   margin-bottom: 8px;
@@ -985,13 +985,11 @@ body.light .vbody.cockpit .orb-score { text-shadow: 0 0 20px rgba(255,255,255,0.
   font-family: var(--font-display);
   font-size: 38px;
   font-weight: 300;
-  color: var(--gold);
   line-height: 1;
   letter-spacing: -1px;
 }
 .rs-unit {
   font-size: 13px;
-  color: var(--gold);
   opacity: 0.75;
   font-weight: 400;
 }
@@ -1003,23 +1001,36 @@ body.light .vbody.cockpit .orb-score { text-shadow: 0 0 20px rgba(255,255,255,0.
   color: var(--text-dim);
   margin-top: -2px;
 }
-.rs-dots {
+/* Week summary replaces dots */
+.rs-week-summary {
   display: flex;
-  gap: 5px;
-  margin-top: 2px;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 4px;
 }
-.rs-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.08);
-  transition: background 0.3s ease;
+.rs-week-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
-.rs-dot.active { background: var(--gold); }
-.rs-dot.today {
-  outline: 1.5px solid rgba(200,160,240,0.4);
-  outline-offset: 2px;
+.rs-week-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
 }
-.rs-dot.today.active { outline-color: rgba(200,160,240,0.7); }
+.rs-week-summary.green  .rs-week-count { color: #60d8a8; }
+.rs-week-summary.yellow .rs-week-count { color: #e0c060; }
+.rs-week-summary.red    .rs-week-count { color: #e07080; }
+
+/* Streak count color states */
+.rs-count         { color: var(--gold); }
+.rs-count.at-risk { color: var(--amber); }
+.rs-count.broken  { color: var(--text-dim); font-size: 28px; }
+.rs-unit          { color: var(--gold); }
+.rs-unit.at-risk  { color: var(--amber); }
 
 /* Streak tooltip */
 .rs-streak-wrap {
