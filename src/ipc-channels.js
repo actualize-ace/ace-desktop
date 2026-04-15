@@ -115,6 +115,7 @@ module.exports = {
   GET_COMPASS:        'get-compass',
   GET_LAST_PULSE:     'get-last-pulse',
   GET_RITUAL_STREAK:  'get-ritual-streak',
+  GET_CADENCE:        'get-cadence',
   MARK_DONE:       'mark-done',
   SNOOZE_ITEM:     'snooze-item',
 }

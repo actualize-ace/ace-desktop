@@ -549,6 +549,12 @@ ipcMain.handle(ch.GET_RITUAL_STREAK, () => {
   } catch (e) { return { streak: 0, todayActive: false, todayPending: false, last7: [], error: e.message } }
 })
 
+ipcMain.handle(ch.GET_CADENCE, () => {
+  try {
+    return require('./src/vault-reader').parseCadence(global.VAULT_PATH)
+  } catch (e) { return { weeklyDays: null, weeklyDate: null, monthlyDays: null, monthlyDate: null, error: e.message } }
+})
+
 ipcMain.handle(ch.MARK_DONE, (_, item) => {
   // item: { type, label, _raw: {...} }
   try {

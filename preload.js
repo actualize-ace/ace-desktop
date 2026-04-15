@@ -69,6 +69,7 @@ contextBridge.exposeInMainWorld('ace', {
     getCompass:       () => ipcRenderer.invoke(ch.GET_COMPASS),
     getLastPulse:     () => ipcRenderer.invoke(ch.GET_LAST_PULSE),
     getRitualStreak:  () => ipcRenderer.invoke(ch.GET_RITUAL_STREAK),
+    getCadence:       () => ipcRenderer.invoke(ch.GET_CADENCE),
     markDone:       (item) => ipcRenderer.invoke(ch.MARK_DONE, item),
     snoozeItem:     (item, days) => ipcRenderer.invoke(ch.SNOOZE_ITEM, item, days),
   },
