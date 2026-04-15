@@ -22,6 +22,12 @@ function formatDate(iso) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+function formatSince(iso) {
+  if (!iso) return null
+  const d = new Date(iso + 'T00:00:00')
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 function launchSkill(cmd) {
   document.querySelector('.nav-item[data-view="terminal"]')?.click()
   setTimeout(() => {
@@ -48,28 +54,27 @@ export default {
     // ─── Ritual Streak (top half) ───
     const d = allData.ritualStreak || {}
     const streak      = d.streak      ?? 0
+    const streakStart = d.streakStart ?? null
     const todayActive = d.todayActive ?? false
     const pending     = d.todayPending ?? false
-    const last7       = d.last7       || []
 
     // Streak state: active | at-risk | broken
     const streakState = todayActive ? 'active' : (pending && streak > 0) ? 'at-risk' : 'broken'
 
-    // Week summary — count of active days in last 7
-    const weekDone  = last7.filter(day => day.active).length
-    const weekTotal = last7.length || 7
-    const weekColor = weekDone >= 6 ? 'green' : weekDone >= 4 ? 'yellow' : 'red'
+    // Since label
+    const sinceLabel = streakStart ? `since ${formatSince(streakStart)}` : null
 
     // Streak display
-    let streakDisplay, streakTooltip
+    let streakCountHtml, streakTooltip
     if (streakState === 'broken') {
-      streakDisplay = `<span class="rs-count broken">—</span>`
+      streakCountHtml = `<span class="rs-count broken">—</span>`
       streakTooltip = 'No active streak — run /start to begin'
     } else {
-      streakDisplay = `<span class="rs-count ${streakState === 'at-risk' ? 'at-risk' : ''}">${streak}</span>
-                       <span class="rs-unit ${streakState === 'at-risk' ? 'at-risk' : ''}">day${streak !== 1 ? 's' : ''}</span>`
+      streakCountHtml = `
+        <span class="rs-count ${streakState}">${streak}</span>
+        <span class="rs-unit ${streakState}">days</span>`
       streakTooltip = streakState === 'active'
-        ? `${streak}-day daily ritual streak · today complete`
+        ? `${streak}-day ritual streak · today complete`
         : `${streak}-day streak at risk — run /start today to keep it`
     }
 
@@ -82,7 +87,7 @@ export default {
     const wOverdue = wColor !== 'green' && wColor !== 'dim'
     const mOverdue = mColor !== 'green' && mColor !== 'dim'
 
-    // Ring state — worst of cadence overdue OR streak at-risk/broken
+    // Ring class — worst of cadence overdue OR streak state
     let ringClass = ''
     if (wColor === 'red' || mColor === 'red' || streakState === 'broken') ringClass = 'overdue-red'
     else if (wColor === 'yellow' || mColor === 'yellow' || streakState === 'at-risk') ringClass = 'overdue-yellow'
@@ -95,19 +100,17 @@ export default {
     el.innerHTML = `
       <div class="cadence-ring-wrap ${ringClass}">
         <div class="cadence-ring-track"></div>
+        <div class="cadence-ring-iris"></div>
         <div class="cadence-ring-inner">
           <div class="rs-section">
             <div class="rs-streak-wrap">
               <div class="rs-top">
-                ${streakDisplay}
+                ${streakCountHtml}
               </div>
               <div class="rs-tooltip">${streakTooltip}</div>
             </div>
-            <div class="rs-label">ritual streak</div>
-            <div class="rs-week-summary ${weekColor}">
-              <span class="rs-week-count">${weekDone}/${weekTotal}</span>
-              <span class="rs-week-label">this week</span>
-            </div>
+            <div class="rs-label">days</div>
+            ${sinceLabel ? `<div class="rs-since">${sinceLabel}</div>` : ''}
           </div>
           <div class="cadence-ring-divider"></div>
           <div class="cadence-section">
