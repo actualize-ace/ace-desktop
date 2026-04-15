@@ -50,8 +50,10 @@ async function loadDashboard() {
     getNorthStar:    () => window.ace.dash.getNorthStar(),
     getDailyFocus:   () => window.ace.dash.getDailyFocus(),
     getBuildBlocks:  () => window.ace.dash.getBuildBlocks(),
-    getCompass:      () => window.ace.dash.getCompass(),
-    getLastPulse:    () => window.ace.dash.getLastPulse(),
+    getCompass:        () => window.ace.dash.getCompass(),
+    getLastPulse:      () => window.ace.dash.getLastPulse(),
+    getRitualStreak:   () => window.ace.dash.getRitualStreak(),
+    getCadence:        () => window.ace.dash.getCadence(),
   }
   // Patterns: optional, don't break dashboard if unavailable
   if (typeof window.ace.dash.getPatterns === 'function') {
@@ -82,23 +84,27 @@ async function loadDashboard() {
   if (!data.getNorthStar)   data.getNorthStar   = await window.ace.dash.getNorthStar()
   if (!data.getDailyFocus)  data.getDailyFocus  = await window.ace.dash.getDailyFocus()
   if (!data.getBuildBlocks) data.getBuildBlocks = await window.ace.dash.getBuildBlocks()
-  if (!data.getCompass)     data.getCompass     = await window.ace.dash.getCompass()
-  if (!data.getLastPulse)   data.getLastPulse   = await window.ace.dash.getLastPulse()
+  if (!data.getCompass)       data.getCompass       = await window.ace.dash.getCompass()
+  if (!data.getLastPulse)     data.getLastPulse     = await window.ace.dash.getLastPulse()
+  if (!data.getRitualStreak)  data.getRitualStreak  = await window.ace.dash.getRitualStreak()
+  if (!data.getCadence)       data.getCadence       = await window.ace.dash.getCadence()
 
   // Bundle allData for composite widgets (dataSource: null)
   const allData = {
-    state:        data.getState,
-    metrics:      data.getMetrics,
-    pipeline:     data.getPipeline,
-    followUps:    data.getFollowUps,
-    velocity:     data.getVelocity,
-    rhythm:       data.getRhythm,
-    patterns:     data.getPatterns,
-    northStar:    data.getNorthStar,
-    dailyFocus:   data.getDailyFocus,
-    buildBlocks:  data.getBuildBlocks,
-    compass:      data.getCompass,
-    lastPulse:    data.getLastPulse,
+    state:         data.getState,
+    metrics:       data.getMetrics,
+    pipeline:      data.getPipeline,
+    followUps:     data.getFollowUps,
+    velocity:      data.getVelocity,
+    rhythm:        data.getRhythm,
+    patterns:      data.getPatterns,
+    northStar:     data.getNorthStar,
+    dailyFocus:    data.getDailyFocus,
+    buildBlocks:   data.getBuildBlocks,
+    compass:       data.getCompass,
+    lastPulse:     data.getLastPulse,
+    ritualStreak:  data.getRitualStreak,
+    cadence:       data.getCadence,
   }
 
   // ─── Build candidate pools per leg + compute leverage + select risen ─────
