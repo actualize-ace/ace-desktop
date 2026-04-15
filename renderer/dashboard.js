@@ -175,8 +175,10 @@ async function loadDashboard() {
 
     try {
       widget.render(widgetData, container)
-      // Staggered entrance animation
-      container.style.animation = `widgetReveal 0.35s ease ${_wi * 0.06}s both`
+      // Staggered entrance animation — cockpit-brain widgets share the same delay so orb + cadence appear together
+      const _zone = WIDGET_ZONES[id]
+      const _staggerIdx = (_zone === 'cockpit-brain') ? 1 : _wi
+      container.style.animation = `widgetReveal 0.35s ease ${_staggerIdx * 0.06}s both`
     } catch (e) {
       console.error(`[dashboard] widget ${id} render error:`, e)
     }
