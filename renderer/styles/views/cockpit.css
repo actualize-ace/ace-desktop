@@ -889,13 +889,25 @@ body.light .vbody.cockpit .orb-score { text-shadow: 0 0 20px rgba(255,255,255,0.
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Resting ambient glow — present but subordinate to orb */
+  box-shadow: 0 0 40px rgba(140,120,255,0.12), 0 0 80px rgba(200,160,240,0.06);
+  border-radius: 50%;
+  transition: box-shadow 0.6s ease;
+}
+
+/* Overdue states amplify the wrap glow */
+.cadence-ring-wrap.overdue-yellow {
+  box-shadow: 0 0 40px rgba(224,192,96,0.18), 0 0 80px rgba(224,192,96,0.08);
+}
+.cadence-ring-wrap.overdue-red {
+  box-shadow: 0 0 40px rgba(224,112,128,0.22), 0 0 80px rgba(224,112,128,0.10);
 }
 
 .cadence-ring-track {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 1px solid rgba(212,165,116,0.12);
+  border: 1px solid rgba(200,160,240,0.18);
   transition: border-color 0.6s ease, box-shadow 0.6s ease;
 }
 .cadence-ring-track::before {
@@ -903,7 +915,7 @@ body.light .vbody.cockpit .orb-score { text-shadow: 0 0 20px rgba(255,255,255,0.
   position: absolute;
   inset: 16px;
   border-radius: 50%;
-  border: 1px dashed rgba(212,165,116,0.08);
+  border: 1px dashed rgba(200,160,240,0.08);
   transition: border-color 0.6s ease;
 }
 .cadence-ring-track::after {
@@ -950,7 +962,7 @@ body.light .vbody.cockpit .orb-score { text-shadow: 0 0 20px rgba(255,255,255,0.
 .cadence-ring-divider {
   width: 60%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(212,165,116,0.25), transparent);
+  background: linear-gradient(90deg, transparent, rgba(200,160,240,0.2), transparent);
   margin: 8px 0;
 }
 
@@ -973,13 +985,13 @@ body.light .vbody.cockpit .orb-score { text-shadow: 0 0 20px rgba(255,255,255,0.
   font-family: var(--font-display);
   font-size: 38px;
   font-weight: 300;
-  color: var(--amber);
+  color: var(--gold);
   line-height: 1;
   letter-spacing: -1px;
 }
 .rs-unit {
   font-size: 13px;
-  color: var(--amber);
+  color: var(--gold);
   opacity: 0.75;
   font-weight: 400;
 }
@@ -1002,12 +1014,40 @@ body.light .vbody.cockpit .orb-score { text-shadow: 0 0 20px rgba(255,255,255,0.
   background: rgba(255,255,255,0.08);
   transition: background 0.3s ease;
 }
-.rs-dot.active { background: var(--amber); }
+.rs-dot.active { background: var(--gold); }
 .rs-dot.today {
-  outline: 1.5px solid rgba(212,165,116,0.4);
+  outline: 1.5px solid rgba(200,160,240,0.4);
   outline-offset: 2px;
 }
-.rs-dot.today.active { outline-color: rgba(212,165,116,0.7); }
+.rs-dot.today.active { outline-color: rgba(200,160,240,0.7); }
+
+/* Streak tooltip */
+.rs-streak-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  position: relative;
+  cursor: default;
+}
+.rs-streak-wrap .rs-tooltip {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20,22,36,0.95);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+.rs-streak-wrap:hover .rs-tooltip { display: block; }
 
 /* Bottom half — Cadence Ticker */
 .cadence-section {

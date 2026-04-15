@@ -81,9 +81,12 @@ export default {
         <div class="cadence-ring-track"></div>
         <div class="cadence-ring-inner">
           <div class="rs-section">
-            <div class="rs-top">
-              <span class="rs-count">${streak}</span>
-              <span class="rs-unit">day${streak !== 1 ? 's' : ''}</span>
+            <div class="rs-streak-wrap">
+              <div class="rs-top">
+                <span class="rs-count">${streak}</span>
+                <span class="rs-unit">day${streak !== 1 ? 's' : ''}</span>
+              </div>
+              <div class="rs-tooltip">${streak}-day morning ritual streak${todayActive ? ' · today complete' : ' · run /start to keep it'}</div>
             </div>
             <div class="rs-label">ritual streak</div>
             <div class="rs-dots">${dotsHtml}</div>
