@@ -21,13 +21,19 @@ export default {
 
     const { byDay, totalThisWeek, totalLastWeek } = data
 
+    // Use local calendar date, not UTC. toISOString() returns UTC, which rolls
+    // to the next day after ~7pm in CDT/MST — mismatching the local dates written
+    // by /close into the execution log and causing today's bar to read 0.
+    function localDateKey(d) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    }
+
     // Build 14-day series oldest→newest
     const today = new Date()
     const series = []
     for (let i = 13; i >= 0; i--) {
       const d = new Date(today); d.setDate(d.getDate() - i)
-      const key = d.toISOString().slice(0, 10)
-      series.push(byDay[key] || 0)
+      series.push(byDay[localDateKey(d)] || 0)
     }
 
     const delta = totalLastWeek > 0

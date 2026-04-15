@@ -143,9 +143,11 @@ function createWindow(page) {
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
-    titleBarStyle: 'hiddenInset',
+    // hiddenInset is macOS-only — Windows needs 'hidden' for a custom titlebar,
+    // otherwise the system chrome stacks over our CSS titlebar.
+    titleBarStyle: process.platform === 'win32' ? 'hidden' : 'hiddenInset',
     backgroundColor: '#0a0a0f',
-    icon: path.join(__dirname, 'assets', 'ace.icns'),
+    icon: path.join(__dirname, 'assets', process.platform === 'win32' ? 'ace.ico' : 'ace.icns'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -365,6 +367,13 @@ ipcMain.handle(ch.DETECT_GIT, () => {
 })
 
 ipcMain.on(ch.PREFLIGHT_RECHECK_BINARY, () => {
+  // Re-detect first — re-running preflight with the same bad path is useless.
+  const detected = detectClaudeBinary()
+  if (detected?.path) {
+    global.CLAUDE_BIN = detected.path
+    const current = loadConfig()
+    if (current) saveConfig({ ...current, claudeBinaryPath: detected.path })
+  }
   require('./src/preflight').run(mainWindow, global.CLAUDE_BIN, global.VAULT_PATH)
 })
 
@@ -723,14 +732,31 @@ ipcMain.handle(ch.VAULT_GRAPH_INVALIDATE, () => {
 ipcMain.handle(ch.ASTRO_TRANSITS, async () => {
   const config = loadConfig()
   const vaultPath = config?.vaultPath
-  if (!vaultPath) return null
+  if (!vaultPath) { console.warn('[astro] no vaultPath configured'); return null }
   const script = require('path').join(vaultPath, 'tools', 'astro', 'daily_transits.py')
-  return new Promise(resolve => {
-    require('child_process').execFile('python3', [script], { timeout: 10000 }, (err, stdout) => {
-      if (err) { resolve(null); return }
-      try { resolve(JSON.parse(stdout)) } catch { resolve(null) }
+  const fs = require('fs')
+  if (!fs.existsSync(script)) { console.warn('[astro] script missing:', script); return null }
+  // Windows ships `python`/`python.exe`, not `python3`. Try the platform-appropriate
+  // binary first; fall through to the other on ENOENT so either install works.
+  const primary = process.platform === 'win32' ? 'python' : 'python3'
+  const secondary = process.platform === 'win32' ? 'python3' : 'python'
+  const run = (bin) => new Promise(resolve => {
+    require('child_process').execFile(bin, [script], { timeout: 15000 }, (err, stdout, stderr) => {
+      if (err) {
+        if (err.code === 'ENOENT') { resolve({ retry: true }); return }
+        console.warn(`[astro] ${bin} failed:`, err.message)
+        if (stderr) console.warn('[astro] stderr:', stderr.slice(0, 500))
+        resolve(null); return
+      }
+      try { resolve(JSON.parse(stdout)) } catch (e) {
+        console.warn('[astro] JSON parse failed:', e.message, 'stdout head:', stdout.slice(0, 200))
+        resolve(null)
+      }
     })
   })
+  const first = await run(primary)
+  if (first && first.retry) return await run(secondary).then(r => (r && r.retry) ? null : r)
+  return first
 })
 
 // Natal chart + interpretations live in the user's vault at {vault}/data/.

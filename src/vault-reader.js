@@ -164,15 +164,17 @@ function parseExecutionLog(vaultPath, days = 14) {
       try { text += '\n' + fs.readFileSync(path.join(vaultPath, '00-System', file), 'utf8') } catch {}
     }
     if (!text.trim()) return { byDay: {}, totalThisWeek: 0, totalLastWeek: 0 }
+    // Use local calendar date — toISOString() returns UTC which can roll to the
+    // next day in the evening for UTC- zones, mismatching local dates in the log.
+    const localKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     const today = new Date()
-    today.setHours(0, 0, 0, 0)
     const byDay = {}
 
     // Build date keys for last N days
     for (let i = 0; i < days; i++) {
       const d = new Date(today)
       d.setDate(d.getDate() - i)
-      byDay[d.toISOString().slice(0, 10)] = 0
+      byDay[localKey(d)] = 0
     }
 
     // Count log entries per date — entries start with "- " under a date heading

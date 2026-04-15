@@ -26,7 +26,7 @@ export function closeOracle() {
   if (panel) { panel.classList.remove('expanded', 'full') }
 }
 
-export function sendOracleQuery(query) {
+export async function sendOracleQuery(query) {
   const input = document.getElementById('oracle-input')
   const msgsEl = document.getElementById('oracle-messages')
 
@@ -106,10 +106,16 @@ export function sendOracleQuery(query) {
   })
 
   // Send to backend — oracle gets its own session, resumes for context continuity
-  // Wrap query with Hindsight recall instruction (graceful — if Hindsight unavailable, Claude falls back to file reads)
+  // Hindsight recall is operator-only: only inject the instruction when the
+  // user's config names a hindsight bank. Clients without Hindsight fall
+  // through to default behavior (Claude reads vault files directly).
+  const config = await window.ace.setup.getConfig()
+  const hindsightBank = config?.hindsightBank
   const enhancedQuery = oracleSessionId
     ? query  // follow-up messages don't need the instruction repeated
-    : `Before answering, try to use the hindsight recall tool to search for relevant context: recall(bank_id="ace-nikhil", query="${query.replace(/"/g, '\\"')}"). If the tool is unavailable, proceed by reading vault files directly. Then answer:\n\n${query}`
+    : hindsightBank
+      ? `Before answering, try to use the hindsight recall tool to search for relevant context: recall(bank_id="${hindsightBank}", query="${query.replace(/"/g, '\\"')}"). If the tool is unavailable, proceed by reading vault files directly. Then answer:\n\n${query}`
+      : query
   window.ace.chat.send(oracleId, enhancedQuery, oracleSessionId, opts)
 }
 

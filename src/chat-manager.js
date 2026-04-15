@@ -96,14 +96,32 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
     }
   }
 
-  // Augment PATH so the Claude binary (a Node.js script) can find `node`
+  // Augment PATH so the Claude binary can find `node` and other dependencies
   // in packaged Electron apps that inherit a minimal system PATH.
-  const augmentedPath = [
-    '/opt/homebrew/bin',
-    '/usr/local/bin',
-    '/usr/bin',
-    process.env.PATH || '',
-  ].filter(Boolean).join(process.platform === 'win32' ? ';' : ':')
+  // Covers Homebrew (arm64 + Intel), nvm, volta, fnm, asdf, and mise installs.
+  const home = require('os').homedir()
+  const augmentedPath = process.platform === 'win32'
+    ? [
+        path.join(process.env.APPDATA || '', 'npm'),
+        path.join(process.env.LOCALAPPDATA || '', 'Programs', 'nodejs'),
+        process.env.PATH || '',
+      ].filter(Boolean).join(';')
+    : [
+        '/opt/homebrew/bin',
+        '/usr/local/bin',
+        '/usr/bin',
+        // nvm — default install; exact version dir unknown so probe shims path
+        path.join(home, '.nvm', 'versions', 'node', 'current', 'bin'),
+        // volta
+        path.join(home, '.volta', 'bin'),
+        // fnm
+        path.join(home, '.fnm', 'aliases', 'default', 'bin'),
+        // mise / asdf shims (covers node + claude installed via tool manager)
+        path.join(home, '.local', 'share', 'mise', 'shims'),
+        path.join(home, '.asdf', 'shims'),
+        path.join(home, '.local', 'bin'),
+        process.env.PATH || '',
+      ].filter(Boolean).join(':')
 
   // On Windows, .cmd wrappers require shell:true so the OS routes the
   // invocation through cmd.exe — without it, stdio pipes never connect
@@ -133,12 +151,13 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
 
   sessions.set(chatId, { proc, claudeSessionId })
 
-  // Line-buffered NDJSON parsing
+  // Line-buffered NDJSON parsing. Split on \r?\n so Windows CRLF line endings
+  // don't leave a trailing \r that fails JSON.parse silently.
   let buffer = ''
   proc.stdout.on('data', chunk => {
     if (win.isDestroyed()) return
     buffer += chunk.toString()
-    const lines = buffer.split('\n')
+    const lines = buffer.split(/\r?\n/)
     buffer = lines.pop() // keep incomplete trailing line
     for (const line of lines) {
       if (!line.trim()) continue

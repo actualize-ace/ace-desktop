@@ -1,6 +1,7 @@
 'use strict'
 
 const fs = require('fs')
+const path = require('path')
 const { execSync } = require('child_process')
 const ch = require('./ipc-channels')
 const { checkVaultHealth } = require('./vault-health')
@@ -19,12 +20,25 @@ function checkBinary(binaryPath) {
     return { ok: false, error: 'not-executable', path: binaryPath }
   }
 
-  const augmentedPath = [
-    '/opt/homebrew/bin',
-    '/usr/local/bin',
-    '/usr/bin',
-    process.env.PATH || '',
-  ].filter(Boolean).join(process.platform === 'win32' ? ';' : ':')
+  const home = require('os').homedir()
+  const augmentedPath = process.platform === 'win32'
+    ? [
+        path.join(process.env.APPDATA || '', 'npm'),
+        path.join(process.env.LOCALAPPDATA || '', 'Programs', 'nodejs'),
+        process.env.PATH || '',
+      ].filter(Boolean).join(';')
+    : [
+        '/opt/homebrew/bin',
+        '/usr/local/bin',
+        '/usr/bin',
+        path.join(home, '.nvm', 'versions', 'node', 'current', 'bin'),
+        path.join(home, '.volta', 'bin'),
+        path.join(home, '.fnm', 'aliases', 'default', 'bin'),
+        path.join(home, '.local', 'share', 'mise', 'shims'),
+        path.join(home, '.asdf', 'shims'),
+        path.join(home, '.local', 'bin'),
+        process.env.PATH || '',
+      ].filter(Boolean).join(':')
 
   try {
     const version = execSync(`"${binaryPath}" --version`, {
