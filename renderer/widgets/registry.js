@@ -6,6 +6,7 @@ import northstar   from './northstar.js'
 import orb          from './orb.js'
 import pulsechip    from './pulsechip.js'
 import compass      from './compass.js'
+import cadence      from './cadence.js'
 import integrity    from './integrity.js'
 import { triadAuthority, triadCapacity, triadExpansion } from './triad-leg.js'
 import innermove    from './innermove.js'
@@ -23,7 +24,7 @@ import quickactions from './quickactions.js'
 import astro        from './astro.js'
 
 export const WIDGETS = [
-  northstar, orb, synthesis, compass, pulsechip,
+  northstar, orb, synthesis, cadence, compass, pulsechip,
   integrity,
   triadAuthority, triadCapacity, triadExpansion,
   innermove,
@@ -39,7 +40,8 @@ export const WIDGET_ZONES = {
   northstar:        'cockpit-top',
   orb:              'cockpit-brain',
   synthesis:        'cockpit-brain',
-  compass:          'cockpit-brain',
+  cadence:          'cockpit-brain',
+  compass:          'legacy',
   pulsechip:        'cockpit-brain',
   integrity:        'cockpit-integrity',
   'triad-authority':'cockpit-triad',

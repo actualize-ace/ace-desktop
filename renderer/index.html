@@ -329,15 +329,17 @@
           <!-- North Star bar — cockpit top -->
           <div id="widget-northstar" data-learn-target="north-star"></div>
 
-          <!-- Brain layer: orb | synthesis | compass -->
+          <!-- Brain layer: orb | synthesis | ritualstreak -->
           <div class="cockpit-brain-row" data-learn-target="dashboard-widgets">
             <div class="brain-col-orb">
               <div id="widget-orb"></div>
               <div id="widget-pulsechip"></div>
             </div>
             <div id="widget-synthesis" class="cb-synthesis"></div>
-            <div id="widget-compass" class="cb-compass"></div>
+            <div id="widget-cadence" class="cb-cadence"></div>
           </div>
+          <!-- compass retired to legacy; slot kept outside brain row for settings compatibility -->
+          <div id="widget-compass" style="display:none"></div>
 
           <!-- Integrity bar -->
           <div id="widget-integrity"></div>
