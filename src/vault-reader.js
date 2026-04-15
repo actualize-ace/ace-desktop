@@ -917,6 +917,7 @@ function parseRitualStreak(vaultPath) {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
+    // last7 for dot display
     const last7 = []
     for (let i = 0; i < 7; i++) {
       const d = new Date(today)
@@ -927,11 +928,14 @@ function parseRitualStreak(vaultPath) {
 
     const todayActive = last7[0].active
 
-    // Count streak: start from today if active, else from yesterday
+    // Count real streak: scan back up to 365 days
     let streak = 0
     const startIdx = todayActive ? 0 : 1
-    for (let i = startIdx; i < last7.length; i++) {
-      if (last7[i].active) streak++
+    for (let i = startIdx; i < 365; i++) {
+      const d = new Date(today)
+      d.setDate(d.getDate() - i)
+      const dateStr = d.toISOString().slice(0, 10)
+      if (fs.existsSync(path.join(dailyDir, `${dateStr}.md`))) streak++
       else break
     }
 
