@@ -904,4 +904,95 @@ function parsePatterns(vaultPath) {
   } catch (e) { return { counts: [], tensions: [], coOccurrences: [], descriptions: {}, error: e.message } }
 }
 
-module.exports = { parseState, parseFollowUps, listDir, parseExecutionLog, parseRitualRhythm, parsePeople, parseArtifacts, getArtifactDetail, updateArtifactStatus, parsePatterns, parseDCAFrontmatter, parseDailyFocus, parseRecoveryFlag, parseBuildBlocks, parseLastPulse }
+// ─── Ritual Streak ────────────────────────────────────────────────────────────
+// Counts consecutive days with a daily note — proxy for /start being run.
+// Returns: { streak, todayActive, todayPending, last7 }
+//   streak       — consecutive active days (from today if active, else from yesterday)
+//   todayActive  — today's note exists
+//   todayPending — streak is alive but today not yet logged (morning state)
+//   last7        — array of { date, active } for the last 7 days
+function parseRitualStreak(vaultPath) {
+  try {
+    const dailyDir = path.join(vaultPath, '01-Journal', 'daily')
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const last7 = []
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today)
+      d.setDate(d.getDate() - i)
+      const dateStr = d.toISOString().slice(0, 10)
+      last7.push({ date: dateStr, active: fs.existsSync(path.join(dailyDir, `${dateStr}.md`)) })
+    }
+
+    const todayActive = last7[0].active
+
+    // Count streak: start from today if active, else from yesterday
+    let streak = 0
+    const startIdx = todayActive ? 0 : 1
+    for (let i = startIdx; i < last7.length; i++) {
+      if (last7[i].active) streak++
+      else break
+    }
+
+    return {
+      streak,
+      todayActive,
+      todayPending: !todayActive && streak > 0,
+      last7,
+    }
+  } catch (e) {
+    return { streak: 0, todayActive: false, todayPending: false, last7: [], error: e.message }
+  }
+}
+
+// Parse cadence freshness — days since last weekly review + monthly reflection
+function parseCadence(vaultPath) {
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+
+  // Weekly: scan 01-Journal/weekly-reviews/ for YYYY-WXX.md
+  let weeklyDays = null
+  let weeklyDate = null
+  try {
+    const wDir = path.join(vaultPath, '01-Journal', 'weekly-reviews')
+    if (fs.existsSync(wDir)) {
+      const files = fs.readdirSync(wDir).filter(f => /^\d{4}-W\d{2}\.md$/.test(f)).sort()
+      if (files.length) {
+        const last = files[files.length - 1]
+        const [year, week] = last.replace('.md', '').split('-W').map(Number)
+        // ISO week to date: Jan 4 is always in week 1
+        const jan4 = new Date(year, 0, 4)
+        const dayOfWeek = jan4.getDay() || 7
+        const weekStart = new Date(jan4)
+        weekStart.setDate(jan4.getDate() - dayOfWeek + 1 + (week - 1) * 7)
+        weekStart.setHours(0, 0, 0, 0)
+        weeklyDate = weekStart.toISOString().slice(0, 10)
+        weeklyDays = Math.floor((now - weekStart) / 86400000)
+      }
+    }
+  } catch (e) { /* silent */ }
+
+  // Monthly: scan 01-Journal/monthly-reviews/ for YYYY-MM.md
+  let monthlyDays = null
+  let monthlyDate = null
+  try {
+    const mDir = path.join(vaultPath, '01-Journal', 'monthly-reviews')
+    if (fs.existsSync(mDir)) {
+      const files = fs.readdirSync(mDir).filter(f => /^\d{4}-\d{2}\.md$/.test(f)).sort()
+      if (files.length) {
+        const last = files[files.length - 1]
+        const [year, month] = last.replace('.md', '').split('-').map(Number)
+        // Use last day of that month as the review date
+        const reviewDate = new Date(year, month, 0)
+        reviewDate.setHours(0, 0, 0, 0)
+        monthlyDate = reviewDate.toISOString().slice(0, 10)
+        monthlyDays = Math.floor((now - reviewDate) / 86400000)
+      }
+    }
+  } catch (e) { /* silent */ }
+
+  return { weeklyDays, weeklyDate, monthlyDays, monthlyDate }
+}
+
+module.exports = { parseState, parseFollowUps, listDir, parseExecutionLog, parseRitualRhythm, parsePeople, parseArtifacts, getArtifactDetail, updateArtifactStatus, parsePatterns, parseDCAFrontmatter, parseDailyFocus, parseRecoveryFlag, parseBuildBlocks, parseLastPulse, parseRitualStreak, parseCadence }
