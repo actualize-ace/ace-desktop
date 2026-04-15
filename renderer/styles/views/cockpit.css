@@ -1203,6 +1203,28 @@ body.light .vbody.cockpit .orb-score { text-shadow: 0 0 20px rgba(255,255,255,0.
 }
 .cadence-chip:hover .cadence-tooltip { display: block; }
 
+/* Light mode tooltips */
+body.light .cadence-chip .cadence-tooltip,
+body.light .rs-streak-wrap .rs-tooltip {
+  background: rgba(250,249,255,0.97);
+  border-color: rgba(0,0,0,0.08);
+  color: var(--text-secondary);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+/* Broken-state CTA */
+.rs-start-cta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--amber);
+  opacity: 0.85;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: opacity 0.2s ease;
+}
+.rs-start-cta:hover { opacity: 1; }
+
 /* ═══ Cockpit overlay (astro / compass / orb contextual panel) ══════ */
 .cockpit-overlay {
   position: fixed;

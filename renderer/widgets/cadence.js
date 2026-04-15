@@ -110,7 +110,10 @@ export default {
               <div class="rs-tooltip">${streakTooltip}</div>
             </div>
             <div class="rs-label">days</div>
-            ${sinceLabel ? `<div class="rs-since">${sinceLabel}</div>` : ''}
+            ${streakState === 'broken'
+              ? `<div class="rs-start-cta" data-skill="/start">run /start →</div>`
+              : sinceLabel ? `<div class="rs-since">${sinceLabel}</div>` : ''
+            }
           </div>
           <div class="cadence-ring-divider"></div>
           <div class="cadence-section">
@@ -136,8 +139,8 @@ export default {
         </div>
       </div>`
 
-    // Click handlers
-    el.querySelectorAll('.cadence-chip').forEach(chip => {
+    // Click handlers — cadence chips + broken-state CTA
+    el.querySelectorAll('.cadence-chip, .rs-start-cta').forEach(chip => {
       chip.addEventListener('click', () => {
         const cmd = chip.dataset.skill
         if (cmd) launchSkill(cmd)
