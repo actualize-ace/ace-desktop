@@ -928,24 +928,39 @@ body.light .vbody.cockpit .orb-score { text-shadow: 0 0 20px rgba(255,255,255,0.
   transition: border-color 0.6s ease, box-shadow 0.6s ease;
 }
 
-/* Overdue ring pulses */
+/* Overdue ring pulses — glow on wrap (border-radius:50% = always circular)
+   ::after only animates its border color; no box-shadow (clip-path would square it) */
 .cadence-ring-wrap.overdue-yellow .cadence-ring-track::after {
-  border-color: rgba(224,192,96,0.4);
-  box-shadow: 0 0 16px rgba(224,192,96,0.15), inset 0 0 16px rgba(224,192,96,0.08);
+  border-color: rgba(224,192,96,0.5);
   animation: ring-pulse-amber 3s ease-in-out infinite;
 }
 @keyframes ring-pulse-amber {
-  0%, 100% { border-color: rgba(224,192,96,0.4); box-shadow: 0 0 16px rgba(224,192,96,0.15); }
-  50%      { border-color: rgba(224,192,96,0.6); box-shadow: 0 0 28px rgba(224,192,96,0.25); }
+  0%, 100% { border-color: rgba(224,192,96,0.4); }
+  50%       { border-color: rgba(224,192,96,0.75); }
 }
 .cadence-ring-wrap.overdue-red .cadence-ring-track::after {
-  border-color: rgba(224,112,128,0.45);
-  box-shadow: 0 0 20px rgba(224,112,128,0.2), inset 0 0 20px rgba(224,112,128,0.1);
+  border-color: rgba(224,112,128,0.55);
   animation: ring-pulse-red 2.2s ease-in-out infinite;
 }
 @keyframes ring-pulse-red {
-  0%, 100% { border-color: rgba(224,112,128,0.45); box-shadow: 0 0 20px rgba(224,112,128,0.2); }
-  50%      { border-color: rgba(224,112,128,0.7);  box-shadow: 0 0 36px rgba(224,112,128,0.35); }
+  0%, 100% { border-color: rgba(224,112,128,0.45); }
+  50%       { border-color: rgba(224,112,128,0.8); }
+}
+
+/* Circular glow pulses live on the wrap — border-radius:50% keeps them round */
+.cadence-ring-wrap.overdue-yellow {
+  animation: wrap-pulse-amber 3s ease-in-out infinite;
+}
+@keyframes wrap-pulse-amber {
+  0%, 100% { box-shadow: 0 0 40px rgba(224,192,96,0.18), 0 0 80px rgba(224,192,96,0.08); }
+  50%       { box-shadow: 0 0 60px rgba(224,192,96,0.32), 0 0 110px rgba(224,192,96,0.14); }
+}
+.cadence-ring-wrap.overdue-red {
+  animation: wrap-pulse-red 2.2s ease-in-out infinite;
+}
+@keyframes wrap-pulse-red {
+  0%, 100% { box-shadow: 0 0 40px rgba(224,112,128,0.22), 0 0 80px rgba(224,112,128,0.10); }
+  50%       { box-shadow: 0 0 65px rgba(224,112,128,0.40), 0 0 120px rgba(224,112,128,0.18); }
 }
 
 .cadence-ring-inner {
