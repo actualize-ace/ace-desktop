@@ -84,10 +84,13 @@ async function loadDashboard() {
   if (!data.getNorthStar)   data.getNorthStar   = await window.ace.dash.getNorthStar()
   if (!data.getDailyFocus)  data.getDailyFocus  = await window.ace.dash.getDailyFocus()
   if (!data.getBuildBlocks) data.getBuildBlocks = await window.ace.dash.getBuildBlocks()
-  if (!data.getCompass)       data.getCompass       = await window.ace.dash.getCompass()
-  if (!data.getLastPulse)     data.getLastPulse     = await window.ace.dash.getLastPulse()
-  if (!data.getRitualStreak)  data.getRitualStreak  = await window.ace.dash.getRitualStreak()
-  if (!data.getCadence)       data.getCadence       = await window.ace.dash.getCadence()
+  // Fetch always-needed sources in parallel so brain-row widgets render together
+  await Promise.all([
+    !data.getCompass      && window.ace.dash.getCompass().then(v       => { data.getCompass      = v }),
+    !data.getLastPulse    && window.ace.dash.getLastPulse().then(v     => { data.getLastPulse    = v }),
+    !data.getRitualStreak && window.ace.dash.getRitualStreak().then(v  => { data.getRitualStreak = v }),
+    !data.getCadence      && window.ace.dash.getCadence().then(v       => { data.getCadence      = v }),
+  ])
 
   // Bundle allData for composite widgets (dataSource: null)
   const allData = {
