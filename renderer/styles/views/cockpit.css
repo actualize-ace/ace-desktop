@@ -881,6 +881,245 @@ body.light .vbody.cockpit .orb-score { text-shadow: 0 0 20px rgba(255,255,255,0.
   opacity: 0.7;
 }
 
+/* ═══ Cadence Ring (ritual streak + review freshness) ════════════════ */
+.cadence-ring-wrap {
+  position: relative;
+  width: 240px; height: 240px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cadence-ring-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(212,165,116,0.12);
+  transition: border-color 0.6s ease, box-shadow 0.6s ease;
+}
+.cadence-ring-track::before {
+  content: '';
+  position: absolute;
+  inset: 16px;
+  border-radius: 50%;
+  border: 1px dashed rgba(212,165,116,0.08);
+  transition: border-color 0.6s ease;
+}
+.cadence-ring-track::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  clip-path: inset(50% 0 0 0);
+  transition: border-color 0.6s ease, box-shadow 0.6s ease;
+}
+
+/* Overdue ring pulses */
+.cadence-ring-wrap.overdue-yellow .cadence-ring-track::after {
+  border-color: rgba(224,192,96,0.4);
+  box-shadow: 0 0 16px rgba(224,192,96,0.15), inset 0 0 16px rgba(224,192,96,0.08);
+  animation: ring-pulse-amber 3s ease-in-out infinite;
+}
+@keyframes ring-pulse-amber {
+  0%, 100% { border-color: rgba(224,192,96,0.4); box-shadow: 0 0 16px rgba(224,192,96,0.15); }
+  50%      { border-color: rgba(224,192,96,0.6); box-shadow: 0 0 28px rgba(224,192,96,0.25); }
+}
+.cadence-ring-wrap.overdue-red .cadence-ring-track::after {
+  border-color: rgba(224,112,128,0.45);
+  box-shadow: 0 0 20px rgba(224,112,128,0.2), inset 0 0 20px rgba(224,112,128,0.1);
+  animation: ring-pulse-red 2.2s ease-in-out infinite;
+}
+@keyframes ring-pulse-red {
+  0%, 100% { border-color: rgba(224,112,128,0.45); box-shadow: 0 0 20px rgba(224,112,128,0.2); }
+  50%      { border-color: rgba(224,112,128,0.7);  box-shadow: 0 0 36px rgba(224,112,128,0.35); }
+}
+
+.cadence-ring-inner {
+  position: relative;
+  width: 210px; height: 210px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.cadence-ring-divider {
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,165,116,0.25), transparent);
+  margin: 8px 0;
+}
+
+/* Top half — Ritual Streak */
+.rs-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  justify-content: flex-end;
+  padding-bottom: 4px;
+}
+.rs-top {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.rs-count {
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 300;
+  color: var(--amber);
+  line-height: 1;
+  letter-spacing: -1px;
+}
+.rs-unit {
+  font-size: 13px;
+  color: var(--amber);
+  opacity: 0.75;
+  font-weight: 400;
+}
+.rs-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-top: -2px;
+}
+.rs-dots {
+  display: flex;
+  gap: 5px;
+  margin-top: 2px;
+}
+.rs-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  transition: background 0.3s ease;
+}
+.rs-dot.active { background: var(--amber); }
+.rs-dot.today {
+  outline: 1.5px solid rgba(212,165,116,0.4);
+  outline-offset: 2px;
+}
+.rs-dot.today.active { outline-color: rgba(212,165,116,0.7); }
+
+/* Bottom half — Cadence Ticker */
+.cadence-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: flex-start;
+  padding-top: 4px;
+}
+.cadence-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.cadence-chips {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.cadence-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+  position: relative;
+}
+.cadence-chip:hover { background: rgba(255,255,255,0.04); }
+.cadence-chip.overdue:hover { background: rgba(255,255,255,0.06); }
+.cadence-chip:active {
+  background: rgba(255,255,255,0.08);
+  transform: scale(0.97);
+}
+
+.cadence-pip {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.cadence-pip.green  { background: #60d8a8; box-shadow: 0 0 8px var(--glow-mint); }
+.cadence-pip.yellow { background: #e0c060; box-shadow: 0 0 8px rgba(224,192,96,0.3); }
+.cadence-pip.red    { background: #e07080; box-shadow: 0 0 8px var(--glow-rose); animation: cadence-pip-pulse 2s ease-in-out infinite; }
+.cadence-pip.dim    { background: rgba(255,255,255,0.1); }
+@keyframes cadence-pip-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.cadence-key {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+.cadence-days {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+.cadence-days.green  { color: #60d8a8; }
+.cadence-days.yellow { color: #e0c060; }
+.cadence-days.red    { color: #e07080; }
+.cadence-days.dim    { color: var(--text-dim); }
+
+.cadence-arrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  opacity: 0;
+  width: 10px;
+  text-align: center;
+  flex-shrink: 0;
+  transition: opacity 0.3s ease;
+  display: inline-block;
+}
+.cadence-arrow.yellow { color: #e0c060; }
+.cadence-arrow.red    { color: #e07080; }
+.cadence-chip.overdue .cadence-arrow { opacity: 0.65; }
+.cadence-chip.overdue:hover .cadence-arrow { opacity: 1; }
+
+.cadence-dot-sep {
+  color: var(--text-dim);
+  font-size: 10px;
+  opacity: 0.4;
+}
+
+/* Tooltip */
+.cadence-chip .cadence-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20,22,36,0.95);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+.cadence-chip:hover .cadence-tooltip { display: block; }
+
 /* ═══ Cockpit overlay (astro / compass / orb contextual panel) ══════ */
 .cockpit-overlay {
   position: fixed;
