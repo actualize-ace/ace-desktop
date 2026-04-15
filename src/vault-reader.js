@@ -951,6 +951,26 @@ function parseRitualStreak(vaultPath) {
 }
 
 // Parse cadence freshness — days since last weekly review + monthly reflection
+// Detection priority:
+//   1. Parse "Written via /skill on YYYY-MM-DD" from file content (explicit skill stamp)
+//   2. Fall back to birthtime (file creation date — stable, set when skill ran)
+//   3. Skip files under MIN_CONTENT_BYTES (blank stubs don't count)
+const MIN_CONTENT_BYTES = 800
+
+function reviewDateFromFile(filePath) {
+  try {
+    const content = fs.readFileSync(filePath, 'utf8')
+    if (content.length < MIN_CONTENT_BYTES) return null  // blank stub
+    // Try explicit stamp first: "Written via /skill on YYYY-MM-DD"
+    const match = content.match(/Written via .+ on (\d{4}-\d{2}-\d{2})/)
+    if (match) return match[1]
+    // Fall back to birthtime (creation date)
+    const stat = fs.statSync(filePath)
+    const born = stat.birthtime || stat.mtime
+    return born.toISOString().slice(0, 10)
+  } catch (e) { return null }
+}
+
 function parseCadence(vaultPath) {
   const now = new Date()
   now.setHours(0, 0, 0, 0)
@@ -961,18 +981,15 @@ function parseCadence(vaultPath) {
   try {
     const wDir = path.join(vaultPath, '01-Journal', 'weekly-reviews')
     if (fs.existsSync(wDir)) {
-      const files = fs.readdirSync(wDir).filter(f => /^\d{4}-W\d{2}\.md$/.test(f)).sort()
-      if (files.length) {
-        const last = files[files.length - 1]
-        const [year, week] = last.replace('.md', '').split('-W').map(Number)
-        // ISO week to date: Jan 4 is always in week 1
-        const jan4 = new Date(year, 0, 4)
-        const dayOfWeek = jan4.getDay() || 7
-        const weekStart = new Date(jan4)
-        weekStart.setDate(jan4.getDate() - dayOfWeek + 1 + (week - 1) * 7)
-        weekStart.setHours(0, 0, 0, 0)
-        weeklyDate = weekStart.toISOString().slice(0, 10)
-        weeklyDays = Math.floor((now - weekStart) / 86400000)
+      const files = fs.readdirSync(wDir).filter(f => /^\d{4}-W\d{2}\.md$/.test(f)).sort().reverse()
+      for (const file of files) {
+        const dateStr = reviewDateFromFile(path.join(wDir, file))
+        if (dateStr) {
+          weeklyDate = dateStr
+          const d = new Date(dateStr + 'T00:00:00')
+          weeklyDays = Math.floor((now - d) / 86400000)
+          break
+        }
       }
     }
   } catch (e) { /* silent */ }
@@ -983,15 +1000,15 @@ function parseCadence(vaultPath) {
   try {
     const mDir = path.join(vaultPath, '01-Journal', 'monthly-reviews')
     if (fs.existsSync(mDir)) {
-      const files = fs.readdirSync(mDir).filter(f => /^\d{4}-\d{2}\.md$/.test(f)).sort()
-      if (files.length) {
-        const last = files[files.length - 1]
-        const [year, month] = last.replace('.md', '').split('-').map(Number)
-        // Use last day of that month as the review date
-        const reviewDate = new Date(year, month, 0)
-        reviewDate.setHours(0, 0, 0, 0)
-        monthlyDate = reviewDate.toISOString().slice(0, 10)
-        monthlyDays = Math.floor((now - reviewDate) / 86400000)
+      const files = fs.readdirSync(mDir).filter(f => /^\d{4}-\d{2}\.md$/.test(f)).sort().reverse()
+      for (const file of files) {
+        const dateStr = reviewDateFromFile(path.join(mDir, file))
+        if (dateStr) {
+          monthlyDate = dateStr
+          const d = new Date(dateStr + 'T00:00:00')
+          monthlyDays = Math.floor((now - d) / 86400000)
+          break
+        }
       }
     }
   } catch (e) { /* silent */ }
