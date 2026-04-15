@@ -1100,6 +1100,7 @@ document.getElementById('preflight-settings')?.addEventListener('click', () => {
     window.ace.dash.onFollowUpsUpdate?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
     window.ace.dash.onPipelineUpdate?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
     window.ace.dash.onSitrepUpdate?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
+    window.ace.dash.onDashRefresh?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
   </script>
   <script type="module">
     import { WIDGETS, DEFAULT_LAYOUT } from './widgets/registry.js'

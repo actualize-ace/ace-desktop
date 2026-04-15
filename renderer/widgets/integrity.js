@@ -20,7 +20,7 @@ const REGEN_MAP = {
   C3: { skill: '/audit-energy', label: 'boundary + energy audit', minutes: 12 },
   E1: { skill: '/audit-energy', label: 'cadence audit',           minutes: 10 },
   E2: { skill: '/weekly-review',label: 'container reset',         minutes: 20 },
-  E3: { skill: '/monthly-reflection', label: 'realization review',minutes: 25 },
+  E3: { skill: '/blind-spots',        label: 'surface realization blockers', minutes: 15 },
 }
 
 function escapeAttr(s) {

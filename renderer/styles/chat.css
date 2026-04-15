@@ -666,3 +666,108 @@ body.light .slash-menu-item:hover {
 body.light .slash-menu-item.active {
   background: rgba(0,0,0,0.06);
 }
+
+/* ══════════════════════════════════════════════════════════════ */
+/*  Memory card — ambient notification when auto-memory writes    */
+/*  Matches chat-tool-block rhythm (6px radius, 1px border,       */
+/*  mono-9 header + sans-12 body). Gold bloom on mount.           */
+/* ══════════════════════════════════════════════════════════════ */
+.chat-memory-card {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin: 8px 0;
+  overflow: hidden;
+  background: rgba(16,20,32,0.4);
+  animation: memory-bloom 1.8s ease-out;
+}
+.chat-memory-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  color: var(--text-secondary);
+}
+.chat-memory-icon { font-size: 11px; }
+.chat-memory-title { font-weight: 500; letter-spacing: 0.02em; }
+.chat-memory-type {
+  font-size: 8px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-left: 4px;
+  border: 1px solid transparent;
+}
+.chat-memory-type.project {
+  background: rgba(96,216,168,0.10);
+  color: var(--capacity);
+  border-color: rgba(96,216,168,0.22);
+}
+.chat-memory-type.feedback {
+  background: rgba(212,165,116,0.10);
+  color: #d4a574;
+  border-color: rgba(212,165,116,0.22);
+}
+.chat-memory-type.user {
+  background: rgba(200,160,240,0.10);
+  color: var(--authority);
+  border-color: rgba(200,160,240,0.22);
+}
+.chat-memory-type.reference {
+  background: rgba(140,140,168,0.06);
+  color: var(--text-dim);
+  border-color: rgba(140,140,168,0.18);
+}
+.chat-memory-time {
+  margin-left: auto;
+  color: var(--text-dim);
+  font-size: 8px;
+}
+.chat-memory-body {
+  padding: 0 12px 10px;
+  font-family: 'DM Sans', sans-serif; font-size: 12px; line-height: 1.5;
+  color: var(--text-primary);
+}
+@keyframes memory-bloom {
+  0%   { opacity: 0; transform: translateY(6px); box-shadow: 0 0 0 rgba(212,165,116,0); }
+  25%  { opacity: 1; transform: translateY(0); box-shadow: 0 0 14px rgba(212,165,116,0.22); }
+  100% { opacity: 1; transform: translateY(0); box-shadow: 0 0 0 rgba(212,165,116,0); }
+}
+
+/* Light mode */
+body.light .chat-memory-card {
+  background: rgba(255,255,255,0.5);
+  border-color: rgba(100,90,160,0.18);
+}
+body.light .chat-memory-type.project {
+  background: rgba(26,138,96,0.10);
+  color: var(--capacity);
+  border-color: rgba(26,138,96,0.25);
+}
+body.light .chat-memory-type.feedback {
+  background: rgba(184,136,85,0.12);
+  color: #a06a3a;
+  border-color: rgba(184,136,85,0.28);
+}
+body.light .chat-memory-type.user {
+  background: rgba(90,72,192,0.10);
+  color: var(--authority);
+  border-color: rgba(90,72,192,0.25);
+}
+body.light .chat-memory-type.reference {
+  background: rgba(100,90,160,0.06);
+  color: var(--text-dim);
+  border-color: rgba(100,90,160,0.18);
+}
+body.light .chat-memory-card {
+  animation: memory-bloom-light 1.8s ease-out;
+}
+@keyframes memory-bloom-light {
+  0%   { opacity: 0; transform: translateY(6px); box-shadow: 0 0 0 rgba(184,136,85,0); }
+  25%  { opacity: 1; transform: translateY(0); box-shadow: 0 0 14px rgba(184,136,85,0.30); }
+  100% { opacity: 1; transform: translateY(0); box-shadow: 0 0 0 rgba(184,136,85,0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-memory-card { animation: none; }
+  body.light .chat-memory-card { animation: none; }
+}

@@ -53,6 +53,7 @@ contextBridge.exposeInMainWorld('ace', {
     onFollowUpsUpdate:(cb) => ipcRenderer.on(ch.DASH_FOLLOWUPS,cb),
     onPipelineUpdate: (cb) => ipcRenderer.on(ch.DASH_PIPELINE, cb),
     onSitrepUpdate:   (cb) => ipcRenderer.on(ch.DASH_SITREP,   cb),
+    onDashRefresh:    (cb) => ipcRenderer.on(ch.DASH_REFRESH,  cb),
 
     getVelocity:          ()        => ipcRenderer.invoke(ch.GET_VELOCITY),
     getRhythm:            ()        => ipcRenderer.invoke(ch.GET_RHYTHM),
