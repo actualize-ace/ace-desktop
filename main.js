@@ -307,6 +307,15 @@ ipcMain.handle(ch.CHAT_SEND, (_, chatId, prompt, claudeSessionId, opts) => {
 ipcMain.on(ch.CHAT_CANCEL, (_, chatId) => require('./src/chat-manager').cancel(chatId))
 ipcMain.on(ch.CHAT_RESPOND, (_, chatId, text) => require('./src/chat-manager').respond(chatId, text))
 
+// ─── Attachment IPC Handlers ─────────────────────────────────────────────────
+
+ipcMain.handle(ch.ATTACHMENT_PICK, () => {
+  return require('./src/attachment-manager').pickFile(mainWindow)
+})
+ipcMain.handle(ch.ATTACHMENT_SAVE, (_, opts) => {
+  return require('./src/attachment-manager').saveFile(resolveVaultPath(), opts)
+})
+
 // ─── Setup IPC Handlers ───────────────────────────────────────────────────────
 
 ipcMain.handle(ch.DETECT_BINARY, () => {
