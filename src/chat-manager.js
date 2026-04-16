@@ -100,28 +100,45 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   // in packaged Electron apps that inherit a minimal system PATH.
   // Covers Homebrew (arm64 + Intel), nvm, volta, fnm, asdf, and mise installs.
   const home = require('os').homedir()
-  const augmentedPath = process.platform === 'win32'
-    ? [
-        path.join(process.env.APPDATA || '', 'npm'),
-        path.join(process.env.LOCALAPPDATA || '', 'Programs', 'nodejs'),
-        process.env.PATH || '',
-      ].filter(Boolean).join(';')
-    : [
-        '/opt/homebrew/bin',
-        '/usr/local/bin',
-        '/usr/bin',
-        // nvm — default install; exact version dir unknown so probe shims path
-        path.join(home, '.nvm', 'versions', 'node', 'current', 'bin'),
-        // volta
-        path.join(home, '.volta', 'bin'),
-        // fnm
-        path.join(home, '.fnm', 'aliases', 'default', 'bin'),
-        // mise / asdf shims (covers node + claude installed via tool manager)
-        path.join(home, '.local', 'share', 'mise', 'shims'),
-        path.join(home, '.asdf', 'shims'),
-        path.join(home, '.local', 'bin'),
-        process.env.PATH || '',
-      ].filter(Boolean).join(':')
+  let augmentedPath
+  if (process.platform === 'win32') {
+    augmentedPath = [
+      path.join(process.env.APPDATA || '', 'npm'),
+      path.join(process.env.LOCALAPPDATA || '', 'Programs', 'nodejs'),
+      process.env.PATH || '',
+    ].filter(Boolean).join(';')
+  } else if (process.platform === 'darwin') {
+    augmentedPath = [
+      '/opt/homebrew/bin',
+      '/usr/local/bin',
+      '/usr/bin',
+      // nvm — default install; exact version dir unknown so probe shims path
+      path.join(home, '.nvm', 'versions', 'node', 'current', 'bin'),
+      // volta
+      path.join(home, '.volta', 'bin'),
+      // fnm
+      path.join(home, '.fnm', 'aliases', 'default', 'bin'),
+      // mise / asdf shims (covers node + claude installed via tool manager)
+      path.join(home, '.local', 'share', 'mise', 'shims'),
+      path.join(home, '.asdf', 'shims'),
+      path.join(home, '.local', 'bin'),
+      process.env.PATH || '',
+    ].filter(Boolean).join(':')
+  } else {
+    // linux
+    augmentedPath = [
+      '/usr/local/bin',
+      '/usr/bin',
+      '/snap/bin',
+      path.join(home, '.local', 'bin'),
+      path.join(home, '.nvm', 'versions', 'node', 'current', 'bin'),
+      path.join(home, '.volta', 'bin'),
+      path.join(home, '.local', 'share', 'fnm', 'aliases', 'default', 'bin'),
+      path.join(home, '.local', 'share', 'mise', 'shims'),
+      path.join(home, '.asdf', 'shims'),
+      process.env.PATH || '',
+    ].filter(Boolean).join(':')
+  }
 
   // On Windows, .cmd wrappers require shell:true so the OS routes the
   // invocation through cmd.exe — without it, stdio pipes never connect
