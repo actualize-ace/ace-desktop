@@ -33,6 +33,7 @@ Core platform — 353 commits on main.
 | Sidebar commands | Done | Customizable, drag-reorder, color-coded |
 | Lean mode toggle | Done | --strict-mcp-config for MCP overhead reduction (Settings > Chat Defaults) |
 | External links in browser | Done | Not inside Electron |
+| Linux AppImage (x64) | Done — v0.2.1 | Aleksander Brankov first user; FUSE2 caveat documented in release notes |
 
 ---
 
