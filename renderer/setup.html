@@ -457,6 +457,87 @@
       border-radius: 3px;
     }
 
+    /* ── TOS section ── */
+    .tos-section {
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+    .tos-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .tos-scroll {
+      background: rgba(12,14,24,0.5);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 14px 16px;
+      max-height: 140px;
+      overflow-y: auto;
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      font-weight: 300;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(140,120,255,0.2) transparent;
+    }
+    .tos-scroll::-webkit-scrollbar { width: 4px; }
+    .tos-scroll::-webkit-scrollbar-track { background: transparent; }
+    .tos-scroll::-webkit-scrollbar-thumb { background: rgba(140,120,255,0.25); border-radius: 4px; }
+    .tos-scroll h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin: 0 0 8px;
+    }
+    .tos-scroll p { margin: 0 0 10px; }
+    .tos-scroll p:last-child { margin-bottom: 0; }
+    .tos-scroll strong { color: var(--text-primary); font-weight: 500; }
+
+    .tos-accept {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      cursor: pointer;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      font-weight: 300;
+    }
+    .tos-accept input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: rgba(20,24,40,0.5);
+      cursor: pointer;
+      flex-shrink: 0;
+      position: relative;
+      transition: border-color 0.14s, background 0.14s;
+    }
+    .tos-accept input[type="checkbox"]:checked {
+      border-color: var(--green);
+      background: rgba(96,216,168,0.15);
+    }
+    .tos-accept input[type="checkbox"]:checked::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 11px;
+      color: var(--green);
+      font-weight: 600;
+    }
+
     .btn-primary {
       width: 100%;
       background: linear-gradient(135deg, var(--gold-warm) 0%, #e0b888 100%);
@@ -516,6 +597,7 @@
         <div class="step-row">
           <div class="step-value" id="binary-path">Detecting…</div>
           <div class="status-dot" id="binary-dot"></div>
+          <button id="binary-browse-btn" style="display:none">Browse…</button>
           <button id="recheck-btn">Re-check</button>
         </div>
         <div class="info-popover" id="pop-claude">
@@ -567,13 +649,35 @@
 
     </div><!-- /.steps -->
 
+    <div class="tos-section">
+      <div class="tos-label">05 · Terms of Use</div>
+      <div class="tos-scroll">
+        <h3>ACE Software License Agreement</h3>
+        <p><strong>1. License Grant.</strong> Actualize grants you a personal, non-transferable, non-exclusive license to use the ACE software and methodology for your own personal or professional development.</p>
+        <p><strong>2. Intellectual Property.</strong> The ACE engine, skills, methodology, Coherence Triad framework, and all associated materials are the intellectual property of Actualize. You may not redistribute, resell, sublicense, or create derivative commercial products from any ACE proprietary content.</p>
+        <p><strong>3. Your Data.</strong> All personal data you create within your vault — journal entries, network files, decisions, state — belongs to you. Actualize does not access, collect, or store your personal vault data.</p>
+        <p><strong>4. Restrictions.</strong> You may not: (a) redistribute ACE skills or methodology to non-licensed users; (b) use ACE materials to build a competing product; (c) remove or alter copyright notices.</p>
+        <p><strong>5. No Warranty.</strong> ACE is provided "as is" without warranty of any kind, express or implied.</p>
+      </div>
+      <label class="tos-accept">
+        <input type="checkbox" id="tos-checkbox">
+        I accept the ACE Terms of Use
+      </label>
+    </div>
+
     <button class="btn-primary" id="launch-btn" disabled>Save &amp; Launch ACE</button>
   </div><!-- /.setup-card -->
 
   <script>
-    let state = { vaultPath: null, vaultValid: false, binaryPath: null }
+    let state = { vaultPath: null, vaultValid: false, binaryPath: null, tosAccepted: false }
 
     const $ = id => document.getElementById(id)
+
+    // ── TOS checkbox ──────────────────────────────────────────────────
+    $('tos-checkbox').addEventListener('change', (e) => {
+      state.tosAccepted = e.target.checked
+      checkReady()
+    })
 
     // ── Popover toggle ────────────────────────────────────────────────
     document.querySelectorAll('.step-info').forEach(btn => {
@@ -623,24 +727,38 @@
       checkReady()
     })
 
-    async function detectBinary() {
-      $('binary-path').textContent = 'Detecting\u2026'
-      $('binary-dot').className = 'status-dot'
-      const result = await window.ace.setup.detectBinary()
-      if (result && result.path) {
+    function applyBinaryResult(result) {
+      if (result && result.path && result.ok !== false) {
         state.binaryPath = result.path
         const label = result.version ? result.path + ' (' + result.version + ')' : result.path
         $('binary-path').textContent = label
         $('binary-path').className = 'step-value valid'
         $('binary-dot').className = 'status-dot green'
+        $('binary-browse-btn').style.display = 'none'
       } else {
         state.binaryPath = null
-        $('binary-path').textContent = 'Not found'
+        $('binary-path').textContent = result?.path
+          ? 'Found at ' + result.path + ' but could not run — check permissions'
+          : 'Not found — install Claude Code or browse to the binary'
         $('binary-path').className = 'step-value error'
         $('binary-dot').className = 'status-dot red'
+        $('binary-browse-btn').style.display = ''
       }
       checkReady()
     }
+
+    async function detectBinary() {
+      $('binary-path').textContent = 'Detecting\u2026'
+      $('binary-dot').className = 'status-dot'
+      $('binary-browse-btn').style.display = 'none'
+      const result = await window.ace.setup.detectBinary()
+      applyBinaryResult(result)
+    }
+
+    $('binary-browse-btn').addEventListener('click', async () => {
+      const result = await window.ace.setup.pickBinary()
+      if (result) applyBinaryResult(result)
+    })
 
     async function detectNode() {
       $('node-path').textContent = 'Detecting\u2026'
@@ -683,8 +801,8 @@
     })
 
     function checkReady() {
-      // Launch requires vault + binary. Node + Git are soft warnings.
-      $('launch-btn').disabled = !(state.vaultPath && state.vaultValid && state.binaryPath)
+      // Launch requires vault + binary + TOS acceptance. Node + Git are soft warnings.
+      $('launch-btn').disabled = !(state.vaultPath && state.vaultValid && state.binaryPath && state.tosAccepted)
     }
 
     $('launch-btn').addEventListener('click', async () => {
@@ -693,6 +811,7 @@
       await window.ace.setup.saveConfig({
         vaultPath: state.vaultPath,
         claudeBinaryPath: state.binaryPath,
+        tosAcceptedAt: new Date().toISOString(),
         configVersion: 1,
       })
     })
