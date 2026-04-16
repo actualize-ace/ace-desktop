@@ -168,11 +168,17 @@ export function attach(inputEl, { send } = {}) {
     const val = inputEl.value
     // Trigger: / at position 0
     if (val.startsWith('/')) {
-      const query = val.slice(1) // everything after /
+      const afterSlash = val.slice(1)
+      // Once the user types a space the skill name is resolved and what follows
+      // is argument text — close the menu and don't re-filter against args.
+      if (afterSlash.includes(' ')) {
+        if (isOpen()) dismiss()
+        return
+      }
       if (!isOpen()) {
         await show(inputEl)
       }
-      updateFilter(query)
+      updateFilter(afterSlash)
     } else if (isOpen()) {
       dismiss()
     }

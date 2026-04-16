@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cadence Ticker Prototype — Ritual Streak + Cadence Ring</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&family=DM+Sans:wght@400;500&family=JetBrains+Mono:wght@300;400&family=Cormorant+Garamond:ital,wght@1,400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0e1020;
+    --surface: rgba(255,255,255,0.03);
+    --border: rgba(255,255,255,0.06);
+    --text-primary: #d8d4e4;
+    --text-secondary: #8884a0;
+    --text-dim: #606080;
+    --amber: #d4a574;
+    --gold: #c8a0f0;
+    --glow-mint: rgba(96,216,168,0.30);
+    --glow-rose: rgba(224,112,128,0.22);
+    --green: #60d8a8;
+    --yellow: #e0c060;
+    --red: #e07080;
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-script: 'Cormorant Garamond', Georgia, serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 24px;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: 20px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    letter-spacing: 0.04em;
+  }
+  .subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 40px;
+    font-family: var(--font-mono);
+  }
+
+  /* ═══ BRAIN ROW SIMULATION ═══ */
+  .brain-row {
+    display: grid;
+    grid-template-columns: 280px 1fr 280px;
+    gap: 32px;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    padding: 24px 0 36px;
+    min-height: 280px;
+  }
+
+  /* ═══ ORB (simplified for context) ═══ */
+  .orb-wrap {
+    position: relative;
+    width: 240px; height: 240px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .orb-iris {
+    position: absolute; inset: 0;
+    border: 1px solid rgba(200,160,240,0.18);
+    border-radius: 50%;
+    animation: iris-rotate 90s linear infinite;
+  }
+  .orb-iris::before {
+    content: ''; position: absolute; inset: -1px;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    border-top-color: rgba(200,160,240,0.5);
+    border-right-color: rgba(176,128,224,0.3);
+  }
+  .orb-iris::after {
+    content: ''; position: absolute; inset: 16px;
+    border-radius: 50%;
+    border: 1px dashed rgba(96,216,168,0.18);
+    animation: iris-counter 130s linear infinite;
+  }
+  @keyframes iris-rotate  { to { transform: rotate(360deg); } }
+  @keyframes iris-counter { to { transform: rotate(-360deg); } }
+
+  .orb {
+    position: relative;
+    width: 170px; height: 170px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(216,212,228,0.4) 0%, transparent 30%),
+                radial-gradient(circle at center, rgba(200,160,240,0.6) 0%, rgba(140,120,255,0.4) 40%, rgba(20,24,40,0.3) 100%);
+    box-shadow: inset 0 0 50px rgba(200,160,240,0.35),
+                inset 0 0 8px rgba(216,212,228,0.4),
+                0 0 60px rgba(140,120,255,0.35),
+                0 0 140px rgba(200,160,240,0.18);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    animation: orb-breath 11s ease-in-out infinite;
+    z-index: 2;
+  }
+  @keyframes orb-breath {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  .orb-score {
+    font-family: var(--font-display);
+    font-size: 56px; font-weight: 300;
+    line-height: 1; letter-spacing: -0.02em;
+    text-shadow: 0 0 20px rgba(216,212,228,0.5);
+  }
+  .orb-divider {
+    font-family: var(--font-mono);
+    font-size: 11px; color: var(--gold); opacity: 0.7;
+    margin: 4px 0 6px;
+  }
+  .orb-state {
+    font-family: var(--font-mono);
+    font-size: 8px; letter-spacing: 0.3em;
+    text-transform: uppercase; color: var(--text-secondary);
+  }
+
+  /* ═══ SYNTHESIS PLACEHOLDER ═══ */
+  .synthesis-placeholder {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-family: var(--font-mono);
+    letter-spacing: 0.1em;
+  }
+
+  /* ═══ CADENCE RING — right column ═══ */
+  .cadence-ring-wrap {
+    position: relative;
+    width: 240px; height: 240px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* The ring track — subtle background arc */
+  .cadence-ring-track {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(212,165,116,0.12);
+    transition: border-color 0.6s ease, box-shadow 0.6s ease;
+  }
+  .cadence-ring-track::before {
+    content: '';
+    position: absolute;
+    inset: 16px;
+    border-radius: 50%;
+    border: 1px dashed rgba(212,165,116,0.08);
+    transition: border-color 0.6s ease;
+  }
+
+  /* Overdue ring states — bottom-half glow via clip-path + pseudo */
+  .cadence-ring-track::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    border: 1.5px solid transparent;
+    clip-path: inset(50% 0 0 0);
+    transition: border-color 0.6s ease, box-shadow 0.6s ease;
+  }
+
+  /* Amber ring pulse */
+  .cadence-ring-wrap.overdue-yellow .cadence-ring-track::after {
+    border-color: rgba(224,192,96,0.4);
+    box-shadow: 0 0 16px rgba(224,192,96,0.15), inset 0 0 16px rgba(224,192,96,0.08);
+    animation: ring-pulse-amber 3s ease-in-out infinite;
+  }
+  @keyframes ring-pulse-amber {
+    0%, 100% { border-color: rgba(224,192,96,0.4); box-shadow: 0 0 16px rgba(224,192,96,0.15); }
+    50%      { border-color: rgba(224,192,96,0.6); box-shadow: 0 0 28px rgba(224,192,96,0.25); }
+  }
+
+  /* Red ring pulse */
+  .cadence-ring-wrap.overdue-red .cadence-ring-track::after {
+    border-color: rgba(224,112,128,0.45);
+    box-shadow: 0 0 20px rgba(224,112,128,0.2), inset 0 0 20px rgba(224,112,128,0.1);
+    animation: ring-pulse-red 2.2s ease-in-out infinite;
+  }
+  @keyframes ring-pulse-red {
+    0%, 100% { border-color: rgba(224,112,128,0.45); box-shadow: 0 0 20px rgba(224,112,128,0.2); }
+    50%      { border-color: rgba(224,112,128,0.7);  box-shadow: 0 0 36px rgba(224,112,128,0.35); }
+  }
+
+  /* Inner content area */
+  .cadence-ring-inner {
+    position: relative;
+    width: 210px; height: 210px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+  }
+
+  /* Divider line between halves */
+  .cadence-ring-divider {
+    width: 60%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,165,116,0.25), transparent);
+    margin: 8px 0;
+  }
+
+  /* ═══ TOP HALF — Ritual Streak ═══ */
+  .rs-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    justify-content: flex-end;
+    padding-bottom: 4px;
+  }
+
+  .rs-top {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+  .rs-count {
+    font-family: var(--font-display);
+    font-size: 38px;
+    font-weight: 300;
+    color: var(--amber);
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+  .rs-unit {
+    font-size: 13px;
+    color: var(--amber);
+    opacity: 0.75;
+    font-weight: 400;
+  }
+  .rs-label {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-top: -2px;
+  }
+  .rs-dots {
+    display: flex;
+    gap: 5px;
+    margin-top: 2px;
+  }
+  .rs-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    transition: background 0.3s ease;
+  }
+  .rs-dot.active { background: var(--amber); }
+  .rs-dot.today {
+    outline: 1.5px solid rgba(212,165,116,0.4);
+    outline-offset: 2px;
+  }
+  .rs-dot.today.active { outline-color: rgba(212,165,116,0.7); }
+
+  /* ═══ BOTTOM HALF — Cadence Ticker ═══ */
+  .cadence-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    justify-content: flex-start;
+    padding-top: 4px;
+  }
+
+  .cadence-label {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .cadence-chips {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .cadence-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+    position: relative;
+  }
+  .cadence-chip:hover {
+    background: rgba(255,255,255,0.04);
+  }
+
+  .cadence-pip {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .cadence-pip.green  { background: var(--green); box-shadow: 0 0 8px var(--glow-mint); }
+  .cadence-pip.yellow { background: var(--yellow); box-shadow: 0 0 8px rgba(224,192,96,0.3); }
+  .cadence-pip.red    { background: var(--red); box-shadow: 0 0 8px var(--glow-rose); animation: pip-pulse 2s ease-in-out infinite; }
+
+  @keyframes pip-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .cadence-key {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+
+  .cadence-days {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  .cadence-days.green  { color: var(--green); }
+  .cadence-days.yellow { color: var(--yellow); }
+  .cadence-days.red    { color: var(--red); }
+
+  .cadence-dot-sep {
+    color: var(--text-dim);
+    font-size: 10px;
+    opacity: 0.4;
+  }
+
+  /* Tooltip */
+  .cadence-chip .tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(20,22,36,0.95);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+  }
+  .cadence-chip:hover .tooltip { display: block; }
+
+  /* Arrow affordance — always reserves space, fades in when overdue */
+  .cadence-arrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    opacity: 0;
+    width: 10px;
+    text-align: center;
+    flex-shrink: 0;
+    transition: opacity 0.3s ease, color 0.3s ease;
+    display: inline-block;
+  }
+  .cadence-chip.overdue .cadence-arrow {
+    opacity: 0.65;
+  }
+  .cadence-chip.overdue:hover .cadence-arrow {
+    opacity: 1;
+  }
+  .cadence-arrow.yellow { color: var(--yellow); }
+  .cadence-arrow.red    { color: var(--red); }
+
+  /* Overdue chip — no border change, just background shift to avoid layout jump */
+  .cadence-chip.overdue:hover {
+    background: rgba(255,255,255,0.06);
+  }
+
+  /* Click flash */
+  .cadence-chip:active {
+    background: rgba(255,255,255,0.08);
+    transform: scale(0.97);
+  }
+
+  /* ═══ DEMO CONTROLS ═══ */
+  .controls {
+    margin-top: 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+    padding: 24px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    width: 100%;
+    max-width: 500px;
+  }
+  .controls h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 14px;
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+  }
+  .control-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    justify-content: center;
+  }
+  .control-row label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    min-width: 100px;
+    text-align: right;
+  }
+  .control-row input[type="range"] {
+    width: 180px;
+    accent-color: var(--amber);
+  }
+  .control-row .val {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-primary);
+    min-width: 40px;
+  }
+  .threshold-legend {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.6;
+  }
+  .threshold-legend span.g { color: var(--green); }
+  .threshold-legend span.y { color: var(--yellow); }
+  .threshold-legend span.r { color: var(--red); }
+</style>
+</head>
+<body>
+
+<h1>Cadence Ring Prototype</h1>
+<p class="subtitle">ritual streak (top) + cadence ticker (bottom) — balances the coherence orb</p>
+
+<div class="brain-row">
+  <!-- LEFT: Orb -->
+  <div>
+    <div class="orb-wrap">
+      <div class="orb-iris"></div>
+      <div class="orb">
+        <div class="orb-score">14</div>
+        <div class="orb-divider">/ 18</div>
+        <div class="orb-state">stable</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER: Synthesis placeholder -->
+  <div class="synthesis-placeholder">command center</div>
+
+  <!-- RIGHT: Cadence Ring -->
+  <div>
+    <div class="cadence-ring-wrap">
+      <div class="cadence-ring-track"></div>
+      <div class="cadence-ring-inner">
+        <!-- Top half: Ritual Streak -->
+        <div class="rs-section">
+          <div class="rs-top">
+            <span class="rs-count" id="streak-count">7</span>
+            <span class="rs-unit">days</span>
+          </div>
+          <div class="rs-label">ritual streak</div>
+          <div class="rs-dots" id="streak-dots"></div>
+        </div>
+
+        <div class="cadence-ring-divider"></div>
+
+        <!-- Bottom half: Cadence Ticker -->
+        <div class="cadence-section">
+          <div class="cadence-label">cadence</div>
+          <div class="cadence-chips">
+            <div class="cadence-chip" id="chip-weekly" title="Click to run /weekly-review">
+              <div class="cadence-pip green" id="pip-weekly"></div>
+              <span class="cadence-key">W:</span>
+              <span class="cadence-days green" id="days-weekly">3d</span>
+              <span class="cadence-arrow" id="arrow-weekly">&#9655;</span>
+              <div class="tooltip" id="tooltip-weekly">Last weekly review: Apr 11, 2026</div>
+            </div>
+            <span class="cadence-dot-sep">&middot;</span>
+            <div class="cadence-chip" id="chip-monthly" title="Click to run /monthly-reflection">
+              <div class="cadence-pip green" id="pip-monthly"></div>
+              <span class="cadence-key">M:</span>
+              <span class="cadence-days green" id="days-monthly">18d</span>
+              <span class="cadence-arrow" id="arrow-monthly">&#9655;</span>
+              <div class="tooltip" id="tooltip-monthly">Last monthly reflection: Mar 27, 2026</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Interactive controls -->
+<div class="controls">
+  <h2>Adjust to see threshold states</h2>
+  <div class="threshold-legend">
+    Weekly: <span class="g">0–7d</span> · <span class="y">8–9d</span> · <span class="r">10d+</span>
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    Monthly: <span class="g">0–31d</span> · <span class="y">32–37d</span> · <span class="r">38d+</span>
+  </div>
+  <div class="control-row">
+    <label>Weekly (days ago)</label>
+    <input type="range" id="slider-weekly" min="0" max="21" value="3">
+    <span class="val" id="val-weekly">3d</span>
+  </div>
+  <div class="control-row">
+    <label>Monthly (days ago)</label>
+    <input type="range" id="slider-monthly" min="0" max="60" value="18">
+    <span class="val" id="val-monthly">18d</span>
+  </div>
+  <div class="control-row">
+    <label>Streak length</label>
+    <input type="range" id="slider-streak" min="0" max="30" value="7">
+    <span class="val" id="val-streak">7</span>
+  </div>
+</div>
+
+<script>
+  // Threshold logic
+  function weeklyColor(days) {
+    if (days <= 7)  return 'green'
+    if (days <= 9)  return 'yellow'
+    return 'red'
+  }
+  function monthlyColor(days) {
+    if (days <= 31) return 'green'
+    if (days <= 37) return 'yellow'
+    return 'red'
+  }
+
+  function formatDate(daysAgo) {
+    const d = new Date()
+    d.setDate(d.getDate() - daysAgo)
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
+  function updateWeekly(days) {
+    const color = weeklyColor(days)
+    const isOverdue = color !== 'green'
+    document.getElementById('pip-weekly').className = 'cadence-pip ' + color
+    const daysEl = document.getElementById('days-weekly')
+    daysEl.className = 'cadence-days ' + color
+    daysEl.textContent = days + 'd'
+
+    // Arrow affordance
+    const arrow = document.getElementById('arrow-weekly')
+    arrow.className = 'cadence-arrow ' + (isOverdue ? color : '')
+
+    // Chip overdue class
+    const chip = document.getElementById('chip-weekly')
+    chip.classList.toggle('overdue', isOverdue)
+
+    // Tooltip
+    const action = isOverdue ? ' — click to run' : ''
+    document.getElementById('tooltip-weekly').textContent = 'Last weekly review: ' + formatDate(days) + action
+    document.getElementById('val-weekly').textContent = days + 'd'
+
+    updateRingState()
+  }
+
+  function updateMonthly(days) {
+    const color = monthlyColor(days)
+    const isOverdue = color !== 'green'
+    document.getElementById('pip-monthly').className = 'cadence-pip ' + color
+    const daysEl = document.getElementById('days-monthly')
+    daysEl.className = 'cadence-days ' + color
+    daysEl.textContent = days + 'd'
+
+    // Arrow affordance
+    const arrow = document.getElementById('arrow-monthly')
+    arrow.className = 'cadence-arrow ' + (isOverdue ? color : '')
+
+    // Chip overdue class
+    const chip = document.getElementById('chip-monthly')
+    chip.classList.toggle('overdue', isOverdue)
+
+    // Tooltip
+    const action = isOverdue ? ' — click to run' : ''
+    document.getElementById('tooltip-monthly').textContent = 'Last monthly reflection: ' + formatDate(days) + action
+    document.getElementById('val-monthly').textContent = days + 'd'
+
+    updateRingState()
+  }
+
+  // Ring border pulse — worst of the two cadence states wins
+  function updateRingState() {
+    const wrap = document.querySelector('.cadence-ring-wrap')
+    wrap.classList.remove('overdue-yellow', 'overdue-red')
+
+    const wDays = +document.getElementById('slider-weekly').value
+    const mDays = +document.getElementById('slider-monthly').value
+    const wColor = weeklyColor(wDays)
+    const mColor = monthlyColor(mDays)
+
+    // Worst state wins
+    if (wColor === 'red' || mColor === 'red') {
+      wrap.classList.add('overdue-red')
+    } else if (wColor === 'yellow' || mColor === 'yellow') {
+      wrap.classList.add('overdue-yellow')
+    }
+  }
+
+  function updateStreak(count) {
+    document.getElementById('streak-count').textContent = count
+    document.getElementById('val-streak').textContent = count
+    const unit = document.querySelector('.rs-unit')
+    unit.textContent = count === 1 ? 'day' : 'days'
+
+    const dotsEl = document.getElementById('streak-dots')
+    const last7 = []
+    for (let i = 6; i >= 0; i--) {
+      last7.push({ active: i < count, today: i === 0 })
+    }
+    dotsEl.innerHTML = last7.map(d => {
+      const cls = ['rs-dot']
+      if (d.active) cls.push('active')
+      if (d.today) cls.push('today')
+      return `<div class="${cls.join(' ')}"></div>`
+    }).join('')
+  }
+
+  // Wire up sliders
+  document.getElementById('slider-weekly').addEventListener('input', e => updateWeekly(+e.target.value))
+  document.getElementById('slider-monthly').addEventListener('input', e => updateMonthly(+e.target.value))
+  document.getElementById('slider-streak').addEventListener('input', e => updateStreak(+e.target.value))
+
+  // Click handlers (simulated)
+  document.getElementById('chip-weekly').addEventListener('click', () => {
+    alert('Would launch /weekly-review in chat pane')
+  })
+  document.getElementById('chip-monthly').addEventListener('click', () => {
+    alert('Would launch /monthly-reflection in chat pane')
+  })
+
+  // Initial render
+  updateWeekly(3)
+  updateMonthly(18)
+  updateStreak(7)
+</script>
+
+</body>
+</html>

@@ -98,10 +98,17 @@ const WHICH_CMD = process.platform === 'win32' ? 'where.exe' : 'which'
 function detectClaudeBinary() {
   // Augment PATH so packaged Electron (minimal system PATH) can still find
   // Homebrew-installed binaries via `which`.
+  const home = require('os').homedir()
   const augmentedPath = [
     '/opt/homebrew/bin',
     '/usr/local/bin',
     '/usr/bin',
+    path.join(home, '.nvm', 'versions', 'node', 'current', 'bin'),
+    path.join(home, '.volta', 'bin'),
+    path.join(home, '.fnm', 'aliases', 'default', 'bin'),
+    path.join(home, '.local', 'share', 'mise', 'shims'),
+    path.join(home, '.asdf', 'shims'),
+    path.join(home, '.local', 'bin'),
     process.env.PATH || '',
   ].filter(Boolean).join(process.platform === 'win32' ? ';' : ':')
   const augmentedEnv = { ...process.env, PATH: augmentedPath }
@@ -112,6 +119,19 @@ function detectClaudeBinary() {
     const result = execSync(`${WHICH_CMD} claude`, { encoding: 'utf8', env: augmentedEnv }).trim().split(/\r?\n/)[0]
     if (result && fs.existsSync(result)) found = result
   } catch {}
+
+  // Try login shell — catches nvm/volta/custom npm prefix paths that only
+  // exist in the user's interactive shell environment (zsh/bash profiles).
+  if (!found && process.platform !== 'win32') {
+    try {
+      const shell = process.env.SHELL || '/bin/zsh'
+      const result = execSync(`${shell} -l -c 'which claude'`, {
+        encoding: 'utf8',
+        timeout: 5000,
+      }).trim().split(/\r?\n/)[0]
+      if (result && fs.existsSync(result)) found = result
+    } catch {}
+  }
 
   // Try known paths
   if (!found) {
@@ -237,8 +257,10 @@ app.on('activate', () => {
   }
 })
 
-app.on('before-quit', () => {
+app.on('before-quit', (event) => {
+  event.preventDefault()
   killAllChildren()
+  require('./src/file-watcher').stop().then(() => app.exit(0))
 })
 
 // Self-heal runtime globals from on-disk config if they've gone missing.
@@ -386,6 +408,15 @@ ipcMain.handle(ch.PICK_VAULT, async () => {
   const vaultPath = result.filePaths[0]
   const hasMcp = fs.existsSync(path.join(vaultPath, '.mcp.json'))
   return { vaultPath, hasMcp }
+})
+
+ipcMain.handle(ch.PICK_BINARY, async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openFile'],
+    message: 'Select the Claude CLI binary',
+  })
+  if (result.canceled || !result.filePaths.length) return null
+  return require('./src/preflight').checkBinary(result.filePaths[0])
 })
 
 ipcMain.handle(ch.SAVE_CONFIG, (_, config) => {
@@ -644,7 +675,7 @@ ipcMain.handle(ch.SAVE_LAYOUT, (_, layout) => {
 
 function resolveInsideVault(targetPath) {
   const realVault = fs.realpathSync(global.VAULT_PATH)
-  const realTarget = fs.realpathSync(path.resolve(targetPath))
+  const realTarget = fs.realpathSync(path.resolve(global.VAULT_PATH, targetPath))
   if (!realTarget.startsWith(realVault + path.sep) && realTarget !== realVault) return null
   return realTarget
 }

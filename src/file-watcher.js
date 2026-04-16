@@ -80,4 +80,13 @@ function start(win) {
   watcher = { dedicatedWatcher, cockpitWatcher }
 }
 
-module.exports = { start }
+async function stop() {
+  if (!watcher) return
+  await Promise.all([
+    watcher.dedicatedWatcher.close(),
+    watcher.cockpitWatcher.close(),
+  ])
+  watcher = null
+}
+
+module.exports = { start, stop }

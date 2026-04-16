@@ -41,6 +41,7 @@ module.exports = {
   DETECT_NODE:     'detect-node',
   DETECT_GIT:      'detect-git',
   PICK_VAULT:      'pick-vault',
+  PICK_BINARY:     'pick-binary',
 
   // Dashboard: new channels
   GET_VELOCITY:           'get-velocity',
