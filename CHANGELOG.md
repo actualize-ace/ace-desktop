@@ -5,6 +5,17 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## v0.2.1 — 2026-04-16
+
+### Added
+- **Linux support (AppImage)** — `ACE-0.2.1-x86_64.AppImage` now built and published alongside Mac DMGs and Windows installer on every release. Run `chmod +x` then execute directly. Ubuntu 22.04+ users may need `sudo apt install libfuse2`.
+- Binary detection now covers Linux install locations: `/usr/local/bin`, `/usr/bin`, `/snap/bin`, `~/.local/bin`, plus nvm/volta/fnm/asdf/mise version-manager paths.
+
+### Changed
+- Refactored platform branching across `pty-manager`, `preflight`, `chat-manager`, and `main` from two-way (`win32` vs. else-Mac) to three-way (`win32` | `darwin` | `linux`). No behavior change on Mac or Windows.
+
+---
+
 ## v0.2.0 — 2026-04-15
 
 ### Added
