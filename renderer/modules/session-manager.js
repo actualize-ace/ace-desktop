@@ -8,6 +8,7 @@ import { onSessionClose } from './atmosphere.js'
 import { initSplitPane, moveToOtherGroup } from './split-pane-manager.js'
 import { startTimer, clearTimer } from './session-timer.js'
 import { attach as attachSlashMenu } from './slash-menu.js'
+import { pickAndStage, wireDropZone, wirePasteHandler, injectAttachments, consumeAttachments, renderChipTray, renderMsgAttachments, wireMsgAttachmentClicks } from './attachment-handler.js'
 
 // ─── Chat System ─────────────────────────────────────────────────────────────
 
@@ -45,11 +46,13 @@ export function sendChatMessage(id, prompt, sessionsObj) {
   const msgsEl = document.getElementById('chat-msgs-' + id)
   const userMsg = document.createElement('div')
   userMsg.className = 'chat-msg chat-msg-user'
-  userMsg.innerHTML = `<div class="chat-msg-label">YOU</div><div class="chat-msg-content">${escapeHtml(prompt.trim())}</div>`
+  const attachHtml = renderMsgAttachments(s.pendingAttachments)
+  userMsg.innerHTML = `<div class="chat-msg-label">YOU</div>${attachHtml}<div class="chat-msg-content">${escapeHtml(prompt.trim())}</div>`
   // Remove welcome if present
   const welcome = msgsEl.querySelector('.chat-welcome')
   if (welcome) welcome.remove()
   msgsEl.appendChild(userMsg)
+  wireMsgAttachmentClicks(userMsg)
 
   // Add assistant message placeholder
   const assistantMsg = document.createElement('div')
@@ -67,7 +70,11 @@ export function sendChatMessage(id, prompt, sessionsObj) {
     if (tabLabel) tabLabel.textContent = newName
   }
 
-  s.messages.push({ role: 'user', content: prompt.trim(), timestamp: Date.now() })
+  // Consume pending attachments before pushing message record
+  const attachedFiles = consumeAttachments(s)
+  const finalPrompt = injectAttachments({ pendingAttachments: attachedFiles }, prompt.trim())
+
+  s.messages.push({ role: 'user', content: prompt.trim(), attachments: attachedFiles.length ? attachedFiles : undefined, timestamp: Date.now() })
   s.currentStreamText = ''
   s._fullResponseText = ''
   s.currentToolInput = ''
@@ -77,6 +84,9 @@ export function sendChatMessage(id, prompt, sessionsObj) {
   s._settledHTML = ''
   s._currentAssistantEl = assistantMsg
   s._pendingRAF = null
+
+  // Clear chip tray
+  renderChipTray(s, id)
 
   // Update button state
   const sendBtn = document.getElementById('chat-send-' + id)
@@ -98,8 +108,8 @@ export function sendChatMessage(id, prompt, sessionsObj) {
   // Keep session state in sync with the model actually used
   if (s) s.model = opts.model
 
-  // Send to backend
-  window.ace.chat.send(id, prompt.trim(), s.claudeSessionId, opts)
+  // Send to backend with injected attachment refs
+  window.ace.chat.send(id, finalPrompt, s.claudeSessionId, opts)
 
   // Start rotating status words
   const STATUS_WORDS = ['Thinking', 'Reasoning', 'Analyzing', 'Synthesizing', 'Composing', 'Reflecting', 'Processing', 'Connecting', 'Exploring', 'Weaving']
@@ -974,7 +984,11 @@ export function spawnSession(opts) {
           <option value="max" ${state.chatDefaults.effort === 'max' ? 'selected' : ''}>Max effort</option>
         </select>
       </div>
+      <div class="chat-attachments" id="chat-attachments-${id}"></div>
       <div class="chat-input-area">
+        <button class="chat-attach-btn" id="chat-attach-${id}" title="Attach · drag, paste, or click" aria-label="Attach file">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.49"/></svg>
+        </button>
         <textarea class="chat-input" id="chat-input-${id}" data-learn-target="chat-composer" placeholder="${window.__preflightResult?.binary?.ok && window.__preflightResult?.vault?.ok ? 'Type /start to begin your day' : 'Message ACE...'}" rows="1"></textarea>
         <button class="chat-send-btn" id="chat-send-${id}" data-learn-target="send-button">↑</button>
       </div>
@@ -1001,6 +1015,7 @@ export function spawnSession(opts) {
     resumeId: resumeId,
     resumeCwd: resumeCwd,
     messages: [],
+    pendingAttachments: [],
     currentStreamText: '',
     currentToolInput: '',
     isStreaming: false,
@@ -1094,6 +1109,14 @@ export function spawnSession(opts) {
     inputEl.style.height = 'auto'
     sendChatMessage(id, prompt)
   })
+
+  // Attachment handlers
+  const attachBtn = document.getElementById('chat-attach-' + id)
+  if (attachBtn) {
+    attachBtn.addEventListener('click', () => pickAndStage(state.sessions[id], id))
+  }
+  wireDropZone(state.sessions[id], id)
+  wirePasteHandler(state.sessions[id], id)
 
   // Wire chat stream listeners
   wireChatListeners(id)
