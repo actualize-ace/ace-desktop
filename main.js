@@ -89,7 +89,16 @@ const WINDOWS_CLAUDE_PATHS = [
   path.join(process.env.APPDATA || '', 'npm', 'claude.cmd'),
   path.join(process.env.APPDATA || '', 'npm', 'claude.ps1'),
 ]
-const KNOWN_PATHS = process.platform === 'win32' ? WINDOWS_CLAUDE_PATHS : MACOS_CLAUDE_PATHS
+const LINUX_CLAUDE_PATHS = [
+  path.join(require('os').homedir(), '.local', 'bin', 'claude'),
+  '/usr/local/bin/claude',
+  '/usr/bin/claude',
+  '/snap/bin/claude',
+]
+const KNOWN_PATHS =
+  process.platform === 'win32' ? WINDOWS_CLAUDE_PATHS :
+  process.platform === 'darwin' ? MACOS_CLAUDE_PATHS :
+  LINUX_CLAUDE_PATHS
 
 // `which` is a POSIX tool; `where.exe` is the Windows equivalent. Windows
 // output can list multiple matches across lines — take the first.
@@ -99,18 +108,41 @@ function detectClaudeBinary() {
   // Augment PATH so packaged Electron (minimal system PATH) can still find
   // Homebrew-installed binaries via `which`.
   const home = require('os').homedir()
-  const augmentedPath = [
-    '/opt/homebrew/bin',
-    '/usr/local/bin',
-    '/usr/bin',
-    path.join(home, '.nvm', 'versions', 'node', 'current', 'bin'),
-    path.join(home, '.volta', 'bin'),
-    path.join(home, '.fnm', 'aliases', 'default', 'bin'),
-    path.join(home, '.local', 'share', 'mise', 'shims'),
-    path.join(home, '.asdf', 'shims'),
-    path.join(home, '.local', 'bin'),
-    process.env.PATH || '',
-  ].filter(Boolean).join(process.platform === 'win32' ? ';' : ':')
+  let augmentedPath
+  if (process.platform === 'win32') {
+    augmentedPath = [
+      path.join(process.env.APPDATA || '', 'npm'),
+      path.join(process.env.LOCALAPPDATA || '', 'Programs', 'nodejs'),
+      process.env.PATH || '',
+    ].filter(Boolean).join(';')
+  } else if (process.platform === 'darwin') {
+    augmentedPath = [
+      '/opt/homebrew/bin',
+      '/usr/local/bin',
+      '/usr/bin',
+      path.join(home, '.nvm', 'versions', 'node', 'current', 'bin'),
+      path.join(home, '.volta', 'bin'),
+      path.join(home, '.fnm', 'aliases', 'default', 'bin'),
+      path.join(home, '.local', 'share', 'mise', 'shims'),
+      path.join(home, '.asdf', 'shims'),
+      path.join(home, '.local', 'bin'),
+      process.env.PATH || '',
+    ].filter(Boolean).join(':')
+  } else {
+    // linux
+    augmentedPath = [
+      '/usr/local/bin',
+      '/usr/bin',
+      '/snap/bin',
+      path.join(home, '.local', 'bin'),
+      path.join(home, '.nvm', 'versions', 'node', 'current', 'bin'),
+      path.join(home, '.volta', 'bin'),
+      path.join(home, '.local', 'share', 'fnm', 'aliases', 'default', 'bin'),
+      path.join(home, '.local', 'share', 'mise', 'shims'),
+      path.join(home, '.asdf', 'shims'),
+      process.env.PATH || '',
+    ].filter(Boolean).join(':')
+  }
   const augmentedEnv = { ...process.env, PATH: augmentedPath }
 
   // Try PATH lookup first
@@ -167,7 +199,10 @@ function createWindow(page) {
     // otherwise the system chrome stacks over our CSS titlebar.
     titleBarStyle: process.platform === 'win32' ? 'hidden' : 'hiddenInset',
     backgroundColor: '#0a0a0f',
-    icon: path.join(__dirname, 'assets', process.platform === 'win32' ? 'ace.ico' : 'ace.icns'),
+    icon: path.join(__dirname, 'assets',
+      process.platform === 'win32' ? 'ace.ico' :
+      process.platform === 'darwin' ? 'ace.icns' :
+      'ace.png'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -344,8 +379,25 @@ const WINDOWS_GIT_PATHS = [
   path.join(process.env.ProgramFiles || 'C:\\Program Files', 'Git', 'cmd', 'git.exe'),
   path.join(process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'Git', 'bin', 'git.exe'),
 ]
-const NODE_PATHS = process.platform === 'win32' ? WINDOWS_NODE_PATHS : MACOS_NODE_PATHS
-const GIT_PATHS = process.platform === 'win32' ? WINDOWS_GIT_PATHS : MACOS_GIT_PATHS
+const LINUX_NODE_PATHS = [
+  '/usr/local/bin/node',
+  '/usr/bin/node',
+  '/snap/bin/node',
+  path.join(require('os').homedir(), '.local', 'bin', 'node'),
+]
+const LINUX_GIT_PATHS = [
+  '/usr/local/bin/git',
+  '/usr/bin/git',
+  '/snap/bin/git',
+]
+const NODE_PATHS =
+  process.platform === 'win32' ? WINDOWS_NODE_PATHS :
+  process.platform === 'darwin' ? MACOS_NODE_PATHS :
+  LINUX_NODE_PATHS
+const GIT_PATHS =
+  process.platform === 'win32' ? WINDOWS_GIT_PATHS :
+  process.platform === 'darwin' ? MACOS_GIT_PATHS :
+  LINUX_GIT_PATHS
 
 function runBinary(bin, args, timeoutMs = 3000) {
   return execSync(`"${bin}" ${args.join(' ')}`, {
