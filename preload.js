@@ -98,6 +98,13 @@ contextBridge.exposeInMainWorld('ace', {
     },
   },
 
+  // ─── Attachments ──────────────────────────────────────────────────────────────
+  attachments: {
+    pickFile: () => ipcRenderer.invoke(ch.ATTACHMENT_PICK),
+    save:     (opts) => ipcRenderer.invoke(ch.ATTACHMENT_SAVE, opts),
+    openFile: (absPath) => ipcRenderer.invoke(ch.SHELL_OPEN_PATH, absPath),
+  },
+
   // ─── Vault ───────────────────────────────────────────────────────────────────
   vault: {
     listDir:  (dirPath)  => ipcRenderer.invoke(ch.VAULT_LIST_DIR, dirPath),

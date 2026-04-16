@@ -62,6 +62,10 @@ module.exports = {
   CHAT_ERROR:             'chat-error',
   CHAT_EXIT:              'chat-exit',
 
+  // Attachments
+  ATTACHMENT_PICK:          'attachment-pick',
+  ATTACHMENT_SAVE:          'attachment-save',
+
   // Claude settings (~/.claude/settings.json)
   CLAUDE_SETTINGS_READ:   'claude-settings-read',
   CLAUDE_SETTINGS_WRITE:  'claude-settings-write',
