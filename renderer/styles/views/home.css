@@ -574,7 +574,7 @@
   background: var(--text-dim);
 }
 .cockpit-triad-deck .signal-row .dot.green   { background: var(--green); box-shadow: 0 0 6px rgba(96,216,168,0.5); }
-.cockpit-triad-deck .signal-row .dot.yellow  { background: var(--gold);  box-shadow: 0 0 6px rgba(212,165,116,0.5); }
+.cockpit-triad-deck .signal-row .dot.yellow  { background: #d4a574;      box-shadow: 0 0 6px rgba(212,165,116,0.5); }
 .cockpit-triad-deck .signal-row .dot.red     { background: var(--red);   box-shadow: 0 0 6px rgba(224,112,128,0.5); }
 .cockpit-triad-deck .signal-row .key {
   font-family: 'JetBrains Mono', monospace;
@@ -590,7 +590,7 @@
   text-transform: uppercase;
 }
 .cockpit-triad-deck .signal-row .status.green  { color: var(--green); }
-.cockpit-triad-deck .signal-row .status.yellow { color: var(--gold); }
+.cockpit-triad-deck .signal-row .status.yellow { color: #d4a574; }
 .cockpit-triad-deck .signal-row .status.red    { color: var(--red); }
 
 /* Action card */
