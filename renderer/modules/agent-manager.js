@@ -5,6 +5,7 @@ import { escapeHtml, SANITIZE_CONFIG, findSettledBoundary, renderTail, postProce
 import { updateOrbState, aceMarkSvg } from './ace-mark.js'
 import { setAttention, clearAttention } from './attention.js'
 import { sendChatMessage, wireChatListeners, scheduleRender } from './session-manager.js'
+import { pickAndStage, wireDropZone, wirePasteHandler } from './attachment-handler.js'
 
 // Single global exit handler — fires for ALL PTY sessions; filter to agents only
 export function wireAgentExitHandler() {
@@ -120,7 +121,11 @@ export function spawnAgentPane(targetRow) {
           <option value="max" ${state.chatDefaults.effort === 'max' ? 'selected' : ''}>Max effort</option>
         </select>
       </div>
+      <div class="chat-attachments" id="chat-attachments-${id}"></div>
       <div class="chat-input-area">
+        <button class="chat-attach-btn" id="chat-attach-${id}" title="Attach · drag, paste, or click" aria-label="Attach file">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.49"/></svg>
+        </button>
         <textarea class="chat-input" id="chat-input-${id}" placeholder="Message ACE..." rows="1"></textarea>
         <button class="chat-send-btn" id="chat-send-${id}">↑</button>
       </div>
@@ -150,7 +155,7 @@ export function spawnAgentPane(targetRow) {
     term: null, fitAddon: null, pane, rosterItem: arItem, role: roleName,
     spawnTime: Date.now(), lineCount: 0, status: 'waiting',
     mode: 'chat',
-    claudeSessionId: null, messages: [], currentStreamText: '', currentToolInput: '',
+    claudeSessionId: null, messages: [], pendingAttachments: [], currentStreamText: '', currentToolInput: '',
     isStreaming: false, totalCost: 0, totalTokens: { input: 0, output: 0 },
     needsAttention: false, attentionReason: null, attentionAt: null,
     _settledBoundary: 0, _settledHTML: '', _currentAssistantEl: null, _pendingRAF: null, _currentToolBlock: null,
@@ -188,6 +193,14 @@ export function spawnAgentPane(targetRow) {
     inputEl.value = ''; inputEl.style.height = 'auto'
     sendChatMessage(id, prompt, state.agentSessions)
   })
+
+  // Attachment handlers
+  const attachBtn = document.getElementById('chat-attach-' + id)
+  if (attachBtn) {
+    attachBtn.addEventListener('click', () => pickAndStage(state.agentSessions[id], id))
+  }
+  wireDropZone(state.agentSessions[id], id)
+  wirePasteHandler(state.agentSessions[id], id)
 
   // Wire chat listeners for agent
   wireChatListeners(id, state.agentSessions)
