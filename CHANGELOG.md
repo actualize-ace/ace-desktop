@@ -5,6 +5,29 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## v0.2.0 — 2026-04-15
+
+### Added
+- **File attachments in chat** — paperclip button, drag-and-drop, and clipboard paste (including screenshots) in both chat sessions and agent terminals. Files stage to `00-System/chat-attachments/YYYY-MM-DD/` in the active vault and inject as `@relPath` references into the prompt. Chip tray shows attached files before sending; individual chips are removable. Supported: PDF, images, docs, and any other file type Claude CLI accepts.
+- **TOS acceptance gate** — terms of service screen on first launch; explicit acceptance required before the app loads.
+- **Manual binary picker** — if Claude CLI is not auto-detected, a file picker lets you point directly to the binary rather than re-detecting.
+
+### Fixed
+- Binary detection broadened to cover additional install locations.
+- Graceful shutdown improved — child processes cleaned up more reliably on quit.
+- Slash-menu positioning fix for edge-case composer layouts.
+- Copyright and TOS updated to reflect Nikhil Kale d/b/a Actualize legal name.
+
+---
+
+## v0.1.10 — 2026-04-13
+
+### Added
+- **Live file-watching** — vault changes (daily notes, patterns, follow-ups, memory files) reflect in the dashboard without manual refresh. File watcher covers all vault subdirectories.
+- **Memory card styles** — auto-memory writes surface as ambient cards in the chat stream with type badge (user/feedback/project/reference) and faint gold glow.
+
+---
+
 ## v0.1.9 — 2026-04-14
 
 ### Fixed
