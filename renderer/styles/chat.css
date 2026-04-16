@@ -355,10 +355,10 @@ body.light .mode-toggle-btn.glow-hint {
   width: 36px; height: 36px; border-radius: 10px; border: 1px solid rgba(136,120,255,0.12);
   background: transparent; color: var(--text-dim); cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  font-size: 16px; transition: all 0.2s;
-  flex-shrink: 0;
+  flex-shrink: 0; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.chat-attach-btn:hover { color: var(--gold); border-color: rgba(212,165,116,0.3); }
+.chat-attach-btn svg { width: 15px; height: 15px; }
+.chat-attach-btn:hover { color: var(--gold); border-color: rgba(212,165,116,0.3); transform: scale(1.08); }
 
 /* Drop overlay */
 .chat-drop-overlay {

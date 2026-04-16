@@ -42,6 +42,7 @@ async function pickFile(win) {
   const result = await dialog.showOpenDialog(win, {
     properties: ['openFile', 'multiSelections'],
     filters: [
+      { name: 'All Supported', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf', 'txt', 'md'] },
       { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp'] },
       { name: 'Documents', extensions: ['pdf'] },
       { name: 'Text', extensions: ['txt', 'md'] },

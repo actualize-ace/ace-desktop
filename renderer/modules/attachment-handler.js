@@ -171,9 +171,20 @@ export function wireDropZone(session, chatId) {
     dragCounter = 0
     hideDropOverlay(inputArea)
     const files = Array.from(e.dataTransfer.files)
-    if (files.length) {
-      // Electron File objects have a .path property
-      stageFromPaths(session, chatId, files.map(f => f.path))
+    for (const file of files) {
+      if (file.path) {
+        // Electron File objects from Finder have a .path property
+        stageFromPaths(session, chatId, [file.path])
+      } else {
+        // Fallback: read as buffer (drag from Preview, browser, etc.)
+        const reader = new FileReader()
+        reader.onload = () => {
+          const ext = extFromName(file.name || 'dropped-file')
+          const name = file.name || `dropped-${Date.now()}.${ext || 'bin'}`
+          stageFromBuffer(session, chatId, reader.result, name)
+        }
+        reader.readAsArrayBuffer(file)
+      }
     }
   })
 }
