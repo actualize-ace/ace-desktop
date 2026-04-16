@@ -43,6 +43,12 @@
       "icon": "assets/ace.ico",
       "artifactName": "ACE-${version}-${arch}.${ext}"
     },
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Office",
+      "icon": "assets/ace.png",
+      "artifactName": "ACE-${version}-${arch}.${ext}"
+    },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
