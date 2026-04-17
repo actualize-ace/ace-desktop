@@ -91,7 +91,9 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
           fs.readFileSync(claudeMdPath, 'utf8'))
       }
     } else {
-      // OAuth/Max path — suppress MCP servers but keep skills + all tools
+      // OAuth/Max path — suppress MCP servers but keep skills + all tools.
+      // --strict-mcp-config without --mcp-config = zero MCP servers loaded.
+      // Verified against Claude Code 2.1.92 CLI help + runtime behavior.
       args.push('--strict-mcp-config')
     }
   }
