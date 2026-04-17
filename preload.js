@@ -153,6 +153,12 @@ contextBridge.exposeInMainWorld('ace', {
     openExternal: (url) => ipcRenderer.invoke(ch.SHELL_OPEN_EXTERNAL, url),
   },
 
+  // ─── Permissions ─────────────────────────────────────────────────────────
+  permissions: {
+    addAllow: (vaultPath, pattern) =>
+      ipcRenderer.invoke(ch.PERMISSIONS_ADD_ALLOW, vaultPath, pattern),
+  },
+
   // ─── MCP Resilience ───────────────────────────────────────────────────────
   mcp: {
     openAuthUrl:   (url)              => ipcRenderer.invoke(ch.MCP_OPEN_AUTH_URL, url),

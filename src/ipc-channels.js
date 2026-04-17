@@ -132,4 +132,7 @@ module.exports = {
   MCP_OPEN_AUTH_URL:   'mcp-open-auth-url',
   MCP_RESET_AUTH:      'mcp-reset-auth',
   MCP_RESOLVE_SERVER:  'mcp-resolve-server',
+
+  // Permissions
+  PERMISSIONS_ADD_ALLOW: 'permissions:add-allow',
 }

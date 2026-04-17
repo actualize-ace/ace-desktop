@@ -808,6 +808,11 @@ ipcMain.handle(ch.SHELL_OPEN_EXTERNAL, (_, url) => {
 
 mcpAuth.registerHandlers(ipcMain, ch)
 
+// ─── Permissions ──────────────────────────────────────────────────────────────
+const { addAllow } = require('./src/permissions')
+ipcMain.handle(ch.PERMISSIONS_ADD_ALLOW, (_, vaultPath, pattern) =>
+  addAllow(vaultPath, pattern))
+
 // ─── Stress Harness IPC (dev only) ───────────────────────────────────────────
 // Registered unconditionally but short-circuits in packaged builds so the
 // renderer-side probe always has a handler to hit without throwing.
