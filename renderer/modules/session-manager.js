@@ -108,6 +108,9 @@ export function sendChatMessage(id, prompt, sessionsObj) {
   // Keep session state in sync with the model actually used
   if (s) s.model = opts.model
 
+  // Store for MCP retry flows
+  s.lastPrompt = prompt
+
   // Send to backend with injected attachment refs
   window.ace.chat.send(id, finalPrompt, s.claudeSessionId, opts)
 
