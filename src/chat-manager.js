@@ -35,6 +35,45 @@ function diagnoseBinary(claudeBin) {
   return null
 }
 
+// ── MCP event detection ─────────────────────────────────────────────────────
+// Sources:
+//   2a. stdout stream-json:   mcp_instructions_delta, elicitation system event
+//   2b. stderr from mcp-remote subprocess (PID-prefixed lines)
+//   2c. stderr from Claude CLI itself (pre-init + mid-session)
+//
+// All patterns verified against Claude Code 2.1.92 + mcp-remote 0.1.37
+// bundled sources — NOT speculative.
+
+// mcp-remote stderr patterns (line-level)
+const MCP_REMOTE_AUTH_URL_RE  = /Please authorize this client by visiting:\s*(https?:\/\/\S+)/i
+const MCP_REMOTE_TERMINAL_RE  = /Already attempted reconnection.*Giving up/i
+const MCP_REMOTE_FATAL_RE     = /Fatal error:/i
+const MCP_REMOTE_AUTH_PEND_RE = /Authentication required\.\s*(?:Initializing auth|Waiting for authorization)/i
+const MCP_REMOTE_SUCCESS_RE   = /Connected to remote server/i
+
+// Claude CLI stderr patterns
+const CLI_AUTH_EXPIRED_RE  = /MCP server\s+"([^"]+)"\s+requires re-authorization\s+\(token expired\)/i
+const CLI_NOT_CONNECTED_RE = /MCP server\s+"([^"]+)"\s+is not connected/i
+const CLI_CONNECT_FAILED_RE = /Failed to connect to MCP server\s+'([^']+)'/i
+const CLI_AUTH_REQUIRED_RE = /Authentication required for (HTTP|claude\.ai proxy) server/i
+
+function classifyMcpLine(text) {
+  let m
+  if ((m = text.match(MCP_REMOTE_AUTH_URL_RE))) return { subtype: 'auth_url_ready', authUrl: m[1] }
+  if (MCP_REMOTE_TERMINAL_RE.test(text))        return { subtype: 'auth_terminal_fail' }
+  if (MCP_REMOTE_FATAL_RE.test(text))           return { subtype: 'mcp_remote_crash', detail: text.trim().slice(0, 500) }
+  if (MCP_REMOTE_AUTH_PEND_RE.test(text))       return { subtype: 'auth_pending' }
+  if ((m = text.match(CLI_AUTH_EXPIRED_RE)))    return { subtype: 'cli_auth_expired', server: m[1] }
+  if ((m = text.match(CLI_NOT_CONNECTED_RE)))   return { subtype: 'cli_not_connected', server: m[1] }
+  if ((m = text.match(CLI_CONNECT_FAILED_RE)))  return { subtype: 'cli_connect_failed', server: m[1] }
+  if ((m = text.match(CLI_AUTH_REQUIRED_RE)))   return { subtype: 'cli_auth_required', serverKind: m[1] }
+  return null
+}
+
+function isMcpNoise(text) {
+  return MCP_REMOTE_SUCCESS_RE.test(text)
+}
+
 function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   // Kill any existing process for this chatId
   cancel(chatId)
@@ -173,27 +212,89 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   // Line-buffered NDJSON parsing. Split on \r?\n so Windows CRLF line endings
   // don't leave a trailing \r that fails JSON.parse silently.
   let buffer = ''
+  let stderrBuf = []
+  let startupPhase = true
+
+  const emitMcpEvent = (event) => {
+    if (win.isDestroyed()) return
+    win.webContents.send(`${ch.CHAT_ERROR}:${chatId}`, JSON.stringify({
+      type: 'mcp-event',
+      ...event,
+    }))
+  }
+
+  // Flush buffered stderr — called on first stdout chunk OR on early exit.
+  const flushStartupBuffer = () => {
+    if (!startupPhase || !stderrBuf) return
+    startupPhase = false
+    const buf = stderrBuf
+    stderrBuf = null
+    if (win.isDestroyed()) return
+    for (const line of buf) {
+      if (line.includes('No STDIN data received') || line.includes('proceeding without')) continue
+      if (isMcpNoise(line)) continue
+      const classified = classifyMcpLine(line)
+      if (classified) {
+        emitMcpEvent(classified)
+      } else {
+        win.webContents.send(`${ch.CHAT_ERROR}:${chatId}`, line)
+      }
+    }
+  }
+
   proc.stdout.on('data', chunk => {
     if (win.isDestroyed()) return
+    if (startupPhase) flushStartupBuffer()
+
     buffer += chunk.toString()
     const lines = buffer.split(/\r?\n/)
-    buffer = lines.pop() // keep incomplete trailing line
+    buffer = lines.pop()
     for (const line of lines) {
       if (!line.trim()) continue
       try {
         const event = JSON.parse(line)
+        // removedNames field name confirmed in Claude Code 2.1.92 binary.
+        if (event.type === 'mcp_instructions_delta' && event.removedNames?.length) {
+          emitMcpEvent({ subtype: 'mcp_disconnect', servers: event.removedNames })
+        }
+        // Elicitation auth URL arrives as a system event — NOT as error.code -32042.
+        // Code -32042 is the internal MCP wire error; stream-json unwraps it into
+        // { type:"system", subtype:"elicitation", mode:"url", url, mcp_server_name, elicitation_id }
+        if (event.type === 'system' && event.subtype === 'elicitation' &&
+            event.mode === 'url' && typeof event.url === 'string') {
+          emitMcpEvent({ subtype: 'auth_url_ready', authUrl: event.url, server: event.mcp_server_name })
+        }
         win.webContents.send(`${ch.CHAT_STREAM}:${chatId}`, event)
       } catch {}
     }
   })
 
-  // Stderr — filter noise, forward actual errors
+  // Stderr — buffer during startup phase, classify MCP lines, forward the rest.
   proc.stderr.on('data', chunk => {
     if (win.isDestroyed()) return
     const text = chunk.toString()
-    if (text.includes('No STDIN data received') || text.includes('proceeding without')) return
-    win.webContents.send(`${ch.CHAT_ERROR}:${chatId}`, text)
+    const lines = text.split(/\r?\n/).filter(l => l.trim())
+    if (startupPhase && stderrBuf) {
+      for (const line of lines) stderrBuf.push(line)
+      return
+    }
+    for (const line of lines) {
+      if (line.includes('No STDIN data received') || line.includes('proceeding without')) continue
+      if (isMcpNoise(line)) continue
+      const classified = classifyMcpLine(line)
+      if (classified) {
+        emitMcpEvent(classified)
+      } else {
+        win.webContents.send(`${ch.CHAT_ERROR}:${chatId}`, line)
+      }
+    }
   })
+
+  // Flush buffered stderr if the CLI dies before producing any stdout.
+  // Without this, startup MCP failures are silently discarded on early crash.
+  proc.on('exit',  () => { if (startupPhase) flushStartupBuffer() })
+  // TODO: manually verify mcp_instructions_delta disconnect path against a
+  // long-running MCP server killed mid-session. Not covered in Task 6.
 
   proc.on('close', code => {
     sessions.delete(chatId)
