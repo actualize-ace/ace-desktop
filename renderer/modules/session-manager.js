@@ -193,6 +193,11 @@ export function finalizeMessage(id, sessionsObj) {
   const s = sessionsObj[id]
   if (!s) return
   s.isStreaming = false
+  // Track per-turn context growth for predictive tooltip
+  const delta = s.contextInputTokens - (s._prevContextTokens || 0)
+  if (delta > 0) {
+    s.turnDeltas = [...(s.turnDeltas || []), delta].slice(-5)
+  }
   updateOrbState()
   // Final full render
   if (s._currentAssistantEl) {
