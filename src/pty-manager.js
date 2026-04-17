@@ -56,10 +56,14 @@ function create(win, id, cwd, claudeBin, cols, rows) {
     cwd,
     env: {
       ...process.env,
-      PATH:                 augmentedPath,
-      TERM:                 'xterm-256color',
-      COLORTERM:            'truecolor',
-      ELECTRON_RUN_AS_NODE: undefined,
+      PATH:                      augmentedPath,
+      TERM:                      'xterm-256color',
+      COLORTERM:                 'truecolor',
+      ELECTRON_RUN_AS_NODE:      undefined,
+      // VS Code's claude-code extension sets this; leaks through `npm start`
+      // into the child claude and makes session init skip slow-starting MCP
+      // servers (Fathom, uvx/uv-backed stdio) — their tools never register.
+      MCP_CONNECTION_NONBLOCKING: undefined,
     },
   })
 
@@ -119,10 +123,11 @@ function resume(win, id, cwd, claudeBin, cols, rows, sessionId) {
     cwd,
     env: {
       ...process.env,
-      PATH:                 augmentedPath,
-      TERM:                 'xterm-256color',
-      COLORTERM:            'truecolor',
-      ELECTRON_RUN_AS_NODE: undefined,
+      PATH:                      augmentedPath,
+      TERM:                      'xterm-256color',
+      COLORTERM:                 'truecolor',
+      ELECTRON_RUN_AS_NODE:      undefined,
+      MCP_CONNECTION_NONBLOCKING: undefined,
     },
   })
 
