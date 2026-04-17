@@ -595,20 +595,19 @@ export function resetContext(id) {
   const s = state.sessions[id]
   if (!s) return
 
+  const ok = confirm('Reset context? Claude will forget this conversation — your chat history stays visible but Claude starts fresh.')
+  if (!ok) return
+
+  // Clear Claude session thread — next send has no --resume
   s.claudeSessionId = null
+
+  // Reset token tracking only — chat DOM and message history are preserved
   s.contextInputTokens = 0
   s.totalTokens = { input: 0, output: 0 }
   s.totalCost = 0
   s.turnDeltas = []
   s._prevContextTokens = 0
   s._costWarned = false
-
-  const msgsEl = document.getElementById('chat-msgs-' + id)
-  if (msgsEl) msgsEl.innerHTML = ''
-
-  s.messages = []
-  s.currentStreamText = ''
-  s._fullResponseText = ''
 
   const statusEl = document.getElementById('chat-status-' + id)
   if (statusEl) {
