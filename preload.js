@@ -153,6 +153,13 @@ contextBridge.exposeInMainWorld('ace', {
     openExternal: (url) => ipcRenderer.invoke(ch.SHELL_OPEN_EXTERNAL, url),
   },
 
+  // ─── MCP Resilience ───────────────────────────────────────────────────────
+  mcp: {
+    openAuthUrl:   (url)              => ipcRenderer.invoke(ch.MCP_OPEN_AUTH_URL, url),
+    resetAuth:     (opts)             => ipcRenderer.invoke(ch.MCP_RESET_AUTH, opts),
+    resolveServer: (name, vaultPath)  => ipcRenderer.invoke(ch.MCP_RESOLVE_SERVER, { name, vaultPath }),
+  },
+
   // ─── Vault Health ──────────────────────────────────────────────────────────
   health: {
     check:        ()        => ipcRenderer.invoke(ch.VAULT_HEALTH_CHECK),
