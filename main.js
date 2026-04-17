@@ -3,6 +3,7 @@ const path = require('path')
 const fs = require('fs')
 const { execSync, spawn } = require('child_process')
 const ch = require('./src/ipc-channels')
+const mcpAuth = require('./src/mcp-auth')
 
 // ─── Process Cleanup ─────────────────────────────────────────────────────────
 
@@ -802,6 +803,8 @@ ipcMain.handle(ch.SHELL_OPEN_PATH, (_, filePath) => {
 ipcMain.handle(ch.SHELL_OPEN_EXTERNAL, (_, url) => {
   return shell.openExternal(url)
 })
+
+mcpAuth.registerHandlers(ipcMain, ch)
 
 // ─── Stress Harness IPC (dev only) ───────────────────────────────────────────
 // Registered unconditionally but short-circuits in packaged builds so the
