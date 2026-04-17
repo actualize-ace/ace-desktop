@@ -10,6 +10,8 @@ import { startTimer, clearTimer } from './session-timer.js'
 import { attach as attachSlashMenu } from './slash-menu.js'
 import { pickAndStage, wireDropZone, wirePasteHandler, injectAttachments, consumeAttachments, renderChipTray, renderMsgAttachments, wireMsgAttachmentClicks } from './attachment-handler.js'
 
+export const MODEL_CTX_LIMITS = { opus: 1_000_000, sonnet: 200_000, haiku: 200_000 }
+
 // ─── Chat System ─────────────────────────────────────────────────────────────
 
 // Derive a short session name from the first user prompt. Keeps the label
@@ -504,11 +506,9 @@ export function updateChatStatus(id, event, sessionsObj) {
   if (event.usage) {
     s.totalTokens.input += event.usage.input_tokens || 0
     s.totalTokens.output += event.usage.output_tokens || 0
-    // Real context = input + cache fields (Claude caches full conversation history)
-    if (event.usage) {
-      const u = event.usage
-      s.contextInputTokens = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0)
-    }
+    // contextInputTokens is NOT updated here — result.usage is cumulative across
+    // all API calls in a multi-tool turn, which inflates the context bar. Use
+    // only message_start events (updateTokensFromStream) for the context meter.
   }
   const totalTok = s.totalTokens.input + s.totalTokens.output
 
@@ -520,9 +520,6 @@ export function updateChatStatus(id, event, sessionsObj) {
     if (costEl) costEl.textContent = '$' + s.totalCost.toFixed(4)
     if (tokEl) tokEl.textContent = formatTokens(totalTok) + ' tokens'
   }
-
-  // Update context bar using actual context window usage
-  updateContextBar(id, s.contextInputTokens)
 
   // Cost guardrail: warn if session cost exceeds threshold
   if (state._costGuardrail && s.totalCost > state._costGuardrail && !s._costWarned) {
@@ -558,8 +555,7 @@ export function formatTokens(n) {
 
 export function updateContextBar(id, totalTokens) {
   const model = state.sessions[id]?.model || state.chatDefaults?.model || 'opus'
-  const CTX_LIMITS = { opus: 1000000, sonnet: 200000, haiku: 200000 }
-  const maxCtx = CTX_LIMITS[model] || 200000
+  const maxCtx = MODEL_CTX_LIMITS[model] || 200_000
   const pct = Math.min(100, (totalTokens / maxCtx) * 100)
   const fill = document.getElementById('ctx-fill-' + id)
   const label = document.getElementById('ctx-label-' + id)

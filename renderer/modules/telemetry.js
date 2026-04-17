@@ -1,5 +1,6 @@
 // renderer/modules/telemetry.js
 import { state } from '../state.js'
+import { MODEL_CTX_LIMITS } from './session-manager.js'
 
 // ─── Sidebar Telemetry ────────────────────────────────────────────────────────
 const ACE_BOOT_TIME = Date.now()
@@ -35,7 +36,7 @@ export function updateTelemetry() {
   if (ctxEl) {
     if (activeSession?.contextInputTokens) {
       const model = activeSession?.model || state.chatDefaults?.model || 'opus'
-      const limit = model === 'opus' ? 1000000 : 200000
+      const limit = MODEL_CTX_LIMITS[model] || 200_000
       const pct = Math.min(100, Math.round((activeSession.contextInputTokens / limit) * 100))
       ctxEl.textContent = pct + '%'
     } else {
