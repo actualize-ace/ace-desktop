@@ -202,6 +202,7 @@
   width:80px; height:3px; background:var(--bg-elevated); border-radius:2px;
   overflow:hidden; border:1px solid var(--border);
   transition: box-shadow 1.2s ease, border-color 1.2s ease;
+  cursor: pointer;
 }
 .ctx-bar-fill {
   height:100%; background:var(--green); border-radius:2px;
