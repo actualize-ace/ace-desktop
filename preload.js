@@ -169,4 +169,9 @@ contextBridge.exposeInMainWorld('ace', {
     markCompleted: (id)      => ipcRenderer.invoke(ch.LEARN_MARK_COMPLETED, id),
     dismiss:       ()        => ipcRenderer.invoke(ch.LEARN_DISMISS),
   },
+
+  // ─── Stress harness (dev only) ────────────────────────────────────────────
+  stress: {
+    appendResult: (entry) => ipcRenderer.invoke(ch.STRESS_APPEND_RESULT, entry),
+  },
 })

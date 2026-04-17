@@ -211,7 +211,12 @@ function createWindow(page) {
     },
   })
 
-  mainWindow.loadFile(path.join(__dirname, 'renderer', page))
+  // STRESS=1 env var (dev only) appends ?stress=1 so renderer loads the
+  // stress harness module. Never honored in packaged builds.
+  const stressOpts = (!app.isPackaged && process.env.STRESS === '1')
+    ? { search: 'stress=1' }
+    : undefined
+  mainWindow.loadFile(path.join(__dirname, 'renderer', page), stressOpts)
 
   // External links: open in default browser, not inside Electron
   mainWindow.webContents.on('will-navigate', (e, url) => {
@@ -489,7 +494,10 @@ ipcMain.handle(ch.SAVE_CONFIG, (_, config) => {
   require('./src/file-watcher').start(mainWindow)
   require('./src/db-reader').open(config.vaultPath)
   require('./src/vault-scanner').invalidateCache()
-  mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'))
+  const stressOpts = (!app.isPackaged && process.env.STRESS === '1')
+    ? { search: 'stress=1' }
+    : undefined
+  mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'), stressOpts)
 })
 
 ipcMain.handle(ch.PATCH_CONFIG, (_, partial) => {
@@ -793,6 +801,21 @@ ipcMain.handle(ch.SHELL_OPEN_PATH, (_, filePath) => {
 })
 ipcMain.handle(ch.SHELL_OPEN_EXTERNAL, (_, url) => {
   return shell.openExternal(url)
+})
+
+// ─── Stress Harness IPC (dev only) ───────────────────────────────────────────
+// Registered unconditionally but short-circuits in packaged builds so the
+// renderer-side probe always has a handler to hit without throwing.
+ipcMain.handle(ch.STRESS_APPEND_RESULT, (_, entry) => {
+  if (app.isPackaged) return { ok: false, reason: 'disabled in packaged builds' }
+  try {
+    const line = JSON.stringify(entry) + '\n'
+    const target = path.join(__dirname, 'scripts', 'stress-results.jsonl')
+    fs.appendFileSync(target, line, 'utf8')
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e.message }
+  }
 })
 
 // ─── Artifacts IPC Handlers ──────────────────────────────────────────────────

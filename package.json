@@ -65,7 +65,11 @@
     "files": [
       "**/*",
       "!renderer/data/natal-chart.json",
-      "!renderer/data/interpretations.json"
+      "!renderer/data/interpretations.json",
+      "!scripts/stress.js",
+      "!scripts/stress-README.md",
+      "!scripts/stress-results.jsonl",
+      "!scripts/fixtures/**"
     ]
   }
 }

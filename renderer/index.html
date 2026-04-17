@@ -1179,6 +1179,16 @@ document.getElementById('preflight-settings')?.addEventListener('click', () => {
     })
   </script>
 
+  <!-- Dev-only stress harness — loaded when main.js detects STRESS=1 env and appends ?stress=1 -->
+  <script type="module">
+    if (new URLSearchParams(location.search).get('stress') === '1') {
+      import('../scripts/stress.js').then(m => {
+        window.__stress = m
+        console.log('[stress] harness loaded — call __stress.runChatHeavy(6, 20, 3) or __stress.runPtyHeavy(6)')
+      }).catch(e => console.error('[stress] failed to load harness:', e))
+    }
+  </script>
+
   <!-- Intensity detail overlay + dropdown card -->
   <div class="atm-detail-overlay" id="atm-detail-overlay"></div>
   <div class="atm-detail-card" id="atm-detail-card">

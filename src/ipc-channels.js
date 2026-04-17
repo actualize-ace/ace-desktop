@@ -124,4 +124,7 @@ module.exports = {
   GET_CADENCE:        'get-cadence',
   MARK_DONE:       'mark-done',
   SNOOZE_ITEM:     'snooze-item',
+
+  // Stress harness (dev only — registered only when !app.isPackaged)
+  STRESS_APPEND_RESULT: 'stress-append-result',
 }
