@@ -81,6 +81,7 @@ export function sendChatMessage(id, prompt, sessionsObj) {
   s._fullResponseText = ''
   s.currentToolInput = ''
   s.isStreaming = true
+  s._prevContextTokens = s.contextInputTokens
   updateOrbState()
   s._settledBoundary = 0
   s._settledHTML = ''
@@ -1259,6 +1260,8 @@ export function spawnSession(opts) {
     attentionAt: null,
     totalTokens: { input: 0, output: 0 },
     contextInputTokens: 0,
+    turnDeltas: [],
+    _prevContextTokens: 0,
     _settledBoundary: 0, _settledHTML: '', _currentAssistantEl: null, _pendingRAF: null, _currentToolBlock: null,
   }
   activateSession(id)
