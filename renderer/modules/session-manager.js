@@ -673,6 +673,12 @@ export function wireChatListeners(id, sessionsObj) {
         if (claudeEdits.length) {
           renderPermissionApprovalCard(id, claudeEdits, sessionsObj)
         }
+
+        const mcpDenials = event.permission_denials.filter(d =>
+          typeof d.tool_name === 'string' && d.tool_name.startsWith('mcp__'))
+        if (mcpDenials.length) {
+          renderMcpPermissionCard(id, mcpDenials, sessionsObj)
+        }
       }
     }
   })
@@ -954,6 +960,107 @@ function renderPermissionApprovalCard(chatId, denials, sessionsObj) {
   })
 
   card.querySelector('.permission-deny').addEventListener('click', () => card.remove())
+}
+
+function renderMcpPermissionCard(chatId, denials, sessionsObj) {
+  const msgsEl = document.getElementById('chat-msgs-' + chatId)
+  if (!msgsEl) return
+
+  // Dedupe by tool_name + stringified tool_input
+  const seen = new Set()
+  const unique = denials.filter(d => {
+    const key = d.tool_name + '|' + JSON.stringify(d.tool_input || {})
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+  if (!unique.length) return
+
+  const esc = str => String(str ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+  // tool_name format: mcp__<server>__<tool>
+  const parseToolName = name => {
+    const m = /^mcp__([^_][^_]*(?:_[^_]+)*)__(.+)$/.exec(name)
+    return m ? { server: m[1], tool: m[2] } : { server: 'unknown', tool: name }
+  }
+
+  const card = document.createElement('div')
+  card.className = 'chat-permission-card mcp-permission-card'
+
+  let html = `<div class="permission-card-header">MCP tool needs approval</div>`
+  unique.forEach((d, i) => {
+    const { server, tool } = parseToolName(d.tool_name)
+    const inputPreview = JSON.stringify(d.tool_input || {}, null, 0).slice(0, 140)
+    html += `
+      <div class="permission-edit-item" data-idx="${i}">
+        <div class="permission-file-path"><strong>${esc(server)}</strong> · ${esc(tool)}</div>
+        <div class="permission-diff" style="font-family:monospace;font-size:11px;opacity:0.7">
+          ${esc(inputPreview)}
+        </div>
+        <div class="chat-tool-actions" style="margin-top:6px">
+          <button class="chat-approve-btn mcp-allow-server" data-server="${esc(server)}">Allow all ${esc(server)} tools</button>
+          <button class="chat-approve-btn mcp-allow-tool" data-pattern="${esc(d.tool_name)}">Just this one</button>
+        </div>
+      </div>`
+  })
+  html += `
+    <div class="chat-tool-actions">
+      <button class="chat-deny-btn mcp-dismiss">Dismiss</button>
+    </div>`
+
+  card.innerHTML = html
+  msgsEl.appendChild(card)
+  msgsEl.scrollTop = msgsEl.scrollHeight
+
+  const session = (sessionsObj || state.sessions)[chatId]
+
+  async function applyPattern(pattern, btn) {
+    btn.disabled = true
+    btn.textContent = 'Saving…'
+    const config = await window.ace.setup.getConfig()
+    const vaultPath = config?.vaultPath || null
+    const res = await window.ace.permissions.addAllow(vaultPath, pattern)
+    if (!res?.ok) {
+      btn.textContent = 'Failed — check console'
+      console.error('[mcp] addAllow failed:', res)
+      return
+    }
+
+    const lastPrompt = session?.lastPrompt
+    const confirm = document.createElement('div')
+    confirm.className = 'chat-msg assistant'
+    confirm.innerHTML = `
+      <div class="msg-content md-body">
+        <strong>Added</strong> <code>${esc(pattern)}</code> to allow list
+        ${res.alreadyPresent ? ' (was already present)' : ''}.
+        ${lastPrompt
+          ? `<div style="margin-top:8px"><button class="preflight-btn mcp-retry-btn">Retry last message</button></div>`
+          : '<div style="margin-top:8px;opacity:0.7">Re-send your message to try again.</div>'}
+      </div>`
+    msgsEl.appendChild(confirm)
+    msgsEl.scrollTop = msgsEl.scrollHeight
+    card.remove()
+
+    const retryBtn = confirm.querySelector('.mcp-retry-btn')
+    if (retryBtn) {
+      retryBtn.addEventListener('click', () => {
+        retryBtn.disabled = true
+        retryBtn.textContent = 'Sending…'
+        sendChatMessage(chatId, session.lastPrompt, sessionsObj)
+      })
+    }
+  }
+
+  card.querySelectorAll('.mcp-allow-server').forEach(btn => {
+    btn.addEventListener('click', () =>
+      applyPattern(`mcp__${btn.dataset.server}__*`, btn))
+  })
+  card.querySelectorAll('.mcp-allow-tool').forEach(btn => {
+    btn.addEventListener('click', () =>
+      applyPattern(btn.dataset.pattern, btn))
+  })
+  card.querySelector('.mcp-dismiss').addEventListener('click', () => card.remove())
 }
 
 // Render an interactive question card from AskUserQuestion tool input
