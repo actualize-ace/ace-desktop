@@ -512,10 +512,9 @@ export function updateChatStatus(id, event, sessionsObj) {
   if (event.usage) {
     s.totalTokens.input += event.usage.input_tokens || 0
     s.totalTokens.output += event.usage.output_tokens || 0
-    // contextInputTokens is NOT updated here — result.usage is cumulative across
-    // all API calls in a multi-tool turn, which inflates the context bar. Use
-    // only message_start events (updateTokensFromStream) for the context meter.
-    console.debug('[ctx] result.usage:', JSON.stringify(event.usage), '| contextInputTokens:', s.contextInputTokens)
+    // contextInputTokens is NOT updated here — result.usage.input_tokens is cumulative
+    // across all API calls in a multi-tool turn (confirmed 2026-04-17). Use
+    // message_start events (updateTokensFromStream) as the sole context source.
   }
   const totalTok = s.totalTokens.input + s.totalTokens.output
 
