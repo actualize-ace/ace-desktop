@@ -713,6 +713,8 @@ export function wireChatListeners(id, sessionsObj) {
           <button class="preflight-btn" onclick="document.getElementById('settings-overlay')?.classList.add('open')">Open Settings</button>
         </div>`
       msgsEl.appendChild(card)
+    } else if (parsed?.type === 'mcp-event') {
+      renderMcpEventCard(msgsEl, id, parsed)
     } else {
       const errEl = document.createElement('div')
       errEl.className = 'chat-error'
@@ -740,6 +742,130 @@ export function wireChatListeners(id, sessionsObj) {
   // Store cleanup functions on session so listeners are removed on close
   const s = sessionsObj[id]
   if (s) s._cleanupListeners = () => { cleanupStream(); cleanupError(); cleanupExit() }
+}
+
+// Escape user-controlled strings before inserting into innerHTML.
+function mcpEsc(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
+async function resetMcpAuth(evt) {
+  // Resolve server name → URL via MCP_RESOLVE_SERVER IPC.
+  // Reads both ~/.claude.json (user-scope) and <vaultPath>/.mcp.json (project-scope).
+  // Do NOT use window.ace.claudeSettings.read() — that reads ~/.claude/settings.json
+  // which has NO mcpServers (confirmed by direct inspection).
+  try {
+    const name = evt.server || evt.serverName
+    if (!name) { console.warn('[mcp] resetAuth: no server name in event', evt); return }
+
+    const config = await window.ace.setup.getConfig()
+    const vaultPath = config?.vaultPath || null
+
+    const resolved = await window.ace.mcp.resolveServer(name, vaultPath)
+    if (!resolved?.ok) {
+      console.warn('[mcp] resetAuth: could not resolve server URL for', name, resolved?.error)
+      return
+    }
+    const result = await window.ace.mcp.resetAuth({
+      serverUrl:  resolved.serverUrl,
+      resource:   resolved.resource,
+      headers:    resolved.headers,
+      serverName: name,
+    })
+    console.log('[mcp] resetAuth result:', result)
+  } catch (err) {
+    console.error('[mcp] resetAuth failed:', err)
+  }
+}
+
+function renderMcpEventCard(msgsEl, chatId, evt) {
+  const { subtype, authUrl, server, servers, serverKind, detail } = evt
+
+  if (subtype === 'mcp_disconnect') {
+    const toast = document.createElement('div')
+    toast.className = 'chat-error'
+    toast.style.cssText = 'opacity:0.7;font-size:12px'
+    toast.textContent = `Lost MCP server${(servers?.length || 0) > 1 ? 's' : ''}: ${(servers || []).join(', ')}`
+    msgsEl.appendChild(toast)
+    setTimeout(() => toast.remove(), 5000)
+    return
+  }
+
+  if (subtype === 'auth_pending') {
+    const inline = document.createElement('div')
+    inline.className = 'chat-error'
+    inline.style.cssText = 'opacity:0.7;font-size:12px'
+    inline.textContent = 'MCP authentication in progress…'
+    msgsEl.appendChild(inline)
+    return
+  }
+
+  const variants = {
+    auth_url_ready: {
+      title: server ? `Authorize ${mcpEsc(server)}` : 'Authorize MCP server',
+      body: 'An MCP server needs OAuth authorization. Click below to complete it in your browser.',
+      primary: { label: 'Authorize in Browser', handler: async () => {
+        const result = await window.ace.mcp.openAuthUrl(authUrl)
+        if (!result?.ok) console.error('[mcp] openExternal failed:', result?.error)
+      }},
+    },
+    auth_terminal_fail: {
+      title: server ? `${mcpEsc(server)} needs re-authentication` : 'MCP re-authentication needed',
+      body: 'Auto-refresh failed. Reset credentials to trigger a fresh browser OAuth flow.',
+      primary: { label: 'Reset & Re-auth', handler: () => resetMcpAuth(evt) },
+    },
+    cli_auth_expired: {
+      title: `${mcpEsc(server) || 'MCP server'} tokens expired`,
+      body: 'OAuth tokens have expired and automatic refresh failed.',
+      primary: { label: 'Reset & Re-auth', handler: () => resetMcpAuth(evt) },
+    },
+    cli_auth_required: {
+      title: `${mcpEsc(serverKind) || 'MCP'} server needs authentication`,
+      body: 'This server has never been authenticated in this session.',
+      primary: { label: 'Reset & Re-auth', handler: () => resetMcpAuth(evt) },
+    },
+    mcp_remote_crash: {
+      title: 'MCP server crashed',
+      body: 'The MCP subprocess exited unexpectedly. Retry your message or restart the server.',
+      primary: { label: 'Dismiss', handler: (card) => card.remove() },
+    },
+    cli_connect_failed: {
+      title: `Can't reach ${mcpEsc(server) || 'MCP server'}`,
+      body: "The server is configured but couldn't be reached. Check network or server status.",
+      primary: { label: 'Dismiss', handler: (card) => card.remove() },
+    },
+    cli_not_connected: {
+      title: `${mcpEsc(server) || 'MCP server'} not connected`,
+      body: 'The server is offline or not responding.',
+      primary: { label: 'Dismiss', handler: (card) => card.remove() },
+    },
+  }
+
+  const variant = variants[subtype]
+  if (!variant) {
+    const errEl = document.createElement('div')
+    errEl.className = 'chat-error'
+    errEl.textContent = `MCP event (${subtype}): ${detail || server || ''}`
+    msgsEl.appendChild(errEl)
+    return
+  }
+
+  const detailBlock = detail
+    ? `<div style="margin-bottom:10px;opacity:0.55;font-size:11px;white-space:pre-wrap;max-height:60px;overflow:auto">${mcpEsc(detail)}</div>`
+    : ''
+  const card = document.createElement('div')
+  card.className = 'chat-error binary-missing-card'
+  card.innerHTML = `
+    <div style="margin-bottom:6px"><strong>${variant.title}</strong></div>
+    <div style="margin-bottom:8px">${variant.body}</div>
+    ${detailBlock}
+    <div style="display:flex;gap:8px">
+      <button class="preflight-btn mcp-primary-btn">${variant.primary.label}</button>
+      <button class="preflight-btn" data-dismiss>Dismiss</button>
+    </div>`
+  card.querySelector('.mcp-primary-btn').addEventListener('click', () => variant.primary.handler(card))
+  card.querySelector('[data-dismiss]').addEventListener('click', () => card.remove())
+  msgsEl.appendChild(card)
 }
 
 // Render approval card for .claude/ permission denials
