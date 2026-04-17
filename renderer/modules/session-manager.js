@@ -592,6 +592,37 @@ export function updateContextBar(id, totalTokens) {
   }
 }
 
+export function resetContext(id) {
+  const s = state.sessions[id]
+  if (!s) return
+
+  s.claudeSessionId = null
+  s.contextInputTokens = 0
+  s.totalTokens = { input: 0, output: 0 }
+  s.totalCost = 0
+  s.turnDeltas = []
+  s._prevContextTokens = 0
+  s._costWarned = false
+
+  const msgsEl = document.getElementById('chat-msgs-' + id)
+  if (msgsEl) msgsEl.innerHTML = ''
+
+  s.messages = []
+  s.currentStreamText = ''
+  s._fullResponseText = ''
+
+  const statusEl = document.getElementById('chat-status-' + id)
+  if (statusEl) {
+    const costEl = statusEl.querySelector('.chat-cost-label')
+    const tokEl = statusEl.querySelector('.chat-tokens-label')
+    if (costEl) costEl.style.color = ''
+    if (costEl) costEl.textContent = '$0.0000'
+    if (tokEl) tokEl.textContent = '0 tokens'
+  }
+
+  updateContextBar(id, 0)
+}
+
 // Wire chat stream listeners for a session
 export function wireChatListeners(id, sessionsObj) {
   sessionsObj = sessionsObj || state.sessions
@@ -1284,6 +1315,10 @@ export function spawnSession(opts) {
   document.getElementById('chat-model-' + id)?.addEventListener('change', function () {
     if (state.sessions[id]) state.sessions[id].model = this.value
     updateContextBar(id, state.sessions[id]?.contextInputTokens || 0)
+  })
+
+  document.getElementById('ctx-bar-' + id)?.addEventListener('click', () => {
+    resetContext(id)
   })
 
   // Close button
