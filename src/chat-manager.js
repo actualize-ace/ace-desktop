@@ -129,12 +129,13 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
         args.push('--append-system-prompt',
           fs.readFileSync(claudeMdPath, 'utf8'))
       }
-    } else {
-      // OAuth/Max path — suppress MCP servers but keep skills + all tools.
+    } else if (opts.suppressMcp) {
+      // Client vaults: suppress user-scoped MCP servers so clients don't see
+      // Nikhil's Fathom/Gmail/etc. Set suppressMcp:true in client ace-config.json.
       // --strict-mcp-config without --mcp-config = zero MCP servers loaded.
-      // Verified against Claude Code 2.1.92 CLI help + runtime behavior.
       args.push('--strict-mcp-config')
     }
+    // else: OAuth/Max on own vault — MCP loads normally
   }
 
   // Augment PATH so the Claude binary can find `node` and other dependencies
@@ -189,7 +190,7 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   const proc = spawn(claudeBin, args, {
     cwd,
     stdio: ['pipe', 'pipe', 'pipe'],
-    env: { ...process.env, PATH: augmentedPath, TERM: 'xterm-256color', COLORTERM: 'truecolor' },
+    env: { ...process.env, PATH: augmentedPath, TERM: 'xterm-256color', COLORTERM: 'truecolor', ELECTRON_RUN_AS_NODE: undefined },
     shell: needsShell,
   })
 

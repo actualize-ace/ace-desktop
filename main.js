@@ -342,8 +342,10 @@ ipcMain.handle(ch.PTY_RESUME, (_, id, cwd, cols, rows, sessionId) => {
 // ─── Chat IPC Handlers (stream-json mode) ────────────────────────────────────
 
 ipcMain.handle(ch.CHAT_SEND, (_, chatId, prompt, claudeSessionId, opts) => {
+  const config = loadConfig() || {}
+  const mergedOpts = { suppressMcp: !!config.suppressMcp, ...opts }
   return require('./src/chat-manager').send(mainWindow, chatId, prompt,
-    resolveVaultPath(), resolveClaudeBin(), claudeSessionId, opts)
+    resolveVaultPath(), resolveClaudeBin(), claudeSessionId, mergedOpts)
 })
 ipcMain.on(ch.CHAT_CANCEL, (_, chatId) => require('./src/chat-manager').cancel(chatId))
 ipcMain.on(ch.CHAT_RESPOND, (_, chatId, text) => require('./src/chat-manager').respond(chatId, text))

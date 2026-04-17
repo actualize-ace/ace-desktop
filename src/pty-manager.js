@@ -56,9 +56,10 @@ function create(win, id, cwd, claudeBin, cols, rows) {
     cwd,
     env: {
       ...process.env,
-      PATH:      augmentedPath,
-      TERM:      'xterm-256color',
-      COLORTERM: 'truecolor',
+      PATH:                 augmentedPath,
+      TERM:                 'xterm-256color',
+      COLORTERM:            'truecolor',
+      ELECTRON_RUN_AS_NODE: undefined,
     },
   })
 
@@ -118,9 +119,10 @@ function resume(win, id, cwd, claudeBin, cols, rows, sessionId) {
     cwd,
     env: {
       ...process.env,
-      PATH:      augmentedPath,
-      TERM:      'xterm-256color',
-      COLORTERM: 'truecolor',
+      PATH:                 augmentedPath,
+      TERM:                 'xterm-256color',
+      COLORTERM:            'truecolor',
+      ELECTRON_RUN_AS_NODE: undefined,
     },
   })
 
