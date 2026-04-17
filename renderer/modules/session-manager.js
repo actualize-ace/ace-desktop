@@ -571,7 +571,16 @@ export function updateContextBar(id, totalTokens) {
     fill.style.width = pct + '%'
     fill.className = 'ctx-bar-fill' + (pct > 80 ? ' critical' : pct > 50 ? ' warn' : '')
   }
-  if (barEl) barEl.title = `Context: ${formatTokens(totalTokens)} / ${formatTokens(maxCtx)} tokens (${Math.round(pct)}%)`
+  if (barEl) {
+    const s = state.sessions[id]
+    let turnsHint = ''
+    if (s?.turnDeltas?.length >= 2) {
+      const avg = s.turnDeltas.reduce((a, b) => a + b, 0) / s.turnDeltas.length
+      const remaining = Math.floor((maxCtx - totalTokens) / avg)
+      if (remaining < 20) turnsHint = `  ·  ~${remaining} turn${remaining === 1 ? '' : 's'} remaining`
+    }
+    barEl.title = `Context: ${formatTokens(totalTokens)} / ${formatTokens(maxCtx)}${turnsHint}  ·  click to reset`
+  }
   if (label) label.textContent = Math.round(pct) + '%'
 
   // Ambient pressure — somatic response on the pane itself
