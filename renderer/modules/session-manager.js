@@ -591,17 +591,11 @@ export function updateContextBar(id, totalTokens) {
   }
 }
 
-export function resetContext(id) {
+function _doResetContext(id) {
   const s = state.sessions[id]
   if (!s) return
 
-  const ok = confirm('Reset context? Claude will forget this conversation — your chat history stays visible but Claude starts fresh.')
-  if (!ok) return
-
-  // Clear Claude session thread — next send has no --resume
   s.claudeSessionId = null
-
-  // Reset token tracking only — chat DOM and message history are preserved
   s.contextInputTokens = 0
   s.totalTokens = { input: 0, output: 0 }
   s.totalCost = 0
@@ -619,6 +613,30 @@ export function resetContext(id) {
   }
 
   updateContextBar(id, 0)
+}
+
+export function resetContext(id) {
+  const s = state.sessions[id]
+  if (!s) return
+
+  // Remove any existing confirm banner
+  document.getElementById('ctx-reset-confirm-' + id)?.remove()
+
+  const inputArea = document.querySelector('#pane-' + id + ' .chat-input-area')
+  if (!inputArea) { _doResetContext(id); return }
+
+  const banner = document.createElement('div')
+  banner.id = 'ctx-reset-confirm-' + id
+  banner.className = 'ctx-reset-confirm'
+  banner.innerHTML = `<span>Claude will forget this conversation — your history stays visible.</span><button class="ctx-reset-ok">Reset</button><button class="ctx-reset-cancel">Cancel</button>`
+
+  banner.querySelector('.ctx-reset-ok').addEventListener('click', () => {
+    banner.remove()
+    _doResetContext(id)
+  })
+  banner.querySelector('.ctx-reset-cancel').addEventListener('click', () => banner.remove())
+
+  inputArea.parentNode.insertBefore(banner, inputArea)
 }
 
 // Wire chat stream listeners for a session

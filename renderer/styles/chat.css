@@ -197,6 +197,21 @@
 .chat-send-btn.cancel { background:rgba(196,116,116,0.12); color:var(--red); border-color:rgba(196,116,116,0.2); }
 .chat-send-btn.cancel:hover { background:rgba(196,116,116,0.22); }
 
+/* Context reset confirmation banner */
+.ctx-reset-confirm {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px; background: var(--bg-elevated);
+  border-top: 1px solid var(--border); font-size: 11px; color: var(--text-dim);
+}
+.ctx-reset-confirm span { flex: 1; }
+.ctx-reset-ok, .ctx-reset-cancel {
+  padding: 3px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;
+  border: 1px solid var(--border); background: transparent; color: var(--text);
+}
+.ctx-reset-ok { border-color: var(--red); color: var(--red); }
+.ctx-reset-ok:hover { background: rgba(196,116,116,0.12); }
+.ctx-reset-cancel:hover { background: var(--bg-hover); }
+
 /* Context bar (in status bar) */
 .ctx-bar {
   width:80px; height:3px; background:var(--bg-elevated); border-radius:2px;
