@@ -243,11 +243,25 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
     }
   }
 
+  // Buffer cap — if upstream emits a pathological 100MB+ line without a
+  // newline, main-process memory would climb unbounded. 1MB is well above
+  // any legitimate single stream-json line (typical: <5KB).
+  const MAX_BUF = 1 * 1024 * 1024
   proc.stdout.on('data', chunk => {
     if (win.isDestroyed()) return
     if (startupPhase) flushStartupBuffer()
 
     buffer += chunk.toString()
+    if (buffer.length > MAX_BUF) {
+      if (!win.isDestroyed()) {
+        win.webContents.send(`${ch.CHAT_ERROR}:${chatId}`, JSON.stringify({
+          type: 'stream-buffer-overflow',
+          message: `chat stream buffer exceeded ${MAX_BUF} bytes; discarding partial line`,
+        }))
+      }
+      buffer = ''
+      return
+    }
     const lines = buffer.split(/\r?\n/)
     buffer = lines.pop()
     for (const line of lines) {

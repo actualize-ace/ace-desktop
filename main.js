@@ -215,7 +215,7 @@ function createWindow(page) {
   // STRESS=1 env var (dev only) appends ?stress=1 so renderer loads the
   // stress harness module. Never honored in packaged builds.
   const stressOpts = (!app.isPackaged && process.env.STRESS === '1')
-    ? { search: 'stress=1' }
+    ? { query: { stress: '1' } }
     : undefined
   mainWindow.loadFile(path.join(__dirname, 'renderer', page), stressOpts)
 
@@ -241,6 +241,16 @@ function createWindow(page) {
   // Forward renderer console errors to stdout for debugging
   mainWindow.webContents.on('console-message', (_, level, msg, line, source) => {
     if (level >= 2) console.log(`[renderer:${level}] ${msg} (${source}:${line})`)
+  })
+
+  // Auto-recover from a true renderer crash (distinct from a UI jam).
+  // refresh-engine handles long-run drift; this handles abrupt process death
+  // so the user sees a reload instead of a black screen.
+  mainWindow.webContents.on('render-process-gone', (_, details) => {
+    console.error('[main] renderer process gone:', details)
+    if (details.reason !== 'clean-exit' && !mainWindow.isDestroyed()) {
+      mainWindow.reload()
+    }
   })
 }
 
@@ -498,7 +508,7 @@ ipcMain.handle(ch.SAVE_CONFIG, (_, config) => {
   require('./src/db-reader').open(config.vaultPath)
   require('./src/vault-scanner').invalidateCache()
   const stressOpts = (!app.isPackaged && process.env.STRESS === '1')
-    ? { search: 'stress=1' }
+    ? { query: { stress: '1' } }
     : undefined
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'), stressOpts)
 })
