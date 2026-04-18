@@ -825,33 +825,34 @@ body.light .atm-audio-popover {
 
 /* ── Vitals Dot ── */
 .vitals-dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  background: var(--vitals-color, rgba(160, 130, 255, 0.85));
-  opacity: 0.85;
-  animation: vitals-pulse var(--vitals-speed, 4s) ease-in-out infinite;
-  transition: background 2s ease, opacity 1.5s ease;
+  background: var(--vitals-color, var(--green, #6db88f));
+  box-shadow: 0 0 5px var(--vitals-glow, rgba(109, 184, 143, 0.5));
+  opacity: 0.9;
+  animation: vitals-pulse var(--vitals-speed, 2.5s) ease-in-out infinite;
+  transition: background 2s ease, box-shadow 2s ease;
   cursor: default;
   flex-shrink: 0;
   position: relative; /* anchor for ::after tooltip */
 }
 
 .vitals-dot[data-level="warming"] {
-  --vitals-color: rgba(200, 160, 100, 0.6);
-  --vitals-speed: 2.5s;
-  opacity: 0.65;
+  --vitals-color: #c8a060;
+  --vitals-glow: rgba(200, 160, 96, 0.5);
+  --vitals-speed: 2s;
 }
 
 .vitals-dot[data-level="hot"] {
-  --vitals-color: rgba(210, 140, 80, 0.8);
-  --vitals-speed: 1.5s;
-  opacity: 0.8;
+  --vitals-color: #d4784a;
+  --vitals-glow: rgba(212, 120, 74, 0.6);
+  --vitals-speed: 1.2s;
 }
 
 @keyframes vitals-pulse {
-  0%, 100% { box-shadow: 0 0 0 0px rgba(160, 130, 255, 0.5); }
-  50%       { box-shadow: 0 0 0 3px rgba(160, 130, 255, 0); }
+  0%, 100% { box-shadow: 0 0 4px var(--vitals-glow, rgba(109, 184, 143, 0.5)); }
+  50%       { box-shadow: 0 0 8px var(--vitals-glow, rgba(109, 184, 143, 0.7)); }
 }
 
 .vitals-dot::after {
