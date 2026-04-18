@@ -4,6 +4,7 @@
 
 import { state } from '../state.js'
 import { initCoherence, coherenceState, onCoherenceUpdate } from './coherence.js'
+import { onSoftGC, onWillReload } from './refresh-engine.js'
 
 // ── Constants ──
 const TICK_MS = 60_000  // update every minute
@@ -1305,4 +1306,18 @@ export async function initAtmosphere() {
   // Start activity detection + tick
   initActivityListeners()
   setInterval(tick, TICK_MS)
+
+  onSoftGC(() => {
+    if (hoverTimeout) { clearTimeout(hoverTimeout); hoverTimeout = null }
+    if (streamTimeout) { clearTimeout(streamTimeout); streamTimeout = null }
+    persistAtmosphere()
+    console.log('[refresh-engine] atmosphere soft GC complete')
+  })
+
+  onWillReload(() => {
+    persistAtmosphere()
+    stopSolfeggio()
+    stopBinaural()
+    console.log('[refresh-engine] atmosphere pre-reload: persisted + audio stopped')
+  })
 }

@@ -2,8 +2,19 @@
 import { state } from '../state.js'
 import { escapeHtml } from '../modules/chat-renderer.js'
 import { initVault, openVaultFile } from './vault.js'
+import { onSoftGC } from '../modules/refresh-engine.js'
 
 let graphSimulation = null
+
+onSoftGC(() => {
+  const graphActive = document.getElementById('view-graph')?.classList.contains('active')
+  if (!graphActive && graphSimulation) {
+    graphSimulation.stop()
+    graphSimulation = null
+    state.graphInitialized = false
+    console.log('[refresh-engine] graph.js: destroyed inactive simulation')
+  }
+})
 
 async function initGraph() {
   state.graphInitialized = true

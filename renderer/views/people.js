@@ -1,6 +1,18 @@
 // renderer/views/people.js
 import { state } from '../state.js'
 import { escapeHtml, processWikilinks, postProcessCodeBlocks, SANITIZE_CONFIG } from '../modules/chat-renderer.js'
+import { onSoftGC } from '../modules/refresh-engine.js'
+
+onSoftGC(() => {
+  const peopleActive = document.getElementById('view-people')?.classList.contains('active')
+  if (!peopleActive && state.peopleInitialized) {
+    if (state.peopleGraphSim) { state.peopleGraphSim.stop(); state.peopleGraphSim = null }
+    state.peopleData = null
+    state.peopleFollowUps = null
+    state.peopleInitialized = false
+    console.log('[refresh-engine] people.js: destroyed inactive data')
+  }
+})
 
 let currentPersonName = null
 let currentPersonPath = null

@@ -286,6 +286,7 @@
         </button>
         <div class="sidebar-meta">
           <div class="status-pulse" title="ACE Online"></div>
+          <div class="vitals-dot" id="vitals-dot" data-tooltip="System vitals: clear"></div>
           <button class="sidebar-version" id="sidebarVersion" title="Click for version + release notes"></button>
         </div>
       </div>
@@ -793,6 +794,7 @@ import { initSettings } from './views/settings.js'
 import { initHistory } from './views/history.js'
 import { initArtifacts, renderArtifactsList } from './views/artifacts.js'
 import { initAtmosphere } from './modules/atmosphere.js'
+import { initRefreshEngine } from './modules/refresh-engine.js'
 import { initBreath, onBreathEnter, onBreathExit } from './views/breath.js'
 import { initInsight, onInsightExit } from './views/insight.js'
 import { initAstro, onAstroExit } from './views/astro.js'
@@ -1012,7 +1014,7 @@ initOracle()
 // Imports above make init functions available to the nav handler.
 
 // ─── Somatic Atmosphere ──
-initAtmosphere().then(() => initBreath())
+initAtmosphere().then(() => { initBreath(); initRefreshEngine() })
 
 // ─── Preflight Result Handler ──
 window.ace.preflight.onResult((result) => {

@@ -1,7 +1,8 @@
 // renderer/modules/session-manager.js
 import { state } from '../state.js'
 import { xtermTheme } from './theme.js'
-import { escapeHtml, syntaxHighlight, findSettledBoundary, renderTail, postProcessCodeBlocks, processWikilinks, SANITIZE_CONFIG } from './chat-renderer.js'
+import { escapeHtml, syntaxHighlight, findSettledBoundary, findSettledBoundaryFrom, renderTail, postProcessCodeBlocks, processWikilinks, SANITIZE_CONFIG } from './chat-renderer.js'
+import { onSoftGC } from './refresh-engine.js'
 import { updateOrbState, aceMarkSvg } from './ace-mark.js'
 import { setAttention, clearAttention, updateAttentionBadge } from './attention.js'
 import { onSessionClose } from './atmosphere.js'
@@ -156,7 +157,7 @@ export function renderChatStream(id, sessionsObj) {
   const settledEl = settledEls[settledEls.length - 1]
   const tailEl = tailEls[tailEls.length - 1]
 
-  const boundary = findSettledBoundary(s.currentStreamText)
+  const boundary = findSettledBoundaryFrom(s.currentStreamText, s._settledBoundary)
   if (boundary > s._settledBoundary) {
     const settledText = s.currentStreamText.slice(0, boundary)
     const withWikilinks = processWikilinks(settledText)
@@ -1506,6 +1507,52 @@ export function toggleSessionMode(id) {
   }
 }
 
+// ── Soft GC — DOM pruning + buffer cleanup ────────────────────────────────────
+const SOFT_GC_MSG_KEEP = 40
+
+function softGcSessions() {
+  for (const [id, s] of Object.entries(state.sessions)) {
+    if (s.isStreaming) continue
+
+    // Prune DOM — keep last SOFT_GC_MSG_KEEP messages, tombstone the rest
+    const msgsEl = document.getElementById('chat-msgs-' + id)
+    if (msgsEl) {
+      const msgs = msgsEl.querySelectorAll('.chat-msg')
+      const excess = msgs.length - SOFT_GC_MSG_KEEP
+      if (excess > 0) {
+        for (let i = 0; i < excess; i++) msgs[i].remove()
+        const existing = msgsEl.querySelector('.chat-gc-tombstone')
+        if (!existing) {
+          const tomb = document.createElement('div')
+          tomb.className = 'chat-gc-tombstone'
+          tomb.textContent = `${excess} earlier messages cleared`
+          tomb.style.cssText = 'text-align:center;padding:8px;opacity:0.35;font-size:11px;'
+          msgsEl.prepend(tomb)
+        } else {
+          const prev = parseInt(existing.textContent) || 0
+          existing.textContent = `${prev + excess} earlier messages cleared`
+        }
+      }
+    }
+
+    // Clear finalized streaming buffers
+    s._settledHTML = ''
+    s._settledBoundary = 0
+    s._fullResponseText = ''
+    s.currentStreamText = ''
+    s.currentToolInput = ''
+
+    // Cancel orphaned timers
+    if (s._wordTimer) { clearInterval(s._wordTimer); s._wordTimer = null }
+    if (s._pendingRAF) { cancelAnimationFrame(s._pendingRAF); s._pendingRAF = null }
+
+    // Release stale DOM refs
+    s._currentAssistantEl = null
+    s._opsContainer = null
+  }
+  console.log('[refresh-engine] session-manager soft GC complete')
+}
+
 export function closeSession(id) {
   const s = state.sessions[id]
   if (!s) return
@@ -1627,4 +1674,5 @@ export function initSessions() {
   window.activateSession = activateSession
 
   initSplitPane()
+  onSoftGC(softGcSessions)
 }

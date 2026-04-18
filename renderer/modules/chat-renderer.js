@@ -96,6 +96,38 @@ export function syntaxHighlight(code, lang) {
   return result
 }
 
+// Incremental settled boundary — only scans text from prevBoundary forward.
+// At any previously computed boundary, inFence is guaranteed false, so no
+// fence state needs to be carried across calls.
+export function findSettledBoundaryFrom(text, prevBoundary) {
+  if (!prevBoundary || prevBoundary <= 0) return findSettledBoundary(text)
+  const suffix = text.slice(prevBoundary)
+  if (!suffix) return prevBoundary
+
+  const lines = suffix.split('\n')
+  let inFence = false, fenceChar = '', fenceLen = 0
+  let lastSafeOffset = prevBoundary
+  let charOffset = prevBoundary
+
+  for (let li = 0; li < lines.length; li++) {
+    const trimmed = lines[li].trimStart()
+    const m = trimmed.match(/^(`{3,}|~{3,})/)
+    if (m) {
+      if (!inFence) { inFence = true; fenceChar = m[1][0]; fenceLen = m[1].length }
+      else if (trimmed[0] === fenceChar && m[1].length >= fenceLen) {
+        inFence = false
+        lastSafeOffset = charOffset + lines[li].length + 1
+      }
+    } else if (!inFence && trimmed === '') {
+      lastSafeOffset = charOffset + 1
+    }
+    charOffset += lines[li].length + 1
+  }
+
+  // If we ended inside an unclosed fence, don't advance into it
+  return inFence ? lastSafeOffset : lastSafeOffset
+}
+
 // Settled boundary — find safe split point for partial markdown
 export function findSettledBoundary(text) {
   // Count code fences

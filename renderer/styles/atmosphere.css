@@ -822,3 +822,54 @@ body.light .atm-audio-popover {
   color: var(--text-secondary);
   user-select: all;
 }
+
+/* ── Vitals Dot ── */
+.vitals-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--vitals-color, rgba(140, 120, 255, 0.4));
+  opacity: 0.5;
+  animation: vitals-pulse var(--vitals-speed, 4s) ease-in-out infinite;
+  transition: background 2s ease, opacity 1.5s ease;
+  cursor: default;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.vitals-dot[data-level="warming"] {
+  --vitals-color: rgba(200, 160, 100, 0.6);
+  --vitals-speed: 2.5s;
+  opacity: 0.65;
+}
+
+.vitals-dot[data-level="hot"] {
+  --vitals-color: rgba(210, 140, 80, 0.8);
+  --vitals-speed: 1.5s;
+  opacity: 0.8;
+}
+
+@keyframes vitals-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.4); }
+}
+
+.vitals-dot::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-elevated, #1a1c2e);
+  color: var(--text-secondary, #aaa);
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 100;
+}
+
+.vitals-dot:hover::after { opacity: 1; }
