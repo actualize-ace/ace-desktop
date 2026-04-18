@@ -1,6 +1,6 @@
 // renderer/views/people.js
 import { state } from '../state.js'
-import { escapeHtml, processWikilinks, postProcessCodeBlocks, SANITIZE_CONFIG } from '../modules/chat-renderer.js'
+import { escapeHtml, processWikilinks, postProcessCodeBlocks, postProcessWikilinks, SANITIZE_CONFIG } from '../modules/chat-renderer.js'
 import { onSoftGC } from '../modules/refresh-engine.js'
 
 onSoftGC(() => {
@@ -178,8 +178,7 @@ async function openPersonProfile(filePath, personName) {
     return
   }
 
-  const withLinks = processWikilinks(content)
-  const html = marked.parse(withLinks)
+  const html = marked.parse(content)
   const safe = DOMPurify.sanitize(html, SANITIZE_CONFIG)
 
   const today = new Date(); today.setHours(0, 0, 0, 0)
@@ -209,6 +208,7 @@ async function openPersonProfile(filePath, personName) {
 
   profileEl.innerHTML = `<div class="md-body">${safe}</div>${commitHtml}`
   postProcessCodeBlocks(profileEl)
+  postProcessWikilinks(profileEl)
   profileEl.scrollTop = 0
 
   profileEl.querySelectorAll('.people-commitment-row').forEach(row => {

@@ -1,7 +1,7 @@
 // renderer/modules/session-manager.js
 import { state } from '../state.js'
 import { xtermTheme } from './theme.js'
-import { escapeHtml, syntaxHighlight, findSettledBoundary, findSettledBoundaryFrom, renderTail, postProcessCodeBlocks, processWikilinks, SANITIZE_CONFIG } from './chat-renderer.js'
+import { escapeHtml, syntaxHighlight, findSettledBoundary, findSettledBoundaryFrom, renderTail, postProcessCodeBlocks, processWikilinks, postProcessWikilinks, SANITIZE_CONFIG } from './chat-renderer.js'
 import { onSoftGC } from './refresh-engine.js'
 import { updateOrbState, aceMarkSvg } from './ace-mark.js'
 import { setAttention, clearAttention, updateAttentionBadge } from './attention.js'
@@ -160,13 +160,13 @@ export function renderChatStream(id, sessionsObj) {
   const boundary = findSettledBoundaryFrom(s.currentStreamText, s._settledBoundary)
   if (boundary > s._settledBoundary) {
     const settledText = s.currentStreamText.slice(0, boundary)
-    const withWikilinks = processWikilinks(settledText)
-    const raw = marked.parse(withWikilinks)
+    const raw = marked.parse(settledText)
     const safe = DOMPurify.sanitize(raw, SANITIZE_CONFIG)
     settledEl.innerHTML = safe
     s._settledBoundary = boundary
     s._settledHTML = safe
     postProcessCodeBlocks(settledEl)
+    postProcessWikilinks(settledEl)
   }
 
   const tail = s.currentStreamText.slice(boundary)
@@ -208,12 +208,12 @@ export function finalizeMessage(id, sessionsObj) {
     const tailEls = contentEl.querySelectorAll('.chat-tail')
     const settledEl = settledEls[settledEls.length - 1]
     const tailEl = tailEls[tailEls.length - 1]
-    const withWikilinks = processWikilinks(s.currentStreamText)
-    const raw = marked.parse(withWikilinks)
+    const raw = marked.parse(s.currentStreamText)
     const safe = DOMPurify.sanitize(raw, SANITIZE_CONFIG)
     settledEl.innerHTML = safe
     tailEl.innerHTML = ''
     postProcessCodeBlocks(settledEl)
+    postProcessWikilinks(settledEl)
     // Remove streaming indicators from label
     const indicator = s._currentAssistantEl.querySelector('.chat-streaming-indicator')
     if (indicator) indicator.remove()
@@ -670,11 +670,11 @@ export function wireChatListeners(id, sessionsObj) {
               const settledEl = contentEl?.querySelector('.chat-settled:last-of-type')
               const tailEl = contentEl?.querySelector('.chat-tail:last-of-type')
               if (settledEl && s.currentStreamText) {
-                const withWikilinks = processWikilinks(s.currentStreamText)
-                const raw = marked.parse(withWikilinks)
+                const raw = marked.parse(s.currentStreamText)
                 const safe = DOMPurify.sanitize(raw, SANITIZE_CONFIG)
                 settledEl.innerHTML = safe
                 postProcessCodeBlocks(settledEl)
+                postProcessWikilinks(settledEl)
               }
               if (tailEl) tailEl.innerHTML = ''
               // Create new settled/tail pair after the tool blocks

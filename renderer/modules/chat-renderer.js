@@ -220,11 +220,50 @@ export function postProcessCodeBlocks(container) {
   })
 }
 
-// Process wikilinks
+// Process wikilinks (text-only, pre-parse — kept for backward compat but prefer postProcessWikilinks)
 export function processWikilinks(text) {
   return text.replace(/\[\[([^\]|#\n]+?)(?:\|([^\]\n]+?))?\]\]/g, (_, target, display) => {
     const label = (display || target).replace(/</g,'&lt;').replace(/>/g,'&gt;')
     const t = target.replace(/"/g, '&quot;')
     return `<span class="wikilink" data-target="${t}">${label}</span>`
   })
+}
+
+// Post-process wikilinks as a DOM traversal — skips content inside <code>/<pre> so
+// wikilinks inside backtick spans don't produce raw HTML entity strings.
+export function postProcessWikilinks(container) {
+  const re = /\[\[([^\]|#\n]+?)(?:\|([^\]\n]+?))?\]\]/g
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      let el = node.parentElement
+      while (el && el !== container) {
+        if (el.tagName === 'CODE' || el.tagName === 'PRE') return NodeFilter.FILTER_REJECT
+        el = el.parentElement
+      }
+      return node.nodeValue.includes('[[') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+    }
+  })
+  const nodes = []
+  let node
+  while ((node = walker.nextNode())) nodes.push(node)
+  for (const textNode of nodes) {
+    re.lastIndex = 0
+    if (!re.test(textNode.nodeValue)) continue
+    re.lastIndex = 0
+    const frag = document.createDocumentFragment()
+    let lastIndex = 0
+    const text = textNode.nodeValue
+    let match
+    while ((match = re.exec(text)) !== null) {
+      if (match.index > lastIndex) frag.appendChild(document.createTextNode(text.slice(lastIndex, match.index)))
+      const span = document.createElement('span')
+      span.className = 'wikilink'
+      span.dataset.target = match[1]
+      span.textContent = match[2] || match[1]
+      frag.appendChild(span)
+      lastIndex = match.index + match[0].length
+    }
+    if (lastIndex < text.length) frag.appendChild(document.createTextNode(text.slice(lastIndex)))
+    textNode.parentNode.replaceChild(frag, textNode)
+  }
 }
