@@ -128,6 +128,27 @@
   border-top: 1px solid var(--glass-border);
 }
 .sidebar.collapsed { width: 52px; overflow: hidden; }
+/* Resize handle — invisible until hover. 4px hit area on the sidebar's
+   right edge, extends 1px beyond the border so the cursor picks it up
+   consistently. Hidden when the sidebar is collapsed. */
+.sidebar-resize-handle {
+  position: absolute;
+  top: 0; right: -2px;
+  width: 4px; height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+  background: transparent;
+  transition: background 160ms ease;
+}
+.sidebar-resize-handle:hover,
+.sidebar.resizing .sidebar-resize-handle {
+  background: rgba(136,120,255,0.35);
+}
+.sidebar.collapsed .sidebar-resize-handle { display: none; }
+/* Disable width transition + text selection while dragging so resize
+   tracks the cursor 1:1 and stray text doesn't highlight. */
+.sidebar.resizing { transition: none; }
+body.sidebar-resizing { user-select: none; cursor: col-resize; }
 .sidebar.collapsed .sidebar-logo > div:not(.sidebar-mark),
 .sidebar.collapsed .cmdk-logo-badge,
 .sidebar.collapsed .nav-section,

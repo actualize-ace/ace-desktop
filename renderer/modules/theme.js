@@ -81,6 +81,59 @@ export function initTheme() {
     setTimeout(() => { if (window.fitActive) window.fitActive() }, 250)
   })
 
+  // ── Sidebar drag-to-resize ─────────────────────────────────────────────
+  // Bounds chosen so the collapsed toggle (52px) and standard width (216px)
+  // remain natural endpoints. Persisted to ace-config.json on mouseup.
+  const SIDEBAR_MIN = 180
+  const SIDEBAR_MAX = 380
+  const SIDEBAR_DEFAULT = 216
+  const handle = document.getElementById('sidebar-resize-handle')
+  const sidebar = document.getElementById('sidebar')
+  if (handle && sidebar) {
+    let dragging = false
+    let startX = 0
+    let startW = 0
+
+    const saveWidth = async (w) => {
+      try {
+        await window.ace?.setup?.patchConfig?.({ defaults: { display: { sidebarWidth: w } } })
+      } catch {}
+    }
+
+    handle.addEventListener('mousedown', e => {
+      if (sidebar.classList.contains('collapsed')) return
+      dragging = true
+      startX = e.clientX
+      startW = sidebar.getBoundingClientRect().width
+      sidebar.classList.add('resizing')
+      document.body.classList.add('sidebar-resizing')
+      e.preventDefault()
+    })
+
+    document.addEventListener('mousemove', e => {
+      if (!dragging) return
+      const delta = e.clientX - startX
+      const w = Math.max(SIDEBAR_MIN, Math.min(SIDEBAR_MAX, startW + delta))
+      sidebar.style.setProperty('--sidebar-w', w + 'px')
+    })
+
+    document.addEventListener('mouseup', () => {
+      if (!dragging) return
+      dragging = false
+      sidebar.classList.remove('resizing')
+      document.body.classList.remove('sidebar-resizing')
+      const w = Math.round(sidebar.getBoundingClientRect().width)
+      saveWidth(w)
+      if (window.fitActive) window.fitActive()
+    })
+
+    handle.addEventListener('dblclick', () => {
+      sidebar.style.setProperty('--sidebar-w', SIDEBAR_DEFAULT + 'px')
+      saveWidth(SIDEBAR_DEFAULT)
+      if (window.fitActive) window.fitActive()
+    })
+  }
+
   // Visibility change — pause/resume clock
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {

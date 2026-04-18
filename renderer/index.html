@@ -291,6 +291,7 @@
       </div>
       <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle sidebar">◂ <span>Collapse</span></button>
       </div><!-- /.sidebar-pinned -->
+      <div class="sidebar-resize-handle" id="sidebar-resize-handle" title="Drag to resize · double-click to reset"></div>
     </div>
 
     <!-- Main content -->
@@ -951,6 +952,11 @@ document.querySelectorAll('[data-cmd]').forEach(el => {
       document.querySelector('.sidebar')?.classList.add('collapsed')
       const toggleBtn = document.getElementById('sidebar-toggle')
       if (toggleBtn) { toggleBtn.innerHTML = '▸'; }
+    }
+    // Apply saved sidebar width (clamp to bounds in case config was edited)
+    if (typeof d.display?.sidebarWidth === 'number') {
+      const w = Math.max(180, Math.min(380, d.display.sidebarWidth))
+      document.querySelector('.sidebar')?.style.setProperty('--sidebar-w', w + 'px')
     }
 
     // Apply font size
