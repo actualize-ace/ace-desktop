@@ -828,13 +828,13 @@ body.light .atm-audio-popover {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--vitals-color, rgba(140, 120, 255, 0.4));
-  opacity: 0.5;
+  background: var(--vitals-color, rgba(160, 130, 255, 0.85));
+  opacity: 0.85;
   animation: vitals-pulse var(--vitals-speed, 4s) ease-in-out infinite;
   transition: background 2s ease, opacity 1.5s ease;
   cursor: default;
   flex-shrink: 0;
-  position: relative;
+  position: relative; /* anchor for ::after tooltip */
 }
 
 .vitals-dot[data-level="warming"] {
@@ -850,8 +850,8 @@ body.light .atm-audio-popover {
 }
 
 @keyframes vitals-pulse {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.4); }
+  0%, 100% { box-shadow: 0 0 0 0px rgba(160, 130, 255, 0.5); }
+  50%       { box-shadow: 0 0 0 3px rgba(160, 130, 255, 0); }
 }
 
 .vitals-dot::after {

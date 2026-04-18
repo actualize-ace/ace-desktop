@@ -207,5 +207,7 @@ export function initRefreshEngine() {
     softGC:     () => runSoftGC(),
     bootedAt:   () => new Date(bootedAt).toLocaleTimeString(),
     lastSoftGC: () => new Date(lastSoftGC).toLocaleTimeString(),
+    // Simulate a specific health score to preview vitals dot states
+    setHealth:  (score) => { healthScore = Math.max(0, Math.min(1, score)); updateVitalsDot() },
   }
 }
