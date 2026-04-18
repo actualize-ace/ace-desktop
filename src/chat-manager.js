@@ -7,7 +7,7 @@ const path = require('path')
 const fs = require('fs')
 const ch = require('./ipc-channels')
 
-const sessions = new Map() // chatId → { proc, claudeSessionId }
+const sessions = new Map() // chatId → { proc, claudeSessionId, _evtQueue, _flushTimer }
 
 // Windows ignores SIGTERM for non-console apps and has no concept of signal-
 // based graceful shutdown. `taskkill /T /F` force-kills the process tree,
@@ -208,7 +208,25 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
       }))
   })
 
-  sessions.set(chatId, { proc, claudeSessionId })
+  // Per-session IPC batch buffer — flush every 16 ms (≈1 frame) to prevent
+  // flooding the renderer when two+ heavy Opus streams run concurrently.
+  const sessionEntry = { proc, claudeSessionId, _evtQueue: [], _flushTimer: null }
+  sessions.set(chatId, sessionEntry)
+
+  const flushEvents = () => {
+    const entry = sessions.get(chatId)
+    if (!entry || entry._evtQueue.length === 0) return
+    const batch = entry._evtQueue.splice(0)
+    entry._flushTimer = null
+    if (!win.isDestroyed()) win.webContents.send(`${ch.CHAT_STREAM}:${chatId}`, batch)
+  }
+
+  const queueEvent = (event) => {
+    const entry = sessions.get(chatId)
+    if (!entry) return
+    entry._evtQueue.push(event)
+    if (!entry._flushTimer) entry._flushTimer = setTimeout(flushEvents, 16)
+  }
 
   // Line-buffered NDJSON parsing. Split on \r?\n so Windows CRLF line endings
   // don't leave a trailing \r that fails JSON.parse silently.
@@ -279,7 +297,7 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
             event.mode === 'url' && typeof event.url === 'string') {
           emitMcpEvent({ subtype: 'auth_url_ready', authUrl: event.url, server: event.mcp_server_name })
         }
-        win.webContents.send(`${ch.CHAT_STREAM}:${chatId}`, event)
+        queueEvent(event)
       } catch {}
     }
   })
@@ -312,6 +330,8 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   // long-running MCP server killed mid-session. Not covered in Task 6.
 
   proc.on('close', code => {
+    const entry = sessions.get(chatId)
+    if (entry?._flushTimer) { clearTimeout(entry._flushTimer); flushEvents() }
     sessions.delete(chatId)
     if (!win.isDestroyed()) {
       win.webContents.send(`${ch.CHAT_EXIT}:${chatId}`, code)

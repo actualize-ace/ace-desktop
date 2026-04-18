@@ -83,7 +83,10 @@ contextBridge.exposeInMainWorld('ace', {
     cancel: (id) => ipcRenderer.send(ch.CHAT_CANCEL, id),
     onStream: (id, cb) => {
       const channel = `${ch.CHAT_STREAM}:${id}`
-      ipcRenderer.on(channel, (_, event) => cb(event))
+      ipcRenderer.on(channel, (_, payload) => {
+        if (Array.isArray(payload)) { for (const ev of payload) cb(ev) }
+        else cb(payload)
+      })
       return () => ipcRenderer.removeAllListeners(channel)
     },
     onError: (id, cb) => {
