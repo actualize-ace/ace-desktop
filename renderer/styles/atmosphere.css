@@ -832,10 +832,22 @@ body.light .atm-audio-popover {
   box-shadow: 0 0 5px var(--vitals-glow, rgba(109, 184, 143, 0.5));
   opacity: 0.9;
   animation: vitals-pulse var(--vitals-speed, 2.5s) ease-in-out infinite;
-  transition: background 2s ease, box-shadow 2s ease;
+  transition: background 2s ease, box-shadow 240ms ease, width 240ms ease, height 240ms ease, margin 240ms ease, opacity 240ms ease;
   cursor: default;
   flex-shrink: 0;
   position: relative; /* anchor for ::after tooltip */
+  margin: 0;
+}
+/* Hover — subtle expansion. Grow the dot via width/height (not transform) so
+   the ::after tooltip is unaffected — transforms on the parent would scale
+   the tooltip too. Negative margin compensates to keep surrounding layout
+   stable. */
+.vitals-dot:hover {
+  width: 7px;
+  height: 7px;
+  margin: -1px;
+  opacity: 1;
+  box-shadow: 0 0 8px var(--vitals-glow, rgba(109, 184, 143, 0.75));
 }
 
 .vitals-dot[data-level="warming"] {

@@ -216,9 +216,19 @@
 .ctx-bar {
   width:80px; height:3px; background:var(--bg-elevated); border-radius:2px;
   overflow:hidden; border:1px solid var(--border);
-  transition: box-shadow 1.2s ease, border-color 1.2s ease;
+  transition: box-shadow 1.2s ease, border-color 1.2s ease, height 220ms ease, transform 220ms ease;
   cursor: pointer;
 }
+/* Hover — reinforce click affordance without alarm. scaleY grows from the
+   center (equal top/bottom) for a fluid breath rather than an upward lift.
+   Pure transform = no layout reflow. Pressure-state breathing preserved. */
+.ctx-bar:hover {
+  transform: scaleY(1.4);
+  box-shadow: 0 0 10px rgba(136,120,255,0.25);
+}
+.term-pane.ctx-warn .ctx-bar:hover    { box-shadow: 0 0 12px rgba(212,165,116,0.45); }
+.term-pane.ctx-hot .ctx-bar:hover     { box-shadow: 0 0 14px rgba(212,165,116,0.6); }
+.term-pane.ctx-critical .ctx-bar:hover { box-shadow: 0 0 14px rgba(196,116,116,0.55); }
 .ctx-bar-fill {
   height:100%; background:var(--green); border-radius:2px;
   transition:width 0.3s, background 0.3s; width:0%;
