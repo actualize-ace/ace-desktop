@@ -11,7 +11,7 @@ import { startTimer, clearTimer } from './session-timer.js'
 import { pickAndStage, wireDropZone, wirePasteHandler, injectAttachments, consumeAttachments, renderChipTray, renderMsgAttachments, wireMsgAttachmentClicks } from './attachment-handler.js'
 import { appendToolBlock, appendToolInput, updateActivityIndicator, clearActivityIndicator, renderQuestionCard } from './tool-renderer.js'
 import { renderMcpEventCard, renderPermissionApprovalCard, renderMcpPermissionCard } from './mcp-cards.js'
-import { MODEL_CTX_LIMITS } from './telemetry.js'
+import { MODEL_CTX_LIMITS, updateTelemetry } from './telemetry.js'
 import { createChatPane } from './chat-pane.js'
 
 // ─── Chat System ─────────────────────────────────────────────────────────────
@@ -682,6 +682,7 @@ export function spawnSession(opts) {
   document.getElementById('chat-model-' + id)?.addEventListener('change', function () {
     if (state.sessions[id]) state.sessions[id].model = this.value
     updateContextBar(id, state.sessions[id]?.contextInputTokens || 0)
+    updateTelemetry()
   })
 
   document.getElementById('ctx-bar-' + id)?.addEventListener('click', () => {
