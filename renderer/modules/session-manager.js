@@ -121,7 +121,11 @@ export function sendChatMessage(id, prompt, sessionsObj) {
   window.ace.chat.send(id, finalPrompt, s.claudeSessionId, opts)
 
   // Start rotating status words
-  const STATUS_WORDS = ['Thinking', 'Reasoning', 'Analyzing', 'Synthesizing', 'Composing', 'Reflecting', 'Processing', 'Connecting', 'Exploring', 'Weaving']
+  const STATUS_WORDS = [
+    'Synthesizing', 'Composing', 'Reflecting', 'Connecting', 'Exploring',
+    'Weaving', 'Cohering', 'Actualizing', 'Expanding', 'Distilling',
+    'Integrating', 'Attuning', 'Crystallizing', 'Illuminating',
+  ]
   let wordIdx = 0
   s._wordTimer = setInterval(() => {
     if (!s.isStreaming) { clearInterval(s._wordTimer); return }
