@@ -126,9 +126,12 @@ export function createChatPane(id, config = {}) {
   }
 
   // ── Element refs ──────────────────────────────────────────────────────────
-  const inputEl  = document.getElementById('chat-input-'  + id)
-  const sendBtn  = document.getElementById('chat-send-'   + id)
-  const xtermEl  = document.getElementById('xterm-'       + id)
+  // pane.querySelector works whether or not the pane is yet attached to the
+  // document — agent panes pass containerEl: null and append themselves after
+  // the factory call, so document.getElementById would miss those elements.
+  const inputEl  = pane.querySelector('#chat-input-'  + id)
+  const sendBtn  = pane.querySelector('#chat-send-'   + id)
+  const xtermEl  = pane.querySelector('#xterm-'       + id)
 
   // ── Slash menu ────────────────────────────────────────────────────────────
   if (attachSlash) {
@@ -164,10 +167,10 @@ export function createChatPane(id, config = {}) {
   })
 
   // ── Close buttons ─────────────────────────────────────────────────────────
-  document.getElementById('stab-close-' + id)?.addEventListener('click', e => {
+  tab?.querySelector('#stab-close-' + id)?.addEventListener('click', e => {
     e.stopPropagation(); onClose?.(id)
   })
-  document.getElementById('ap-close-' + id)?.addEventListener('click', e => {
+  pane.querySelector('#ap-close-' + id)?.addEventListener('click', e => {
     e.stopPropagation(); onClose?.(id)
   })
 
@@ -175,7 +178,7 @@ export function createChatPane(id, config = {}) {
   // Factory fires onTerminalInit on first toggle, then delegates all DOM/state
   // work to the onModeToggle callback (toggleSessionMode / toggleAgentMode).
   let terminalInited = false
-  document.getElementById('mode-toggle-' + id)?.addEventListener('click', e => {
+  pane.querySelector('#mode-toggle-' + id)?.addEventListener('click', e => {
     e.stopPropagation()
     if (!terminalInited && xtermEl) {
       terminalInited = true
