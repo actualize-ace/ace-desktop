@@ -49,6 +49,14 @@
     </div>
   </div>
 
+  <!-- Quick Capture Overlay -->
+  <div class="capture-overlay" id="capture-overlay" style="display:none">
+    <div class="capture-box">
+      <input class="capture-input" id="capture-input" placeholder="Capture a thought..." autocomplete="off" spellcheck="false">
+      <button class="capture-submit" id="capture-submit">→</button>
+    </div>
+  </div>
+
   <!-- Titlebar -->
   <div class="titlebar">
     <div class="titlebar-center">
@@ -61,6 +69,9 @@
       </div>
     </div>
     <div class="titlebar-right">
+      <button class="capture-btn" id="capture-btn" title="Quick capture to inbox">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </button>
       <button class="alpha-pill" id="alpha-pill" title="ACE v0.1.0 · alpha — click for details">ALPHA</button>
       <div class="preflight-status" id="preflight-status" style="display:none">
         <div class="preflight-dot"></div>
@@ -995,6 +1006,56 @@ document.getElementById('ar-collapse-btn')?.addEventListener('click', () => {
   document.getElementById('agents-roster')?.classList.toggle('collapsed')
 })
 initTelemetry()
+
+// ── Quick Capture ──
+;(function() {
+  const btn    = document.getElementById('capture-btn')
+  const overlay = document.getElementById('capture-overlay')
+  const input  = document.getElementById('capture-input')
+  const submit = document.getElementById('capture-submit')
+  if (!btn || !overlay || !input || !submit) return
+
+  function showCapture() {
+    overlay.style.display = ''
+    input.value = ''
+    input.focus()
+  }
+  function hideCapture() { overlay.style.display = 'none' }
+
+  async function doCapture() {
+    const text = input.value.trim()
+    if (!text) { hideCapture(); return }
+    hideCapture()
+    try {
+      const vaultPath = state.config?.vaultPath
+      if (!vaultPath) return
+      const filePath = '00-System/inbox.md'
+      const existing = await window.ace.vault.readFile(filePath) || ''
+      const ts = new Date().toISOString().slice(0, 16).replace('T', ' ')
+      const entry = `- ${ts} — ${text}\n`
+      // Append after the first heading line, or prepend if no heading found
+      const lines = existing.split('\n')
+      const headerIdx = lines.findIndex(l => l.startsWith('#'))
+      if (headerIdx >= 0) {
+        lines.splice(headerIdx + 1, 0, entry)
+      } else {
+        lines.unshift(entry)
+      }
+      await window.ace.vault.writeFile(filePath, lines.join('\n'))
+    } catch (e) { console.error('[capture]', e) }
+  }
+
+  btn.addEventListener('click', () => overlay.style.display === 'none' ? showCapture() : hideCapture())
+  submit.addEventListener('click', doCapture)
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); doCapture() }
+    if (e.key === 'Escape') hideCapture()
+  })
+  // Close on outside click
+  document.addEventListener('click', e => {
+    if (!overlay.contains(e.target) && e.target !== btn) hideCapture()
+  }, true)
+})()
 
 // ─── Overlays (init on startup, not lazy) ──
 initSettings()
