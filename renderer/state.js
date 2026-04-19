@@ -18,7 +18,7 @@ export const state = {
   agentsInitialized: false,
 
   // Chat defaults
-  chatDefaults: { model: 'opus', permissions: 'default', effort: 'high', lean: true },
+  chatDefaults: { model: 'sonnet', permissions: 'default', effort: 'high', lean: true },
 
   // Telemetry
   usageData: null,

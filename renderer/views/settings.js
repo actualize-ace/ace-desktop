@@ -15,7 +15,7 @@ const CMD_COLORS = [
 ]
 
 const DEFAULTS = {
-  chat: { model: 'opus', permissions: 'default', effort: 'high' },
+  chat: { model: 'sonnet', permissions: 'default', effort: 'high' },
   display: { theme: 'dark', fontSize: 'medium', sidebarCollapsed: false },
   guardrails: { sessionCostWarning: 2.00 },
   sidebar: {
