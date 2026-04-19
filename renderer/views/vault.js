@@ -1,6 +1,6 @@
 // renderer/views/vault.js
 import { state } from '../state.js'
-import { escapeHtml, processWikilinks, postProcessCodeBlocks } from '../modules/chat-renderer.js'
+import { escapeHtml, processWikilinks, postProcessCodeBlocks, postProcessWikilinks } from '../modules/chat-renderer.js'
 
 let vaultRootPath      = null
 let activeVaultFile    = null
@@ -115,8 +115,7 @@ async function openVaultFile(filePath, fileName) {
 
   const ext = treeExt(filePath)
   if (ext === '.md' || ext === '.markdown') {
-    const withLinks = processWikilinks(content)
-    const html  = marked.parse(withLinks)
+    const html  = marked.parse(content)
     const safe  = DOMPurify.sanitize(html, {
       ALLOWED_TAGS: ['h1','h2','h3','h4','h5','h6','p','a','ul','ol','li',
                      'blockquote','code','pre','strong','em','del','s','table',
@@ -126,6 +125,7 @@ async function openVaultFile(filePath, fileName) {
                      'colspan','rowspan','type','checked','disabled'],
     })
     renderEl.innerHTML = `<div class="md-body">${safe}</div>`
+    postProcessWikilinks(renderEl)
   } else {
     const escaped = content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     renderEl.innerHTML = `<div class="md-body"><pre><code>${escaped}</code></pre></div>`

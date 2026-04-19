@@ -157,6 +157,7 @@ const ASPECT_MSG = {
 }
 
 let _cachedTransits = null
+let _cachedDate = null
 let _currentVariant = 0
 
 function pickVariant(arr) {
@@ -216,7 +217,10 @@ export default {
   defaultEnabled: true,
 
   async render(_data, el) {
-    if (!_cachedTransits) {
+    const today = new Date().toISOString().slice(0, 10)
+    if (!_cachedTransits || _cachedDate !== today) {
+      _cachedDate = today
+      _cachedTransits = null
       try {
         _cachedTransits = await window.ace.astro?.getTransits()
       } catch { /* not configured */ }
@@ -233,6 +237,11 @@ export default {
     const { symbol, label } = phaseToGlyph(phaseRaw)
     const moonSign = SIGN_NAMES[_cachedTransits.moon?.sign] || _cachedTransits.moon?.sign || ''
     const sunSign = SIGN_NAMES[_cachedTransits.sun?.sign] || _cachedTransits.sun?.sign || ''
+    // New Moon = conjunction in the Sun's sign; Full Moon = opposition in the Moon's sign.
+    // When the Moon has moved on to the next sign, show the lunation sign, not the current Moon sign.
+    const isNewMoon = phaseRaw.includes('new')
+    const isFullMoon = phaseRaw.includes('full')
+    const displaySign = isNewMoon ? sunSign : moonSign
     const retros = _cachedTransits.retrogrades || []
     const retroChip = retros.length
       ? `<span class="astro-retro" title="${retros.join(', ')} retrograde">℞ ${retros[0]}${retros.length > 1 ? ` +${retros.length - 1}` : ''}</span>`
@@ -254,7 +263,7 @@ export default {
         </div>
         <div class="astro-body">
           <div class="astro-symbol">${symbol}</div>
-          <div class="astro-label">${label}${moonSign ? `<br/><span style="opacity:0.7">in ${moonSign}</span>` : ''}</div>
+          <div class="astro-label">${label}${displaySign ? `<br/><span style="opacity:0.7">in ${displaySign}</span>` : ''}</div>
         </div>
         <div class="astro-telemetry">
           ${aspectLine ? `<div class="astro-aspect" title="Tightest transit-to-natal aspect">${escapeAttr(aspectLine)}</div>` : ''}

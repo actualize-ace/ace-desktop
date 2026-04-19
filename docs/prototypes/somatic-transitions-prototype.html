@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>ACE Somatic Ceremony — Transition Prototype v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&family=Cormorant+Garamond:ital,wght@1,300;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   ACE Somatic Ceremony — Transition Prototype v2
+   Three arrival styles: A) Meditation  B) Temple  C) Ship Boot
+   Four ritual triggers: Start of Day, Close, Weekly Review, Monthly
+   Time-aware somatic cues on sidebar mark + somatic bar
+   Design doc: 2026-04-17-somatic-ceremony-view-design.md
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg-deep:    #080a12;
+  --bg-surface: #0c0e18;
+  --bg-elevated:#141828;
+  --bg-card:    #101420;
+  --border:      rgba(140,120,255,0.10);
+  --border-hover:rgba(140,120,255,0.22);
+  --gold:       #c8a0f0;
+  --gold-dim:   #7a60b0;
+  --green:      #60d8a8;
+  --ark:        #b080e0;
+  --blue-grey:  #70b0e0;
+  --red:        #e07080;
+  --amber:      #e0c878;
+  --dawn-gold:  #d4a574;
+  --amber-settle: #c89860;
+  --text-primary:   #d8d4e4;
+  --text-secondary: #9898b8;
+  --text-dim:       #606080;
+  --text-whisper:   #404060;
+
+  --authority: #70b0e0;
+  --capacity:  #b080e0;
+  --expansion: #c8a0f0;
+
+  --glow-primary: rgba(140,120,255,0.15);
+  --glow-accent:  rgba(200,160,240,0.25);
+  --glow-mint:    rgba(96,216,168,0.25);
+
+  --glass-bg:     rgba(16,20,36,0.6);
+  --glass-border: rgba(140,120,255,0.08);
+  --glass-blur:   blur(12px);
+
+  --orb-bg-gradient: radial-gradient(circle at 35% 30%, rgba(216,212,228,0.4) 0%, transparent 30%),
+                     radial-gradient(circle at center, rgba(200,160,240,0.6) 0%, rgba(140,120,255,0.4) 40%, rgba(20,24,40,0.3) 100%);
+  --orb-shadow:      inset 0 0 50px rgba(200,160,240,0.35),
+                     inset 0 0 8px rgba(216,212,228,0.4),
+                     0 0 60px rgba(140,120,255,0.35),
+                     0 0 140px rgba(200,160,240,0.18);
+  --orb-shadow-deep: inset 0 0 70px rgba(200,160,240,0.5),
+                     inset 0 0 12px rgba(216,212,228,0.6),
+                     0 0 90px rgba(140,120,255,0.5),
+                     0 0 200px rgba(200,160,240,0.28);
+
+  --font-display: 'Space Grotesk', -apple-system, system-ui, sans-serif;
+  --font-body:    'DM Sans', -apple-system, system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'SF Mono', monospace;
+  --font-script:  'Cormorant Garamond', Georgia, serif;
+
+  --breath:      11s;
+  --breath-slow: 15s;
+  --breath-fast: 8s;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ═══ CONTROL BAR ═══ */
+.controls {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 12px;
+  background: rgba(8,10,18,0.95);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+  flex-wrap: wrap;
+}
+.controls button {
+  background: var(--glass-bg);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.controls button:hover {
+  border-color: var(--border-hover);
+  color: var(--gold);
+  background: rgba(200,160,240,0.08);
+}
+.controls button.active {
+  border-color: var(--gold-dim);
+  color: var(--gold);
+  background: rgba(200,160,240,0.12);
+}
+.controls .sep {
+  width: 1px; height: 18px;
+  background: var(--border);
+  margin: 0 2px;
+}
+.controls .label {
+  font-family: var(--font-mono);
+  font-size: 6.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-right: 2px;
+}
+.controls button.play {
+  background: rgba(96,216,168,0.1);
+  border-color: rgba(96,216,168,0.3);
+  color: var(--green);
+}
+.controls button.play:hover {
+  background: rgba(96,216,168,0.2);
+  border-color: var(--green);
+}
+.controls button.reset-btn {
+  background: rgba(224,112,128,0.08);
+  border-color: rgba(224,112,128,0.25);
+  color: var(--red);
+}
+.controls button.reset-btn:hover {
+  background: rgba(224,112,128,0.15);
+  border-color: var(--red);
+}
+
+/* ═══ MOCK SIDEBAR (left edge) ═══ */
+.mock-sidebar {
+  position: fixed;
+  top: 40px; left: 0; bottom: 0;
+  width: 52px;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 16px 0;
+  z-index: 100;
+}
+
+/* ACE Mark */
+.ace-mark {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, rgba(200,160,240,0.5), rgba(140,120,255,0.3));
+  box-shadow: 0 0 12px rgba(140,120,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: 11px; font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  position: relative;
+  transition: box-shadow 0.8s ease, background 0.8s ease;
+}
+/* Normal breathing */
+.ace-mark::after {
+  content: '';
+  position: absolute; inset: -4px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  transition: border-color 0.8s ease, box-shadow 0.8s ease;
+}
+
+/* Dawn-gold glow (morning ceremonies) */
+.ace-mark.dawn {
+  background: radial-gradient(circle at 40% 35%, rgba(212,165,116,0.6), rgba(200,160,240,0.3));
+  box-shadow: 0 0 18px rgba(212,165,116,0.35), 0 0 40px rgba(212,165,116,0.15);
+  animation: mark-dawn-breathe 5.5s ease-in-out infinite;
+}
+.ace-mark.dawn::after {
+  border-color: rgba(212,165,116,0.3);
+  animation: mark-ring-dawn 5.5s ease-in-out infinite;
+}
+@keyframes mark-dawn-breathe {
+  0%, 100% { box-shadow: 0 0 14px rgba(212,165,116,0.3), 0 0 30px rgba(212,165,116,0.1); }
+  50%      { box-shadow: 0 0 24px rgba(212,165,116,0.5), 0 0 50px rgba(212,165,116,0.2); }
+}
+@keyframes mark-ring-dawn {
+  0%, 100% { border-color: rgba(212,165,116,0.2); transform: scale(1); }
+  50%      { border-color: rgba(212,165,116,0.45); transform: scale(1.08); }
+}
+
+/* Amber-settle glow (evening ceremonies) */
+.ace-mark.settle {
+  background: radial-gradient(circle at 40% 35%, rgba(200,152,96,0.5), rgba(140,120,255,0.25));
+  box-shadow: 0 0 18px rgba(200,152,96,0.3), 0 0 40px rgba(200,152,96,0.12);
+  animation: mark-settle-breathe 7s ease-in-out infinite;
+}
+.ace-mark.settle::after {
+  border-color: rgba(200,152,96,0.25);
+  animation: mark-ring-settle 7s ease-in-out infinite;
+}
+@keyframes mark-settle-breathe {
+  0%, 100% { box-shadow: 0 0 14px rgba(200,152,96,0.25), 0 0 30px rgba(200,152,96,0.08); }
+  50%      { box-shadow: 0 0 22px rgba(200,152,96,0.45), 0 0 45px rgba(200,152,96,0.18); }
+}
+@keyframes mark-ring-settle {
+  0%, 100% { border-color: rgba(200,152,96,0.18); transform: scale(1); }
+  50%      { border-color: rgba(200,152,96,0.38); transform: scale(1.06); }
+}
+
+/* Sidebar nav icons (simplified) */
+.sidebar-nav { margin-top: 28px; display: flex; flex-direction: column; gap: 18px; align-items: center; }
+.sidebar-icon {
+  width: 18px; height: 18px;
+  border-radius: 4px;
+  background: rgba(140,120,255,0.08);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.sidebar-icon:hover { border-color: var(--border-hover); background: rgba(200,160,240,0.12); }
+.sidebar-icon.active-nav { border-color: var(--gold-dim); background: rgba(200,160,240,0.15); }
+
+/* ═══ STAGE — the demo viewport ═══ */
+.stage {
+  position: fixed;
+  top: 40px; left: 52px; right: 0; bottom: 0;
+  overflow: hidden;
+}
+
+/* ═══ MOCK SOMATIC BAR (bottom, full width including sidebar) ═══ */
+.mock-somatic-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: 28px;
+  background: linear-gradient(180deg, transparent, rgba(8,10,18,0.85));
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200;
+  transition: all 1s ease;
+}
+.mock-somatic-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--gold-dim);
+  margin-right: 8px;
+  animation: somatic-dot-breathe 5.5s ease-in-out infinite;
+  transition: background 1s ease;
+}
+@keyframes somatic-dot-breathe {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.3); }
+}
+.mock-somatic-text {
+  font-family: var(--font-body);
+  font-size: 11px; font-weight: 300;
+  color: var(--text-dim);
+  font-style: italic;
+  letter-spacing: 0.02em;
+  transition: color 1s ease;
+  cursor: default;
+}
+
+/* Ceremony-ready somatic bar states */
+.mock-somatic-bar.dawn .mock-somatic-dot { background: var(--dawn-gold); }
+.mock-somatic-bar.dawn .mock-somatic-text { color: var(--dawn-gold); cursor: pointer; }
+.mock-somatic-bar.settle .mock-somatic-dot { background: var(--amber-settle); }
+.mock-somatic-bar.settle .mock-somatic-text { color: var(--amber-settle); cursor: pointer; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOCK COCKPIT
+   ═══════════════════════════════════════════════════════════════════ */
+.mock-cockpit {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 50px 40px 40px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Starfield */
+.mock-cockpit::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 8% 12%, rgba(216,212,228,0.5), transparent),
+    radial-gradient(1px 1px at 23% 65%, rgba(200,160,240,0.4), transparent),
+    radial-gradient(1px 1px at 41% 28%, rgba(216,212,228,0.6), transparent),
+    radial-gradient(1px 1px at 67% 42%, rgba(176,128,224,0.4), transparent),
+    radial-gradient(1px 1px at 88% 19%, rgba(216,212,228,0.5), transparent),
+    radial-gradient(1px 1px at 92% 78%, rgba(96,216,168,0.3), transparent),
+    radial-gradient(1px 1px at 14% 85%, rgba(216,212,228,0.4), transparent),
+    radial-gradient(1.5px 1.5px at 55% 7%, rgba(200,160,240,0.5), transparent),
+    radial-gradient(1.5px 1.5px at 75% 88%, rgba(216,212,228,0.4), transparent);
+  pointer-events: none; z-index: -1; opacity: 0.7;
+  animation: cockpit-star-shimmer 15s ease-in-out infinite;
+}
+@keyframes cockpit-star-shimmer {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 0.9; }
+}
+
+/* ORB */
+.mock-orb-wrap {
+  position: relative;
+  width: 180px; height: 180px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 24px;
+}
+.mock-orb-iris {
+  position: absolute; inset: 0;
+  border: 1px solid rgba(200,160,240,0.18);
+  border-radius: 50%;
+}
+.mock-orb-iris::before {
+  content: ''; position: absolute; inset: -1px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  border-top-color: rgba(200,160,240,0.5);
+  border-right-color: rgba(176,128,224,0.3);
+}
+.mock-orb-iris::after {
+  content: ''; position: absolute; inset: 16px;
+  border-radius: 50%;
+  border: 1px dashed rgba(96,216,168,0.18);
+}
+.mock-orb {
+  width: 130px; height: 130px;
+  border-radius: 50%;
+  background: var(--orb-bg-gradient);
+  box-shadow: var(--orb-shadow);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 2;
+}
+.mock-orb-score {
+  font-family: var(--font-display);
+  font-size: 40px; font-weight: 300;
+  color: var(--text-primary);
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(216,212,228,0.5);
+}
+.mock-orb-label {
+  font-family: var(--font-mono);
+  font-size: 7px; letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+
+/* Orb ping — 5.5s pulse ring */
+.mock-orb-ping {
+  position: absolute;
+  inset: 50%; width: 0; height: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(140,120,255,0.4);
+  pointer-events: none;
+}
+.stage.arrived .mock-orb-ping {
+  animation: orb-ping-anim 5.5s ease-out infinite;
+}
+@keyframes orb-ping-anim {
+  0%   { width: 100px; height: 100px; inset: 50%; transform: translate(-50%, -50%); opacity: 0.6; }
+  100% { width: 180px; height: 180px; inset: 50%; transform: translate(-50%, -50%); opacity: 0; }
+}
+
+/* SYNTHESIS */
+.mock-synthesis {
+  text-align: center;
+  margin-bottom: 28px;
+  max-width: 460px;
+}
+.mock-synthesis-text {
+  font-family: var(--font-display);
+  font-size: 13px; font-weight: 300;
+  color: var(--text-primary);
+  line-height: 1.55;
+  letter-spacing: 0.005em;
+}
+.mock-synthesis-text em {
+  font-family: var(--font-script);
+  font-style: italic;
+  color: var(--gold);
+}
+.mock-signal-row {
+  display: flex; justify-content: center;
+  gap: 22px; margin-top: 12px;
+}
+.mock-signal-cluster {
+  display: flex; gap: 6px; align-items: center;
+  position: relative;
+}
+.mock-signal-cluster::after {
+  content: attr(data-leg);
+  position: absolute; bottom: -13px; left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 6px; letter-spacing: 0.18em;
+  color: var(--text-whisper);
+  text-transform: uppercase;
+}
+.mock-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  transition: all 0.6s ease;
+}
+.mock-dot.green { background: var(--green); box-shadow: 0 0 6px var(--glow-mint); }
+.mock-dot.amber { background: var(--amber); box-shadow: 0 0 6px rgba(224,200,120,0.5); }
+.mock-dot.dim   { background: var(--text-whisper); }
+
+/* TRIAD CARDS */
+.mock-triad-row {
+  display: flex; gap: 14px; width: 100%;
+  max-width: 760px; margin-top: 24px;
+}
+.mock-triad-card {
+  flex: 1;
+  background: var(--glass-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  min-height: 90px;
+  backdrop-filter: var(--glass-blur);
+  transition: all 0.4s ease;
+}
+.mock-triad-card .card-leg {
+  font-family: var(--font-mono);
+  font-size: 7px; letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.mock-triad-card.authority .card-leg { color: var(--authority); }
+.mock-triad-card.capacity  .card-leg { color: var(--capacity); }
+.mock-triad-card.expansion .card-leg { color: var(--expansion); }
+.mock-triad-card .card-item {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Skip hint */
+.skip-hint {
+  position: absolute;
+  bottom: 40px; right: 20px;
+  font-family: var(--font-mono);
+  font-size: 8px; letter-spacing: 0.1em;
+  color: var(--text-whisper);
+  opacity: 0; pointer-events: none;
+  z-index: 200;
+}
+.stage.arriving .skip-hint {
+  animation: skip-hint-in 0.4s ease 1.5s forwards;
+}
+@keyframes skip-hint-in {
+  from { opacity: 0; }
+  to   { opacity: 0.6; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   APPROACH A — "Opening Eyes After Meditation"
+   ═══════════════════════════════════════════════════════════════════ */
+.stage.mode-a .mock-cockpit {
+  filter: blur(20px) brightness(0.3);
+  transform: scale(1.04);
+}
+.stage.mode-a.arriving .mock-cockpit {
+  opacity: 1;
+  animation: eyes-open 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+@keyframes eyes-open {
+  0%   { filter: blur(20px) brightness(0.3); transform: scale(1.04); }
+  30%  { filter: blur(12px) brightness(0.5); transform: scale(1.025); }
+  60%  { filter: blur(5px)  brightness(0.75); transform: scale(1.01); }
+  80%  { filter: blur(2px)  brightness(0.9); transform: scale(1.005); }
+  100% { filter: blur(0)    brightness(1);   transform: scale(1); }
+}
+
+/* Breath guide */
+.breath-guide {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 16px;
+  opacity: 0; pointer-events: none;
+}
+.breath-guide-ring {
+  width: 120px; height: 120px;
+  border: 1.5px solid rgba(200,160,240,0.3);
+  border-radius: 50%;
+}
+.breath-guide-text {
+  font-family: var(--font-script);
+  font-size: 16px; font-style: italic;
+  color: var(--gold);
+  opacity: 0.8;
+}
+.stage.mode-a.arriving .breath-guide {
+  animation: breath-guide-appear 4s ease forwards;
+}
+@keyframes breath-guide-appear {
+  0%   { opacity: 0; }
+  15%  { opacity: 0.9; }
+  50%  { opacity: 0.9; }
+  75%  { opacity: 0.3; }
+  100% { opacity: 0; }
+}
+.stage.mode-a.arriving .breath-guide-ring {
+  animation: breath-guide-expand 4s ease-in-out forwards;
+}
+@keyframes breath-guide-expand {
+  0%   { transform: scale(0.7); border-color: rgba(200,160,240,0.15); }
+  50%  { transform: scale(1.15); border-color: rgba(200,160,240,0.45); }
+  100% { transform: scale(1.3); border-color: rgba(200,160,240,0); }
+}
+
+/* Whisper text */
+.mock-whisper {
+  position: absolute;
+  bottom: 50px; left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-script);
+  font-size: 13px; font-style: italic;
+  color: var(--text-whisper);
+  opacity: 0; pointer-events: none;
+  white-space: nowrap;
+}
+.stage.arriving .mock-whisper {
+  animation: whisper-appear 5s ease 2.5s forwards;
+}
+@keyframes whisper-appear {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  30%  { opacity: 0.7; transform: translateX(-50%) translateY(0); }
+  80%  { opacity: 0.7; }
+  100% { opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   APPROACH B — "Temple Threshold"
+   ═══════════════════════════════════════════════════════════════════ */
+.temple-doors {
+  position: absolute; inset: 0;
+  z-index: 50; pointer-events: none;
+  display: none;
+}
+.stage.mode-b .temple-doors { display: block; }
+
+.temple-door {
+  position: absolute; top: 0; bottom: 0;
+  width: 50%;
+  background: var(--bg-deep);
+  will-change: transform;
+}
+.temple-door.left  { left: 0; }
+.temple-door.right { right: 0; }
+
+.temple-door::after {
+  content: '';
+  position: absolute; top: 8%; bottom: 8%;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(200,160,240,0.3), rgba(96,216,168,0.2), rgba(200,160,240,0.3), transparent);
+}
+.temple-door.left::after  { right: 0; }
+.temple-door.right::after { left: 0; }
+
+/* Door engravings — subtle decorative lines */
+.temple-door .door-engraving {
+  position: absolute;
+  top: 20%; bottom: 20%;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(200,160,240,0.08), transparent);
+}
+.temple-door.left .door-engraving  { right: 30px; }
+.temple-door.right .door-engraving { left: 30px; }
+
+.temple-glyph {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 51;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 12px;
+  opacity: 0;
+}
+.temple-glyph-mark {
+  width: 48px; height: 48px;
+  border: 1.5px solid rgba(200,160,240,0.35);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 300;
+  color: var(--gold);
+  text-shadow: 0 0 14px var(--glow-accent);
+}
+.temple-glyph-text {
+  font-family: var(--font-mono);
+  font-size: 8px; letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.stage.mode-b .mock-cockpit { opacity: 1; }
+
+.stage.mode-b.arriving .temple-glyph {
+  animation: glyph-flash 2.8s ease forwards;
+}
+@keyframes glyph-flash {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  15%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  55%  { opacity: 1; }
+  75%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+.stage.mode-b.arriving .temple-door.left {
+  animation: door-open-left 2.8s cubic-bezier(0.22, 0.61, 0.36, 1) 0.6s forwards;
+}
+.stage.mode-b.arriving .temple-door.right {
+  animation: door-open-right 2.8s cubic-bezier(0.22, 0.61, 0.36, 1) 0.6s forwards;
+}
+@keyframes door-open-left  { to { transform: translateX(-100%); } }
+@keyframes door-open-right { to { transform: translateX(100%); } }
+
+/* Light seam */
+.temple-seam {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%; width: 2px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, transparent 5%, rgba(200,160,240,0.6) 30%, rgba(96,216,168,0.4) 50%, rgba(200,160,240,0.6) 70%, transparent 95%);
+  z-index: 52;
+  opacity: 0;
+}
+.stage.mode-b.arriving .temple-seam {
+  animation: seam-glow 2.8s ease forwards;
+}
+@keyframes seam-glow {
+  0%   { opacity: 0; width: 1px; }
+  20%  { opacity: 1; width: 3px; }
+  50%  { opacity: 0.8; width: 40px; filter: blur(12px); }
+  100% { opacity: 0; width: 100%; filter: blur(40px); }
+}
+
+/* Staggered reveals */
+.stage.mode-b.arriving .mock-orb-wrap {
+  opacity: 0;
+  animation: temple-reveal 1s ease 1.8s forwards;
+}
+.stage.mode-b.arriving .mock-synthesis {
+  opacity: 0;
+  animation: temple-reveal 1s ease 2.2s forwards;
+}
+.stage.mode-b.arriving .mock-triad-row {
+  opacity: 0;
+  animation: temple-reveal 1s ease 2.6s forwards;
+}
+@keyframes temple-reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   APPROACH C — "Ship Power-On"
+   ═══════════════════════════════════════════════════════════════════ */
+.scan-line {
+  position: absolute; top: -2px; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(200,160,240,0.6), rgba(96,216,168,0.4), rgba(200,160,240,0.6), transparent);
+  z-index: 60; opacity: 0; pointer-events: none;
+  box-shadow: 0 0 20px rgba(200,160,240,0.4), 0 0 60px rgba(200,160,240,0.2);
+  display: none;
+}
+.stage.mode-c .scan-line { display: block; }
+.stage.mode-c.arriving .scan-line {
+  animation: scan-sweep 2.5s ease-in-out forwards;
+}
+@keyframes scan-sweep {
+  0%   { top: -2px; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.boot-overlay {
+  position: absolute; inset: 0;
+  z-index: 55;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.stage.mode-c .boot-overlay { display: flex; }
+
+.boot-line {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  opacity: 0;
+  display: flex; align-items: center; gap: 8px;
+}
+.boot-line .boot-pip {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--text-whisper);
+  transition: all 0.3s ease 0.15s;
+  flex-shrink: 0;
+}
+.boot-line .boot-pip.on { background: var(--green); box-shadow: 0 0 8px var(--glow-mint); }
+.boot-line.final-line { color: var(--green); font-weight: 500; }
+
+.stage.mode-c.arriving .boot-line:nth-child(1) { animation: boot-in 0.35s ease 0.3s forwards; }
+.stage.mode-c.arriving .boot-line:nth-child(2) { animation: boot-in 0.35s ease 0.65s forwards; }
+.stage.mode-c.arriving .boot-line:nth-child(3) { animation: boot-in 0.35s ease 1.0s forwards; }
+.stage.mode-c.arriving .boot-line:nth-child(4) { animation: boot-in 0.35s ease 1.35s forwards; }
+.stage.mode-c.arriving .boot-line:nth-child(5) { animation: boot-in 0.35s ease 1.7s forwards; }
+.stage.mode-c.arriving .boot-line:nth-child(6) { animation: boot-in 0.35s ease 2.1s forwards; }
+@keyframes boot-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.stage.mode-c .mock-cockpit { opacity: 0; }
+.stage.mode-c.arriving .boot-overlay {
+  animation: boot-fade 0.8s ease 3s forwards;
+}
+@keyframes boot-fade {
+  to { opacity: 0; pointer-events: none; }
+}
+.stage.mode-c.arriving .mock-cockpit {
+  animation: cockpit-power-on 1.5s ease 2.6s forwards;
+}
+@keyframes cockpit-power-on {
+  0%   { opacity: 0; filter: brightness(0.2); }
+  40%  { opacity: 0.6; filter: brightness(0.6); }
+  100% { opacity: 1; filter: brightness(1); }
+}
+
+/* Subsystem labels flash on power-on */
+.sys-label {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 7px; letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--green);
+  opacity: 0; pointer-events: none;
+  white-space: nowrap;
+}
+.sys-label.orb-label     { top: 30px; left: 50%; transform: translateX(-50%); }
+.sys-label.synth-label   { top: 240px; right: 60px; }
+.sys-label.triad-label   { bottom: 100px; left: 60px; }
+
+.stage.mode-c.arriving .sys-label.orb-label   { animation: sys-label-flash 1.2s ease 2.8s forwards; }
+.stage.mode-c.arriving .sys-label.synth-label  { animation: sys-label-flash 1s ease 3.1s forwards; }
+.stage.mode-c.arriving .sys-label.triad-label  { animation: sys-label-flash 1s ease 3.4s forwards; }
+@keyframes sys-label-flash {
+  0%   { opacity: 0; }
+  30%  { opacity: 1; }
+  70%  { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+
+.stage.mode-c.arriving .mock-orb-wrap {
+  opacity: 0;
+  animation: sys-online 0.6s ease 2.8s forwards;
+}
+.stage.mode-c.arriving .mock-synthesis {
+  opacity: 0;
+  animation: sys-online 0.6s ease 3.1s forwards;
+}
+.stage.mode-c.arriving .mock-triad-row {
+  opacity: 0;
+  animation: sys-online 0.6s ease 3.4s forwards;
+}
+.stage.mode-c.arriving .mock-triad-card.authority {
+  border-color: transparent;
+  animation: sys-border-light 0.8s ease 3.5s forwards;
+}
+.stage.mode-c.arriving .mock-triad-card.capacity {
+  border-color: transparent;
+  animation: sys-border-light 0.8s ease 3.7s forwards;
+}
+.stage.mode-c.arriving .mock-triad-card.expansion {
+  border-color: transparent;
+  animation: sys-border-light 0.8s ease 3.9s forwards;
+}
+@keyframes sys-online {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes sys-border-light {
+  0%   { border-color: transparent; box-shadow: none; }
+  50%  { border-color: rgba(140,120,255,0.35); box-shadow: 0 0 12px var(--glow-primary); }
+  100% { border-color: var(--border); box-shadow: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   /CLOSE DEPARTURE SEQUENCE
+   Gravitational settle + session stats + departure message
+   ═══════════════════════════════════════════════════════════════════ */
+.close-overlay {
+  position: absolute; inset: 0;
+  z-index: 80;
+  background: rgba(8,10,18,0);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 20px;
+  opacity: 0; pointer-events: none;
+}
+
+.close-ring {
+  width: 90px; height: 90px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(200,160,240,0.15);
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.close-ring-progress {
+  position: absolute; inset: -2px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--gold);
+  border-right-color: rgba(200,160,240,0.3);
+}
+.close-ring-check {
+  font-size: 24px;
+  color: var(--green);
+  opacity: 0;
+}
+.close-ring-label {
+  font-family: var(--font-mono);
+  font-size: 7px; letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  position: absolute;
+}
+
+.close-stats {
+  display: flex; gap: 28px;
+  opacity: 0;
+}
+.close-stat { text-align: center; }
+.close-stat-value {
+  font-family: var(--font-display);
+  font-size: 24px; font-weight: 300;
+  color: var(--text-primary);
+}
+.close-stat-label {
+  font-family: var(--font-mono);
+  font-size: 7px; letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.close-message {
+  font-family: var(--font-script);
+  font-size: 16px; font-style: italic;
+  color: var(--gold);
+  opacity: 0;
+  letter-spacing: 0.03em;
+}
+
+/* Close animation */
+.stage.departing .mock-cockpit {
+  animation: cockpit-settle 3s ease forwards;
+}
+@keyframes cockpit-settle {
+  0%   { filter: none; transform: none; }
+  40%  { filter: brightness(0.7) blur(1px); transform: scale(0.98) translateY(8px); }
+  70%  { filter: brightness(0.3) blur(6px); transform: scale(0.96) translateY(16px); }
+  100% { filter: brightness(0.1) blur(12px); transform: scale(0.94) translateY(24px); opacity: 0.3; }
+}
+
+.stage.departing .close-overlay {
+  animation: close-appear 3s ease forwards;
+}
+@keyframes close-appear {
+  0%   { opacity: 0; background: rgba(8,10,18,0); }
+  40%  { opacity: 1; background: rgba(8,10,18,0.5); }
+  100% { background: rgba(8,10,18,0.88); }
+}
+.stage.departing .close-ring-progress {
+  animation: close-ring-spin 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes close-ring-spin {
+  from { transform: rotate(0); }
+  to   { transform: rotate(360deg); }
+}
+.stage.departing .close-ring-label {
+  animation: close-label-swap 2.8s ease forwards;
+}
+@keyframes close-label-swap {
+  0%   { opacity: 1; }
+  85%  { opacity: 1; }
+  90%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+.stage.departing .close-ring-check {
+  animation: close-check-in 0.4s ease 2.6s forwards;
+}
+@keyframes close-check-in {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.stage.departing .close-stats {
+  animation: fadeSlideUp 0.8s ease 1.4s forwards;
+}
+.stage.departing .close-message {
+  animation: fadeSlideUp 0.8s ease 2s forwards;
+}
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.stage.departed {
+  animation: final-dim 1.5s ease forwards;
+}
+@keyframes final-dim {
+  to { opacity: 0; }
+}
+
+/* ═══ ARRIVED STATE ═══ */
+.stage.arrived .mock-cockpit {
+  opacity: 1; filter: none; transform: none;
+}
+.stage.arrived .mock-orb {
+  animation: orb-breath 11s ease-in-out infinite;
+}
+@keyframes orb-breath {
+  0%, 100% { transform: scale(1);    box-shadow: var(--orb-shadow); }
+  50%      { transform: scale(1.05); box-shadow: var(--orb-shadow-deep); }
+}
+.stage.arrived .mock-orb-iris {
+  animation: orb-iris-rotate 90s linear infinite;
+}
+@keyframes orb-iris-rotate { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+/* ═══ PRIORITY STATUS DISPLAY ═══ */
+.priority-display {
+  position: fixed;
+  top: 48px; left: 60px;
+  z-index: 300;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 8px 10px;
+  background: rgba(16,20,36,0.8);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.priority-display.visible { opacity: 1; }
+.priority-display .pd-row {
+  display: flex; align-items: center; gap: 6px;
+}
+.priority-display .pd-pip {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.priority-display .pd-pip.ready    { background: var(--dawn-gold); box-shadow: 0 0 6px rgba(212,165,116,0.4); }
+.priority-display .pd-pip.waiting  { background: var(--text-whisper); }
+.priority-display .pd-pip.done     { background: var(--green); box-shadow: 0 0 6px var(--glow-mint); }
+.priority-display .pd-label { color: var(--text-secondary); }
+.priority-display .pd-label.active-ritual { color: var(--dawn-gold); font-weight: 500; }
+.priority-display .pd-arrow {
+  color: var(--text-whisper);
+  font-size: 7px;
+  margin-left: auto;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ CONTROL BAR ═══ -->
+<div class="controls">
+  <span class="label">Style</span>
+  <button id="btn-a" class="active" onclick="setMode('a')">A Eyes Open</button>
+  <button id="btn-b" onclick="setMode('b')">B Temple</button>
+  <button id="btn-c" onclick="setMode('c')">C Ship Boot</button>
+  <div class="sep"></div>
+  <span class="label">Arrival</span>
+  <button class="play" onclick="playArrival('start')">Start of Day</button>
+  <button class="play" onclick="playArrival('weekly')">Weekly Review</button>
+  <button class="play" onclick="playArrival('monthly')">Monthly</button>
+  <div class="sep"></div>
+  <span class="label">Departure</span>
+  <button class="play" onclick="playDeparture()">/ close</button>
+  <div class="sep"></div>
+  <button onclick="showCue('dawn')">Cue: Dawn</button>
+  <button onclick="showCue('settle')">Cue: Settle</button>
+  <button onclick="showPriorityQueue()">Priority Queue</button>
+  <div class="sep"></div>
+  <button class="reset-btn" onclick="resetAll()">Reset</button>
+</div>
+
+<!-- ═══ MOCK SIDEBAR ═══ -->
+<div class="mock-sidebar">
+  <div class="ace-mark" id="aceMark" onclick="markClicked()">A</div>
+  <div class="sidebar-nav">
+    <div class="sidebar-icon active-nav"></div>
+    <div class="sidebar-icon"></div>
+    <div class="sidebar-icon"></div>
+    <div class="sidebar-icon"></div>
+  </div>
+</div>
+
+<!-- ═══ SOMATIC BAR ═══ -->
+<div class="mock-somatic-bar" id="somaticBar">
+  <div class="mock-somatic-dot"></div>
+  <div class="mock-somatic-text" id="somaticText" onclick="barClicked()">what wants to move through you today?</div>
+</div>
+
+<!-- ═══ PRIORITY QUEUE DISPLAY ═══ -->
+<div class="priority-display" id="priorityDisplay">
+  <div class="pd-row">
+    <div class="pd-pip ready"></div>
+    <span class="pd-label active-ritual">weekly review</span>
+    <span class="pd-arrow">&larr; now</span>
+  </div>
+  <div class="pd-row">
+    <div class="pd-pip waiting"></div>
+    <span class="pd-label">start of day</span>
+    <span class="pd-arrow">next</span>
+  </div>
+  <div class="pd-row">
+    <div class="pd-pip done"></div>
+    <span class="pd-label" style="text-decoration:line-through; opacity:0.5;">monthly</span>
+  </div>
+</div>
+
+<!-- ═══ STAGE ═══ -->
+<div class="stage mode-a" id="stage">
+
+  <!-- Approach A: breath guide -->
+  <div class="breath-guide">
+    <div class="breath-guide-ring"></div>
+    <div class="breath-guide-text">settle in</div>
+  </div>
+
+  <!-- Approach B: temple doors -->
+  <div class="temple-doors">
+    <div class="temple-door left"><div class="door-engraving"></div></div>
+    <div class="temple-door right"><div class="door-engraving"></div></div>
+    <div class="temple-seam"></div>
+    <div class="temple-glyph">
+      <div class="temple-glyph-mark">&#9670;</div>
+      <div class="temple-glyph-text" id="templeText">Welcome home</div>
+    </div>
+  </div>
+
+  <!-- Approach C: scan + boot -->
+  <div class="scan-line"></div>
+  <div class="boot-overlay" id="bootOverlay">
+    <div class="boot-line"><span class="boot-pip"></span> initializing coherence engine</div>
+    <div class="boot-line"><span class="boot-pip"></span> loading triad signals</div>
+    <div class="boot-line"><span class="boot-pip"></span> syncing vault state</div>
+    <div class="boot-line"><span class="boot-pip"></span> calibrating atmosphere</div>
+    <div class="boot-line"><span class="boot-pip"></span> connecting nervous system</div>
+    <div class="boot-line final-line"><span class="boot-pip"></span> all systems nominal</div>
+  </div>
+
+  <!-- Subsystem labels (mode C) -->
+  <div class="sys-label orb-label">coherence orb</div>
+  <div class="sys-label synth-label">synthesis engine</div>
+  <div class="sys-label triad-label">triad deck</div>
+
+  <!-- Mock Cockpit -->
+  <div class="mock-cockpit" id="cockpit">
+    <div class="mock-orb-wrap">
+      <div class="mock-orb-iris"></div>
+      <div class="mock-orb-ping"></div>
+      <div class="mock-orb">
+        <div class="mock-orb-score">7.2</div>
+        <div class="mock-orb-label">coherence</div>
+      </div>
+    </div>
+
+    <div class="mock-synthesis">
+      <div class="mock-synthesis-text">
+        Authority is strong. Capacity needs depth today.<br>
+        <em>Let the body lead before the mind decides.</em>
+      </div>
+      <div class="mock-signal-row">
+        <div class="mock-signal-cluster" data-leg="authority">
+          <div class="mock-dot green"></div>
+          <div class="mock-dot green"></div>
+          <div class="mock-dot amber"></div>
+        </div>
+        <div class="mock-signal-cluster" data-leg="capacity">
+          <div class="mock-dot amber"></div>
+          <div class="mock-dot dim"></div>
+          <div class="mock-dot green"></div>
+        </div>
+        <div class="mock-signal-cluster" data-leg="expansion">
+          <div class="mock-dot green"></div>
+          <div class="mock-dot green"></div>
+          <div class="mock-dot green"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mock-triad-row">
+      <div class="mock-triad-card authority">
+        <div class="card-leg">Authority</div>
+        <div class="card-item">Voice profile refined<br>Decision log current</div>
+      </div>
+      <div class="mock-triad-card capacity">
+        <div class="card-leg">Capacity</div>
+        <div class="card-item">Sleep: 7.2h<br>Body: needs movement</div>
+      </div>
+      <div class="mock-triad-card expansion">
+        <div class="card-leg">Expansion</div>
+        <div class="card-item">3 sessions shipped<br>Pipeline warm</div>
+      </div>
+    </div>
+
+    <div class="mock-whisper">begin here &#8595;</div>
+  </div>
+
+  <!-- Skip hint -->
+  <div class="skip-hint">esc to skip</div>
+
+  <!-- Close overlay -->
+  <div class="close-overlay">
+    <div class="close-ring">
+      <div class="close-ring-progress"></div>
+      <div class="close-ring-label">Closing</div>
+      <div class="close-ring-check">&#10003;</div>
+    </div>
+    <div class="close-stats">
+      <div class="close-stat">
+        <div class="close-stat-value">4</div>
+        <div class="close-stat-label">Sessions</div>
+      </div>
+      <div class="close-stat">
+        <div class="close-stat-value">3.2h</div>
+        <div class="close-stat-label">Active Time</div>
+      </div>
+      <div class="close-stat">
+        <div class="close-stat-value">6</div>
+        <div class="close-stat-label">Items Shipped</div>
+      </div>
+    </div>
+    <div class="close-message">the work landed. rest well.</div>
+  </div>
+</div>
+
+<script>
+;(function () {
+  const stage = document.getElementById('stage')
+  const aceMark = document.getElementById('aceMark')
+  const somaticBar = document.getElementById('somaticBar')
+  const somaticText = document.getElementById('somaticText')
+  const templeText = document.getElementById('templeText')
+  const priorityDisplay = document.getElementById('priorityDisplay')
+
+  let currentMode = 'a'
+  let timeouts = []
+  let currentCue = null  // 'dawn' | 'settle' | null
+  let currentRitual = null
+
+  const SOMATIC_TEXTS = {
+    start:   'the day is ready',
+    close:   'time to land',
+    weekly:  'the week wants your attention',
+    monthly: 'a month to witness'
+  }
+  const TEMPLE_TEXTS = {
+    start:   'Welcome home',
+    close:   'Until tomorrow',
+    weekly:  'The week awaits',
+    monthly: 'A month to witness'
+  }
+  const NORMAL_TEXTS = [
+    'what wants to move through you today?',
+    'the space between thoughts is where clarity lives',
+    'depth over velocity',
+    'presence is the first act of authority'
+  ]
+
+  function clearTimeouts() {
+    timeouts.forEach(t => clearTimeout(t))
+    timeouts = []
+  }
+
+  window.setMode = function (mode) {
+    resetAll()
+    currentMode = mode
+    stage.className = 'stage mode-' + mode
+    document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'))
+    document.getElementById('btn-' + mode).classList.add('active')
+  }
+
+  window.showCue = function (type) {
+    currentCue = type
+    aceMark.className = 'ace-mark ' + type
+
+    const ritual = type === 'dawn' ? 'start' : 'close'
+    somaticBar.className = 'mock-somatic-bar ' + type
+    somaticText.textContent = SOMATIC_TEXTS[ritual]
+    currentRitual = ritual
+  }
+
+  window.markClicked = function () {
+    if (!currentCue) return
+    const ritual = currentCue === 'dawn' ? 'start' : 'close'
+    if (ritual === 'close') {
+      playDeparture()
+    } else {
+      playArrival(ritual)
+    }
+  }
+
+  window.barClicked = function () {
+    if (!currentRitual) return
+    if (currentRitual === 'close') {
+      playDeparture()
+    } else {
+      playArrival(currentRitual)
+    }
+  }
+
+  window.showPriorityQueue = function () {
+    priorityDisplay.classList.toggle('visible')
+  }
+
+  window.playArrival = function (ritual) {
+    clearTimeouts()
+    currentRitual = ritual || 'start'
+
+    // Update temple glyph text
+    templeText.textContent = TEMPLE_TEXTS[currentRitual] || 'Welcome home'
+
+    // Clear cues — ceremony is starting
+    aceMark.className = 'ace-mark'
+    somaticBar.className = 'mock-somatic-bar'
+    somaticText.textContent = ''
+    priorityDisplay.classList.remove('visible')
+
+    stage.className = 'stage mode-' + currentMode + ' arriving'
+
+    // Progressive boot pip activation (mode C)
+    if (currentMode === 'c') {
+      const pips = document.querySelectorAll('.boot-pip')
+      const delays = [450, 800, 1150, 1500, 1850, 2250]
+      delays.forEach((d, i) => {
+        timeouts.push(setTimeout(() => {
+          if (pips[i]) pips[i].classList.add('on')
+        }, d))
+      })
+    }
+
+    // Transition to arrived state
+    const durations = { a: 4200, b: 3600, c: 4300 }
+    timeouts.push(setTimeout(() => {
+      stage.classList.remove('arriving')
+      stage.classList.add('arrived')
+
+      // Restore somatic bar to normal
+      timeouts.push(setTimeout(() => {
+        somaticText.textContent = NORMAL_TEXTS[Math.floor(Math.random() * NORMAL_TEXTS.length)]
+      }, 800))
+    }, durations[currentMode]))
+  }
+
+  window.playDeparture = function () {
+    clearTimeouts()
+
+    // Clear cues
+    aceMark.className = 'ace-mark'
+    somaticBar.className = 'mock-somatic-bar'
+    somaticText.textContent = ''
+    priorityDisplay.classList.remove('visible')
+
+    // Show cockpit in arrived state first
+    stage.className = 'stage mode-' + currentMode + ' arrived'
+    const cockpit = document.getElementById('cockpit')
+    cockpit.style.opacity = '1'
+
+    timeouts.push(setTimeout(() => {
+      // Somatic bar shifts to departure text
+      somaticBar.className = 'mock-somatic-bar settle'
+      somaticText.textContent = SOMATIC_TEXTS.close
+
+      timeouts.push(setTimeout(() => {
+        stage.classList.remove('arrived')
+        stage.classList.add('departing')
+        somaticText.textContent = ''
+        somaticBar.className = 'mock-somatic-bar'
+
+        timeouts.push(setTimeout(() => {
+          stage.classList.add('departed')
+        }, 3400))
+      }, 1200))
+    }, 600))
+  }
+
+  window.resetAll = function () {
+    clearTimeouts()
+    stage.className = 'stage mode-' + currentMode
+    const cockpit = document.getElementById('cockpit')
+    cockpit.style.opacity = ''
+    document.querySelectorAll('.boot-pip').forEach(p => p.classList.remove('on'))
+    aceMark.className = 'ace-mark'
+    somaticBar.className = 'mock-somatic-bar'
+    somaticText.textContent = NORMAL_TEXTS[0]
+    priorityDisplay.classList.remove('visible')
+    currentCue = null
+    currentRitual = null
+  }
+
+  // Skip on Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && stage.classList.contains('arriving')) {
+      clearTimeouts()
+      stage.classList.remove('arriving')
+      stage.classList.add('arrived')
+      document.querySelectorAll('.boot-pip').forEach(p => p.classList.add('on'))
+      somaticText.textContent = NORMAL_TEXTS[Math.floor(Math.random() * NORMAL_TEXTS.length)]
+    }
+  })
+})()
+</script>
+</body>
+</html>
