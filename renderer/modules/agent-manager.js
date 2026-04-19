@@ -2,10 +2,11 @@
 import { state } from '../state.js'
 import { xtermTheme } from './theme.js'
 import { escapeHtml, SANITIZE_CONFIG, findSettledBoundary, renderTail, postProcessCodeBlocks, processWikilinks, syntaxHighlight } from './chat-renderer.js'
-import { updateOrbState, aceMarkSvg } from './ace-mark.js'
+import { updateOrbState } from './ace-mark.js'
 import { setAttention, clearAttention } from './attention.js'
 import { sendChatMessage, wireChatListeners, scheduleRender } from './session-manager.js'
 import { pickAndStage, wireDropZone, wirePasteHandler } from './attachment-handler.js'
+import { createChatPane } from './chat-pane.js'
 
 // Single global exit handler — fires for ALL PTY sessions; filter to agents only
 export function wireAgentExitHandler() {
@@ -74,64 +75,21 @@ export function spawnAgentPane(targetRow) {
   const isTop    = targetRow === 'top'
   const roleName = isTop ? 'orchestrator' : 'agent'
 
-  const pane = document.createElement('div')
-  pane.className = 'apane'; pane.id = 'pane-' + id
-  pane.innerHTML = `
-    <div class="apane-tab" id="aptab-${id}">
-      <div class="ap-dot waiting"></div>
-      <span class="ap-role">${roleName}</span>
-      <span class="ap-name-label">${id.slice(-6)}</span>
-      <span class="ap-task-label" id="ap-task-${id}">starting…</span>
-      <button class="mode-toggle-btn" id="agent-mode-toggle-${id}">Terminal</button>
-      <span class="ap-tokens" id="ap-tokens-${id}">↑ 0 lines</span>
-      <span class="ap-time-label" id="ap-time-${id}">0:00</span>
-      <span class="ap-close-btn" id="ap-close-${id}">×</span>
-    </div>
-    <div class="chat-view" id="chat-view-${id}">
-      <div class="chat-messages" id="chat-msgs-${id}">
-        <div class="chat-welcome">
-          <div class="chat-welcome-icon">${aceMarkSvg(36)}</div>
-          <div class="chat-welcome-text">Agent Chat</div>
-          <div class="chat-welcome-sub">Enter to send · Shift+Enter for newline</div>
-        </div>
-      </div>
-      <div class="chat-status" id="chat-status-${id}">
-        <span class="chat-cost-label">$0.00</span>
-        <span class="chat-tokens-label">0 tokens</span>
-        <div class="ctx-bar" id="ctx-bar-${id}" title="Context usage">
-          <div class="ctx-bar-fill" id="ctx-fill-${id}"></div>
-        </div>
-        <span class="ctx-bar-pct" id="ctx-label-${id}">0%</span>
-      </div>
-      <div class="chat-controls" id="chat-controls-${id}">
-        <select class="chat-select" id="chat-model-${id}" title="Model">
-          <option value="opus" ${state.chatDefaults.model === 'opus' ? 'selected' : ''}>Opus</option>
-          <option value="sonnet" ${state.chatDefaults.model === 'sonnet' ? 'selected' : ''}>Sonnet</option>
-          <option value="haiku" ${state.chatDefaults.model === 'haiku' ? 'selected' : ''}>Haiku</option>
-        </select>
-        <select class="chat-select" id="chat-perms-${id}" title="Permission mode">
-          <option value="default" ${state.chatDefaults.permissions === 'default' ? 'selected' : ''}>Normal</option>
-          <option value="plan" ${state.chatDefaults.permissions === 'plan' ? 'selected' : ''}>Plan</option>
-          <option value="auto" ${state.chatDefaults.permissions === 'auto' ? 'selected' : ''}>Auto-accept</option>
-        </select>
-        <select class="chat-select" id="chat-effort-${id}" title="Reasoning effort">
-          <option value="low" ${state.chatDefaults.effort === 'low' ? 'selected' : ''}>Low effort</option>
-          <option value="medium" ${state.chatDefaults.effort === 'medium' ? 'selected' : ''}>Medium</option>
-          <option value="high" ${state.chatDefaults.effort === 'high' ? 'selected' : ''}>High</option>
-          <option value="max" ${state.chatDefaults.effort === 'max' ? 'selected' : ''}>Max effort</option>
-        </select>
-      </div>
-      <div class="chat-attachments" id="chat-attachments-${id}"></div>
-      <div class="chat-input-area">
-        <button class="chat-attach-btn" id="chat-attach-${id}" title="Attach · drag, paste, or click" aria-label="Attach file">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.49"/></svg>
-        </button>
-        <textarea class="chat-input" id="chat-input-${id}" placeholder="Message ACE..." rows="1"></textarea>
-        <button class="chat-send-btn" id="chat-send-${id}">↑</button>
-      </div>
-    </div>
-    <div class="term-xterm" id="xterm-${id}" style="display:none"></div>
-    <button class="scroll-to-bottom" id="scroll-btn-${id}" title="Scroll to bottom" style="display:none">↓</button>`
+  const controls = createChatPane(id, {
+    paneClass: 'apane',
+    roleName,
+    showTimer: false,
+    showMoveButton: false,
+    containerEl: null,        // appended manually below due to row logic
+    tabBarEl: null,           // agents use roster sidebar, not tab bar
+    attachSlash: false,       // agents don't use slash commands
+    onSend:         (id, prompt) => sendChatMessage(id, prompt, state.agentSessions),
+    onClose:        (id)         => closeAgentPane(id),
+    onModeToggle:   (id)         => toggleAgentMode(id),
+    onTerminalInit: (xtermEl)    => _initAgentTerminal(id, xtermEl),
+  })
+
+  const { pane } = controls
 
   if (!isTop && botEl.querySelector('.apane')) {
     const vRes = document.createElement('div')
@@ -159,39 +117,18 @@ export function spawnAgentPane(targetRow) {
     isStreaming: false, totalCost: 0, totalTokens: { input: 0, output: 0 },
     needsAttention: false, attentionReason: null, attentionAt: null,
     _settledBoundary: 0, _settledHTML: '', _currentAssistantEl: null, _pendingRAF: null, _currentToolBlock: null,
+    _paneControls: controls,
   }
 
-  // Chat input handling for agent
-  const inputEl = document.getElementById('chat-input-' + id)
-  const sendBtn = document.getElementById('chat-send-' + id)
-
-  inputEl.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      const prompt = inputEl.value
-      if (!prompt.trim()) return
-      inputEl.value = ''; inputEl.style.height = 'auto'
-      sendChatMessage(id, prompt, state.agentSessions)
-    }
-    if (e.key === 'Escape' && state.agentSessions[id]?.isStreaming) {
-      window.ace.chat.cancel(id)
-    }
-  })
+  // Factory provides Enter/send/Escape/resize; keep cancel-toggle for streaming UI
+  const inputEl = controls.chatInput
+  const sendBtn = controls.sendBtn
   inputEl.addEventListener('input', () => {
-    inputEl.style.height = 'auto'
-    inputEl.style.height = Math.min(inputEl.scrollHeight, 150) + 'px'
     if (state.agentSessions[id]?.isStreaming) {
       const hasText = inputEl.value.trim().length > 0
       sendBtn.textContent = hasText ? '↑' : '■'
       sendBtn.classList.toggle('cancel', !hasText)
     }
-  })
-  sendBtn.addEventListener('click', () => {
-    const prompt = inputEl.value
-    if (state.agentSessions[id]?.isStreaming && !prompt.trim()) { window.ace.chat.cancel(id); return }
-    if (!prompt.trim()) return
-    inputEl.value = ''; inputEl.style.height = 'auto'
-    sendChatMessage(id, prompt, state.agentSessions)
   })
 
   // Attachment handlers
@@ -205,20 +142,60 @@ export function spawnAgentPane(targetRow) {
   // Wire chat listeners for agent
   wireChatListeners(id, state.agentSessions)
 
-  // Mode toggle for agent pane
-  document.getElementById('agent-mode-toggle-' + id).addEventListener('click', (e) => {
-    e.stopPropagation()
-    toggleAgentMode(id)
-  })
-
-  document.getElementById('ap-close-' + id).addEventListener('click', e => {
-    e.stopPropagation(); closeAgentPane(id)
-  })
   document.getElementById('aptab-' + id).addEventListener('click', () => focusAgentPane(id))
 
   focusAgentPane(id)
   refreshAgentsLayout()
   return id
+}
+
+function _initAgentTerminal(id, xtermEl) {
+  const s = state.agentSessions[id]
+  if (!s) return
+  const scrollBtn = document.getElementById('scroll-btn-' + id)
+  const term = new Terminal({
+    fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+    fontSize: 12.5, lineHeight: 1.5, cursorBlink: true,
+    theme: xtermTheme(), allowProposedApi: true,
+  })
+  const fitAddon = new FitAddon.FitAddon()
+  term.loadAddon(fitAddon)
+  s.term = term; s.fitAddon = fitAddon
+
+  let agentUserScrolledUp = false
+  requestAnimationFrame(() => {
+    term.open(xtermEl)
+    fitAddon.fit()
+    window.ace.pty.create(id, null, term.cols, term.rows).then(() => {
+      if (!state.agentSessions[id]) return
+      state.agentSessions[id].status = 'running'
+      document.getElementById('ap-task-' + id).textContent = 'ready'
+      updateAgentDots(id)
+    })
+    term.onScroll(() => {
+      agentUserScrolledUp = term.buffer.active.viewportY < term.buffer.active.baseY
+      scrollBtn?.classList.toggle('visible', agentUserScrolledUp)
+    })
+    term.buffer.onBufferChange(() => {
+      requestAnimationFrame(() => { term.scrollToBottom(); agentUserScrolledUp = false; scrollBtn?.classList.toggle('visible', false) })
+    })
+  })
+  scrollBtn?.addEventListener('click', () => {
+    term.scrollToBottom(); agentUserScrolledUp = false; scrollBtn.classList.toggle('visible', false)
+  })
+  window.ace.pty.onData(id, data => {
+    if (!state.agentSessions[id]) return
+    const wasAtBottom = !agentUserScrolledUp
+    term.write(data, () => { if (wasAtBottom) term.scrollToBottom() })
+    const newlines = (data.match(/\n/g) || []).length
+    if (newlines > 0) {
+      state.agentSessions[id].lineCount += newlines
+      const el = document.getElementById('ap-tokens-' + id)
+      if (el) el.textContent = `↑ ${state.agentSessions[id].lineCount} lines`
+    }
+  })
+  term.onData(d => window.ace.pty.write(id, d))
+  term.onResize(({ cols, rows }) => window.ace.pty.resize(id, cols, rows))
 }
 
 export function toggleAgentMode(id) {
@@ -227,62 +204,16 @@ export function toggleAgentMode(id) {
   const chatView = document.getElementById('chat-view-' + id)
   const xtermEl = document.getElementById('xterm-' + id)
   const scrollBtn = document.getElementById('scroll-btn-' + id)
-  const toggleBtn = document.getElementById('agent-mode-toggle-' + id)
+  const toggleBtn = document.getElementById('mode-toggle-' + id)
 
   if (s.mode === 'chat') {
+    // Switch to terminal mode — factory fires onTerminalInit on first toggle.
     s.mode = 'terminal'
     chatView.style.display = 'none'
     xtermEl.style.display = ''
     scrollBtn.style.display = ''
     toggleBtn.textContent = 'Chat'
-
-    if (!s.term) {
-      const term = new Terminal({
-        fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-        fontSize: 12.5, lineHeight: 1.5, cursorBlink: true,
-        theme: xtermTheme(), allowProposedApi: true,
-      })
-      const fitAddon = new FitAddon.FitAddon()
-      term.loadAddon(fitAddon)
-      s.term = term; s.fitAddon = fitAddon
-
-      let agentUserScrolledUp = false
-      requestAnimationFrame(() => {
-        term.open(xtermEl)
-        fitAddon.fit()
-        window.ace.pty.create(id, null, term.cols, term.rows).then(() => {
-          if (!state.agentSessions[id]) return
-          state.agentSessions[id].status = 'running'
-          document.getElementById('ap-task-' + id).textContent = 'ready'
-          updateAgentDots(id)
-        })
-        term.onScroll(() => {
-          agentUserScrolledUp = term.buffer.active.viewportY < term.buffer.active.baseY
-          scrollBtn.classList.toggle('visible', agentUserScrolledUp)
-        })
-        term.buffer.onBufferChange(() => {
-          requestAnimationFrame(() => { term.scrollToBottom(); agentUserScrolledUp = false; scrollBtn.classList.toggle('visible', false) })
-        })
-      })
-      scrollBtn.addEventListener('click', () => {
-        term.scrollToBottom(); agentUserScrolledUp = false; scrollBtn.classList.toggle('visible', false)
-      })
-      window.ace.pty.onData(id, data => {
-        if (!state.agentSessions[id]) return
-        const wasAtBottom = !agentUserScrolledUp
-        term.write(data, () => { if (wasAtBottom) term.scrollToBottom() })
-        const newlines = (data.match(/\n/g) || []).length
-        if (newlines > 0) {
-          state.agentSessions[id].lineCount += newlines
-          const el = document.getElementById('ap-tokens-' + id)
-          if (el) el.textContent = `↑ ${state.agentSessions[id].lineCount} lines`
-        }
-      })
-      term.onData(d => window.ace.pty.write(id, d))
-      term.onResize(({ cols, rows }) => window.ace.pty.resize(id, cols, rows))
-    } else {
-      requestAnimationFrame(() => s.fitAddon.fit())
-    }
+    if (s.fitAddon) requestAnimationFrame(() => s.fitAddon.fit())
   } else {
     s.mode = 'chat'
     chatView.style.display = ''

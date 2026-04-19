@@ -3,16 +3,16 @@ import { state } from '../state.js'
 import { xtermTheme } from './theme.js'
 import { escapeHtml, syntaxHighlight, findSettledBoundary, findSettledBoundaryFrom, renderTail, postProcessCodeBlocks, processWikilinks, postProcessWikilinks, SANITIZE_CONFIG } from './chat-renderer.js'
 import { onSoftGC } from './refresh-engine.js'
-import { updateOrbState, aceMarkSvg } from './ace-mark.js'
+import { updateOrbState } from './ace-mark.js'
 import { setAttention, clearAttention, updateAttentionBadge } from './attention.js'
 import { onSessionClose } from './atmosphere.js'
 import { initSplitPane, moveToOtherGroup } from './split-pane-manager.js'
 import { startTimer, clearTimer } from './session-timer.js'
-import { attach as attachSlashMenu } from './slash-menu.js'
 import { pickAndStage, wireDropZone, wirePasteHandler, injectAttachments, consumeAttachments, renderChipTray, renderMsgAttachments, wireMsgAttachmentClicks } from './attachment-handler.js'
 import { appendToolBlock, appendToolInput, updateActivityIndicator, clearActivityIndicator, renderQuestionCard } from './tool-renderer.js'
 import { renderMcpEventCard, renderPermissionApprovalCard, renderMcpPermissionCard } from './mcp-cards.js'
 import { MODEL_CTX_LIMITS } from './telemetry.js'
+import { createChatPane } from './chat-pane.js'
 
 // ─── Chat System ─────────────────────────────────────────────────────────────
 
@@ -83,6 +83,7 @@ export function sendChatMessage(id, prompt, sessionsObj) {
   s._fullResponseText = ''
   s.currentToolInput = ''
   s.isStreaming = true
+  s._paneControls?.setStreaming(true)
   s._prevContextTokens = s.contextInputTokens
   updateOrbState()
   s._settledBoundary = 0
@@ -195,6 +196,7 @@ export function finalizeMessage(id, sessionsObj) {
   const s = sessionsObj[id]
   if (!s) return
   s.isStreaming = false
+  s._paneControls?.setStreaming(false)
   // Track per-turn context growth for predictive tooltip
   const delta = s.contextInputTokens - (s._prevContextTokens || 0)
   if (delta > 0) {
@@ -606,79 +608,30 @@ export function spawnSession(opts) {
   const resumeCwd = opts?.resumeCwd || null
   const id = 'sess-' + Date.now()
 
-  const pane = document.createElement('div')
-  pane.className = 'term-pane'; pane.id = 'pane-' + id
-  pane.innerHTML = `
-    <div class="term-hdr">
-      <div class="term-hdr-dot" style="background:var(--green);box-shadow:0 0 7px rgba(109,184,143,0.5)"></div>
-      <div class="term-hdr-label" id="hdr-label-${id}">ACE Session</div>
-      <button class="mode-toggle-btn" id="mode-toggle-${id}">Terminal</button>
-      <div class="term-hdr-path" id="hdr-path-${id}">Chat Mode</div>
-      <span class="session-timer" id="session-timer-${id}" style="display:none"></span>
-      <select class="session-duration-select" id="session-duration-${id}" title="Set session timer" data-learn-target="session-timer">
-        <option value="">Timer</option>
-        <option value="15">15m</option>
-        <option value="30">30m</option>
-        <option value="60">60m</option>
-        <option value="90">90m</option>
-      </select>
-    </div>
-    <div class="chat-view" id="chat-view-${id}">
-      <div class="chat-messages" id="chat-msgs-${id}">
-        <div class="chat-welcome">
-          <div class="chat-welcome-icon">${aceMarkSvg(36)}</div>
-          <div class="chat-welcome-text">ACE Chat</div>
-          <div class="chat-welcome-sub">Enter to send · Shift+Enter for newline · Type a message below</div>
-        </div>
-      </div>
-      <div class="chat-status" id="chat-status-${id}">
-        <span class="chat-cost-label">$0.00</span>
-        <span class="chat-tokens-label">0 tokens</span>
-        <div class="ctx-bar" id="ctx-bar-${id}" title="Context usage" data-learn-target="ctx-bar">
-          <div class="ctx-bar-fill" id="ctx-fill-${id}"></div>
-        </div>
-        <span class="ctx-bar-pct" id="ctx-label-${id}">0%</span>
-      </div>
-      <div class="chat-controls" id="chat-controls-${id}">
-        <select class="chat-select" id="chat-model-${id}" title="Model">
-          <option value="opus" ${state.chatDefaults.model === 'opus' ? 'selected' : ''}>Opus</option>
-          <option value="sonnet" ${state.chatDefaults.model === 'sonnet' ? 'selected' : ''}>Sonnet</option>
-          <option value="haiku" ${state.chatDefaults.model === 'haiku' ? 'selected' : ''}>Haiku</option>
-        </select>
-        <select class="chat-select" id="chat-perms-${id}" title="Permission mode">
-          <option value="default" ${state.chatDefaults.permissions === 'default' ? 'selected' : ''}>Normal</option>
-          <option value="plan" ${state.chatDefaults.permissions === 'plan' ? 'selected' : ''}>Plan</option>
-          <option value="auto" ${state.chatDefaults.permissions === 'auto' ? 'selected' : ''}>Auto-accept</option>
-        </select>
-        <select class="chat-select" id="chat-effort-${id}" title="Reasoning effort">
-          <option value="low" ${state.chatDefaults.effort === 'low' ? 'selected' : ''}>Low effort</option>
-          <option value="medium" ${state.chatDefaults.effort === 'medium' ? 'selected' : ''}>Medium</option>
-          <option value="high" ${state.chatDefaults.effort === 'high' ? 'selected' : ''}>High</option>
-          <option value="max" ${state.chatDefaults.effort === 'max' ? 'selected' : ''}>Max effort</option>
-        </select>
-      </div>
-      <div class="chat-attachments" id="chat-attachments-${id}"></div>
-      <div class="chat-input-area">
-        <button class="chat-attach-btn" id="chat-attach-${id}" title="Attach · drag, paste, or click" aria-label="Attach file">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.49"/></svg>
-        </button>
-        <textarea class="chat-input" id="chat-input-${id}" data-learn-target="chat-composer" placeholder="${window.__preflightResult?.binary?.ok && window.__preflightResult?.vault?.ok ? 'Type /start to begin your day' : 'Message ACE...'}" rows="1"></textarea>
-        <button class="chat-send-btn" id="chat-send-${id}" data-learn-target="send-button">↑</button>
-      </div>
-    </div>
-    <div class="term-xterm" id="xterm-${id}" style="display:none"></div>
-    <button class="scroll-to-bottom" id="scroll-btn-${id}" title="Scroll to bottom" style="display:none">↓</button>`
   const targetContainer = opts?.container || document.getElementById('pane-content-left')
-  targetContainer.appendChild(pane)
-
-  const tab = document.createElement('div')
-  tab.className = 'stab'; tab.id = 'tab-' + id
+  const targetTabBar    = opts?.tabBar    || document.getElementById('session-tabs-left')
   const moveArrow = targetContainer.id === 'pane-content-right' ? '←' : '→'
-  tab.innerHTML = `<div class="stab-dot"></div><span class="stab-label" id="tab-label-${id}">ACE</span><span class="stab-move" id="stab-move-${id}" title="Move to other pane">${moveArrow}</span><span class="stab-close" id="stab-close-${id}" title="Close session">×</span>`
+  const smartPlaceholder = window.__preflightResult?.binary?.ok && window.__preflightResult?.vault?.ok
+    ? 'Type /start to begin your day'
+    : 'Message ACE...'
+
+  const controls = createChatPane(id, {
+    paneClass: 'term-pane',
+    roleName: 'ACE',
+    showTimer: true,
+    showMoveButton: true,
+    moveDirection: moveArrow,
+    placeholder: smartPlaceholder,
+    containerEl: targetContainer,
+    tabBarEl: targetTabBar,
+    onSend:         (id, prompt) => sendChatMessage(id, prompt),
+    onClose:        (id)         => closeSession(id),
+    onModeToggle:   (id)         => toggleSessionMode(id),
+    onTerminalInit: (xtermEl)    => _initSessionTerminal(id, xtermEl),
+  })
+
+  const { pane, tab } = controls
   tab.addEventListener('click', (e) => { if (!e.target.classList.contains('stab-close') && !e.target.classList.contains('stab-move')) activateSession(id) })
-  const targetTabBar = opts?.tabBar || document.getElementById('session-tabs-left')
-  const addBtn = targetTabBar.querySelector('.stab-add')
-  targetTabBar.insertBefore(tab, addBtn)
 
   state.sessions[id] = {
     term: null, fitAddon: null, pane, tab,
@@ -702,6 +655,7 @@ export function spawnSession(opts) {
     turnDeltas: [],
     _prevContextTokens: 0,
     _settledBoundary: 0, _settledHTML: '', _currentAssistantEl: null, _pendingRAF: null, _currentToolBlock: null,
+    _paneControls: controls,
   }
   activateSession(id)
 
@@ -715,14 +669,8 @@ export function spawnSession(opts) {
     resetContext(id)
   })
 
-  // Close button
-  document.getElementById('stab-close-' + id).addEventListener('click', (e) => {
-    e.stopPropagation()
-    closeSession(id)
-  })
-
-  // Move to other pane button
-  document.getElementById('stab-move-' + id).addEventListener('click', (e) => {
+  // Move to other pane button (factory wires stab-close → onClose)
+  document.getElementById('stab-move-' + id)?.addEventListener('click', (e) => {
     e.stopPropagation()
     moveToOtherGroup(id)
   })
@@ -738,55 +686,25 @@ export function spawnSession(opts) {
     }
   })
 
-  // Chat input handling
-  const inputEl = document.getElementById('chat-input-' + id)
-  const sendBtn = document.getElementById('chat-send-' + id)
+  // Input refs from factory — used for streaming cancel toggle + resetPlaceholder
+  const inputEl = controls.chatInput
+  const sendBtn = controls.sendBtn
 
-  attachSlashMenu(inputEl, { send: (prompt) => sendChatMessage(id, prompt) })
-
-  inputEl.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      if (e.__slashMenuHandled) return  // slash menu consumed this
-      e.preventDefault()
-      const prompt = inputEl.value
-      if (!prompt.trim()) return
-      inputEl.value = ''
-      inputEl.style.height = 'auto'
-      sendChatMessage(id, prompt)
-    }
-    if (e.key === 'Escape' && state.sessions[id].isStreaming) {
-      if (e.__slashMenuHandled) return
-      window.ace.chat.cancel(id)
-    }
-  })
-  // Reset placeholder after first message
+  // Reset smart placeholder after first keystroke
   inputEl.addEventListener('input', function resetPlaceholder() {
     if (inputEl.placeholder !== 'Message ACE...') {
       inputEl.placeholder = 'Message ACE...'
       inputEl.removeEventListener('input', resetPlaceholder)
     }
   })
+
+  // Toggle send button between ↑ / ■ during streaming (factory's input listener only resizes)
   inputEl.addEventListener('input', () => {
-    inputEl.style.height = 'auto'
-    inputEl.style.height = Math.min(inputEl.scrollHeight, 150) + 'px'
-    // Toggle button between queue/cancel during streaming
-    if (state.sessions[id].isStreaming) {
+    if (state.sessions[id]?.isStreaming) {
       const hasText = inputEl.value.trim().length > 0
       sendBtn.textContent = hasText ? '↑' : '■'
       sendBtn.classList.toggle('cancel', !hasText)
     }
-  })
-
-  sendBtn.addEventListener('click', () => {
-    const prompt = inputEl.value
-    if (state.sessions[id].isStreaming && !prompt.trim()) {
-      window.ace.chat.cancel(id)
-      return
-    }
-    if (!prompt.trim()) return
-    inputEl.value = ''
-    inputEl.style.height = 'auto'
-    sendChatMessage(id, prompt)
   })
 
   // Attachment handlers
@@ -800,15 +718,52 @@ export function spawnSession(opts) {
   // Wire chat stream listeners
   wireChatListeners(id)
 
-  // Mode toggle (chat ↔ terminal)
-  document.getElementById('mode-toggle-' + id).addEventListener('click', () => {
-    toggleSessionMode(id)
-  })
-
   // Auto-switch to terminal mode for resumed sessions
   if (resumeId) {
     requestAnimationFrame(() => toggleSessionMode(id))
   }
+}
+
+function _initSessionTerminal(id, xtermEl) {
+  const s = state.sessions[id]
+  if (!s) return
+  const scrollBtn = document.getElementById('scroll-btn-' + id)
+  const term = new Terminal({
+    fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+    fontSize: 12.5, lineHeight: 1.5, cursorBlink: true,
+    theme: xtermTheme(), allowProposedApi: true,
+  })
+  const fitAddon = new FitAddon.FitAddon()
+  term.loadAddon(fitAddon)
+  s.term = term
+  s.fitAddon = fitAddon
+
+  let userScrolledUp = false
+  requestAnimationFrame(() => {
+    term.open(xtermEl)
+    fitAddon.fit()
+    if (s.resumeId) {
+      window.ace.pty.resume(id, s.resumeCwd, term.cols, term.rows, s.resumeId)
+    } else {
+      window.ace.pty.create(id, null, term.cols, term.rows)
+    }
+    term.onScroll(() => {
+      userScrolledUp = term.buffer.active.viewportY < term.buffer.active.baseY
+      scrollBtn?.classList.toggle('visible', userScrolledUp)
+    })
+    term.buffer.onBufferChange(() => {
+      requestAnimationFrame(() => { term.scrollToBottom(); userScrolledUp = false; scrollBtn?.classList.toggle('visible', false) })
+    })
+  })
+  scrollBtn?.addEventListener('click', () => {
+    term.scrollToBottom(); userScrolledUp = false; scrollBtn.classList.toggle('visible', false)
+  })
+  window.ace.pty.onData(id, data => {
+    const wasAtBottom = !userScrolledUp
+    term.write(data, () => { if (wasAtBottom) term.scrollToBottom() })
+  })
+  term.onData(d => window.ace.pty.write(id, d))
+  term.onResize(({ cols, rows }) => window.ace.pty.resize(id, cols, rows))
 }
 
 export function toggleSessionMode(id) {
@@ -821,56 +776,15 @@ export function toggleSessionMode(id) {
   const hdrPath = document.getElementById('hdr-path-' + id)
 
   if (s.mode === 'chat') {
-    // Switch to terminal mode
+    // Switch to terminal mode — factory fires onTerminalInit on first toggle
+    // which calls _initSessionTerminal; no init branch needed here.
     s.mode = 'terminal'
     chatView.style.display = 'none'
     xtermEl.style.display = ''
     scrollBtn.style.display = ''
     toggleBtn.textContent = 'Chat'
     hdrPath.textContent = '~/Documents/Actualize'
-
-    // Lazy-init xterm + PTY
-    if (!s.term) {
-      const term = new Terminal({
-        fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-        fontSize: 12.5, lineHeight: 1.5, cursorBlink: true,
-        theme: xtermTheme(), allowProposedApi: true,
-      })
-      const fitAddon = new FitAddon.FitAddon()
-      term.loadAddon(fitAddon)
-      s.term = term; s.fitAddon = fitAddon
-
-      let userScrolledUp = false
-      requestAnimationFrame(() => {
-        term.open(xtermEl)
-        fitAddon.fit()
-        if (s.resumeId) {
-          window.ace.pty.resume(id, s.resumeCwd, term.cols, term.rows, s.resumeId)
-        } else {
-          window.ace.pty.create(id, null, term.cols, term.rows)
-        }
-
-        term.onScroll(() => {
-          userScrolledUp = term.buffer.active.viewportY < term.buffer.active.baseY
-          scrollBtn.classList.toggle('visible', userScrolledUp)
-        })
-        term.buffer.onBufferChange(() => {
-          requestAnimationFrame(() => { term.scrollToBottom(); userScrolledUp = false; scrollBtn.classList.toggle('visible', false) })
-        })
-      })
-
-      scrollBtn.addEventListener('click', () => {
-        term.scrollToBottom(); userScrolledUp = false; scrollBtn.classList.toggle('visible', false)
-      })
-      window.ace.pty.onData(id, data => {
-        const wasAtBottom = !userScrolledUp
-        term.write(data, () => { if (wasAtBottom) term.scrollToBottom() })
-      })
-      term.onData(data => window.ace.pty.write(id, data))
-      term.onResize(({ cols, rows }) => window.ace.pty.resize(id, cols, rows))
-    } else {
-      requestAnimationFrame(() => s.fitAddon.fit())
-    }
+    if (s.fitAddon) requestAnimationFrame(() => s.fitAddon.fit())
   } else {
     // Switch to chat mode
     s.mode = 'chat'
