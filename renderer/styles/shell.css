@@ -854,7 +854,7 @@ body.light .alpha-pop-link:hover { color: #3a288a; background: rgba(100,90,160,0
 }
 
 /* ── Quick Capture ── */
-.capture-btn { background:none; border:1px solid rgba(212,165,116,0.18); border-radius:4px; color:var(--text-dim); width:22px; height:22px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.14s; padding:0; -webkit-app-region:no-drag; }
+.capture-btn { background:none; border:1px solid rgba(212,165,116,0.18); border-radius:4px; color:var(--text-dim); width:24px; height:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.14s; padding:0; -webkit-app-region:no-drag; }
 .capture-btn:hover { border-color:rgba(212,165,116,0.55); color:#d4a574; background:rgba(212,165,116,0.06); }
 .capture-btn svg { display:block; }
 .capture-overlay { position:fixed; top:32px; left:50%; transform:translateX(-50%); z-index:9000; }
