@@ -76,7 +76,7 @@ export function sendChatMessage(id, prompt, sessionsObj) {
   // Add assistant message placeholder
   const assistantMsg = document.createElement('div')
   assistantMsg.className = 'chat-msg chat-msg-assistant'
-  assistantMsg.innerHTML = `<div class="chat-msg-label">ACE <span class="chat-streaming-indicator"><span></span><span></span><span></span></span><span class="chat-status-word" id="status-word-${id}">Thinking</span></div><div class="chat-msg-content md-body"><div class="chat-settled"></div><div class="chat-tail"></div></div>`
+  assistantMsg.innerHTML = `<div class="chat-msg-label">ACE <span class="chat-streaming-indicator"><span></span><span></span><span></span></span><span class="chat-status-word" id="status-word-${id}">Synthesizing</span></div><div class="chat-msg-content md-body"><div class="chat-settled"></div><div class="chat-tail"></div></div>`
   msgsEl.appendChild(assistantMsg)
 
   // Auto-name session on first user send (while name is still the default).

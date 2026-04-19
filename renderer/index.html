@@ -503,7 +503,7 @@
       <div class="view" id="view-agents">
         <div class="agents-workspace">
           <div class="agents-roster" id="agents-roster">
-            <div class="ar-section ar-section-toggle" id="ar-collapse-btn">Agents <span class="ar-chevron">◂</span></div>
+            <div class="ar-section ar-section-toggle" id="ar-collapse-btn"><span class="ar-label">Agents</span><span class="ar-chevron">◂</span></div>
             <div id="ar-list"></div>
             <button class="ar-spawn" id="ar-spawn-btn">+ spawn agent</button>
           </div>
@@ -1027,13 +1027,10 @@ initTelemetry()
     if (!text) { hideCapture(); return }
     hideCapture()
     try {
-      const vaultPath = state.config?.vaultPath
-      if (!vaultPath) return
       const filePath = '00-System/inbox.md'
-      const existing = await window.ace.vault.readFile(filePath) || ''
+      const existing = (await window.ace.vault.readFile(filePath)) || ''
       const ts = new Date().toISOString().slice(0, 16).replace('T', ' ')
       const entry = `- ${ts} — ${text}\n`
-      // Append after the first heading line, or prepend if no heading found
       const lines = existing.split('\n')
       const headerIdx = lines.findIndex(l => l.startsWith('#'))
       if (headerIdx >= 0) {
