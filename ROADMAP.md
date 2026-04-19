@@ -35,6 +35,7 @@ Core platform — 353 commits on main.
 | External links in browser | Done | Not inside Electron |
 | Linux AppImage (x64) | Done — v0.2.1 | Aleksander Brankov first user; FUSE2 caveat documented in release notes |
 | Self-healing refresh engine | Done — 2026-04-17 | Two-tier coordinator: soft GC every 30 min (DOM pruning to 40 msgs/session, timer sweep, config hot-reload) + full `location.reload()` after 6h idle + 2h uptime. 5-sensor health score (DOM/listeners/sessions/uptime/staleness) drives early GC at >0.7. Vitals dot in sidebar reflects health. Commit `da68d99`. |
+| Token context meter — fresh-chat calibration | Done — 2026-04-17 | Meter was reading ~100% on fresh chats in v0.2.1 due to non-cumulative usage assumption. Commits 54b267e + 629d446 confirmed result.usage is cumulative; meter now reads correctly. |
 
 ---
 
@@ -98,7 +99,7 @@ Promoted from post-ship — building with velocity.
 | ~~Operations container + auto-scroll~~ | Done | ~~High~~ | Shipped to Phase 1. Commit `a878b3e`. [Design](docs/plans/2026-04-11-ops-container-autoscroll-design.md) |
 | ~~Slash command menu in chat input~~ | Done | ~~High~~ | Shipped to Phase 1. [Design](docs/plans/2026-04-11-slash-menu-design.md) |
 | Windows close button / window chrome | Not started | High | v0.2.1 on Windows ships without visible close controls (top menu file/edit bar dropped). Craig had to force-kill the app. Add cross-platform titlebar close/minimize, or re-enable the native menu on win32. Surfaced in Craig Session 3 2026-04-17 [[1:05:08]](https://fathom.video/calls/639987960?timestamp=3908). |
-| Token context meter stuck at 100% | Not started | High | Bottom bar shows ~100% on fresh chats in v0.2.1. Meter calc needs validation against actual Claude CLI token usage. Surfaced in Craig Session 3 2026-04-17 [[1:02:45]](https://fathom.video/calls/639987960?timestamp=3765). |
+| ~~Token context meter stuck at 100%~~ | Done | ~~High~~ | Shipped 2026-04-17 — see Shipped table. |
 | DCA surfacing on Windows without DevTools | Not started | High | First-launch cockpit does not render North Star anchors on Windows vault path. Fix required live DevTools + PowerShell intervention on Craig's box. Same class as `compass_ui_vault_bleed` (widget bound to wrong vault path). Surfaced in Craig Session 3 2026-04-17 [[1:28:52]](https://fathom.video/calls/639987960?timestamp=5332). |
 | Ritual nudges — /pulse + /weekly-review + /monthly-review | Not started | High | Automate ritual reminders via cron-like scheduler or top-bar nudge. Craig had never run a weekly review; command center now surfaces it visually but needs a time-of-week nudge. Surfaced in Craig Session 3 2026-04-17 [[1:02:03]](https://fathom.video/calls/639987960?timestamp=3723). |
 | Google Workspace MCP auth loop (Windows) | Not started | High | OAuth refresh keeps expiring on Windows clients; Craig has re-authorized twice and given up. Blocks Gmail + Calendar integration for ritual nudges + weekly review. Surfaced in Craig Session 3 2026-04-17 [[59:47]](https://fathom.video/calls/639987960?timestamp=3587). |
