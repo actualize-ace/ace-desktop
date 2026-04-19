@@ -175,7 +175,11 @@ body.sidebar-resizing { user-select: none; cursor: col-resize; }
   transition: color 0.14s, background 0.14s;
 }
 .sidebar-toggle:hover { color: var(--text-primary); background: rgba(136,120,255,0.06); }
-.sidebar.collapsed .sidebar-toggle span { display: none; }
+.sidebar-toggle-chevron { display: inline-block; transition: transform 0.18s, font-size 0.18s, color 0.15s; }
+.sidebar.collapsed .sidebar-toggle span:not(.sidebar-toggle-chevron) { display: none; }
+.sidebar.collapsed .sidebar-toggle { padding: 14px 0; }
+.sidebar.collapsed .sidebar-toggle-chevron { font-size: 14px; color: #d4a574; transform: rotate(180deg); }
+.sidebar.collapsed .sidebar-toggle:hover .sidebar-toggle-chevron { color: #e8c191; }
 .sidebar-logo {
   display: flex; align-items: center; gap: 9px;
   padding: 16px; border-bottom: 1px solid var(--border);
