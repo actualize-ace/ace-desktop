@@ -75,9 +75,7 @@ export function initTheme() {
   document.getElementById('zoom-out-btn').addEventListener('click', () => applyZoom(state.uiZoom - 0.05))
   document.getElementById('sidebar-toggle').addEventListener('click', () => {
     const sidebar = document.getElementById('sidebar')
-    const btn = document.getElementById('sidebar-toggle')
-    const isCollapsed = sidebar.classList.toggle('collapsed')
-    btn.innerHTML = isCollapsed ? '▸' : '◂ <span>Collapse</span>'
+    sidebar.classList.toggle('collapsed')
     setTimeout(() => { if (window.fitActive) window.fitActive() }, 250)
   })
 

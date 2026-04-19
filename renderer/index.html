@@ -945,11 +945,9 @@ document.querySelectorAll('[data-cmd]').forEach(el => {
     if (!cfg?.defaults) return
     const d = cfg.defaults
 
-    // Apply sidebar collapsed state
+    // Apply sidebar collapsed state — CSS rotates the chevron + hides the label
     if (d.display?.sidebarCollapsed) {
       document.querySelector('.sidebar')?.classList.add('collapsed')
-      const toggleBtn = document.getElementById('sidebar-toggle')
-      if (toggleBtn) { toggleBtn.innerHTML = '▸'; }
     }
     // Apply saved sidebar width (clamp to bounds in case config was edited)
     if (typeof d.display?.sidebarWidth === 'number') {
