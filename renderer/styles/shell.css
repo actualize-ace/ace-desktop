@@ -66,25 +66,20 @@
 }
 .titlebar-nextmove:hover .titlebar-nm-close { opacity: 1; }
 .titlebar-nm-close:hover { color: var(--text-primary); }
-.mode-chip {
-  font-family: 'JetBrains Mono', monospace; font-size: 7.5px;
-  letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-dim);
-  padding: 3px 8px; border: 1px solid var(--border); border-radius: 4px;
+/* Titlebar group divider */
+.titlebar-divider {
+  width: 1px; height: 14px; background: rgba(255,255,255,0.08);
+  margin: 0 4px; flex-shrink: 0;
 }
-.coherence-chip {
-  display: flex; align-items: center; gap: 5px;
-  padding: 3px 9px; border-radius: 12px;
-  border: 1px solid rgba(109,184,143,0.2); background: rgba(109,184,143,0.06);
+/* Zoom cluster — visually unified pill */
+.zoom-group {
+  display: flex; align-items: center; gap: 2px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 5px; padding: 2px;
 }
-.coherence-dot {
-  width: 5px; height: 5px; border-radius: 50%;
-  background: var(--green); box-shadow: 0 0 7px rgba(109,184,143,0.6);
-  animation: breathe 2.5s ease-in-out infinite;
-}
-.coherence-label {
-  font-family: 'JetBrains Mono', monospace; font-size: 7.5px;
-  letter-spacing: 1.5px; text-transform: uppercase; color: var(--green);
-}
+.zoom-group .zoom-btn { border: none; background: none; width: 20px; height: 20px; font-size: 12px; }
+.zoom-group .zoom-btn:hover { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+.zoom-group .zoom-label { min-width: 30px; }
 /* @keyframes moved to animation.css */
 .theme-btn {
   background: none; border: 1px solid var(--border); border-radius: 4px;
