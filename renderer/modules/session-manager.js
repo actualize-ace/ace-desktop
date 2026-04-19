@@ -20,9 +20,24 @@ import { createChatPane } from './chat-pane.js'
 // scannable across tabs. Falls back to 'ACE' if the prompt is empty.
 function deriveSessionName(prompt) {
   if (!prompt || !prompt.trim()) return 'ACE'
-  const cleaned = prompt.trim().replace(/\s+/g, ' ')
-  if (cleaned.length <= 28) return cleaned
-  return cleaned.slice(0, 28).trim() + '…'
+  const STOP = new Set([
+    'what','how','why','when','where','who','which','can','could','would','should',
+    'please','help','me','us','i','you','the','a','an','is','are','was','were',
+    'do','does','did','to','of','for','in','on','with','and','or','but','my','your',
+    'this','that','these','those','it','its','be','been','being','have','has','had',
+    'will','want','need','make','get','let','tell','show','give','find','go','put',
+  ])
+  const words = prompt.trim()
+    .replace(/[^\w\s'-]/g, ' ')
+    .split(/\s+/)
+    .map(w => w.toLowerCase().replace(/^[-']+|[-']+$/g, ''))
+    .filter(w => w.length > 1 && !STOP.has(w))
+  const title = words.slice(0, 4).join(' ')
+  if (!title) {
+    const cleaned = prompt.trim().replace(/\s+/g, ' ')
+    return cleaned.length <= 28 ? cleaned : cleaned.slice(0, 28).trim() + '…'
+  }
+  return title.charAt(0).toUpperCase() + title.slice(1)
 }
 
 export function sendChatMessage(id, prompt, sessionsObj) {
