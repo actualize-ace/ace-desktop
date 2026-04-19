@@ -56,6 +56,10 @@
       <button class="capture-submit" id="capture-submit">→</button>
     </div>
   </div>
+  <div class="capture-toast" id="capture-toast">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    <span>Captured to inbox</span>
+  </div>
 
   <!-- Titlebar -->
   <div class="titlebar">
@@ -1002,8 +1006,12 @@ initBuildMode()
 // ─── Sessions + Chat + Agents + Telemetry (from modules) ──
 initSessions()
 initAgents()
-document.getElementById('ar-collapse-btn')?.addEventListener('click', () => {
+document.getElementById('ar-collapse-btn')?.addEventListener('click', (e) => {
+  e.stopPropagation()
   document.getElementById('agents-roster')?.classList.toggle('collapsed')
+})
+document.getElementById('agents-roster')?.addEventListener('click', function () {
+  if (this.classList.contains('collapsed')) this.classList.remove('collapsed')
 })
 initTelemetry()
 
@@ -1022,6 +1030,14 @@ initTelemetry()
   }
   function hideCapture() { overlay.style.display = 'none' }
 
+  function showToast() {
+    const toast = document.getElementById('capture-toast')
+    if (!toast) return
+    toast.classList.add('show')
+    clearTimeout(toast._t)
+    toast._t = setTimeout(() => toast.classList.remove('show'), 1800)
+  }
+
   async function doCapture() {
     const text = input.value.trim()
     if (!text) { hideCapture(); return }
@@ -1039,6 +1055,7 @@ initTelemetry()
         lines.unshift(entry)
       }
       await window.ace.vault.writeFile(filePath, lines.join('\n'))
+      showToast()
     } catch (e) { console.error('[capture]', e) }
   }
 

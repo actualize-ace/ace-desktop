@@ -6,11 +6,13 @@
 .agents-roster.collapsed .ar-spawn { opacity:0; pointer-events:none; }
 .agents-roster.collapsed .ar-label { opacity:0; pointer-events:none; }
 .ar-section-toggle { cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center; }
-.ar-section-toggle:hover .ar-chevron { color:var(--text-primary); }
+.ar-section-toggle:hover .ar-chevron { color:#d4a574; }
 .ar-label { transition:opacity 0.18s; }
-.ar-chevron { font-size:8px; color:var(--text-dim); transition:transform 0.18s, color 0.15s; flex-shrink:0; }
-.agents-roster.collapsed .ar-section-toggle { justify-content:center; padding-left:0; padding-right:0; }
-.agents-roster.collapsed .ar-chevron { transform:rotate(180deg); }
+.ar-chevron { font-size:8px; color:var(--text-dim); transition:transform 0.18s, color 0.15s, font-size 0.18s; flex-shrink:0; }
+.agents-roster.collapsed { cursor:pointer; }
+.agents-roster.collapsed .ar-section-toggle { justify-content:center; padding-left:0; padding-right:0; width:100%; height:100%; min-height:28px; }
+.agents-roster.collapsed .ar-chevron { transform:rotate(180deg); font-size:14px; color:#d4a574; }
+.agents-roster.collapsed:hover .ar-chevron { color:#e8c191; }
 .agents-panes { flex:1; display:flex; flex-direction:column; overflow:hidden; }
 .panes-top { display:flex; overflow:hidden; }
 .panes-h-resizer { height:3px; background:var(--border); flex-shrink:0; cursor:row-resize; transition:background 0.15s; }

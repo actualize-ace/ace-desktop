@@ -863,4 +863,7 @@ body.light .alpha-pop-link:hover { color: #3a288a; background: rgba(100,90,160,0
 .capture-input { flex:1; background:none; border:none; outline:none; color:var(--text-primary); font-family:'DM Sans',sans-serif; font-size:13px; }
 .capture-input::placeholder { color:var(--text-dim); }
 .capture-submit { background:none; border:none; color:var(--gold); cursor:pointer; font-size:16px; padding:0 4px; }
+.capture-toast { position:fixed; top:44px; right:18px; z-index:9100; display:flex; align-items:center; gap:6px; padding:6px 10px; background:rgba(10,12,22,0.96); border:1px solid rgba(212,165,116,0.35); border-radius:6px; color:#d4a574; font-family:'DM Sans',sans-serif; font-size:12px; box-shadow:0 6px 20px rgba(0,0,0,0.45); opacity:0; transform:translateY(-4px); pointer-events:none; transition:opacity 0.18s, transform 0.18s; }
+.capture-toast.show { opacity:1; transform:translateY(0); }
+.capture-toast svg { display:block; }
 .preflight-btn:hover { border-color: var(--gold, #d4a574); }
