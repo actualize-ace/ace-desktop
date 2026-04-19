@@ -12,8 +12,7 @@ import { attach as attachSlashMenu } from './slash-menu.js'
 import { pickAndStage, wireDropZone, wirePasteHandler, injectAttachments, consumeAttachments, renderChipTray, renderMsgAttachments, wireMsgAttachmentClicks } from './attachment-handler.js'
 import { appendToolBlock, appendToolInput, updateActivityIndicator, clearActivityIndicator, renderQuestionCard } from './tool-renderer.js'
 import { renderMcpEventCard, renderPermissionApprovalCard, renderMcpPermissionCard } from './mcp-cards.js'
-
-export const MODEL_CTX_LIMITS = { opus: 1_000_000, sonnet: 200_000, haiku: 200_000 }
+import { MODEL_CTX_LIMITS } from './telemetry.js'
 
 // ─── Chat System ─────────────────────────────────────────────────────────────
 

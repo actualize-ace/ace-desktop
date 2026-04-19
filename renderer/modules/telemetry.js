@@ -1,6 +1,7 @@
 // renderer/modules/telemetry.js
 import { state } from '../state.js'
-import { MODEL_CTX_LIMITS } from './session-manager.js'
+
+export const MODEL_CTX_LIMITS = { opus: 1_000_000, sonnet: 200_000, haiku: 200_000 }
 
 // ─── Sidebar Telemetry ────────────────────────────────────────────────────────
 const ACE_BOOT_TIME = Date.now()
