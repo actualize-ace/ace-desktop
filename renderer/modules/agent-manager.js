@@ -73,7 +73,7 @@ export function spawnAgentPane(targetRow) {
 
   const id       = 'agent-' + Date.now()
   const isTop    = targetRow === 'top'
-  const roleName = isTop ? 'orchestrator' : 'agent'
+  const roleName = isTop ? 'Orchestrator' : 'Agent'
 
   const controls = createChatPane(id, {
     paneClass: 'apane',
