@@ -492,7 +492,7 @@
       <div class="view" id="view-agents">
         <div class="agents-workspace">
           <div class="agents-roster" id="agents-roster">
-            <div class="ar-section">Agents</div>
+            <div class="ar-section ar-section-toggle" id="ar-collapse-btn">Agents <span class="ar-chevron">◂</span></div>
             <div id="ar-list"></div>
             <button class="ar-spawn" id="ar-spawn-btn">+ spawn agent</button>
           </div>
@@ -991,6 +991,9 @@ initBuildMode()
 // ─── Sessions + Chat + Agents + Telemetry (from modules) ──
 initSessions()
 initAgents()
+document.getElementById('ar-collapse-btn')?.addEventListener('click', () => {
+  document.getElementById('agents-roster')?.classList.toggle('collapsed')
+})
 initTelemetry()
 
 // ─── Overlays (init on startup, not lazy) ──

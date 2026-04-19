@@ -1,6 +1,13 @@
 /* ── AGENTS VIEW ── */
 .agents-workspace { display:flex; flex:1; overflow:hidden; }
-.agents-roster { width:148px; flex-shrink:0; border-right:1px solid var(--glass-border); background:rgba(10,12,22,0.92); backdrop-filter:var(--glass-blur); overflow-y:auto; display:flex; flex-direction:column; }
+.agents-roster { width:148px; flex-shrink:0; border-right:1px solid var(--glass-border); background:rgba(10,12,22,0.92); backdrop-filter:var(--glass-blur); overflow-y:auto; display:flex; flex-direction:column; transition:width 0.18s ease; }
+.agents-roster.collapsed { width:28px; overflow:hidden; }
+.agents-roster.collapsed .ar-item,
+.agents-roster.collapsed .ar-spawn,
+.agents-roster.collapsed .ar-section { opacity:0; pointer-events:none; }
+.ar-section-toggle { cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center; }
+.ar-chevron { font-size:8px; color:var(--text-dim); transition:transform 0.18s; }
+.agents-roster.collapsed .ar-chevron { transform:rotate(180deg); opacity:1; pointer-events:auto; }
 .agents-panes { flex:1; display:flex; flex-direction:column; overflow:hidden; }
 .panes-top { display:flex; overflow:hidden; }
 .panes-h-resizer { height:3px; background:var(--border); flex-shrink:0; cursor:row-resize; transition:background 0.15s; }
