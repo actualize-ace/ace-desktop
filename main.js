@@ -771,7 +771,9 @@ ipcMain.handle(ch.VAULT_LIST_DIR, (_, dirPath) => {
 ipcMain.handle(ch.VAULT_READ_FILE, (_, filePath) => {
   const resolved = resolveInsideVault(filePath)
   if (!resolved) return { error: 'Access denied: path outside vault' }
-  try { return fs.readFileSync(resolved, 'utf8') } catch (e) { return { error: e.message } }
+  // Normalize CRLF → LF so Windows autocrlf=true doesn't break renderer-side
+  // frontmatter parsers that hard-code \n (command-registry, tool-renderer, etc.)
+  try { return fs.readFileSync(resolved, 'utf8').replace(/\r\n/g, '\n') } catch (e) { return { error: e.message } }
 })
 
 ipcMain.handle(ch.VAULT_WRITE_FILE, (_, filePath, content) => {

@@ -5,6 +5,38 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## v0.2.2 — 2026-04-19
+
+### Added
+- **MCP tool permission approval cards** — inline approval UI when Claude requests a new MCP tool, with retry flow on denial and browser-based auth recovery.
+- **Self-healing refresh engine** — detects renderer death and stream freezes, auto-recovers without losing chat state.
+- **Interactive context bar** — click to reset the conversation in-place; tooltip shows turns remaining; accurate per-turn delta tracking (fixed `result.usage` cumulative-read bug).
+- **Vitals dot unification** — merged status-pulse into a single semantic indicator with hover response showing health state.
+- **One-click capture** — lightning icon in the titlebar drops an instant inbox entry with confirmation toast.
+- **Collapsible agents roster sidebar** — reclaim real estate when not in use; smart contextual chat names in headers.
+- **Drag-to-resize sidebar** — manual width control with visible affordance.
+- **Default model → Sonnet** for new chat sessions.
+- **Renderer stress harness** — internal tooling for chat + pty scaling tests.
+
+### Changed
+- **Nav rename** — "Terminal" → "Build", "Agents" → "Studio".
+- **Telemetry sidebar cleanup** — removed token/cost/daily/weekly clutter; kept signal-carrying metrics only.
+- **Titlebar polish** — logical right-side grouping, consistent button sizing, capitalized Orchestrator + Agent role names in Studio.
+- **Chat engine internals rebuilt** — `session-manager.js` split into dedicated modules (`chat-pane`, `mcp-cards`, `tool-renderer`; telemetry now owns context-window limits). ~45% code reduction in the core chat file, eliminates DOM duplication across single + multi-pane flows, sets up stable multi-session scaling. No change to chat behavior for existing sessions.
+
+### Fixed
+- **Windows CRLF frontmatter parsing** (Windows-only) — DCA frontmatter, skill discovery, and memory cards failed silently on Windows due to Git's LF → CRLF conversion on checkout. All `vault-reader.js` reads now normalize CRLF → LF via a `readText()` helper, and the `vault:readFile` IPC handler applies the same normalization before returning content to the renderer. Affects North Star bar, `/` autocomplete, memory cards, weekly targets, active outcomes, state widgets, and people metadata. Surfaced on Craig Young onboarding call 2026-04-17.
+- **Concurrent Opus renderer freeze** — IPC stream events now batch under load; chat stream buffer is capped to prevent DOM overload with multiple streaming sessions.
+- **Chat pane detached crash** — factory uses `pane.querySelector` instead of `document.getElementById`, so panes no longer crash when dragged to a secondary window.
+- **Electron `confirm()` suppression** — replaced native `confirm()` with an inline reset banner (Electron silently blocks native dialogs under contextIsolation).
+- **Reset context preserves history** — clears thread + token tracking only, keeps chat DOM visible.
+- **MCP server startup reliability** — strip `MCP_CONNECTION_NONBLOCKING` and `ELECTRON_RUN_AS_NODE` from child spawns so slow-starting MCP servers register their tools without dropping init.
+- **Cockpit triad deck** — correct amber yellow for caution-level signal dots.
+- **Sidebar toggle stability** — stops wiping the toggle's span structure on collapse; expand chevron stays visible when sidebar is collapsed.
+- **Capture UX polish** — centered toast matching the capture box; visible expand chevron; status word fallthrough.
+
+---
+
 ## v0.2.1 — 2026-04-16
 
 ### Added

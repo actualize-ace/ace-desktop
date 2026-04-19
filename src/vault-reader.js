@@ -1,6 +1,12 @@
 const fs   = require('fs')
 const path = require('path')
 
+// Normalize CRLF → LF on read so Windows Git autocrlf=true doesn't break
+// frontmatter regexes that hard-code \n. No-op on Mac/Linux (already LF).
+function readText(p) {
+  return fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n')
+}
+
 const MONTHS = {
   January:0, February:1, March:2, April:3, May:4, June:5,
   July:6, August:7, September:8, October:9, November:10, December:11,
@@ -10,8 +16,8 @@ const MONTHS = {
 
 function parseState(vaultPath) {
   try {
-    const stateText = fs.readFileSync(path.join(vaultPath, '00-System', 'state.md'), 'utf8')
-    const activeText = fs.readFileSync(path.join(vaultPath, '00-System', 'active.md'), 'utf8')
+    const stateText = readText(path.join(vaultPath, '00-System', 'state.md'))
+    const activeText = readText(path.join(vaultPath, '00-System', 'active.md'))
 
     const stateSection = (heading) => {
       const re = new RegExp(`## ${heading}\\s*\\n([\\s\\S]*?)(?=\\n## |$)`)
@@ -108,7 +114,7 @@ function parseWeeklyTargets(activeText) {
 
 function parseFollowUps(vaultPath) {
   try {
-    const text = fs.readFileSync(path.join(vaultPath, '04-Network', 'follow-ups.md'), 'utf8')
+    const text = readText(path.join(vaultPath, '04-Network', 'follow-ups.md'))
 
     const activeSection = text.match(/## Active\s*\n([\s\S]*?)(?=\n---|\n## |$)/)
     if (!activeSection) return []
@@ -161,7 +167,7 @@ function parseExecutionLog(vaultPath, days = 14) {
     // Read both log files (recent entries may be in execution-log-recent.md)
     let text = ''
     for (const file of ['execution-log-recent.md', 'execution-log.md']) {
-      try { text += '\n' + fs.readFileSync(path.join(vaultPath, '00-System', file), 'utf8') } catch {}
+      try { text += '\n' + readText(path.join(vaultPath, '00-System', file)) } catch {}
     }
     if (!text.trim()) return { byDay: {}, totalThisWeek: 0, totalLastWeek: 0 }
     // Use local calendar date — toISOString() returns UTC which can roll to the
@@ -205,7 +211,7 @@ function parseExecutionLog(vaultPath, days = 14) {
 
 function parseUserName(vaultPath) {
   try {
-    const text = fs.readFileSync(path.join(vaultPath, '00-System', 'user.md'), 'utf8')
+    const text = readText(path.join(vaultPath, '00-System', 'user.md'))
     const m = text.match(/\*\*Name:\*\*\s*(.+)/)
     return m ? m[1].trim() : null
   } catch { return null }
@@ -215,7 +221,7 @@ function parseUserName(vaultPath) {
 
 function parseDCA(vaultPath) {
   try {
-    const text = fs.readFileSync(path.join(vaultPath, '00-System', 'core', 'dca.md'), 'utf8')
+    const text = readText(path.join(vaultPath, '00-System', 'core', 'dca.md'))
     const lines = text.split('\n').filter(l => !l.startsWith('#') && l.trim().length > 0)
     if (!lines.length) return null
     const first = lines[0].trim()
@@ -231,7 +237,7 @@ function parseDCA(vaultPath) {
 function parseDCAFrontmatter(vaultPath) {
   try {
     const dcaPath = path.join(vaultPath, '00-System', 'core', 'dca.md')
-    const text = fs.readFileSync(dcaPath, 'utf8')
+    const text = readText(dcaPath)
     const fmMatch = text.match(/^---\n([\s\S]*?)\n---\n?/)
     const bodyText = fmMatch ? text.slice(fmMatch[0].length).trim() : text.trim()
     if (!fmMatch) return { ...defaultDCAFrontmatter(), body: bodyText, filePath: dcaPath }
@@ -375,7 +381,7 @@ function parseDailyFocus(vaultPath) {
     const today = new Date()
     const dateStr = today.toISOString().slice(0, 10)
     const filePath = path.join(vaultPath, '01-Journal', 'daily', `${dateStr}.md`)
-    const text = fs.readFileSync(filePath, 'utf8')
+    const text = readText(filePath)
 
     const focusItems = []
 
@@ -415,7 +421,7 @@ function parseDailyFocus(vaultPath) {
 
 function parseRecoveryFlag(vaultPath) {
   try {
-    const text = fs.readFileSync(path.join(vaultPath, '00-System', 'state.md'), 'utf8')
+    const text = readText(path.join(vaultPath, '00-System', 'state.md'))
     const m = text.match(/## Recovery Flag\s*\n\s*(true|false)/i)
     return m ? m[1].toLowerCase() === 'true' : false
   } catch {
@@ -427,7 +433,7 @@ function parseRecoveryFlag(vaultPath) {
 
 function parseBuildBlocks(vaultPath) {
   try {
-    const text = fs.readFileSync(path.join(vaultPath, '00-System', 'pulse-cache.md'), 'utf8')
+    const text = readText(path.join(vaultPath, '00-System', 'pulse-cache.md'))
 
     const upcomingMatch = text.match(/build_blocks_upcoming:\s*\n((?:\s+-\s+[\s\S]*?(?=\n\s*-|\n[a-z_]+:|\n\n|$))+)/)
     if (!upcomingMatch) return []
@@ -467,7 +473,7 @@ function parseBuildBlocks(vaultPath) {
 
 function daysSinceLastPulse(vaultPath) {
   try {
-    const text = fs.readFileSync(path.join(vaultPath, '00-System', 'system-metrics.md'), 'utf8')
+    const text = readText(path.join(vaultPath, '00-System', 'system-metrics.md'))
     const dates = [...text.matchAll(/^## (\d{4}-\d{2}-\d{2})/gm)]
     if (!dates.length) return -1
     // Use max date, not last-in-file (entries may be out of chronological order)
@@ -483,7 +489,7 @@ function daysSinceLastPulse(vaultPath) {
 // system-metrics.md entries look like "## 2026-04-10 14:23" — we preserve hour granularity.
 function parseLastPulse(vaultPath) {
   try {
-    const text = fs.readFileSync(path.join(vaultPath, '00-System', 'system-metrics.md'), 'utf8')
+    const text = readText(path.join(vaultPath, '00-System', 'system-metrics.md'))
     const entries = [...text.matchAll(/^##\s+(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}):(\d{2}))?/gm)]
     if (!entries.length) return { timestamp: null, hoursAgo: null }
     // Parse to Date and pick the latest
@@ -520,7 +526,7 @@ function parseRitualRhythm(vaultPath) {
   // Read both log files
   let text = ''
   for (const file of ['execution-log-recent.md', 'execution-log.md']) {
-    try { text += '\n' + fs.readFileSync(path.join(vaultPath, '00-System', file), 'utf8') } catch {}
+    try { text += '\n' + readText(path.join(vaultPath, '00-System', file)) } catch {}
   }
 
   const dateSet = new Set(week.map(w => w.date))
@@ -564,7 +570,7 @@ function parseRitualRhythm(vaultPath) {
   for (const day of week) {
     if (day.start && day.active && day.eod) continue
     try {
-      const dailyNote = fs.readFileSync(path.join(vaultPath, '01-Journal', 'daily', day.date + '.md'), 'utf8')
+      const dailyNote = readText(path.join(vaultPath, '01-Journal', 'daily', day.date + '.md'))
       // /start: filled morning journal (not empty template)
       if (!day.start) {
         const morningMatch = dailyNote.match(/\*\*What is true this morning:\*\*[ \t]*(.+)/)
@@ -640,7 +646,7 @@ function parseRitualRhythm(vaultPath) {
   for (const day of days28) {
     if (day.start && day.active && day.eod) continue
     try {
-      const dailyNote = fs.readFileSync(path.join(vaultPath, '01-Journal', 'daily', day.date + '.md'), 'utf8')
+      const dailyNote = readText(path.join(vaultPath, '01-Journal', 'daily', day.date + '.md'))
       if (!day.start) {
         const morningMatch = dailyNote.match(/\*\*What is true this morning:\*\*[ \t]*(.+)/)
         if (morningMatch && morningMatch[1].trim().length > 0) day.start = true
@@ -669,7 +675,7 @@ function parsePeople(vaultPath) {
       if (!e.isFile() || !e.name.endsWith('.md') || e.name === 'person.md') continue
       const filePath = path.join(peopleDir, e.name)
       try {
-        const text = fs.readFileSync(filePath, 'utf8')
+        const text = readText(filePath)
         const nameMatch = text.match(/^#\s+(.+)/m)
         const name = nameMatch ? nameMatch[1].trim() : e.name.replace('.md', '').replace(/-/g, ' ')
         people.push({ name, fileName: e.name.replace('.md', ''), path: filePath, category: null })
@@ -681,7 +687,7 @@ function parsePeople(vaultPath) {
   // Multi-category: each person can belong to multiple categories
   const categories = []
   try {
-    const mapText = fs.readFileSync(path.join(vaultPath, '04-Network', 'network-map.md'), 'utf8')
+    const mapText = readText(path.join(vaultPath, '04-Network', 'network-map.md'))
     const sections = mapText.split(/\n(?=## )/)
     for (const section of sections) {
       const headingMatch = section.match(/^## (.+)/m)
@@ -759,7 +765,7 @@ function parseArtifacts(vaultPath) {
       if (!e.isFile() || !e.name.endsWith('.md') || e.name === 'README.md') continue
       const filePath = path.join(artDir, e.name)
       try {
-        const text = fs.readFileSync(filePath, 'utf8')
+        const text = readText(filePath)
         const fm = parseFrontmatter(text)
         if (!fm) continue
         const body = text.replace(/^---[\s\S]*?---\s*/, '').trim()
@@ -820,7 +826,7 @@ function parseFrontmatter(text) {
 function getArtifactDetail(vaultPath, slug) {
   const filePath = path.join(vaultPath, '11-Artifacts', slug + '.md')
   try {
-    const text = fs.readFileSync(filePath, 'utf8')
+    const text = readText(filePath)
     const fm = parseFrontmatter(text)
     const body = text.replace(/^---[\s\S]*?---\s*/, '').trim()
     // Check if file_path resolves to a previewable target
@@ -842,7 +848,7 @@ function getArtifactDetail(vaultPath, slug) {
 function updateArtifactStatus(vaultPath, slug, newStatus) {
   const filePath = path.join(vaultPath, '11-Artifacts', slug + '.md')
   try {
-    let text = fs.readFileSync(filePath, 'utf8')
+    let text = readText(filePath)
     if (text.match(/^status:\s*.+$/m)) {
       text = text.replace(/^status:\s*.+$/m, `status: ${newStatus}`)
     } else {
@@ -857,7 +863,7 @@ function updateArtifactStatus(vaultPath, slug, newStatus) {
 function parsePatterns(vaultPath) {
   const indexPath = path.join(vaultPath, '01-Journal', 'patterns', 'index.md')
   try {
-    const text = fs.readFileSync(indexPath, 'utf8')
+    const text = readText(indexPath)
 
     // Parse backlink counts: "- pattern-name: 43 ^"
     const counts = []
@@ -889,7 +895,7 @@ function parsePatterns(vaultPath) {
     const descriptions = {}
     for (const c of counts) {
       try {
-        const pText = fs.readFileSync(path.join(patternsDir, c.name + '.md'), 'utf8')
+        const pText = readText(path.join(patternsDir, c.name + '.md'))
         // First paragraph after the heading
         const lines = pText.split('\n').filter(l => l.trim() && !l.startsWith('#'))
         if (lines[0]) descriptions[c.name] = lines[0].trim()
@@ -965,7 +971,7 @@ const MIN_CONTENT_BYTES = 800
 
 function reviewDateFromFile(filePath) {
   try {
-    const content = fs.readFileSync(filePath, 'utf8')
+    const content = readText(filePath)
     if (content.length < MIN_CONTENT_BYTES) return null  // blank stub
     // Try explicit stamp first: "Written via /skill on YYYY-MM-DD"
     const match = content.match(/Written via .+ on (\d{4}-\d{2}-\d{2})/)
