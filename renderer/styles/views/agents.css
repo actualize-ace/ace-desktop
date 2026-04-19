@@ -4,7 +4,7 @@
 .agents-roster.collapsed { width:28px; overflow:hidden; }
 .agents-roster.collapsed .ar-item,
 .agents-roster.collapsed .ar-spawn { opacity:0; pointer-events:none; }
-.agents-roster.collapsed .ar-label { opacity:0; pointer-events:none; }
+.agents-roster.collapsed .ar-label { display:none; }
 .ar-section-toggle { cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center; }
 .ar-section-toggle:hover .ar-chevron { color:#d4a574; }
 .ar-label { transition:opacity 0.18s; }
