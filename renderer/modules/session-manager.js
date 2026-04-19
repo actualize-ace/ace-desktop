@@ -3,15 +3,16 @@ import { state } from '../state.js'
 import { xtermTheme } from './theme.js'
 import { escapeHtml, syntaxHighlight, findSettledBoundary, findSettledBoundaryFrom, renderTail, postProcessCodeBlocks, processWikilinks, postProcessWikilinks, SANITIZE_CONFIG } from './chat-renderer.js'
 import { onSoftGC } from './refresh-engine.js'
-import { updateOrbState, aceMarkSvg } from './ace-mark.js'
+import { updateOrbState } from './ace-mark.js'
 import { setAttention, clearAttention, updateAttentionBadge } from './attention.js'
 import { onSessionClose } from './atmosphere.js'
 import { initSplitPane, moveToOtherGroup } from './split-pane-manager.js'
 import { startTimer, clearTimer } from './session-timer.js'
-import { attach as attachSlashMenu } from './slash-menu.js'
 import { pickAndStage, wireDropZone, wirePasteHandler, injectAttachments, consumeAttachments, renderChipTray, renderMsgAttachments, wireMsgAttachmentClicks } from './attachment-handler.js'
-
-export const MODEL_CTX_LIMITS = { opus: 1_000_000, sonnet: 200_000, haiku: 200_000 }
+import { appendToolBlock, appendToolInput, updateActivityIndicator, clearActivityIndicator, renderQuestionCard } from './tool-renderer.js'
+import { renderMcpEventCard, renderPermissionApprovalCard, renderMcpPermissionCard } from './mcp-cards.js'
+import { MODEL_CTX_LIMITS } from './telemetry.js'
+import { createChatPane } from './chat-pane.js'
 
 // ─── Chat System ─────────────────────────────────────────────────────────────
 
@@ -82,6 +83,7 @@ export function sendChatMessage(id, prompt, sessionsObj) {
   s._fullResponseText = ''
   s.currentToolInput = ''
   s.isStreaming = true
+  s._paneControls?.setStreaming(true)
   s._prevContextTokens = s.contextInputTokens
   updateOrbState()
   s._settledBoundary = 0
@@ -194,6 +196,7 @@ export function finalizeMessage(id, sessionsObj) {
   const s = sessionsObj[id]
   if (!s) return
   s.isStreaming = false
+  s._paneControls?.setStreaming(false)
   // Track per-turn context growth for predictive tooltip
   const delta = s.contextInputTokens - (s._prevContextTokens || 0)
   if (delta > 0) {
@@ -224,7 +227,7 @@ export function finalizeMessage(id, sessionsObj) {
   s.currentStreamText = ''
   s._settledBoundary = 0
   s._settledHTML = ''
-  clearActivityIndicator(id, sessionsObj)
+  clearActivityIndicator(s)
   // Auto-scroll on finalize — generous threshold (user may have scrolled up deliberately)
   scrollChatToBottom(id, 300)
   if (s._wordTimer) { clearInterval(s._wordTimer); s._wordTimer = null }
@@ -247,251 +250,6 @@ export function finalizeMessage(id, sessionsObj) {
     if (queuedEl) queuedEl.remove()
     setTimeout(() => sendChatMessage(id, nextPrompt, sessionsObj), 300)
   }
-}
-
-// ─── Memory card rendering ───────────────────────────────────────────────────
-// When auto-memory writes to `memory/*.md` via the Write tool, render an
-// ambient card in the chat stream alongside the tool ops. Makes the
-// compounding-intelligence loop visible instead of invisible. V2 · Standard
-// variant — see docs/plans/2026-04-12-memory-card-prototype.html.
-
-const MEMORY_TYPES = new Set(['user', 'feedback', 'project', 'reference'])
-
-function isMemoryWritePath(filePath) {
-  if (!filePath) return false
-  // Match any path that contains a memory/ segment and ends in .md,
-  // excluding the MEMORY.md index itself.
-  const basename = filePath.split('/').pop() || ''
-  if (basename === 'MEMORY.md') return false
-  return /(^|\/)memory\/[^/]+\.md$/.test(filePath) && basename.endsWith('.md')
-}
-
-function parseMemoryFrontmatter(content) {
-  if (!content || typeof content !== 'string') return null
-  const m = content.match(/^---\s*\n([\s\S]*?)\n---\s*\n?([\s\S]*)$/)
-  if (!m) return null
-  const frontmatter = m[1]
-  const body = (m[2] || '').trim()
-  const fields = {}
-  frontmatter.split('\n').forEach(line => {
-    const kv = line.match(/^([a-zA-Z_][\w-]*)\s*:\s*(.*)$/)
-    if (!kv) return
-    let val = kv[2].trim()
-    // Strip surrounding quotes
-    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-      val = val.slice(1, -1)
-    }
-    fields[kv[1]] = val
-  })
-  const type = MEMORY_TYPES.has(fields.type) ? fields.type : 'reference'
-  const description = fields.description || ''
-  // Prefer description for the hook; fall back to first non-heading body line.
-  let hook = description
-  if (!hook && body) {
-    const firstLine = body.split('\n').find(l => l.trim() && !l.trim().startsWith('#'))
-    hook = (firstLine || '').trim()
-  }
-  return { type, description, hook, name: fields.name || '' }
-}
-
-function renderMemoryCard(contentEl, parsed) {
-  const meta = parseMemoryFrontmatter(parsed.content)
-  if (!meta || !meta.hook) return
-  const card = document.createElement('div')
-  card.className = 'chat-memory-card'
-  card.innerHTML = `
-    <div class="chat-memory-header">
-      <span class="chat-memory-icon">🧠</span>
-      <span class="chat-memory-title">Memory saved</span>
-      <span class="chat-memory-type ${meta.type}">${meta.type}</span>
-      <span class="chat-memory-time">just now</span>
-    </div>
-    <div class="chat-memory-body">${escapeHtml(meta.hook)}</div>
-  `
-  // Insert before the current tail so the card sits after tool ops in reading order.
-  const tailEl = contentEl.querySelector('.chat-tail:last-of-type')
-  if (tailEl) contentEl.insertBefore(card, tailEl)
-  else contentEl.appendChild(card)
-}
-
-// Tools that need user input (questions) — render outside ops container
-const QUESTION_TOOLS = new Set(['AskUserQuestion'])
-
-// Tool block helpers — all non-question tools go into an ops container
-export function appendToolBlock(id, toolInfo, sessionsObj) {
-  sessionsObj = sessionsObj || state.sessions
-  const s = sessionsObj[id]
-  if (!s || !s._currentAssistantEl) return
-  const contentEl = s._currentAssistantEl.querySelector('.chat-msg-content')
-  const toolName = toolInfo.name || 'Tool'
-  const needsInput = QUESTION_TOOLS.has(toolName)
-
-  // Track current tool name for Skill/close detection
-  s._currentToolName = toolName
-
-  if (needsInput) {
-    // Question tool — render outside container, break current container
-    s._opsContainer = null
-    s._opsCount = 0
-    const block = document.createElement('div')
-    block.className = 'chat-question-block'
-    block.innerHTML = `<div class="question-header" id="question-text-${id}"></div>`
-    s._questionBlockEl = block
-    const tailEl = contentEl.querySelector('.chat-tail:last-of-type')
-    contentEl.insertBefore(block, tailEl)
-    setAttention(id, sessionsObj, 'question')
-    s._currentToolBlock = block
-    s.currentToolInput = ''
-    updateActivityIndicator(id, toolName, sessionsObj)
-    return
-  }
-
-  // Non-question tool — add to ops container
-  if (!s._opsContainer) {
-    // Create new ops container
-    const container = document.createElement('div')
-    container.className = 'chat-ops-container collapsed'
-    container.innerHTML = `<div class="chat-ops-header"><span class="chat-ops-icon">⚡</span><span class="chat-ops-count">1 operation</span><span class="chat-ops-chevron">▸</span></div><div class="chat-ops-list"></div>`
-    container.querySelector('.chat-ops-header').addEventListener('click', () => container.classList.toggle('collapsed'))
-    const tailEl = contentEl.querySelector('.chat-tail:last-of-type')
-    contentEl.insertBefore(container, tailEl)
-    s._opsContainer = container
-    s._opsCount = 0
-  }
-
-  // Create ops item
-  s._opsCount++
-  const countEl = s._opsContainer.querySelector('.chat-ops-count')
-  if (countEl) countEl.textContent = s._opsCount === 1 ? '1 operation' : `${s._opsCount} operations`
-
-  const item = document.createElement('div')
-  item.className = 'chat-ops-item collapsed'
-  item.innerHTML = `<div class="chat-ops-item-header"><span class="chat-ops-item-label">${escapeHtml(toolName)}</span><span class="chat-ops-item-chevron">▸</span></div><div class="chat-ops-item-detail"></div>`
-  item.querySelector('.chat-ops-item-header').addEventListener('click', () => item.classList.toggle('collapsed'))
-
-  s._opsContainer.querySelector('.chat-ops-list').appendChild(item)
-  s._currentToolBlock = item
-  s.currentToolInput = ''
-
-  updateActivityIndicator(id, toolName, sessionsObj)
-  scrollChatToBottom(id, 120)
-}
-
-export function appendToolInput(id, partialJson, sessionsObj) {
-  sessionsObj = sessionsObj || state.sessions
-  const s = sessionsObj[id]
-  if (!s || !s._currentToolBlock) return
-  s.currentToolInput += partialJson
-
-  // Update activity indicator with file path or tool details
-  let toolName = s._currentToolName || ''
-  try {
-    const parsed = JSON.parse(s.currentToolInput)
-    const detail = parsed.file_path || parsed.path || parsed.command || parsed.pattern || parsed.query || ''
-    if (detail) {
-      const short = detail.split('/').pop() || detail.slice(0, 40)
-      updateActivityIndicator(id, `${toolName}: ${short}`, sessionsObj)
-    }
-  } catch {}
-
-  // Question tool — render markdown in question block
-  if (s._questionBlockEl) {
-    try {
-      const parsed = JSON.parse(s.currentToolInput)
-      const question = parsed.question || parsed.text || parsed.message || JSON.stringify(parsed, null, 2)
-      const headerEl = s._questionBlockEl.querySelector('.question-header')
-      if (headerEl) {
-        headerEl.innerHTML = DOMPurify.sanitize(marked.parse(question), SANITIZE_CONFIG)
-        headerEl.classList.add('md-body')
-      }
-      scrollChatToBottom(id, 120)
-    } catch {}
-    return
-  }
-
-  // Ops item — update the item label and detail
-  const detailEl = s._currentToolBlock.querySelector('.chat-ops-item-detail')
-  const labelEl = s._currentToolBlock.querySelector('.chat-ops-item-label')
-  if (!detailEl) return
-
-  try {
-    const parsed = JSON.parse(s.currentToolInput)
-
-    // Update item label with short description
-    let shortLabel = toolName
-    const filePath = parsed.file_path || parsed.path || ''
-    if (filePath) {
-      const parts = filePath.split('/')
-      shortLabel = toolName + ': ' + (parts.length > 3 ? '.../' + parts.slice(-3).join('/') : filePath)
-    } else if (parsed.command) {
-      shortLabel = toolName + ': ' + (parsed.command.length > 50 ? parsed.command.slice(0, 50) + '...' : parsed.command)
-    } else if (parsed.pattern) {
-      shortLabel = toolName + ': ' + parsed.pattern
-    } else if (parsed.query) {
-      shortLabel = toolName + ': ' + parsed.query.slice(0, 40)
-    }
-    if (labelEl) labelEl.textContent = shortLabel
-
-    // Render detail content (visible when item is expanded)
-    if (parsed.old_string != null && parsed.new_string != null) {
-      // Edit tool — diff view
-      const file = parsed.file_path ? `<div class="tool-item" style="font-weight:500">${escapeHtml(parsed.file_path.split('/').slice(-3).join('/'))}</div>` : ''
-      detailEl.innerHTML = `${file}<pre class="tool-diff"><span class="diff-remove">${escapeHtml(parsed.old_string)}</span><span class="diff-add">${escapeHtml(parsed.new_string)}</span></pre>`
-    } else if (parsed.command) {
-      // Bash tool — command
-      detailEl.innerHTML = `<pre>${escapeHtml(parsed.command)}</pre>`
-    } else if (parsed.content != null) {
-      // Write tool — file path + content preview
-      const file = parsed.file_path ? `<div class="tool-item" style="font-weight:500">${escapeHtml(parsed.file_path.split('/').slice(-3).join('/'))}</div>` : ''
-      const preview = parsed.content.length > 500 ? parsed.content.slice(0, 500) + '...' : parsed.content
-      detailEl.innerHTML = `${file}<pre>${escapeHtml(preview)}</pre>`
-      // Memory surfacing — if this Write lands in memory/*.md, render an
-      // ambient card once the content has a valid frontmatter block.
-      if (isMemoryWritePath(parsed.file_path) && !s._currentToolBlock.dataset.memoryRendered) {
-        const contentEl = s._currentAssistantEl && s._currentAssistantEl.querySelector('.chat-msg-content')
-        if (contentEl && /^---[\s\S]*?\n---/.test(parsed.content)) {
-          renderMemoryCard(contentEl, parsed)
-          s._currentToolBlock.dataset.memoryRendered = '1'
-        }
-      }
-    } else {
-      // Generic — show key info
-      const label = parsed.file_path || parsed.path || parsed.pattern || parsed.query || JSON.stringify(parsed, null, 2).slice(0, 200)
-      detailEl.innerHTML = `<pre>${escapeHtml(label)}</pre>`
-    }
-  } catch {
-    detailEl.innerHTML = `<pre>${escapeHtml(s.currentToolInput.slice(0, 200))}</pre>`
-  }
-}
-
-// Activity indicator — shows what Claude is doing right now
-export function updateActivityIndicator(id, text, sessionsObj) {
-  sessionsObj = sessionsObj || state.sessions
-  const s = sessionsObj[id]
-  if (!s || !s._currentAssistantEl) return
-  let indicator = s._currentAssistantEl.querySelector('.chat-activity')
-  if (!indicator) {
-    indicator = document.createElement('div')
-    indicator.className = 'chat-activity'
-    const label = s._currentAssistantEl.querySelector('.chat-msg-label')
-    if (label) label.after(indicator)
-  }
-  indicator.textContent = text
-  // Also update the status word to match the action
-  const wordEl = document.getElementById('status-word-' + id)
-  if (wordEl) {
-    const action = text.split(':')[0] || text
-    const TOOL_WORDS = { Read: 'Reading', Glob: 'Searching', Grep: 'Scanning', Edit: 'Editing', Write: 'Writing', Bash: 'Executing', WebFetch: 'Fetching', WebSearch: 'Searching' }
-    wordEl.textContent = TOOL_WORDS[action] || action
-  }
-}
-
-export function clearActivityIndicator(id, sessionsObj) {
-  sessionsObj = sessionsObj || state.sessions
-  const s = sessionsObj[id]
-  if (!s || !s._currentAssistantEl) return
-  const indicator = s._currentAssistantEl.querySelector('.chat-activity')
-  if (indicator) indicator.remove()
 }
 
 // Scroll chat to bottom — respects autoScroll setting and proximity threshold
@@ -655,10 +413,10 @@ export function wireChatListeners(id, sessionsObj) {
       const e = event.event
       if (e.type === 'content_block_start') {
         if (e.content_block?.type === 'tool_use') {
-          appendToolBlock(id, e.content_block, sessionsObj)
+          appendToolBlock(s, id, e.content_block)
         } else if (e.content_block?.type === 'text') {
           // Text block starts — end any tool group and clear activity
-          clearActivityIndicator(id, sessionsObj)
+          clearActivityIndicator(s)
           // If there were tool blocks before this text, create new settled/tail
           // so text renders AFTER the tool blocks in the DOM
           if (s._opsContainer || s._hadToolBlocks) {
@@ -699,7 +457,7 @@ export function wireChatListeners(id, sessionsObj) {
           scheduleRender(id, sessionsObj)
         }
         if (e.delta?.type === 'input_json_delta') {
-          appendToolInput(id, e.delta.partial_json, sessionsObj)
+          appendToolInput(s, id, e.delta.partial_json)
         }
       }
       if (e.type === 'content_block_stop') {
@@ -731,13 +489,13 @@ export function wireChatListeners(id, sessionsObj) {
           return d.tool_name === 'Edit' && p.includes('/.claude/') && !p.includes('/.claude/projects/')
         })
         if (claudeEdits.length) {
-          renderPermissionApprovalCard(id, claudeEdits, sessionsObj)
+          renderPermissionApprovalCard(s, id, claudeEdits)
         }
 
         const mcpDenials = event.permission_denials.filter(d =>
           typeof d.tool_name === 'string' && d.tool_name.startsWith('mcp__'))
         if (mcpDenials.length) {
-          renderMcpPermissionCard(id, mcpDenials, sessionsObj)
+          renderMcpPermissionCard(s, id, mcpDenials)
         }
       }
     }
@@ -813,385 +571,6 @@ export function wireChatListeners(id, sessionsObj) {
   if (s) s._cleanupListeners = () => { cleanupStream(); cleanupError(); cleanupExit() }
 }
 
-// Escape user-controlled strings before inserting into innerHTML.
-function mcpEsc(s) {
-  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
-}
-
-async function resetMcpAuth(evt) {
-  // Resolve server name → URL via MCP_RESOLVE_SERVER IPC.
-  // Reads both ~/.claude.json (user-scope) and <vaultPath>/.mcp.json (project-scope).
-  // Do NOT use window.ace.claudeSettings.read() — that reads ~/.claude/settings.json
-  // which has NO mcpServers (confirmed by direct inspection).
-  try {
-    const name = evt.server || evt.serverName
-    if (!name) { console.warn('[mcp] resetAuth: no server name in event', evt); return }
-
-    const config = await window.ace.setup.getConfig()
-    const vaultPath = config?.vaultPath || null
-
-    const resolved = await window.ace.mcp.resolveServer(name, vaultPath)
-    if (!resolved?.ok) {
-      console.warn('[mcp] resetAuth: could not resolve server URL for', name, resolved?.error)
-      return
-    }
-    const result = await window.ace.mcp.resetAuth({
-      serverUrl:  resolved.serverUrl,
-      resource:   resolved.resource,
-      headers:    resolved.headers,
-      serverName: name,
-    })
-    console.log('[mcp] resetAuth result:', result)
-  } catch (err) {
-    console.error('[mcp] resetAuth failed:', err)
-  }
-}
-
-function renderMcpEventCard(msgsEl, chatId, evt) {
-  const { subtype, authUrl, server, servers, serverKind, detail } = evt
-
-  if (subtype === 'mcp_disconnect') {
-    const toast = document.createElement('div')
-    toast.className = 'chat-error'
-    toast.style.cssText = 'opacity:0.7;font-size:12px'
-    toast.textContent = `Lost MCP server${(servers?.length || 0) > 1 ? 's' : ''}: ${(servers || []).join(', ')}`
-    msgsEl.appendChild(toast)
-    setTimeout(() => toast.remove(), 5000)
-    return
-  }
-
-  if (subtype === 'auth_pending') {
-    const inline = document.createElement('div')
-    inline.className = 'chat-error'
-    inline.style.cssText = 'opacity:0.7;font-size:12px'
-    inline.textContent = 'MCP authentication in progress…'
-    msgsEl.appendChild(inline)
-    return
-  }
-
-  const variants = {
-    auth_url_ready: {
-      title: server ? `Authorize ${mcpEsc(server)}` : 'Authorize MCP server',
-      body: 'An MCP server needs OAuth authorization. Click below to complete it in your browser.',
-      primary: { label: 'Authorize in Browser', handler: async () => {
-        const result = await window.ace.mcp.openAuthUrl(authUrl)
-        if (!result?.ok) console.error('[mcp] openExternal failed:', result?.error)
-      }},
-    },
-    auth_terminal_fail: {
-      title: server ? `${mcpEsc(server)} needs re-authentication` : 'MCP re-authentication needed',
-      body: 'Auto-refresh failed. Reset credentials to trigger a fresh browser OAuth flow.',
-      primary: { label: 'Reset & Re-auth', handler: () => resetMcpAuth(evt) },
-    },
-    cli_auth_expired: {
-      title: `${mcpEsc(server) || 'MCP server'} tokens expired`,
-      body: 'OAuth tokens have expired and automatic refresh failed.',
-      primary: { label: 'Reset & Re-auth', handler: () => resetMcpAuth(evt) },
-    },
-    cli_auth_required: {
-      title: `${mcpEsc(serverKind) || 'MCP'} server needs authentication`,
-      body: 'This server has never been authenticated in this session.',
-      primary: { label: 'Reset & Re-auth', handler: () => resetMcpAuth(evt) },
-    },
-    mcp_remote_crash: {
-      title: 'MCP server crashed',
-      body: 'The MCP subprocess exited unexpectedly. Retry your message or restart the server.',
-      primary: { label: 'Dismiss', handler: (card) => card.remove() },
-    },
-    cli_connect_failed: {
-      title: `Can't reach ${mcpEsc(server) || 'MCP server'}`,
-      body: "The server is configured but couldn't be reached. Check network or server status.",
-      primary: { label: 'Dismiss', handler: (card) => card.remove() },
-    },
-    cli_not_connected: {
-      title: `${mcpEsc(server) || 'MCP server'} not connected`,
-      body: 'The server is offline or not responding.',
-      primary: { label: 'Dismiss', handler: (card) => card.remove() },
-    },
-  }
-
-  const variant = variants[subtype]
-  if (!variant) {
-    const errEl = document.createElement('div')
-    errEl.className = 'chat-error'
-    errEl.textContent = `MCP event (${subtype}): ${detail || server || ''}`
-    msgsEl.appendChild(errEl)
-    return
-  }
-
-  const detailBlock = detail
-    ? `<div style="margin-bottom:10px;opacity:0.55;font-size:11px;white-space:pre-wrap;max-height:60px;overflow:auto">${mcpEsc(detail)}</div>`
-    : ''
-  const card = document.createElement('div')
-  card.className = 'chat-error binary-missing-card'
-  card.innerHTML = `
-    <div style="margin-bottom:6px"><strong>${variant.title}</strong></div>
-    <div style="margin-bottom:8px">${variant.body}</div>
-    ${detailBlock}
-    <div style="display:flex;gap:8px">
-      <button class="preflight-btn mcp-primary-btn">${variant.primary.label}</button>
-      <button class="preflight-btn" data-dismiss>Dismiss</button>
-    </div>`
-  card.querySelector('.mcp-primary-btn').addEventListener('click', () => variant.primary.handler(card))
-  card.querySelector('[data-dismiss]').addEventListener('click', () => card.remove())
-  msgsEl.appendChild(card)
-}
-
-// Render approval card for .claude/ permission denials
-function renderPermissionApprovalCard(chatId, denials, sessionsObj) {
-  const msgsEl = document.getElementById('chat-msgs-' + chatId)
-  if (!msgsEl) return
-
-  // Deduplicate retries (same file + same old_string)
-  const seen = new Set()
-  const unique = denials.filter(d => {
-    const key = d.tool_input.file_path + '|' + d.tool_input.old_string
-    if (seen.has(key)) return false
-    seen.add(key)
-    return true
-  })
-
-  const esc = str => String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-
-  const card = document.createElement('div')
-  card.className = 'chat-permission-card'
-
-  let html = `<div class="permission-card-header">Edit requires approval</div>`
-  unique.forEach((d, i) => {
-    const inp = d.tool_input
-    const short = inp.file_path.replace(/^.*\/\.claude\//, '.claude/')
-    html += `
-      <div class="permission-edit-item">
-        <div class="permission-file-path">${esc(short)}</div>
-        <div class="permission-diff">
-          <div class="permission-diff-old">− ${esc(inp.old_string)}</div>
-          <div class="permission-diff-new">+ ${esc(inp.new_string)}</div>
-        </div>
-      </div>`
-  })
-  html += `
-    <div class="chat-tool-actions">
-      <button class="chat-approve-btn permission-approve">Approve</button>
-      <button class="chat-deny-btn permission-deny">Deny</button>
-    </div>`
-
-  card.innerHTML = html
-  msgsEl.appendChild(card)
-  msgsEl.scrollTop = msgsEl.scrollHeight
-
-  card.querySelector('.permission-approve').addEventListener('click', async () => {
-    const btn = card.querySelector('.permission-approve')
-    btn.disabled = true
-    btn.textContent = 'Applying...'
-    let allOk = true
-    for (const d of unique) {
-      const { file_path, old_string, new_string, replace_all } = d.tool_input
-      try {
-        const content = await window.ace.vault.readFile(file_path)
-        if (typeof content !== 'string') { allOk = false; continue }
-        let updated
-        if (replace_all) {
-          updated = content.split(old_string).join(new_string)
-        } else {
-          const idx = content.indexOf(old_string)
-          if (idx === -1) { allOk = false; continue }
-          updated = content.slice(0, idx) + new_string + content.slice(idx + old_string.length)
-        }
-        const res = await window.ace.vault.writeFile(file_path, updated)
-        if (res?.error) allOk = false
-      } catch { allOk = false }
-    }
-    btn.textContent = allOk ? 'Applied' : 'Partial — check files'
-    card.querySelector('.permission-deny').style.display = 'none'
-
-    // Inject confirmation message into chat
-    const msgsEl = document.getElementById('chat-msgs-' + chatId)
-    if (msgsEl) {
-      const confirm = document.createElement('div')
-      confirm.className = 'chat-msg assistant'
-      const paths = unique.map(d => d.tool_input.file_path.replace(/^.*\/\.claude\//, '.claude/')).join(', ')
-      confirm.innerHTML = `<div class="msg-content md-body">${allOk
-        ? `<strong>Done.</strong> Edited ${paths} directly (bypassed CLI permission).`
-        : `<strong>Partial.</strong> Some edits to ${paths} may not have applied — check the files.`
-      }</div>`
-      msgsEl.appendChild(confirm)
-      msgsEl.scrollTop = msgsEl.scrollHeight
-    }
-  })
-
-  card.querySelector('.permission-deny').addEventListener('click', () => card.remove())
-}
-
-function renderMcpPermissionCard(chatId, denials, sessionsObj) {
-  const msgsEl = document.getElementById('chat-msgs-' + chatId)
-  if (!msgsEl) return
-
-  // Dedupe by tool_name + stringified tool_input
-  const seen = new Set()
-  const unique = denials.filter(d => {
-    const key = d.tool_name + '|' + JSON.stringify(d.tool_input || {})
-    if (seen.has(key)) return false
-    seen.add(key)
-    return true
-  })
-  if (!unique.length) return
-
-  const esc = str => String(str ?? '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-
-  // tool_name format: mcp__<server>__<tool>
-  const parseToolName = name => {
-    const m = /^mcp__([^_][^_]*(?:_[^_]+)*)__(.+)$/.exec(name)
-    return m ? { server: m[1], tool: m[2] } : { server: 'unknown', tool: name }
-  }
-
-  const card = document.createElement('div')
-  card.className = 'chat-permission-card mcp-permission-card'
-
-  let html = `<div class="permission-card-header">MCP tool needs approval</div>`
-  unique.forEach((d, i) => {
-    const { server, tool } = parseToolName(d.tool_name)
-    const inputPreview = JSON.stringify(d.tool_input || {}, null, 0).slice(0, 140)
-    html += `
-      <div class="permission-edit-item" data-idx="${i}">
-        <div class="permission-file-path"><strong>${esc(server)}</strong> · ${esc(tool)}</div>
-        <div class="permission-diff" style="font-family:monospace;font-size:11px;opacity:0.7">
-          ${esc(inputPreview)}
-        </div>
-        <div class="chat-tool-actions" style="margin-top:6px">
-          <button class="chat-approve-btn mcp-allow-server" data-server="${esc(server)}">Allow all ${esc(server)} tools</button>
-          <button class="chat-approve-btn mcp-allow-tool" data-pattern="${esc(d.tool_name)}">Just this one</button>
-        </div>
-      </div>`
-  })
-  html += `
-    <div class="chat-tool-actions">
-      <button class="chat-deny-btn mcp-dismiss">Dismiss</button>
-    </div>`
-
-  card.innerHTML = html
-  msgsEl.appendChild(card)
-  msgsEl.scrollTop = msgsEl.scrollHeight
-
-  const session = (sessionsObj || state.sessions)[chatId]
-
-  async function applyPattern(pattern, btn) {
-    btn.disabled = true
-    btn.textContent = 'Saving…'
-    const config = await window.ace.setup.getConfig()
-    const vaultPath = config?.vaultPath || null
-    const res = await window.ace.permissions.addAllow(vaultPath, pattern)
-    if (!res?.ok) {
-      btn.textContent = 'Failed — check console'
-      console.error('[mcp] addAllow failed:', res)
-      return
-    }
-
-    const lastPrompt = session?.lastPrompt
-    const confirm = document.createElement('div')
-    confirm.className = 'chat-msg assistant'
-    confirm.innerHTML = `
-      <div class="msg-content md-body">
-        <strong>Added</strong> <code>${esc(pattern)}</code> to allow list
-        ${res.alreadyPresent ? ' (was already present)' : ''}.
-        ${lastPrompt
-          ? `<div style="margin-top:8px"><button class="preflight-btn mcp-retry-btn">Retry last message</button></div>`
-          : '<div style="margin-top:8px;opacity:0.7">Re-send your message to try again.</div>'}
-      </div>`
-    msgsEl.appendChild(confirm)
-    msgsEl.scrollTop = msgsEl.scrollHeight
-    card.remove()
-
-    const retryBtn = confirm.querySelector('.mcp-retry-btn')
-    if (retryBtn) {
-      retryBtn.addEventListener('click', () => {
-        retryBtn.disabled = true
-        retryBtn.textContent = 'Sending…'
-        sendChatMessage(chatId, session.lastPrompt, sessionsObj)
-      })
-    }
-  }
-
-  card.querySelectorAll('.mcp-allow-server').forEach(btn => {
-    btn.addEventListener('click', () =>
-      applyPattern(`mcp__${btn.dataset.server}__*`, btn))
-  })
-  card.querySelectorAll('.mcp-allow-tool').forEach(btn => {
-    btn.addEventListener('click', () =>
-      applyPattern(btn.dataset.pattern, btn))
-  })
-  card.querySelector('.mcp-dismiss').addEventListener('click', () => card.remove())
-}
-
-// Render an interactive question card from AskUserQuestion tool input
-export function renderQuestionCard(id, data, containerEl, sessionsObj) {
-  sessionsObj = sessionsObj || state.sessions
-  const question = data.question || data.text || data.message || ''
-  const options = data.options || []
-  const isMulti = data.multiple === true || data.multi === true ||
-                  (data.type && data.type.includes('multi'))
-
-  let html = ''
-  // Question header
-  if (question) {
-    const rendered = DOMPurify.sanitize(marked.parse(question), SANITIZE_CONFIG)
-    html += `<div class="question-header md-body">${rendered}</div>`
-  }
-
-  if (options.length > 0) {
-    // Options with radio buttons or checkboxes
-    const inputType = isMulti ? 'checkbox' : 'radio'
-    const groupName = 'q-' + id + '-' + Date.now()
-    html += `<div class="question-options">`
-    options.forEach((opt, i) => {
-      const label = typeof opt === 'string' ? opt : (opt.label || opt.value || opt.text || JSON.stringify(opt))
-      const desc = typeof opt === 'object' ? (opt.description || opt.desc || '') : ''
-      html += `
-        <label class="question-option">
-          <input type="${inputType}" name="${groupName}" value="${escapeHtml(label)}" />
-          <div class="question-option-content">
-            <span class="question-option-label">${escapeHtml(label)}</span>
-            ${desc ? `<span class="question-option-desc">${escapeHtml(desc)}</span>` : ''}
-          </div>
-        </label>`
-    })
-    html += `</div>`
-    html += `<button class="chat-approve-btn question-submit">Submit</button>`
-  } else {
-    // No predefined options — show text input
-    html += `
-      <div class="chat-prompt-input-area">
-        <textarea class="chat-input chat-prompt-response" placeholder="Type your answer..." rows="2"></textarea>
-        <button class="chat-approve-btn question-submit">Send</button>
-      </div>`
-  }
-
-  containerEl.innerHTML = html
-
-  // Wire submit
-  const submitBtn = containerEl.querySelector('.question-submit')
-  submitBtn.addEventListener('click', () => {
-    let answer = ''
-    if (options.length > 0) {
-      const checked = containerEl.querySelectorAll('input:checked')
-      answer = [...checked].map(c => c.value).join(', ')
-    } else {
-      const textarea = containerEl.querySelector('textarea')
-      answer = textarea?.value?.trim() || ''
-    }
-    if (!answer) return
-    window.ace.chat.respond(id, answer)
-    // Disable the card
-    containerEl.querySelectorAll('input, textarea, button').forEach(el => el.disabled = true)
-    submitBtn.textContent = 'Submitted'
-    containerEl.classList.add('answered')
-  })
-
-  // Auto-scroll
-  const msgsEl = document.getElementById('chat-msgs-' + id)
-  if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight
-}
-
 // ─── Sessions ────────────────────────────────────────────────────────────────
 
 const SESSION_LIMIT = 3
@@ -1229,79 +608,30 @@ export function spawnSession(opts) {
   const resumeCwd = opts?.resumeCwd || null
   const id = 'sess-' + Date.now()
 
-  const pane = document.createElement('div')
-  pane.className = 'term-pane'; pane.id = 'pane-' + id
-  pane.innerHTML = `
-    <div class="term-hdr">
-      <div class="term-hdr-dot" style="background:var(--green);box-shadow:0 0 7px rgba(109,184,143,0.5)"></div>
-      <div class="term-hdr-label" id="hdr-label-${id}">ACE Session</div>
-      <button class="mode-toggle-btn" id="mode-toggle-${id}">Terminal</button>
-      <div class="term-hdr-path" id="hdr-path-${id}">Chat Mode</div>
-      <span class="session-timer" id="session-timer-${id}" style="display:none"></span>
-      <select class="session-duration-select" id="session-duration-${id}" title="Set session timer" data-learn-target="session-timer">
-        <option value="">Timer</option>
-        <option value="15">15m</option>
-        <option value="30">30m</option>
-        <option value="60">60m</option>
-        <option value="90">90m</option>
-      </select>
-    </div>
-    <div class="chat-view" id="chat-view-${id}">
-      <div class="chat-messages" id="chat-msgs-${id}">
-        <div class="chat-welcome">
-          <div class="chat-welcome-icon">${aceMarkSvg(36)}</div>
-          <div class="chat-welcome-text">ACE Chat</div>
-          <div class="chat-welcome-sub">Enter to send · Shift+Enter for newline · Type a message below</div>
-        </div>
-      </div>
-      <div class="chat-status" id="chat-status-${id}">
-        <span class="chat-cost-label">$0.00</span>
-        <span class="chat-tokens-label">0 tokens</span>
-        <div class="ctx-bar" id="ctx-bar-${id}" title="Context usage" data-learn-target="ctx-bar">
-          <div class="ctx-bar-fill" id="ctx-fill-${id}"></div>
-        </div>
-        <span class="ctx-bar-pct" id="ctx-label-${id}">0%</span>
-      </div>
-      <div class="chat-controls" id="chat-controls-${id}">
-        <select class="chat-select" id="chat-model-${id}" title="Model">
-          <option value="opus" ${state.chatDefaults.model === 'opus' ? 'selected' : ''}>Opus</option>
-          <option value="sonnet" ${state.chatDefaults.model === 'sonnet' ? 'selected' : ''}>Sonnet</option>
-          <option value="haiku" ${state.chatDefaults.model === 'haiku' ? 'selected' : ''}>Haiku</option>
-        </select>
-        <select class="chat-select" id="chat-perms-${id}" title="Permission mode">
-          <option value="default" ${state.chatDefaults.permissions === 'default' ? 'selected' : ''}>Normal</option>
-          <option value="plan" ${state.chatDefaults.permissions === 'plan' ? 'selected' : ''}>Plan</option>
-          <option value="auto" ${state.chatDefaults.permissions === 'auto' ? 'selected' : ''}>Auto-accept</option>
-        </select>
-        <select class="chat-select" id="chat-effort-${id}" title="Reasoning effort">
-          <option value="low" ${state.chatDefaults.effort === 'low' ? 'selected' : ''}>Low effort</option>
-          <option value="medium" ${state.chatDefaults.effort === 'medium' ? 'selected' : ''}>Medium</option>
-          <option value="high" ${state.chatDefaults.effort === 'high' ? 'selected' : ''}>High</option>
-          <option value="max" ${state.chatDefaults.effort === 'max' ? 'selected' : ''}>Max effort</option>
-        </select>
-      </div>
-      <div class="chat-attachments" id="chat-attachments-${id}"></div>
-      <div class="chat-input-area">
-        <button class="chat-attach-btn" id="chat-attach-${id}" title="Attach · drag, paste, or click" aria-label="Attach file">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.49"/></svg>
-        </button>
-        <textarea class="chat-input" id="chat-input-${id}" data-learn-target="chat-composer" placeholder="${window.__preflightResult?.binary?.ok && window.__preflightResult?.vault?.ok ? 'Type /start to begin your day' : 'Message ACE...'}" rows="1"></textarea>
-        <button class="chat-send-btn" id="chat-send-${id}" data-learn-target="send-button">↑</button>
-      </div>
-    </div>
-    <div class="term-xterm" id="xterm-${id}" style="display:none"></div>
-    <button class="scroll-to-bottom" id="scroll-btn-${id}" title="Scroll to bottom" style="display:none">↓</button>`
   const targetContainer = opts?.container || document.getElementById('pane-content-left')
-  targetContainer.appendChild(pane)
-
-  const tab = document.createElement('div')
-  tab.className = 'stab'; tab.id = 'tab-' + id
+  const targetTabBar    = opts?.tabBar    || document.getElementById('session-tabs-left')
   const moveArrow = targetContainer.id === 'pane-content-right' ? '←' : '→'
-  tab.innerHTML = `<div class="stab-dot"></div><span class="stab-label" id="tab-label-${id}">ACE</span><span class="stab-move" id="stab-move-${id}" title="Move to other pane">${moveArrow}</span><span class="stab-close" id="stab-close-${id}" title="Close session">×</span>`
+  const smartPlaceholder = window.__preflightResult?.binary?.ok && window.__preflightResult?.vault?.ok
+    ? 'Type /start to begin your day'
+    : 'Message ACE...'
+
+  const controls = createChatPane(id, {
+    paneClass: 'term-pane',
+    roleName: 'ACE',
+    showTimer: true,
+    showMoveButton: true,
+    moveDirection: moveArrow,
+    placeholder: smartPlaceholder,
+    containerEl: targetContainer,
+    tabBarEl: targetTabBar,
+    onSend:         (id, prompt) => sendChatMessage(id, prompt),
+    onClose:        (id)         => closeSession(id),
+    onModeToggle:   (id)         => toggleSessionMode(id),
+    onTerminalInit: (xtermEl)    => _initSessionTerminal(id, xtermEl),
+  })
+
+  const { pane, tab } = controls
   tab.addEventListener('click', (e) => { if (!e.target.classList.contains('stab-close') && !e.target.classList.contains('stab-move')) activateSession(id) })
-  const targetTabBar = opts?.tabBar || document.getElementById('session-tabs-left')
-  const addBtn = targetTabBar.querySelector('.stab-add')
-  targetTabBar.insertBefore(tab, addBtn)
 
   state.sessions[id] = {
     term: null, fitAddon: null, pane, tab,
@@ -1325,6 +655,7 @@ export function spawnSession(opts) {
     turnDeltas: [],
     _prevContextTokens: 0,
     _settledBoundary: 0, _settledHTML: '', _currentAssistantEl: null, _pendingRAF: null, _currentToolBlock: null,
+    _paneControls: controls,
   }
   activateSession(id)
 
@@ -1338,14 +669,8 @@ export function spawnSession(opts) {
     resetContext(id)
   })
 
-  // Close button
-  document.getElementById('stab-close-' + id).addEventListener('click', (e) => {
-    e.stopPropagation()
-    closeSession(id)
-  })
-
-  // Move to other pane button
-  document.getElementById('stab-move-' + id).addEventListener('click', (e) => {
+  // Move to other pane button (factory wires stab-close → onClose)
+  document.getElementById('stab-move-' + id)?.addEventListener('click', (e) => {
     e.stopPropagation()
     moveToOtherGroup(id)
   })
@@ -1361,55 +686,25 @@ export function spawnSession(opts) {
     }
   })
 
-  // Chat input handling
-  const inputEl = document.getElementById('chat-input-' + id)
-  const sendBtn = document.getElementById('chat-send-' + id)
+  // Input refs from factory — used for streaming cancel toggle + resetPlaceholder
+  const inputEl = controls.chatInput
+  const sendBtn = controls.sendBtn
 
-  attachSlashMenu(inputEl, { send: (prompt) => sendChatMessage(id, prompt) })
-
-  inputEl.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      if (e.__slashMenuHandled) return  // slash menu consumed this
-      e.preventDefault()
-      const prompt = inputEl.value
-      if (!prompt.trim()) return
-      inputEl.value = ''
-      inputEl.style.height = 'auto'
-      sendChatMessage(id, prompt)
-    }
-    if (e.key === 'Escape' && state.sessions[id].isStreaming) {
-      if (e.__slashMenuHandled) return
-      window.ace.chat.cancel(id)
-    }
-  })
-  // Reset placeholder after first message
+  // Reset smart placeholder after first keystroke
   inputEl.addEventListener('input', function resetPlaceholder() {
     if (inputEl.placeholder !== 'Message ACE...') {
       inputEl.placeholder = 'Message ACE...'
       inputEl.removeEventListener('input', resetPlaceholder)
     }
   })
+
+  // Toggle send button between ↑ / ■ during streaming (factory's input listener only resizes)
   inputEl.addEventListener('input', () => {
-    inputEl.style.height = 'auto'
-    inputEl.style.height = Math.min(inputEl.scrollHeight, 150) + 'px'
-    // Toggle button between queue/cancel during streaming
-    if (state.sessions[id].isStreaming) {
+    if (state.sessions[id]?.isStreaming) {
       const hasText = inputEl.value.trim().length > 0
       sendBtn.textContent = hasText ? '↑' : '■'
       sendBtn.classList.toggle('cancel', !hasText)
     }
-  })
-
-  sendBtn.addEventListener('click', () => {
-    const prompt = inputEl.value
-    if (state.sessions[id].isStreaming && !prompt.trim()) {
-      window.ace.chat.cancel(id)
-      return
-    }
-    if (!prompt.trim()) return
-    inputEl.value = ''
-    inputEl.style.height = 'auto'
-    sendChatMessage(id, prompt)
   })
 
   // Attachment handlers
@@ -1423,15 +718,52 @@ export function spawnSession(opts) {
   // Wire chat stream listeners
   wireChatListeners(id)
 
-  // Mode toggle (chat ↔ terminal)
-  document.getElementById('mode-toggle-' + id).addEventListener('click', () => {
-    toggleSessionMode(id)
-  })
-
   // Auto-switch to terminal mode for resumed sessions
   if (resumeId) {
     requestAnimationFrame(() => toggleSessionMode(id))
   }
+}
+
+function _initSessionTerminal(id, xtermEl) {
+  const s = state.sessions[id]
+  if (!s) return
+  const scrollBtn = document.getElementById('scroll-btn-' + id)
+  const term = new Terminal({
+    fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+    fontSize: 12.5, lineHeight: 1.5, cursorBlink: true,
+    theme: xtermTheme(), allowProposedApi: true,
+  })
+  const fitAddon = new FitAddon.FitAddon()
+  term.loadAddon(fitAddon)
+  s.term = term
+  s.fitAddon = fitAddon
+
+  let userScrolledUp = false
+  requestAnimationFrame(() => {
+    term.open(xtermEl)
+    fitAddon.fit()
+    if (s.resumeId) {
+      window.ace.pty.resume(id, s.resumeCwd, term.cols, term.rows, s.resumeId)
+    } else {
+      window.ace.pty.create(id, null, term.cols, term.rows)
+    }
+    term.onScroll(() => {
+      userScrolledUp = term.buffer.active.viewportY < term.buffer.active.baseY
+      scrollBtn?.classList.toggle('visible', userScrolledUp)
+    })
+    term.buffer.onBufferChange(() => {
+      requestAnimationFrame(() => { term.scrollToBottom(); userScrolledUp = false; scrollBtn?.classList.toggle('visible', false) })
+    })
+  })
+  scrollBtn?.addEventListener('click', () => {
+    term.scrollToBottom(); userScrolledUp = false; scrollBtn.classList.toggle('visible', false)
+  })
+  window.ace.pty.onData(id, data => {
+    const wasAtBottom = !userScrolledUp
+    term.write(data, () => { if (wasAtBottom) term.scrollToBottom() })
+  })
+  term.onData(d => window.ace.pty.write(id, d))
+  term.onResize(({ cols, rows }) => window.ace.pty.resize(id, cols, rows))
 }
 
 export function toggleSessionMode(id) {
@@ -1444,56 +776,15 @@ export function toggleSessionMode(id) {
   const hdrPath = document.getElementById('hdr-path-' + id)
 
   if (s.mode === 'chat') {
-    // Switch to terminal mode
+    // Switch to terminal mode — factory fires onTerminalInit on first toggle
+    // which calls _initSessionTerminal; no init branch needed here.
     s.mode = 'terminal'
     chatView.style.display = 'none'
     xtermEl.style.display = ''
     scrollBtn.style.display = ''
     toggleBtn.textContent = 'Chat'
     hdrPath.textContent = '~/Documents/Actualize'
-
-    // Lazy-init xterm + PTY
-    if (!s.term) {
-      const term = new Terminal({
-        fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-        fontSize: 12.5, lineHeight: 1.5, cursorBlink: true,
-        theme: xtermTheme(), allowProposedApi: true,
-      })
-      const fitAddon = new FitAddon.FitAddon()
-      term.loadAddon(fitAddon)
-      s.term = term; s.fitAddon = fitAddon
-
-      let userScrolledUp = false
-      requestAnimationFrame(() => {
-        term.open(xtermEl)
-        fitAddon.fit()
-        if (s.resumeId) {
-          window.ace.pty.resume(id, s.resumeCwd, term.cols, term.rows, s.resumeId)
-        } else {
-          window.ace.pty.create(id, null, term.cols, term.rows)
-        }
-
-        term.onScroll(() => {
-          userScrolledUp = term.buffer.active.viewportY < term.buffer.active.baseY
-          scrollBtn.classList.toggle('visible', userScrolledUp)
-        })
-        term.buffer.onBufferChange(() => {
-          requestAnimationFrame(() => { term.scrollToBottom(); userScrolledUp = false; scrollBtn.classList.toggle('visible', false) })
-        })
-      })
-
-      scrollBtn.addEventListener('click', () => {
-        term.scrollToBottom(); userScrolledUp = false; scrollBtn.classList.toggle('visible', false)
-      })
-      window.ace.pty.onData(id, data => {
-        const wasAtBottom = !userScrolledUp
-        term.write(data, () => { if (wasAtBottom) term.scrollToBottom() })
-      })
-      term.onData(data => window.ace.pty.write(id, data))
-      term.onResize(({ cols, rows }) => window.ace.pty.resize(id, cols, rows))
-    } else {
-      requestAnimationFrame(() => s.fitAddon.fit())
-    }
+    if (s.fitAddon) requestAnimationFrame(() => s.fitAddon.fit())
   } else {
     // Switch to chat mode
     s.mode = 'chat'

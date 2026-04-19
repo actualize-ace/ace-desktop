@@ -1,6 +1,7 @@
 // renderer/modules/telemetry.js
 import { state } from '../state.js'
-import { MODEL_CTX_LIMITS } from './session-manager.js'
+
+export const MODEL_CTX_LIMITS = { opus: 1_000_000, sonnet: 200_000, haiku: 200_000 }
 
 // ─── Sidebar Telemetry ────────────────────────────────────────────────────────
 const ACE_BOOT_TIME = Date.now()
@@ -16,19 +17,6 @@ export function updateTelemetry() {
     sessEl.textContent = streamingCount > 0 ? `${activeCount} · ${streamingCount} live` : `${activeCount}`
     sessEl.classList.toggle('streaming', streamingCount > 0)
   }
-
-  // Total tokens
-  let totalInput = 0, totalOutput = 0
-  allSessions.forEach(s => { totalInput += s.totalTokens?.input || 0; totalOutput += s.totalTokens?.output || 0 })
-  const totalTok = totalInput + totalOutput
-  const tokEl = document.getElementById('telem-tokens')
-  if (tokEl) tokEl.textContent = totalTok >= 1000000 ? (totalTok / 1000000).toFixed(1) + 'M' : totalTok >= 1000 ? (totalTok / 1000).toFixed(1) + 'K' : totalTok + ''
-
-  // Total cost
-  let totalCost = 0
-  allSessions.forEach(s => { totalCost += s.totalCost || 0 })
-  const costEl = document.getElementById('telem-cost')
-  if (costEl) costEl.textContent = '$' + totalCost.toFixed(2)
 
   // Active session context %
   const activeSession = state.sessions[state.activeId]
@@ -77,17 +65,8 @@ export function fmtTok(n) {
 
 export function renderUsageLimits() {
   const sessionEl = document.getElementById('telem-session-val')
-  const todayEl = document.getElementById('telem-today-val')
-  const weeklyEl = document.getElementById('telem-weekly-val')
-
   if (state.usageData?.session && sessionEl) {
     sessionEl.textContent = fmtTok(state.usageData.session.tokens)
-  }
-  if (state.usageData?.today && todayEl) {
-    todayEl.textContent = fmtTok(state.usageData.today.tokens)
-  }
-  if (state.usageData?.weekly && weeklyEl) {
-    weeklyEl.textContent = fmtTok(state.usageData.weekly.tokens)
   }
 }
 
