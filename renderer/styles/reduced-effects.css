@@ -1,0 +1,56 @@
+/* reduced-effects.css — Linux / low-GPU / reduced-motion fallback mode.
+ *
+ * Stripped under body.reduced-effects:
+ *   - backdrop-filter (GPU-expensive; falls back to CPU on Linux/Wayland)
+ *   - continuous decorative animations (.atmosphere, .glow, ring/pulse anim)
+ *   - heavy decorative box-shadow (reduced to 1px rim)
+ *
+ * PRESERVED (accessibility affordances must survive):
+ *   - :focus-visible outlines
+ *   - :active / :hover state indicators
+ *   - loading spinners (not targeted by any rule here)
+ *
+ * Applied automatically when any of:
+ *   platform === linux | prefers-reduced-motion | prefers-reduced-transparency
+ * or when user flips the Config toggle (B3).
+ *
+ * Link this sheet LAST in index.html so cascade wins without higher specificity.
+ */
+
+body.reduced-effects *,
+body.reduced-effects *::before,
+body.reduced-effects *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Kill continuous decorative animations only.
+ * Scoped by class names that denote ambient / atmospheric effects —
+ * do NOT add :focus, :active, or loading indicators here. */
+body.reduced-effects .atmosphere,
+body.reduced-effects .glow,
+body.reduced-effects [class*="ring-anim"],
+body.reduced-effects [class*="pulse-anim"],
+body.reduced-effects [class*="breathe-anim"] {
+  animation: none !important;
+}
+
+/* Simplify decorative box-shadow to a 1px rim.
+ * Hierarchy preserved without the blur radius that triggers filter
+ * rasterization on weak GPUs. Focus rings use outline, not box-shadow,
+ * so the :focus-visible rule below still overrides. */
+body.reduced-effects .card,
+body.reduced-effects .pane,
+body.reduced-effects .modal,
+body.reduced-effects .chat-message,
+body.reduced-effects .widget,
+body.reduced-effects .cmdk-panel {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Explicit focus-ring preservation. Uses --authority (semantic accent)
+ * with a safe hardcoded fallback in case the token isn't loaded yet. */
+body.reduced-effects :focus-visible {
+  outline: 2px solid var(--authority, #c8a0f0) !important;
+  outline-offset: 2px !important;
+}
