@@ -190,4 +190,9 @@ contextBridge.exposeInMainWorld('ace', {
   stress: {
     appendResult: (entry) => ipcRenderer.invoke(ch.STRESS_APPEND_RESULT, entry),
   },
+
+  // ─── Diagnostics ─────────────────────────────────────────────────────────
+  debug: {
+    reportLongTask: (payload) => ipcRenderer.send(ch.LONGTASK_REPORT, payload),
+  },
 })
