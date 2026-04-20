@@ -135,4 +135,7 @@ module.exports = {
 
   // Permissions
   PERMISSIONS_ADD_ALLOW: 'permissions:add-allow',
+
+  // Diagnostics
+  LONGTASK_REPORT: 'longtask-report',
 }
