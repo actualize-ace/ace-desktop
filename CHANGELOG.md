@@ -5,6 +5,13 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## Unreleased
+
+### Added
+- Renderer long-task observer: dumps stack + context to `~/Library/Logs/ACE/longtask.log` when main thread stalls ≥200 ms. Diagnostic only — no user-facing behavior change.
+
+---
+
 ## v0.2.2 — 2026-04-19
 
 ### Added
