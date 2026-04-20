@@ -949,3 +949,20 @@ ipcMain.handle(ch.INSIGHT_SPEAK, async (_, text) => {
     return { error: e.message }
   }
 })
+
+// ─── Diagnostics: renderer long-task reports ─────────────────────────────────
+
+const aceLogsDir = path.join(app.getPath('logs'))
+try { fs.mkdirSync(aceLogsDir, { recursive: true }) } catch {}
+const longTaskLogPath = path.join(aceLogsDir, 'longtask.log')
+
+ipcMain.on(ch.LONGTASK_REPORT, (_, payload) => {
+  try {
+    const line = JSON.stringify({ ts: new Date().toISOString(), ...payload }) + '\n'
+    fs.appendFile(longTaskLogPath, line, (err) => {
+      if (err) console.error('[longtask] append failed:', err.message)
+    })
+  } catch (err) {
+    console.error('[longtask] handler threw:', err.message)
+  }
+})
