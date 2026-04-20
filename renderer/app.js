@@ -21,3 +21,22 @@ window.__aceState = state
 // Command bar (Cmd+K)
 import { initCommandBar } from './modules/command-bar.js'
 initCommandBar()
+
+// Phase B1: live-reapply reduced-effects when OS accessibility preferences
+// change (e.g. user toggles macOS "Reduce motion"). Initial application
+// happens pre-paint via the inline script in index.html.
+;(function initReducedEffectsListeners () {
+  const ace = window.ace || {}
+  const resolve = () => {
+    const cfg = (window.ace && window.ace.cachedConfig) || ace.initialConfig || {}
+    if (typeof cfg.reducedEffects === 'boolean') return cfg.reducedEffects
+    return (ace.platform === 'linux')
+      || matchMedia('(prefers-reduced-motion: reduce)').matches
+      || matchMedia('(prefers-reduced-transparency: reduce)').matches
+  }
+  const reapply = () => {
+    document.body.classList.toggle('reduced-effects', !!resolve())
+  }
+  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', reapply)
+  matchMedia('(prefers-reduced-transparency: reduce)').addEventListener('change', reapply)
+})()

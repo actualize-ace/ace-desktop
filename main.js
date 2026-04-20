@@ -193,6 +193,12 @@ function detectClaudeBinary() {
 let mainWindow = null
 
 function createWindow(page) {
+  // Minimal config subset passed to preload via additionalArguments so the
+  // renderer can apply body.reduced-effects before first paint. Only fields
+  // needed for pre-paint decisions — do NOT leak the full config via argv.
+  const cfg = loadConfig() || {}
+  const preloadConfig = { reducedEffects: cfg.reducedEffects }
+
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -209,6 +215,9 @@ function createWindow(page) {
       contextIsolation: true,
       sandbox: false,        // required: preload uses require() for ipc-channels
       preload: path.join(__dirname, 'preload.js'),
+      additionalArguments: [
+        `--ace-initial-config=${JSON.stringify(preloadConfig)}`,
+      ],
     },
   })
 

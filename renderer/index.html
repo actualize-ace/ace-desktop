@@ -34,6 +34,29 @@
   <link rel="stylesheet" href="styles/command-bar.css">
 </head>
 <body>
+<script>
+  // Phase B1: apply reduced-effects class synchronously, before first paint.
+  // Must run inside <body> so document.body exists, but before app content
+  // renders so there's no FOUC. Live-reapply listeners wired in app.js.
+  (function () {
+    try {
+      var ace = window.ace || {}
+      var cfg = ace.initialConfig || {}
+      var mm = function (q) { return window.matchMedia && window.matchMedia(q).matches }
+      var shouldReduce
+      if (typeof cfg.reducedEffects === 'boolean') {
+        shouldReduce = cfg.reducedEffects
+      } else {
+        shouldReduce = (ace.platform === 'linux')
+          || mm('(prefers-reduced-motion: reduce)')
+          || mm('(prefers-reduced-transparency: reduce)')
+      }
+      if (shouldReduce) document.body.classList.add('reduced-effects')
+    } catch (e) {
+      console.warn('[reduced-effects] pre-paint skipped:', e)
+    }
+  })()
+</script>
 <div class="app-shell">
 
   <!-- Cmd+K Command Bar -->

@@ -1,11 +1,25 @@
 const { contextBridge, ipcRenderer } = require('electron')
 const ch = require('./src/ipc-channels')
 
+// Pre-paint config: main passes a minimal subset of ace-config.json via
+// additionalArguments so the renderer can apply body.reduced-effects before
+// first paint (avoids FOUC on Linux / accessibility users). Kept minimal —
+// do NOT expand to full config, argv leaks via DevTools / crash reports.
+function parseInitialConfig () {
+  try {
+    const flag = process.argv.find(a => a.startsWith('--ace-initial-config='))
+    if (!flag) return {}
+    return JSON.parse(flag.split('=').slice(1).join('='))
+  } catch { return {} }
+}
+
 contextBridge.exposeInMainWorld('ace', {
 
   // ─── App metadata ────────────────────────────────────────────────────────────
   appVersion: require('./package.json').version,
   appStage: 'alpha',
+  platform: process.platform,
+  initialConfig: parseInitialConfig(),
 
   // ─── Config / Setup ──────────────────────────────────────────────────────────
   setup: {
