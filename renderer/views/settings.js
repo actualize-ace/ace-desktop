@@ -16,7 +16,7 @@ const CMD_COLORS = [
 
 const DEFAULTS = {
   chat: { model: 'sonnet', permissions: 'default', effort: 'high' },
-  display: { theme: 'dark', fontSize: 'medium', sidebarCollapsed: false },
+  display: { theme: 'dark', fontSize: 'medium', sidebarCollapsed: false, reducedEffects: 'auto' },
   guardrails: { sessionCostWarning: 2.00 },
   sidebar: {
     commands: [
@@ -137,6 +137,17 @@ export async function renderSettingsPanel() {
       <div class="settings-row">
         <div class="settings-label">Sidebar Collapsed</div>
         <div class="settings-toggle${d.display?.sidebarCollapsed ? ' on' : ''}" data-setting="display.sidebarCollapsed"></div>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Visual Effects</div>
+          <div style="font-size:9px;color:var(--text-dim);margin-top:2px;">Reduced mode strips backdrop blur + ambient animations. Recommended on Linux or weak GPUs.</div>
+        </div>
+        <select class="settings-select" data-setting="display.reducedEffects">
+          ${sel('display.reducedEffects', 'auto', 'Auto')}
+          ${sel('display.reducedEffects', 'on', 'Reduced always')}
+          ${sel('display.reducedEffects', 'off', 'Full always')}
+        </select>
       </div>
     </div>
 
@@ -445,6 +456,16 @@ export function applySettingImmediately(path, value) {
     // Update chatDefaults for new sessions
     const key = path.split('.')[1]
     state.chatDefaults[key] = value
+  } else if (path === 'display.reducedEffects') {
+    // Store user pref globally so app.js's OS-media listeners consult it
+    // when the user is on 'auto' vs 'on' vs 'off'.
+    window.__aceReducedPref = value
+    const shouldReduce = value === 'on' ? true
+      : value === 'off' ? false
+      : (window.ace?.platform === 'linux'
+         || matchMedia('(prefers-reduced-motion: reduce)').matches
+         || matchMedia('(prefers-reduced-transparency: reduce)').matches)
+    document.body.classList.toggle('reduced-effects', !!shouldReduce)
   }
 }
 

@@ -25,11 +25,14 @@ initCommandBar()
 // Phase B1: live-reapply reduced-effects when OS accessibility preferences
 // change (e.g. user toggles macOS "Reduce motion"). Initial application
 // happens pre-paint via the inline script in index.html.
+// User pref is stored in window.__aceReducedPref ('auto' | 'on' | 'off') —
+// set by the pre-paint script and updated by the Settings dropdown (B3).
 ;(function initReducedEffectsListeners () {
   const ace = window.ace || {}
   const resolve = () => {
-    const cfg = (window.ace && window.ace.cachedConfig) || ace.initialConfig || {}
-    if (typeof cfg.reducedEffects === 'boolean') return cfg.reducedEffects
+    const pref = window.__aceReducedPref
+    if (pref === 'on') return true
+    if (pref === 'off') return false
     return (ace.platform === 'linux')
       || matchMedia('(prefers-reduced-motion: reduce)').matches
       || matchMedia('(prefers-reduced-transparency: reduce)').matches

@@ -196,8 +196,10 @@ function createWindow(page) {
   // Minimal config subset passed to preload via additionalArguments so the
   // renderer can apply body.reduced-effects before first paint. Only fields
   // needed for pre-paint decisions — do NOT leak the full config via argv.
+  // reducedEffects is stored as 'auto' | 'on' | 'off' string under
+  // defaults.display (set by the settings UI tri-state dropdown).
   const cfg = loadConfig() || {}
-  const preloadConfig = { reducedEffects: cfg.reducedEffects }
+  const preloadConfig = { reducedEffects: cfg.defaults?.display?.reducedEffects }
 
   mainWindow = new BrowserWindow({
     width: 1400,
