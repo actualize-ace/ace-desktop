@@ -639,15 +639,7 @@ export function wireChatListeners(id, sessionsObj) {
     const agentVisible = agentsVisible && id === state.focusedAgentId
     if (!sessionVisible && !agentVisible) setAttention(id, sessionsObj, 'exit')
   })
-  const setMcpDot = (status) => {
-    const dot = document.getElementById('mcp-dot-' + id)
-    if (!dot) return
-    dot.className = 'mcp-dot' + (status ? ' ' + status : '')
-    const labels = { starting: 'Claude process: starting…', ready: 'Claude process: ready', failed: 'Claude process: failed' }
-    dot.title = labels[status] || 'Claude process: idle'
-  }
   const cleanupSpawn = window.ace.chat.onSpawnStatus?.(id, ({ status, spawnMs }) => {
-    setMcpDot(status)
     if (status === 'ready') markSessionReady(id)
     if (spawnMs != null) console.debug(`[perf] spawn_ready=${spawnMs}ms id=${id}`)
   })
