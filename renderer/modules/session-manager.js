@@ -13,6 +13,7 @@ import { appendToolBlock, appendToolInput, updateActivityIndicator, clearActivit
 import { renderMcpEventCard, renderPermissionApprovalCard, renderMcpPermissionCard } from './mcp-cards.js'
 import { MODEL_CTX_LIMITS, updateTelemetry } from './telemetry.js'
 import { createChatPane } from './chat-pane.js'
+import { createVirtualChatList } from './virtual-chat-list.js'
 
 // ─── Chat System ─────────────────────────────────────────────────────────────
 
@@ -38,6 +39,50 @@ function deriveSessionName(prompt) {
     return cleaned.length <= 28 ? cleaned : cleaned.slice(0, 28).trim() + '…'
   }
   return title.charAt(0).toUpperCase() + title.slice(1)
+}
+
+// Lazy per-session virtual chat list. Kills unbounded DOM growth on long
+// sessions by evicting settled messages above the viewport + BUFFER_ABOVE
+// into height-preserving placeholders. Snapshot-based hydrate restores
+// them on scroll-back without re-running the markdown pipeline. Escape
+// hatch: window.__disableVirtualChat = true to skip entirely.
+function getVirtualList(id) {
+  if (typeof window !== 'undefined' && window.__disableVirtualChat) return null
+  const s = state.sessions?.[id]
+  if (!s) return null
+  if (s._virtualList) return s._virtualList
+  const msgsEl = document.getElementById('chat-msgs-' + id)
+  if (!msgsEl) return null
+  const vl = createVirtualChatList(msgsEl, {
+    onRewire: (node) => { try { wireMsgAttachmentClicks(node) } catch (_) { /* ignored */ } }
+  })
+  let scrollTimer = null
+  msgsEl.addEventListener('scroll', () => {
+    if (scrollTimer) return
+    scrollTimer = setTimeout(() => {
+      scrollTimer = null
+      const top = vl.topVisible()
+      if (top.index > 0) vl.evictAboveFold(top.index)
+    }, 500)
+  }, { passive: true })
+  s._virtualList = vl
+  return vl
+}
+
+// Dev test hook — not called in production code paths
+if (typeof window !== 'undefined') window.__aceVL = (id) => state.sessions?.[id]?._virtualList ?? null
+
+// Adopt a freshly-settled message node so it participates in eviction.
+// Called after state.messages.push() so message.index is stable.
+function registerSettledMessage(id, node) {
+  const s = state.sessions?.[id]
+  if (!s || !node) return
+  const vl = getVirtualList(id)
+  if (!vl) return
+  const msg = s.messages[s.messages.length - 1]
+  if (!msg) return
+  vl.setMessages(s.messages)
+  vl.adopt(node, msg)
 }
 
 export function sendChatMessage(id, prompt, sessionsObj) {
@@ -94,6 +139,7 @@ export function sendChatMessage(id, prompt, sessionsObj) {
   const finalPrompt = injectAttachments({ pendingAttachments: attachedFiles }, prompt.trim())
 
   s.messages.push({ index: s.messages.length, role: 'user', content: prompt.trim(), attachments: attachedFiles.length ? attachedFiles : undefined, timestamp: Date.now() })
+  registerSettledMessage(id, userMsg)
   s.currentStreamText = ''
   s._fullResponseText = ''
   s.currentToolInput = ''
@@ -243,6 +289,10 @@ export function finalizeMessage(id, sessionsObj) {
     if (statusWord) statusWord.remove()
   }
   s.messages.push({ index: s.messages.length, role: 'assistant', content: s._fullResponseText || s.currentStreamText, timestamp: Date.now() })
+  // Adopt BEFORE nulling _currentAssistantEl below — virtualList tracks
+  // the fully post-processed node (code blocks highlighted, wikilinks
+  // resolved) so the snapshot round-trips cleanly on hydrate.
+  registerSettledMessage(id, s._currentAssistantEl)
   s.currentStreamText = ''
   s._settledBoundary = 0
   s._settledHTML = ''
@@ -891,6 +941,13 @@ export function closeSession(id) {
 
 export function activateSession(id) {
   if (!state.sessions[id]) return
+  // Save outgoing session's scroll position as { index, offset } so tab
+  // switch doesn't drift after rehydration (pixel scrollTop drifts ±2px
+  // per evicted message).
+  const prevId = state.activeId
+  if (prevId && prevId !== id && state.sessions[prevId]?._virtualList) {
+    try { state.sessions[prevId]._scrollPos = state.sessions[prevId]._virtualList.topVisible() } catch (_) { /* ignored */ }
+  }
   // Only deactivate sessions in the SAME pane group
   const pane = state.sessions[id].pane
   const group = pane.parentElement  // .pane-group-content
@@ -909,6 +966,13 @@ export function activateSession(id) {
     setTimeout(() => state.sessions[id].fitAddon.fit(), 50)
   } else if (state.sessions[id].mode === 'chat') {
     setTimeout(() => document.getElementById('chat-input-' + id)?.focus(), 50)
+  }
+  // Restore scroll position on incoming session (after pane is visible so
+  // getBoundingClientRect is valid). Only when we have a saved position.
+  const incoming = state.sessions[id]
+  if (incoming._virtualList && incoming._scrollPos) {
+    const { index, offset } = incoming._scrollPos
+    requestAnimationFrame(() => incoming._virtualList.scrollToIndex(index, offset))
   }
 }
 

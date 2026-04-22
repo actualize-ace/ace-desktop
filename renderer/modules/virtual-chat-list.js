@@ -25,16 +25,22 @@ const OBSERVE_ROOT_MARGIN = '400px 0px 0px 0px'
 
 /**
  * @param {HTMLElement} container - Scroll container (e.g. #chat-msgs-{id}).
- * @param {(message: object, ctx: { signal: AbortSignal }) => (HTMLElement | { node: HTMLElement, hydrateHeavy?: () => void })} renderMessage
- *   Caller-provided renderer. MUST attach any event listeners with
- *   { signal: ctx.signal } so releaseNode can tear them down. May return
- *   a plain node (work done synchronously) OR { node, hydrateHeavy }
- *   where hydrateHeavy is deferred to rIC/rAF after mount so fast
- *   scrolls do not jank on syntax highlighting / image decoding.
+ * @param {object} [opts]
+ * @param {(message: object, ctx: { signal: AbortSignal }) => (HTMLElement | { node: HTMLElement, hydrateHeavy?: () => void })} [opts.renderMessage]
+ *   Optional full renderer. Used by hydrate when no snapshot exists.
+ *   MUST attach listeners via ctx.signal so releaseNode can tear them down.
+ * @param {(node: HTMLElement, message: object, ctx: { signal: AbortSignal }) => void} [opts.onRewire]
+ *   Called after snapshot-based hydrate to re-attach listeners on the
+ *   fresh node (e.g. attachment click handlers). Listeners MUST use
+ *   ctx.signal.
  */
-export function createVirtualChatList(container, renderMessage) {
+export function createVirtualChatList(container, opts = {}) {
+  // Back-compat: older callers pass renderMessage as second arg directly.
+  const renderMessage = typeof opts === 'function' ? opts : opts.renderMessage
+  const onRewire = typeof opts === 'function' ? null : opts.onRewire
   const mounted = new Map()       // index -> node
   const placeholders = new Map()  // index -> placeholder node
+  const snapshots = new Map()     // index -> outerHTML (captured at adopt)
   let currentMessages = []
 
   const io = new IntersectionObserver((entries) => {
@@ -83,14 +89,40 @@ export function createVirtualChatList(container, renderMessage) {
     return node
   }
 
+  // Retroactively track an existing DOM node + capture its outerHTML as
+  // the snapshot source for hydrate after eviction. Used by callers (e.g.
+  // session-manager) that already build their own message nodes and just
+  // want eviction + snapshot-based restoration, not full render ownership.
+  function adopt(node, message) {
+    if (!node || message?.index == null) return
+    const ac = new AbortController()
+    node._ac = ac
+    node.dataset.messageIndex = String(message.index)
+    snapshots.set(message.index, node.outerHTML)
+    mounted.set(message.index, node)
+  }
+
   function hydrate(idx) {
     const ph = placeholders.get(idx)
     if (!ph) return
-    const message = currentMessages[idx]
-    if (!message) return
+    const message = currentMessages[idx] || { index: idx }
 
     const expectedH = Number(ph.dataset.measuredHeight)
-    const node = renderAttached(message)
+    const html = snapshots.get(idx)
+    let node
+    const ac = new AbortController()
+
+    if (html) {
+      const tmpl = document.createElement('template')
+      tmpl.innerHTML = html
+      node = tmpl.content.firstElementChild
+      node._ac = ac
+      node.dataset.messageIndex = String(idx)
+    } else if (renderMessage) {
+      node = renderAttached(message)
+    } else {
+      return
+    }
 
     io.unobserve(ph)
     ph.replaceWith(node)
@@ -105,8 +137,42 @@ export function createVirtualChatList(container, renderMessage) {
       window.__virtHeightDrift = (window.__virtHeightDrift || 0) + 1
     }
 
-    scheduleHeavy(node)
+    if (html && typeof onRewire === 'function') {
+      try { onRewire(node, message, { signal: ac.signal }) } catch (_) { /* ignored */ }
+    } else if (!html) {
+      scheduleHeavy(node)
+    }
+
     return node
+  }
+
+  // Topmost visible message in the viewport + pixel offset from its top.
+  // Used by session switch to persist scroll via { index, offset } instead
+  // of pixel scrollTop (which drifts across rehydration when placeholder
+  // heights diverge from actual rendered heights by ±2px).
+  function topVisible() {
+    const containerTop = container.getBoundingClientRect().top
+    const entries = [...mounted.entries(), ...placeholders.entries()]
+      .sort((a, b) => a[0] - b[0])
+    for (const [idx, el] of entries) {
+      const rect = el.getBoundingClientRect()
+      if (rect.bottom > containerTop + 1) {
+        return { index: idx, offset: Math.max(0, containerTop - rect.top) }
+      }
+    }
+    return { index: 0, offset: 0 }
+  }
+
+  // Scroll container so the given message index is at the top, adjusted
+  // by offset pixels within that message. Hydrates a placeholder if the
+  // target index is currently evicted.
+  function scrollToIndex(index, offset = 0) {
+    if (placeholders.has(index)) hydrate(index)
+    const node = mounted.get(index)
+    if (!node) return
+    const containerRect = container.getBoundingClientRect()
+    const nodeRect = node.getBoundingClientRect()
+    container.scrollTop += (nodeRect.top - containerRect.top) + offset
   }
 
   // Two-pass to avoid layout thrash: PASS 1 reads all heights (no DOM
@@ -158,13 +224,17 @@ export function createVirtualChatList(container, renderMessage) {
 
   return {
     mount,
+    adopt,
     hydrate,
     evictAboveFold,
     releaseNode,
     setMessages,
+    topVisible,
+    scrollToIndex,
     get size() { return mounted.size },
     get messages() { return currentMessages },
     _mounted: mounted,
     _placeholders: placeholders,
+    _snapshots: snapshots,
   }
 }
