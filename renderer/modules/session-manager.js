@@ -93,7 +93,7 @@ export function sendChatMessage(id, prompt, sessionsObj) {
   const attachedFiles = consumeAttachments(s)
   const finalPrompt = injectAttachments({ pendingAttachments: attachedFiles }, prompt.trim())
 
-  s.messages.push({ role: 'user', content: prompt.trim(), attachments: attachedFiles.length ? attachedFiles : undefined, timestamp: Date.now() })
+  s.messages.push({ index: s.messages.length, role: 'user', content: prompt.trim(), attachments: attachedFiles.length ? attachedFiles : undefined, timestamp: Date.now() })
   s.currentStreamText = ''
   s._fullResponseText = ''
   s.currentToolInput = ''
@@ -242,7 +242,7 @@ export function finalizeMessage(id, sessionsObj) {
     const statusWord = s._currentAssistantEl.querySelector('.chat-status-word')
     if (statusWord) statusWord.remove()
   }
-  s.messages.push({ role: 'assistant', content: s._fullResponseText || s.currentStreamText, timestamp: Date.now() })
+  s.messages.push({ index: s.messages.length, role: 'assistant', content: s._fullResponseText || s.currentStreamText, timestamp: Date.now() })
   s.currentStreamText = ''
   s._settledBoundary = 0
   s._settledHTML = ''
