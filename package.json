@@ -56,12 +56,6 @@
       "createDesktopShortcut": true,
       "shortcutName": "ACE"
     },
-    "extraResources": [
-      {
-        "from": "../tools/ace-analytics",
-        "to": "ace-analytics"
-      }
-    ],
     "files": [
       "**/*",
       "!renderer/data/natal-chart.json",
@@ -69,7 +63,14 @@
       "!scripts/stress.js",
       "!scripts/stress-README.md",
       "!scripts/stress-results.jsonl",
-      "!scripts/fixtures/**"
+      "!scripts/fixtures/**",
+      "!../tools/**",
+      "!**/tools/ace-analytics/**",
+      "!**/*.db",
+      "!**/*.db-shm",
+      "!**/*.db-wal",
+      "!**/*.sqlite",
+      "!**/*.sqlite3"
     ]
   }
 }
