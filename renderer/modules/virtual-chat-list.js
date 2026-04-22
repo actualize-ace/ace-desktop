@@ -25,9 +25,12 @@ const OBSERVE_ROOT_MARGIN = '400px 0px 0px 0px'
 
 /**
  * @param {HTMLElement} container - Scroll container (e.g. #chat-msgs-{id}).
- * @param {(message: object, ctx: { signal: AbortSignal }) => HTMLElement} renderMessage
+ * @param {(message: object, ctx: { signal: AbortSignal }) => (HTMLElement | { node: HTMLElement, hydrateHeavy?: () => void })} renderMessage
  *   Caller-provided renderer. MUST attach any event listeners with
- *   { signal: ctx.signal } so releaseNode can tear them down.
+ *   { signal: ctx.signal } so releaseNode can tear them down. May return
+ *   a plain node (work done synchronously) OR { node, hydrateHeavy }
+ *   where hydrateHeavy is deferred to rIC/rAF after mount so fast
+ *   scrolls do not jank on syntax highlighting / image decoding.
  */
 export function createVirtualChatList(container, renderMessage) {
   const mounted = new Map()       // index -> node
@@ -42,21 +45,97 @@ export function createVirtualChatList(container, renderMessage) {
     }
   }, { root: container, rootMargin: OBSERVE_ROOT_MARGIN })
 
-  function mount(message) {
-    // A4 implements real mount; skeleton appends a rendered node so
-    // callers can exercise the surface without virtualization yet.
+  function renderAttached(message) {
     const ac = new AbortController()
-    const node = renderMessage(message, { signal: ac.signal })
+    const result = renderMessage(message, { signal: ac.signal })
+    const node = result && result.nodeType ? result : result?.node
+    if (!node) throw new Error('renderMessage must return a node or { node }')
     node._ac = ac
+    node._hydrateHeavy = result?.hydrateHeavy || null
     node.dataset.messageIndex = String(message.index)
-    container.appendChild(node)
-    mounted.set(message.index, node)
     return node
   }
 
-  function hydrate(_idx) { /* A4 */ }
+  // Deferred heavy work (syntax highlighting, image decoding, markdown
+  // post-processing). Sync mount resolves layout first so fast scroll
+  // doesn't drift; heavy work runs in an idle slot. Aborted-eviction
+  // check skips wasted work on nodes evicted before their idle callback.
+  function scheduleHeavy(node) {
+    if (!node._hydrateHeavy) return
+    const signal = node._ac?.signal
+    const run = () => {
+      if (signal?.aborted) return
+      try { node._hydrateHeavy?.() } catch (_) { /* ignored */ }
+      node._hydrateHeavy = null
+    }
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(run, { timeout: 100 })
+    } else {
+      requestAnimationFrame(run)
+    }
+  }
 
-  function evictAboveFold(_visibleTopIdx) { /* A4 */ }
+  function mount(message) {
+    const node = renderAttached(message)
+    container.appendChild(node)
+    mounted.set(message.index, node)
+    scheduleHeavy(node)
+    return node
+  }
+
+  function hydrate(idx) {
+    const ph = placeholders.get(idx)
+    if (!ph) return
+    const message = currentMessages[idx]
+    if (!message) return
+
+    const expectedH = Number(ph.dataset.measuredHeight)
+    const node = renderAttached(message)
+
+    io.unobserve(ph)
+    ph.replaceWith(node)
+    placeholders.delete(idx)
+    mounted.set(idx, node)
+
+    // Height reconciliation — drift > 2px means placeholder was the wrong
+    // size at eviction and cumulative drift across N placeholders above
+    // will misplace scroll on restoration. A6 gates on this counter.
+    const actualH = node.getBoundingClientRect().height
+    if (expectedH && Math.abs(actualH - expectedH) > 2) {
+      window.__virtHeightDrift = (window.__virtHeightDrift || 0) + 1
+    }
+
+    scheduleHeavy(node)
+    return node
+  }
+
+  // Two-pass to avoid layout thrash: PASS 1 reads all heights (no DOM
+  // mutation), PASS 2 does replaceWith + releaseNode. Interleaving the
+  // two forces a reflow per iteration — on a 100-message eviction that
+  // is 100 reflows, making the eviction itself a frame-killer.
+  function evictAboveFold(visibleTopIdx) {
+    const evictBefore = visibleTopIdx - BUFFER_ABOVE
+
+    const toEvict = []
+    for (const [idx, node] of mounted) {
+      if (idx < evictBefore) {
+        toEvict.push({ idx, node, h: node.getBoundingClientRect().height })
+      }
+    }
+
+    for (const { idx, node, h } of toEvict) {
+      const ph = document.createElement('div')
+      ph.className = 'message-placeholder'
+      ph.style.height = `${h}px`
+      ph.dataset.messageIndex = String(idx)
+      ph.dataset.measuredHeight = String(h)
+      node.replaceWith(ph)
+      releaseNode(node)
+      mounted.delete(idx)
+      placeholders.set(idx, ph)
+      io.observe(ph)
+    }
+  }
 
   function releaseNode(node) {
     if (!node) return
