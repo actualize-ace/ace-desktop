@@ -187,18 +187,21 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   // and the process hangs silently (node-pty works because ConPTY handles
   // this internally; bare spawn does not).
   const needsShell = process.platform === 'win32' && /\.(cmd|bat)$/i.test(claudeBin)
+  const spawnStartMs = Date.now()
   const proc = spawn(claudeBin, args, {
     cwd,
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env, PATH: augmentedPath, TERM: 'xterm-256color', COLORTERM: 'truecolor', ELECTRON_RUN_AS_NODE: undefined, MCP_CONNECTION_NONBLOCKING: undefined },
     shell: needsShell,
   })
+  if (!win.isDestroyed()) win.webContents.send(`${ch.CHAT_SPAWN_STATUS}:${chatId}`, { status: 'starting' })
 
   // Spawn-level failures (ENOENT for node, EACCES, etc.) are emitted on the
   // proc itself — without this listener they'd surface only as an exit with
   // no stderr and the renderer would show nothing.
   proc.on('error', err => {
     if (win.isDestroyed()) return
+    win.webContents.send(`${ch.CHAT_SPAWN_STATUS}:${chatId}`, { status: 'failed' })
     win.webContents.send(`${ch.CHAT_ERROR}:${chatId}`,
       JSON.stringify({
         type: 'spawn-failed',
@@ -246,6 +249,7 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   const flushStartupBuffer = () => {
     if (!startupPhase || !stderrBuf) return
     startupPhase = false
+    if (!win.isDestroyed()) win.webContents.send(`${ch.CHAT_SPAWN_STATUS}:${chatId}`, { status: 'ready', spawnMs: Date.now() - spawnStartMs })
     const buf = stderrBuf
     stderrBuf = null
     if (win.isDestroyed()) return

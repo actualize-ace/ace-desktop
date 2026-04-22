@@ -14,6 +14,7 @@ import { renderMcpEventCard, renderPermissionApprovalCard, renderMcpPermissionCa
 import { MODEL_CTX_LIMITS, updateTelemetry } from './telemetry.js'
 import { createChatPane } from './chat-pane.js'
 import { createVirtualChatList } from './virtual-chat-list.js'
+import { markSessionOpen, markSessionReady, markSendStart, markFirstToken } from './perf-telemetry.js'
 
 // ─── Chat System ─────────────────────────────────────────────────────────────
 
@@ -144,6 +145,8 @@ export function sendChatMessage(id, prompt, sessionsObj) {
   s._fullResponseText = ''
   s.currentToolInput = ''
   s.isStreaming = true
+  s._firstTokenMarked = false
+  markSendStart(id)
   s._paneControls?.setStreaming(true)
   s._prevContextTokens = s.contextInputTokens
   updateOrbState()
@@ -521,6 +524,7 @@ export function wireChatListeners(id, sessionsObj) {
       }
       if (e.type === 'content_block_delta') {
         if (e.delta?.type === 'text_delta') {
+          if (!s._firstTokenMarked) { s._firstTokenMarked = true; markFirstToken(id) }
           s.currentStreamText += e.delta.text
           s._fullResponseText += e.delta.text
           scheduleRender(id, sessionsObj)
@@ -635,9 +639,22 @@ export function wireChatListeners(id, sessionsObj) {
     const agentVisible = agentsVisible && id === state.focusedAgentId
     if (!sessionVisible && !agentVisible) setAttention(id, sessionsObj, 'exit')
   })
+  const setMcpDot = (status) => {
+    const dot = document.getElementById('mcp-dot-' + id)
+    if (!dot) return
+    dot.className = 'mcp-dot' + (status ? ' ' + status : '')
+    const labels = { starting: 'Claude process: starting…', ready: 'Claude process: ready', failed: 'Claude process: failed' }
+    dot.title = labels[status] || 'Claude process: idle'
+  }
+  const cleanupSpawn = window.ace.chat.onSpawnStatus?.(id, ({ status, spawnMs }) => {
+    setMcpDot(status)
+    if (status === 'ready') markSessionReady(id)
+    if (spawnMs != null) console.debug(`[perf] spawn_ready=${spawnMs}ms id=${id}`)
+  })
+
   // Store cleanup functions on session so listeners are removed on close
   const s = sessionsObj[id]
-  if (s) s._cleanupListeners = () => { cleanupStream(); cleanupError(); cleanupExit() }
+  if (s) s._cleanupListeners = () => { cleanupStream(); cleanupError(); cleanupExit(); cleanupSpawn?.() }
 }
 
 // ─── Sessions ────────────────────────────────────────────────────────────────
@@ -941,6 +958,7 @@ export function closeSession(id) {
 
 export function activateSession(id) {
   if (!state.sessions[id]) return
+  markSessionOpen(id)
   // Save outgoing session's scroll position as { index, offset } so tab
   // switch doesn't drift after rehydration (pixel scrollTop drifts ±2px
   // per evicted message).

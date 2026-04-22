@@ -113,6 +113,11 @@ contextBridge.exposeInMainWorld('ace', {
       ipcRenderer.on(channel, (_, code) => cb(code))
       return () => ipcRenderer.removeAllListeners(channel)
     },
+    onSpawnStatus: (id, cb) => {
+      const channel = `${ch.CHAT_SPAWN_STATUS}:${id}`
+      ipcRenderer.on(channel, (_, payload) => cb(payload))
+      return () => ipcRenderer.removeAllListeners(channel)
+    },
   },
 
   // ─── Attachments ──────────────────────────────────────────────────────────────

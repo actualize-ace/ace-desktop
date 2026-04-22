@@ -103,7 +103,10 @@ export function createChatPane(id, config = {}) {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.49"/></svg>
         </button>
         <textarea class="chat-input" id="chat-input-${id}" data-learn-target="chat-composer" placeholder="${placeholder}" rows="1"></textarea>
-        <button class="chat-send-btn" id="chat-send-${id}" data-learn-target="send-button">↑</button>
+        <div class="chat-send-wrap">
+          <button class="chat-send-btn" id="chat-send-${id}" data-learn-target="send-button">↑</button>
+          <span class="mcp-dot" id="mcp-dot-${id}" title="Claude process: idle"></span>
+        </div>
       </div>
     </div>
     <div class="term-xterm" id="xterm-${id}" style="display:none"></div>

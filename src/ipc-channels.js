@@ -61,6 +61,7 @@ module.exports = {
   CHAT_STREAM:            'chat-stream',
   CHAT_ERROR:             'chat-error',
   CHAT_EXIT:              'chat-exit',
+  CHAT_SPAWN_STATUS:      'chat-spawn-status',
 
   // Attachments
   ATTACHMENT_PICK:          'attachment-pick',
