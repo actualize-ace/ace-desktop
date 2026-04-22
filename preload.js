@@ -118,6 +118,7 @@ contextBridge.exposeInMainWorld('ace', {
       ipcRenderer.on(channel, (_, payload) => cb(payload))
       return () => ipcRenderer.removeAllListeners(channel)
     },
+    prewarm: () => ipcRenderer.send(ch.CHAT_PREWARM),
   },
 
   // ─── Attachments ──────────────────────────────────────────────────────────────

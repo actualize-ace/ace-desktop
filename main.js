@@ -370,6 +370,7 @@ ipcMain.handle(ch.CHAT_SEND, (_, chatId, prompt, claudeSessionId, opts) => {
 })
 ipcMain.on(ch.CHAT_CANCEL, (_, chatId) => require('./src/chat-manager').cancel(chatId))
 ipcMain.on(ch.CHAT_RESPOND, (_, chatId, text) => require('./src/chat-manager').respond(chatId, text))
+ipcMain.on(ch.CHAT_PREWARM, () => require('./src/chat-manager').prewarm(resolveClaudeBin()))
 
 // ─── Attachment IPC Handlers ─────────────────────────────────────────────────
 

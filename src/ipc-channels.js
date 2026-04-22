@@ -62,6 +62,7 @@ module.exports = {
   CHAT_ERROR:             'chat-error',
   CHAT_EXIT:              'chat-exit',
   CHAT_SPAWN_STATUS:      'chat-spawn-status',
+  CHAT_PREWARM:           'chat-prewarm',
 
   // Attachments
   ATTACHMENT_PICK:          'attachment-pick',

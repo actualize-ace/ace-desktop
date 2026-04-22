@@ -365,4 +365,19 @@ function respond(chatId, text) {
   }
 }
 
-module.exports = { send, cancel, cancelAll, respond }
+// Warm up OS binary caches (AV scanning, Node.js module load) by running
+// `claude --version` in the background. Zero tokens, no API call, no output.
+// Fires ~5s after first user activity so the real first send has a head start.
+function prewarm(claudeBin) {
+  if (!claudeBin) return
+  try {
+    const pw = spawn(claudeBin, ['--version'], {
+      stdio: 'ignore',
+      env: { ...process.env },
+    })
+    pw.on('error', () => { /* silent — binary may not support --version */ })
+    pw.unref()
+  } catch (_) { /* ignored */ }
+}
+
+module.exports = { send, cancel, cancelAll, respond, prewarm }

@@ -805,6 +805,22 @@ export function spawnSession(opts) {
   // Wire chat stream listeners
   wireChatListeners(id)
 
+  // 5s activity prewarm — warm up OS binary/AV caches before first real send.
+  // Fires once, 5s after first user engagement (keystroke, focus, scroll).
+  // Aborts if session is closed first. Zero tokens — uses `claude --version`.
+  const prewarmAc = new AbortController()
+  const prewarmOnce = () => {
+    prewarmAc.abort() // fire once only
+    setTimeout(() => { window.ace.chat.prewarm?.() }, 5000)
+  }
+  const inputElForPrewarm = document.getElementById('chat-input-' + id)
+  const msgsElForPrewarm = document.getElementById('chat-msgs-' + id)
+  inputElForPrewarm?.addEventListener('focus',   prewarmOnce, { once: true, signal: prewarmAc.signal })
+  inputElForPrewarm?.addEventListener('keydown', prewarmOnce, { once: true, signal: prewarmAc.signal })
+  msgsElForPrewarm?.addEventListener('scroll',   prewarmOnce, { once: true, signal: prewarmAc.signal })
+  const s2 = state.sessions[id]
+  if (s2) s2._prewarmAc = prewarmAc  // store so close can abort
+
   // Auto-switch to terminal mode for resumed sessions
   if (resumeId) {
     requestAnimationFrame(() => toggleSessionMode(id))
@@ -935,6 +951,7 @@ export function closeSession(id) {
   const s = state.sessions[id]
   if (!s) return
   clearTimer(id)
+  try { s._prewarmAc?.abort() } catch (_) { /* ignored */ }
   if (s.term) window.ace.pty.kill(id)
   if (s.isStreaming) window.ace.chat.cancel(id)
   if (s._cleanupListeners) s._cleanupListeners()
