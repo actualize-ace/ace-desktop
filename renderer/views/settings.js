@@ -115,6 +115,13 @@ export async function renderSettingsPanel() {
         </div>
         <div class="settings-toggle${d.chat?.lean !== false ? ' on' : ''}" data-setting="chat.lean"></div>
       </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Disable MCP Servers</div>
+          <div style="font-size:9px;color:var(--text-dim);margin-top:2px;">Emergency bypass — skips all MCP tools. Speeds chat launch on slow networks or Windows.</div>
+        </div>
+        <div class="settings-toggle${_settingsConfig?.suppressMcp ? ' on' : ''}" data-setting="suppressMcp"></div>
+      </div>
     </div>
 
     <div class="settings-section">
@@ -390,6 +397,15 @@ export function wireSettingsHandlers() {
         await toggleBuildMode()
         return
       }
+      if (tog.dataset.setting === 'suppressMcp') {
+        // Top-level config field — not under defaults
+        tog.classList.toggle('on')
+        const isOn = tog.classList.contains('on')
+        await window.ace.setup.patchConfig({ suppressMcp: isOn })
+        if (_settingsConfig) _settingsConfig.suppressMcp = isOn
+        applySettingImmediately('suppressMcp', isOn)
+        return
+      }
       tog.classList.toggle('on')
       const isOn = tog.classList.contains('on')
       const setting = tog.dataset.setting
@@ -452,6 +468,22 @@ export function applySettingImmediately(path, value) {
       sidebar?.classList.remove('collapsed')
       if (toggleBtn) toggleBtn.innerHTML = '\u25c2 <span>Collapse</span>'
     }
+  } else if (path === 'suppressMcp') {
+    // Cancel all live streams — next send picks up the new flag from main.js config
+    for (const id of Object.keys(state.sessions || {})) {
+      const s = state.sessions[id]
+      if (s?.isStreaming) window.ace.chat.cancel(id)
+    }
+    // Inline transient banner in settings panel
+    const existing = document.getElementById('suppress-mcp-toast')
+    if (existing) existing.remove()
+    const banner = document.createElement('div')
+    banner.id = 'suppress-mcp-toast'
+    banner.style.cssText = 'margin:8px 0;padding:7px 10px;background:rgba(136,120,255,0.12);border-radius:6px;font-size:11px;color:var(--text-secondary,#aaa);'
+    banner.textContent = 'MCP setting changed — next message restarts the chat process.'
+    const section = document.querySelector('.settings-section')
+    if (section) section.parentNode.insertBefore(banner, section)
+    setTimeout(() => banner.remove(), 4000)
   } else if (path === 'chat.model' || path === 'chat.permissions' || path === 'chat.effort' || path === 'chat.lean') {
     // Update chatDefaults for new sessions
     const key = path.split('.')[1]
