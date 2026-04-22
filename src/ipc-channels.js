@@ -16,13 +16,11 @@ module.exports = {
   DASH_STATE:      'dash-state-update',
   DASH_OUTCOMES:   'dash-outcomes-update',
   DASH_FOLLOWUPS:  'dash-followups-update',
-  DASH_PIPELINE:   'dash-pipeline-update',
   DASH_SITREP:     'dash-sitrep-update',
   DASH_REFRESH:    'dash-refresh',
 
   // Dashboard data requests (renderer → main, invoke/handle)
   GET_STATE:       'get-state',
-  GET_PIPELINE:    'get-pipeline',
   GET_FOLLOWUPS:   'get-followups',
   GET_METRICS:     'get-metrics',
 

@@ -68,7 +68,7 @@ function parseSignalDetails(vaultPath) {
 
 // ─── Build context object from all vault/db data ──────────────────────────────
 
-function buildContext(vaultPath, state, metrics, followUps, velocity, pipeline) {
+function buildContext(vaultPath, state, metrics, followUps, velocity) {
   const signals = parseSignalDetails(vaultPath)
   const scoreMap = { green: 2, yellow: 1, red: 0, dim: 0 }
   const coherenceScore = signals.reduce((sum, c) => sum + (scoreMap[c] || 0), 0)
@@ -99,10 +99,6 @@ function buildContext(vaultPath, state, metrics, followUps, velocity, pipeline) 
     targets: {
       done:  (state?.weeklyTargets || []).filter(t => t.checked).length,
       total: (state?.weeklyTargets || []).length,
-    },
-    pipeline: {
-      count: (pipeline || []).length,
-      value: (pipeline || []).reduce((s, d) => s + (d.amount || 0), 0),
     },
     velocity: {
       thisWeek: velocity?.totalThisWeek || 0,
@@ -143,7 +139,6 @@ System state:
 - Signals: ${context.signals?.join(',') || 'unknown'}
 - Outcomes: ${(context.outcomes || []).map(o => `${o.title}[${o.status}]${o.daysToGate != null ? ' gate:' + o.daysToGate + 'd' : ''}`).join(' | ') || 'none'}
 - Targets: ${context.targets?.done || 0}/${context.targets?.total || 0} complete
-- Pipeline: ${context.pipeline?.count || 0} deals / $${context.pipeline?.value || 0}
 - Velocity: ${context.velocity?.thisWeek || 0} this week vs ${context.velocity?.lastWeek || 0} last week
 - Overdue follow-ups: ${context.overdueFu || 0}
 - Execution gap: ${context.daysSinceExecution || 0}d

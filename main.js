@@ -304,7 +304,6 @@ app.whenReady().then(() => {
       require('./src/preflight').run(mainWindow, config.claudeBinaryPath, config.vaultPath)
     })
     require('./src/file-watcher').start(mainWindow)
-    require('./src/db-reader').open(config.vaultPath)
   }
 })
 
@@ -517,7 +516,6 @@ ipcMain.handle(ch.SAVE_CONFIG, (_, config) => {
   global.CLAUDE_BIN = config.claudeBinaryPath
   if (config.anthropicApiKey) process.env.ANTHROPIC_API_KEY = config.anthropicApiKey
   require('./src/file-watcher').start(mainWindow)
-  require('./src/db-reader').open(config.vaultPath)
   require('./src/vault-scanner').invalidateCache()
   const stressOpts = (!app.isPackaged && process.env.STRESS === '1')
     ? { query: { stress: '1' } }
@@ -601,19 +599,13 @@ ipcMain.handle(ch.GET_STATE, () => {
   try { return require('./src/vault-reader').parseState(global.VAULT_PATH) } catch (e) { return { error: e.message } }
 })
 
-ipcMain.handle(ch.GET_PIPELINE, () => {
-  try { return require('./src/db-reader').getPipeline() } catch (e) { return { error: e.message } }
-})
-
 ipcMain.handle(ch.GET_FOLLOWUPS, () => {
   try { return require('./src/vault-reader').parseFollowUps(global.VAULT_PATH) } catch (e) { return { error: e.message } }
 })
 
 ipcMain.handle(ch.GET_METRICS, () => {
   try {
-    const metrics = require('./src/db-reader').getMetrics()
-    metrics._signals = require('./src/synthesizer').parseSignalDetails(global.VAULT_PATH)
-    return metrics
+    return { _signals: require('./src/synthesizer').parseSignalDetails(global.VAULT_PATH) }
   } catch (e) { return { error: e.message } }
 })
 

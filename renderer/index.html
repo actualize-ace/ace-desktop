@@ -1196,7 +1196,6 @@ document.getElementById('preflight-settings')?.addEventListener('click', () => {
     let reloadTimer
     window.ace.dash.onStateUpdate?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
     window.ace.dash.onFollowUpsUpdate?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
-    window.ace.dash.onPipelineUpdate?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
     window.ace.dash.onSitrepUpdate?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
     window.ace.dash.onDashRefresh?.(() => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => loadDashboard(), 300) })
   </script>

@@ -59,14 +59,12 @@ contextBridge.exposeInMainWorld('ace', {
   // ─── Dashboard ───────────────────────────────────────────────────────────────
   dash: {
     getState:    () => ipcRenderer.invoke(ch.GET_STATE),
-    getPipeline: () => ipcRenderer.invoke(ch.GET_PIPELINE),
     getFollowUps:() => ipcRenderer.invoke(ch.GET_FOLLOWUPS),
     getMetrics:  () => ipcRenderer.invoke(ch.GET_METRICS),
 
     onStateUpdate:    (cb) => ipcRenderer.on(ch.DASH_STATE,    cb),
     onOutcomesUpdate: (cb) => ipcRenderer.on(ch.DASH_OUTCOMES, cb),
     onFollowUpsUpdate:(cb) => ipcRenderer.on(ch.DASH_FOLLOWUPS,cb),
-    onPipelineUpdate: (cb) => ipcRenderer.on(ch.DASH_PIPELINE, cb),
     onSitrepUpdate:   (cb) => ipcRenderer.on(ch.DASH_SITREP,   cb),
     onDashRefresh:    (cb) => ipcRenderer.on(ch.DASH_REFRESH,  cb),
 

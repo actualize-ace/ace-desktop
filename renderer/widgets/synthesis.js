@@ -385,7 +385,7 @@ export default {
   },
 
   _buildContext(allData) {
-    const { state, metrics, pipeline, followUps, velocity, patterns } = allData || {}
+    const { state, metrics, followUps, velocity, patterns } = allData || {}
     const signals = metrics?._signals || Array(9).fill('dim')
     const scoreMap = { green: 2, yellow: 1, red: 0, dim: 0 }
     const coherenceScore = signals.reduce((sum, c) => sum + (scoreMap[c] || 0), 0)
@@ -419,10 +419,6 @@ export default {
         items: (state?.weeklyTargets || []),
         done:  (state?.weeklyTargets || []).filter(t => t.checked).length,
         total: (state?.weeklyTargets || []).length,
-      },
-      pipeline: {
-        count: (pipeline || []).length,
-        value: (pipeline || []).reduce((s, d) => s + (d.amount || 0), 0),
       },
       velocity: {
         thisWeek: velocity?.totalThisWeek || 0,
@@ -509,7 +505,6 @@ export default {
     const priorities = []
     const today = new Date(); today.setHours(0, 0, 0, 0)
     const fuArr = Array.isArray(allData?.followUps) ? allData.followUps : []
-    const pipeline = Array.isArray(allData?.pipeline) ? allData.pipeline : []
 
     // 1. Overdue follow-ups (skip non-date due values like "Next paycheck", "—", "TBD")
     fuArr.filter(f => {
@@ -563,27 +558,7 @@ export default {
         })
       })
 
-    // 4. Pipeline deals with overdue next actions
-    pipeline.filter(d => {
-      if (!d.due_date) return false
-      const due = new Date(d.due_date); due.setHours(0, 0, 0, 0)
-      return due < today
-    }).sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
-      .forEach(d => {
-        const due = new Date(d.due_date); due.setHours(0, 0, 0, 0)
-        const days = Math.round((today - due) / (1000 * 60 * 60 * 24))
-        const fmtMoney = n => n >= 1000 ? `$${Math.round(n/1000)}K` : `$${Math.round(n)}`
-        priorities.push({
-          type: 'pipeline', urgency: 'warning',
-          label: `${d.person} \u2014 ${d.stage}`,
-          context: `${days}d overdue`,
-          prompt: `${d.person} is at ${d.stage} stage${d.amount ? ', ' + fmtMoney(d.amount) : ''}. Next action: ${d.next_action || 'TBD'} (${days}d overdue). Help me move this forward.`,
-          tabLabel: `${d.person} deal`,
-          _raw: { person: d.person, stage: d.stage, amount: d.amount, nextAction: d.next_action, due: d.due_date },
-        })
-      })
-
-    // 5. Unchecked weekly targets
+    // 4. Unchecked weekly targets
     ctx.targets.items
       .filter(t => !t.checked)
       .forEach(t => {

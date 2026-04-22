@@ -42,7 +42,6 @@ async function loadDashboard() {
   // Data source → IPC method map
   const sourceMap = {
     getState:        () => window.ace.dash.getState(),
-    getPipeline:     () => window.ace.dash.getPipeline(),
     getFollowUps:    () => window.ace.dash.getFollowUps(),
     getMetrics:      () => window.ace.dash.getMetrics(),
     getVelocity:     () => window.ace.dash.getVelocity(),
@@ -96,7 +95,6 @@ async function loadDashboard() {
   const allData = {
     state:         data.getState,
     metrics:       data.getMetrics,
-    pipeline:      data.getPipeline,
     followUps:     data.getFollowUps,
     velocity:      data.getVelocity,
     rhythm:        data.getRhythm,
@@ -388,7 +386,6 @@ function buildExpansionCandidates(allData) {
   const buildBlocks = allData.buildBlocks || []
   const patterns = allData.patterns || {}
   const signals = allData.metrics?._signals || []
-  const pipeline = Array.isArray(allData.pipeline) ? allData.pipeline : []
 
   // Weekly targets (unchecked)
   const targets = (state.weeklyTargets || []).filter(t => !t.checked)
@@ -454,23 +451,6 @@ function buildExpansionCandidates(allData) {
       label: 'Untouched edge',
       context: `Capacity → Depth ${c2}`,
       _raw: { signal: 'C2', color: c2 },
-    })
-  }
-
-  // Pipeline (overdue only)
-  for (const deal of pipeline) {
-    if (!deal.due_date) continue
-    const due = new Date(deal.due_date)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    if (due >= today) continue
-    candidates.push({
-      type: 'pipeline',
-      leg: 'expansion',
-      urgency: 'urgent',
-      label: `${deal.person} — ${(deal.next_action || '').slice(0, 60)}`,
-      context: `Overdue · $${deal.amount}`,
-      _raw: deal,
     })
   }
 

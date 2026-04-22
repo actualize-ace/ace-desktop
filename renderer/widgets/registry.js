@@ -18,7 +18,6 @@ import velocity     from './velocity.js'
 import state        from './state.js'
 import outcomes     from './outcomes.js'
 import targets      from './targets.js'
-import pipeline     from './pipeline.js'
 import followups    from './followups.js'
 import quickactions from './quickactions.js'
 import astro        from './astro.js'
@@ -29,7 +28,7 @@ export const WIDGETS = [
   triadAuthority, triadCapacity, triadExpansion,
   innermove,
   identity, astro, metrics, rhythm, velocity,
-  state, outcomes, targets, pipeline, followups, quickactions,
+  state, outcomes, targets, followups, quickactions,
 ]
 
 // Zone assignment for cockpit layout
@@ -57,7 +56,6 @@ export const WIDGET_ZONES = {
   state:        'legacy',
   outcomes:     'legacy',
   targets:      'legacy',
-  pipeline:     'legacy',
   followups:    'legacy',
   quickactions: 'legacy',
 }
