@@ -189,9 +189,11 @@ export function createChatPane(id, config = {}) {
 
   // ── setStreaming ──────────────────────────────────────────────────────────
   function setStreaming(active) {
-    sendBtn.disabled = active
     sendBtn.classList.toggle('streaming', active)
-    if (!active) {
+    if (active) {
+      sendBtn.textContent = '■'
+      sendBtn.classList.add('cancel')
+    } else {
       sendBtn.textContent = '↑'
       sendBtn.classList.remove('cancel')
     }

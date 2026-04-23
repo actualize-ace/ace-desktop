@@ -615,26 +615,76 @@ export async function initAstro() {
   ;[natalData, interpretations] = await Promise.all([loadNatalChart(), loadInterpretations()])
   transitData = await loadTransits()
 
-  // Empty state — no natal chart configured (v0.1.6 ships without bundled charts;
-  // v0.1.7 will add the birth-details Settings UI that generates per-user charts).
+  // Empty state — birth details form
   if (!natalData) {
     el.innerHTML = `<div class="view-header">
       <div class="view-title">Astro</div>
     </div>
     <div class="vbody" style="display:flex;align-items:center;justify-content:center;min-height:400px">
-      <div style="max-width:420px;text-align:center;padding:40px 32px">
-        <div style="font-size:48px;margin-bottom:20px;opacity:0.4">✦</div>
-        <div style="font-size:15px;color:var(--text);margin-bottom:12px;font-weight:500">
-          Birth chart not configured
-        </div>
-        <div style="font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:20px">
-          Astrology features — natal wheel, daily transits, cosmic weather — require your birth details. Add them in Settings to generate your chart.
-        </div>
-        <div style="font-size:11px;color:var(--text-dim);opacity:0.6;letter-spacing:0.04em">
-          Birth details input ships in v0.1.7
+      <div style="max-width:380px;padding:40px 32px">
+        <div style="font-size:36px;margin-bottom:16px;opacity:0.5;text-align:center">✦</div>
+        <div style="font-size:14px;color:var(--text-primary);margin-bottom:6px;font-weight:500;text-align:center">Enter your birth details</div>
+        <div style="font-size:12px;color:var(--text-dim);line-height:1.5;margin-bottom:24px;text-align:center">Natal wheel, daily transits, and cosmic weather activate once your chart is generated.</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div>
+            <label style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:5px">Birth Date</label>
+            <input id="astro-birth-date" type="date" style="width:100%;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:13px;box-sizing:border-box" placeholder="YYYY-MM-DD">
+          </div>
+          <div>
+            <label style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:5px">Birth Time (local)</label>
+            <input id="astro-birth-time" type="time" style="width:100%;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:13px;box-sizing:border-box" placeholder="HH:MM">
+          </div>
+          <div>
+            <label style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:5px">Birth Location</label>
+            <input id="astro-birth-location" type="text" style="width:100%;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:13px;box-sizing:border-box" placeholder="City, Country">
+          </div>
+          <button id="astro-birth-save" style="margin-top:6px;padding:10px;background:var(--gold);border:none;border-radius:6px;color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:opacity 0.15s">Save &amp; Generate Chart</button>
+          <div id="astro-birth-status" style="font-size:11px;color:var(--text-dim);text-align:center;min-height:16px"></div>
         </div>
       </div>
     </div>`
+
+    document.getElementById('astro-birth-save').addEventListener('click', async () => {
+      const date     = document.getElementById('astro-birth-date').value.trim()
+      const time     = document.getElementById('astro-birth-time').value.trim()
+      const location = document.getElementById('astro-birth-location').value.trim()
+      const status   = document.getElementById('astro-birth-status')
+
+      if (!date || !time || !location) {
+        status.textContent = 'Please fill in all three fields.'
+        status.style.color = 'var(--red, #e07080)'
+        return
+      }
+
+      status.textContent = 'Saving…'
+      status.style.color = 'var(--text-dim)'
+
+      const details = { date, time, location, saved_at: new Date().toISOString() }
+      try {
+        await window.ace.vault.writeFile('data/birth-details.json', JSON.stringify(details, null, 2))
+      } catch (e) {
+        status.textContent = 'Save failed — check vault path.'
+        status.style.color = 'var(--red, #e07080)'
+        return
+      }
+
+      status.textContent = 'Saved. Opening chart generation…'
+      status.style.color = 'var(--green)'
+
+      // Navigate to Create view and send chart-generation prompt
+      setTimeout(() => {
+        document.querySelector('.nav-item[data-view="terminal"]')?.click()
+        setTimeout(() => {
+          if (window.spawnSession) window.spawnSession()
+          setTimeout(() => {
+            const prompt = `Generate my natal chart. Birth details:\n- Date: ${date}\n- Time: ${time}\n- Location: ${location}\n\nRun the Kerykeion-based generation script at tools/astro/ to produce data/natal-chart.json and data/interpretations.json in my vault. Confirm when done.`
+            if (state.activeId && window.sendChatMessage) {
+              window.sendChatMessage(state.activeId, prompt)
+            }
+          }, 200)
+        }, 150)
+      }, 800)
+    })
     return
   }
 

@@ -102,7 +102,7 @@ function showDCAOverlay(ns, alignment) {
     : `<div style="font-style:italic;color:var(--text-dim);">No anchors set.</div>`
 
   const affirmationsHtml = affirmations.length
-    ? affirmations.map(a => `<div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;padding:5px 0;color:var(--text-primary);opacity:0.85;">“${escapeAttr(a)}”</div>`).join('')
+    ? affirmations.map(a => `<div style="font-family:'Instrument Serif',serif;font-style:italic;font-size:13px;padding:5px 0;color:var(--text-primary);opacity:0.85;">“${escapeAttr(a)}”</div>`).join('')
     : `<div style="font-style:italic;color:var(--text-dim);font-size:12px;">No affirmations set.</div>`
 
   // Full DCA body: render markdown-ish (#, paragraphs). Skip the H1 since we show it elsewhere.

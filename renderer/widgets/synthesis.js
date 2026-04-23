@@ -1068,7 +1068,7 @@ function showRisenWhyOverlay(leg, allData, ctx) {
         </div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;">Leverage score: ${total}</div>
         ${breakdownHtml || '<div style="font-style:italic;color:var(--text-dim);font-size:12px;">No candidates available.</div>'}
-        <div style="margin-top:18px;padding-top:14px;border-top:1px dashed var(--border);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--text-secondary);line-height:1.5;">
+        <div style="margin-top:18px;padding-top:14px;border-top:1px dashed var(--border);font-family:'Instrument Serif',serif;font-style:italic;font-size:13px;color:var(--text-secondary);line-height:1.5;">
           The risen leg shifts daily based on what has highest leverage: focus match (+5), weakest leg (+3), urgency (+2), compass alignment (+1).
         </div>
       </div>

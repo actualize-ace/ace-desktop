@@ -109,7 +109,7 @@
   font-weight: 400;
   color: var(--text-bright, var(--text-primary));
   margin: 0 0 12px;
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Instrument Serif', serif;
   font-style: italic;
 }
 
@@ -179,7 +179,7 @@
   font-weight: 400;
   margin: 0 0 24px;
   color: var(--text-bright, var(--text-primary));
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Instrument Serif', serif;
   font-style: italic;
 }
 
@@ -207,7 +207,7 @@
 }
 
 .learn-lesson-body em {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Instrument Serif', serif;
   font-style: italic;
   font-size: 1.05em;
 }
