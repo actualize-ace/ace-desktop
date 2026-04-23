@@ -7,8 +7,35 @@ Format: newest first. Tags link to GitHub Releases.
 
 ## Unreleased
 
+---
+
+## v0.2.6 — 2026-04-23
+
+Branch hygiene release. No user-facing changes.
+
+Rebased 12 commingled landing-page commits off `main`; prior state preserved as `backup/pre-cleanup-v0.2.5` tag on origin. First clean-trunk release — `main` now contains only `ace-desktop/` work.
+
+---
+
+## v0.2.5 — 2026-04-22
+
 ### Added
-- Renderer long-task observer: dumps stack + context to `~/Library/Logs/ACE/longtask.log` when main thread stalls ≥200 ms. Diagnostic only — no user-facing behavior change.
+- **Astro birth details form** — natal chart data entry in the Cockpit; lays groundwork for transit-aware context.
+- **Reduced Effects mode** — tri-state setting (Auto / On / Off) in Display settings. Auto inherits your OS preference; On strips all decorative filters and animations; Off forces them regardless of OS setting.
+- **Long chat virtualization** — messages beyond 50 are evicted from the DOM and snapshot-hydrated on scroll. Prevents renderer slowdown in extended sessions with no change to visible behavior.
+- **CLI binary prewarm** — Claude CLI is pre-warmed 5 seconds after session open (activity-based), reducing first-response latency on slower machines.
+- **Suppress MCP toggle** — emergency bypass in settings for MCP connection failures; lets you keep working without restarting the app.
+- **Longtask observer** — diagnostic module that logs main-thread stalls ≥200ms to `~/Library/Logs/ACE/longtask.log`. Diagnostic only, no user-facing behavior change.
+
+### Changed
+- **Nav rename** — "Build" → "Create", "Studio" → "Agents".
+- **Cockpit font** — Cormorant Garamond replaced with Instrument Serif across Cockpit, Home, Learn, Welcome, North Star, and Synthesis surfaces.
+- **Cockpit layout** — full-width canvas; removed the 1320px max-width constraint.
+- **ace-analytics** — dashboard surface removed from the app; tooling remains operator-side only.
+
+### Fixed
+- **Stop button** — send button now visibly flips to red ■ when a stream activates, not only on deactivate. Fixes the stop button being invisible on restored or re-hydrated sessions.
+- **Security: tools/ bundling** — `tools/` directory no longer packed into the DMG. Previously shipped operator-side scripts (analytics agent, outreach agent) to client machines.
 
 ---
 

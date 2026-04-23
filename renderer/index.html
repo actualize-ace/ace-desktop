@@ -102,7 +102,7 @@
     </div>
     <div class="titlebar-right">
       <!-- Status cluster -->
-      <button class="alpha-pill" id="alpha-pill" title="ACE v0.1.0 · alpha — click for details">ALPHA</button>
+      <button class="alpha-pill" id="alpha-pill" title="ACE · alpha — click for details">ALPHA</button>
       <div class="preflight-status" id="preflight-status" style="display:none">
         <div class="preflight-dot"></div>
         <span class="preflight-label" id="preflight-label"></span>
@@ -645,20 +645,20 @@
     <div class="alpha-pop-list">
       <div class="alpha-pop-item">
         <span class="alpha-pop-dot"></span>
-        <span>Unsigned build — macOS needs a right-click → Open on first launch</span>
+        <span>Long-chat performance — messages beyond 50 are virtualized, keeping extended sessions snappier</span>
       </div>
       <div class="alpha-pop-item">
         <span class="alpha-pop-dot"></span>
-        <span>Auto-update not wired yet — new releases require a manual re-install</span>
+        <span>Stop button fixed — visible ■ affordance while Claude is responding, including on re-hydrated sessions</span>
       </div>
       <div class="alpha-pop-item">
         <span class="alpha-pop-dot"></span>
-        <span>Windows build still in development</span>
+        <span>Typography + layout refresh — Instrument Serif across Cockpit, Home, Learn, Welcome, North Star, Synthesis; Cockpit now full-width</span>
       </div>
     </div>
     <div class="alpha-pop-actions">
       <a class="alpha-pop-link" data-url="https://gist.github.com/mythopoetix/aa39a1831b4358e0452e8aed777fda2a">Changelog</a>
-      <a class="alpha-pop-link" data-url="mailto:nikhil@asraya.io?subject=ACE%20Desktop%20bug%20(v0.1.0)&body=What%20happened%3A%0A%0AWhat%20you%20expected%3A%0A%0ASteps%20to%20reproduce%3A%0A">Report a bug</a>
+      <a class="alpha-pop-link" id="alpha-pop-bug-link" data-url="mailto:nikhil@asraya.io?subject=ACE%20Desktop%20bug&body=What%20happened%3A%0A%0AWhat%20you%20expected%3A%0A%0ASteps%20to%20reproduce%3A%0A">Report a bug</a>
     </div>
   </div>
 
@@ -916,6 +916,14 @@ document.querySelectorAll('[data-cmd]').forEach(el => {
     const popVEl = document.getElementById('alpha-pop-version')
     if (popVEl && window.ace?.appVersion) {
       popVEl.textContent = `v${window.ace.appVersion}`
+    }
+    const pillEl = document.getElementById('alpha-pill')
+    if (pillEl && window.ace?.appVersion) {
+      pillEl.title = `ACE v${window.ace.appVersion} · alpha — click for details`
+    }
+    const bugLinkEl = document.getElementById('alpha-pop-bug-link')
+    if (bugLinkEl && window.ace?.appVersion) {
+      bugLinkEl.dataset.url = `mailto:nikhil@asraya.io?subject=ACE%20Desktop%20bug%20(v${window.ace.appVersion})&body=What%20happened%3A%0A%0AWhat%20you%20expected%3A%0A%0ASteps%20to%20reproduce%3A%0A`
     }
   } catch {}
 
