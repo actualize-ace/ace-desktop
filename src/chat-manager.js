@@ -6,8 +6,9 @@ const { spawn, spawnSync } = require('child_process')
 const path = require('path')
 const fs = require('fs')
 const ch = require('./ipc-channels')
+const { DisposableStore, toDisposable } = require('./lifecycle')
 
-const sessions = new Map() // chatId → { proc, claudeSessionId, _evtQueue, _flushTimer }
+const sessions = new Map() // chatId → { proc, claudeSessionId, _evtQueue, _flushTimer, store }
 
 // Windows ignores SIGTERM for non-console apps and has no concept of signal-
 // based graceful shutdown. `taskkill /T /F` force-kills the process tree,
@@ -196,6 +197,12 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   })
   if (!win.isDestroyed()) win.webContents.send(`${ch.CHAT_SPAWN_STATUS}:${chatId}`, { status: 'starting' })
 
+  // Per-session DisposableStore — cascades proc kill + timer cleanup so that
+  // cancel() clears all resources in one step regardless of which code path
+  // triggered the teardown.
+  const store = new DisposableStore()
+  store.add(toDisposable(() => killProc(proc)))
+
   // 5s hard timeout on OS-level process spawn. Distinct from silence detection
   // (1.2) — this covers the case where the binary exists but the OS never
   // delivers the spawn event (network FS, locked binary, etc.).
@@ -213,6 +220,7 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
       }))
     }
   }, SpawnTimeoutMs)
+  store.add(toDisposable(() => clearTimeout(spawnTimeout)))
   proc.once('spawn', () => { spawned = true; clearTimeout(spawnTimeout) })
 
   // Spawn-level failures (ENOENT for node, EACCES, etc.) are emitted on the
@@ -233,8 +241,14 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
 
   // Per-session IPC batch buffer — flush every 16 ms (≈1 frame) to prevent
   // flooding the renderer when two+ heavy Opus streams run concurrently.
-  const sessionEntry = { proc, claudeSessionId, _evtQueue: [], _flushTimer: null }
+  const sessionEntry = { proc, claudeSessionId, _evtQueue: [], _flushTimer: null, store }
   sessions.set(chatId, sessionEntry)
+  store.add(toDisposable(() => {
+    if (sessionEntry._flushTimer) {
+      clearTimeout(sessionEntry._flushTimer)
+      sessionEntry._flushTimer = null
+    }
+  }))
 
   const flushEvents = () => {
     const entry = sessions.get(chatId)
@@ -366,16 +380,13 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
 
 function cancel(chatId) {
   const s = sessions.get(chatId)
-  if (s?.proc) {
-    killProc(s.proc)
-    sessions.delete(chatId)
-  }
+  if (!s) return
+  sessions.delete(chatId)
+  s.store.dispose()
 }
 
 function cancelAll() {
-  for (const [, s] of sessions) {
-    killProc(s.proc)
-  }
+  for (const [, s] of sessions) { try { s.store.dispose() } catch {} }
   sessions.clear()
 }
 
