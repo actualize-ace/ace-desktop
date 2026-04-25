@@ -902,7 +902,7 @@ app.whenReady().then(() => {
   // 7-day retention via size cap (~200 bytes/sample × 10_080 samples ≈ 2MB max).
   const memLogPath = path.join(app.getPath('logs'), 'memory.ndjson')
   const MAX_MEM_LOG_BYTES = 2 * 1024 * 1024
-  setInterval(() => {
+  const memLogInterval = setInterval(() => {
     try {
       const mem = process.memoryUsage()
       const ptyMgr = (() => { try { return require('./src/pty-manager') } catch { return null } })()
@@ -919,6 +919,9 @@ app.whenReady().then(() => {
       else fs.appendFileSync(memLogPath, line, 'utf8')
     } catch {}
   }, 60_000)
+
+  // Clear interval on app quit so the event loop can exit cleanly.
+  app.on('before-quit', () => clearInterval(memLogInterval))
 })
 
 // ─── Artifacts IPC Handlers ──────────────────────────────────────────────────
