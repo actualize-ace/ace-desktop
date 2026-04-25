@@ -196,10 +196,30 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   })
   if (!win.isDestroyed()) win.webContents.send(`${ch.CHAT_SPAWN_STATUS}:${chatId}`, { status: 'starting' })
 
+  // 5s hard timeout on OS-level process spawn. Distinct from silence detection
+  // (1.2) — this covers the case where the binary exists but the OS never
+  // delivers the spawn event (network FS, locked binary, etc.).
+  const SpawnTimeoutMs = 5_000
+  let spawned = false
+  const spawnTimeout = setTimeout(() => {
+    if (spawned) return
+    try { proc.kill('SIGKILL') } catch {}
+    if (!win.isDestroyed()) {
+      win.webContents.send(`${ch.CHAT_SPAWN_STATUS}:${chatId}`, { status: 'failed' })
+      win.webContents.send(`${ch.CHAT_ERROR}:${chatId}`, JSON.stringify({
+        type: 'chat-spawn-timeout',
+        message: `Claude CLI did not start within ${SpawnTimeoutMs}ms`,
+        path: claudeBin,
+      }))
+    }
+  }, SpawnTimeoutMs)
+  proc.once('spawn', () => { spawned = true; clearTimeout(spawnTimeout) })
+
   // Spawn-level failures (ENOENT for node, EACCES, etc.) are emitted on the
   // proc itself — without this listener they'd surface only as an exit with
   // no stderr and the renderer would show nothing.
   proc.on('error', err => {
+    clearTimeout(spawnTimeout)
     if (win.isDestroyed()) return
     win.webContents.send(`${ch.CHAT_SPAWN_STATUS}:${chatId}`, { status: 'failed' })
     win.webContents.send(`${ch.CHAT_ERROR}:${chatId}`,
@@ -334,6 +354,7 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   // long-running MCP server killed mid-session. Not covered in Task 6.
 
   proc.on('close', code => {
+    clearTimeout(spawnTimeout)
     const entry = sessions.get(chatId)
     if (entry?._flushTimer) { clearTimeout(entry._flushTimer); flushEvents() }
     sessions.delete(chatId)
