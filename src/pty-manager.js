@@ -1,8 +1,9 @@
 const pty = require('node-pty')
 const fs  = require('fs')
 const ch  = require('./ipc-channels')
+const { DisposableStore, toDisposable } = require('./lifecycle')
 
-const sessions = new Map()
+const sessions = new Map() // id → { shell, store }
 
 const path = require('path')
 const os = require('os')
@@ -67,7 +68,9 @@ function create(win, id, cwd, claudeBin, cols, rows) {
     },
   })
 
-  sessions.set(id, shell)
+  const store = new DisposableStore()
+  store.add(toDisposable(() => { try { shell.kill() } catch (_) {} }))
+  sessions.set(id, { shell, store })
 
   shell.onData(data => {
     if (!win.isDestroyed()) {
@@ -87,22 +90,24 @@ function create(win, id, cwd, claudeBin, cols, rows) {
 }
 
 function write(id, data) {
-  const p = sessions.get(id)
-  if (p) p.write(data)
+  const s = sessions.get(id)
+  if (s) s.shell.write(data)
 }
 
 function resize(id, cols, rows) {
-  const p = sessions.get(id)
-  if (p) p.resize(cols, rows)
+  const s = sessions.get(id)
+  if (s) s.shell.resize(cols, rows)
 }
 
 function kill(id) {
-  const p = sessions.get(id)
-  if (p) { try { p.kill() } catch {} sessions.delete(id) }
+  const s = sessions.get(id)
+  if (!s) return
+  sessions.delete(id)
+  s.store.dispose()
 }
 
 function killAll() {
-  for (const [, p] of sessions) { try { p.kill() } catch {} }
+  for (const [, s] of sessions) { try { s.store.dispose() } catch {} }
   sessions.clear()
 }
 
@@ -131,7 +136,9 @@ function resume(win, id, cwd, claudeBin, cols, rows, sessionId) {
     },
   })
 
-  sessions.set(id, shell)
+  const store = new DisposableStore()
+  store.add(toDisposable(() => { try { shell.kill() } catch (_) {} }))
+  sessions.set(id, { shell, store })
 
   shell.onData(data => {
     if (!win.isDestroyed()) {
