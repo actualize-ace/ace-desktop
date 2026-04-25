@@ -79,6 +79,10 @@ function create(win, id, cwd, claudeBin, cols, rows) {
   })
 
   shell.onExit(({ exitCode }) => {
+    const entry = sessions.get(id)
+    // Identity check: same race as chat-manager — a kill/recreate sequence
+    // can replace the entry before this old shell's onExit fires.
+    if (entry && entry.shell !== shell) return
     sessions.delete(id)
     if (!win.isDestroyed()) {
       win.webContents.send(ch.SESSION_EXIT, id, exitCode)
@@ -147,6 +151,8 @@ function resume(win, id, cwd, claudeBin, cols, rows, sessionId) {
   })
 
   shell.onExit(({ exitCode }) => {
+    const entry = sessions.get(id)
+    if (entry && entry.shell !== shell) return
     sessions.delete(id)
     if (!win.isDestroyed()) {
       win.webContents.send(ch.SESSION_EXIT, id, exitCode)

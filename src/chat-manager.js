@@ -370,6 +370,11 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   proc.on('close', code => {
     clearTimeout(spawnTimeout)
     const entry = sessions.get(chatId)
+    // Identity check: a rapid cancel→send replaces the entry with a NEW proc
+    // before this old proc's close lands. Without this guard, the late close
+    // would clobber the new session's flushTimer and emit CHAT_EXIT for a
+    // chat that's still streaming.
+    if (entry && entry.proc !== proc) return
     if (entry?._flushTimer) { clearTimeout(entry._flushTimer); flushEvents() }
     sessions.delete(chatId)
     if (!win.isDestroyed()) {
