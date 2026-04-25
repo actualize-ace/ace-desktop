@@ -207,6 +207,12 @@ contextBridge.exposeInMainWorld('ace', {
   // ─── Stress harness (dev only) ────────────────────────────────────────────
   stress: {
     appendResult: (entry) => ipcRenderer.invoke(ch.STRESS_APPEND_RESULT, entry),
+    snapshot:     ()      => ipcRenderer.invoke(ch.STRESS_SNAPSHOT),
+    coldStart:    ()      => ipcRenderer.invoke(ch.STRESS_COLD_START),
+    onWake: (cb) => {
+      ipcRenderer.on(ch.STRESS_WAKE_EVENT, (_, payload) => cb(payload))
+      return () => ipcRenderer.removeAllListeners(ch.STRESS_WAKE_EVENT)
+    },
   },
 
   // ─── Diagnostics ─────────────────────────────────────────────────────────

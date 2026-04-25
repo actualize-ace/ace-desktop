@@ -127,6 +127,9 @@ module.exports = {
 
   // Stress harness (dev only — registered only when !app.isPackaged)
   STRESS_APPEND_RESULT: 'stress-append-result',
+  STRESS_SNAPSHOT:      'stress-snapshot',
+  STRESS_COLD_START:    'stress-cold-start',
+  STRESS_WAKE_EVENT:    'stress-wake-event',
 
   // MCP resilience
   MCP_OPEN_AUTH_URL:   'mcp-open-auth-url',

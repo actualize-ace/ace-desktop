@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, session } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, shell, session, powerMonitor } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const { execSync, spawn } = require('child_process')
@@ -842,6 +842,46 @@ ipcMain.handle(ch.STRESS_APPEND_RESULT, (_, entry) => {
   } catch (e) {
     return { ok: false, error: e.message }
   }
+})
+
+ipcMain.handle(ch.STRESS_SNAPSHOT, () => {
+  if (app.isPackaged) return { ok: false, reason: 'disabled in packaged builds' }
+  const mem = process.memoryUsage()
+  const ptyMgr = (() => { try { return require('./src/pty-manager') } catch { return null } })()
+  return {
+    ok: true,
+    ts: Date.now(),
+    rss: mem.rss,
+    heapUsed: mem.heapUsed,
+    heapTotal: mem.heapTotal,
+    external: mem.external,
+    ptySessions: ptyMgr?.sessions?.size ?? -1,
+  }
+})
+
+ipcMain.handle(ch.STRESS_COLD_START, async () => {
+  if (app.isPackaged) return { ok: false, reason: 'disabled in packaged builds' }
+  try {
+    await session.defaultSession.clearCache()
+    app.relaunch({ args: process.argv.slice(1) })
+    setTimeout(() => app.exit(0), 300)
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e.message }
+  }
+})
+
+// powerMonitor sleep/wake logging — fires stress-wake-event to renderer on resume
+app.whenReady().then(() => {
+  let _suspendAt = 0
+  powerMonitor.on('suspend', () => { _suspendAt = Date.now() })
+  powerMonitor.on('resume', () => {
+    const sleepMs = _suspendAt ? Date.now() - _suspendAt : -1
+    _suspendAt = 0
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send(ch.STRESS_WAKE_EVENT, { wakeAt: Date.now(), sleepMs })
+    }
+  })
 })
 
 // ─── Artifacts IPC Handlers ──────────────────────────────────────────────────
