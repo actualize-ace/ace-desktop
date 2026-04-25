@@ -902,22 +902,33 @@ app.whenReady().then(() => {
   // 7-day retention via size cap (~200 bytes/sample × 10_080 samples ≈ 2MB max).
   const memLogPath = path.join(app.getPath('logs'), 'memory.ndjson')
   const MAX_MEM_LOG_BYTES = 2 * 1024 * 1024
+  let memLogErrorReported = false
+  const onMemLogError = (err) => {
+    // Surface the first error so disk-full / ENOENT / EACCES is debuggable.
+    // Suppress subsequent errors so a persistent failure doesn't spam logs.
+    if (memLogErrorReported || !err) return
+    memLogErrorReported = true
+    console.error('[memory-telemetry] log write failed:', err.message)
+  }
   const memLogInterval = setInterval(() => {
-    try {
-      const mem = process.memoryUsage()
-      const ptyMgr = (() => { try { return require('./src/pty-manager') } catch { return null } })()
-      const line = JSON.stringify({
-        ts: Date.now(),
-        rss: mem.rss,
-        heapUsed: mem.heapUsed,
-        heapTotal: mem.heapTotal,
-        external: mem.external,
-        ptySessions: ptyMgr?.sessions?.size ?? -1,
-      }) + '\n'
-      const stat = (() => { try { return fs.statSync(memLogPath) } catch { return null } })()
-      if (stat && stat.size > MAX_MEM_LOG_BYTES) fs.writeFileSync(memLogPath, line, 'utf8')
-      else fs.appendFileSync(memLogPath, line, 'utf8')
-    } catch {}
+    const mem = process.memoryUsage()
+    const ptyMgr = (() => { try { return require('./src/pty-manager') } catch { return null } })()
+    const line = JSON.stringify({
+      ts: Date.now(),
+      rss: mem.rss,
+      heapUsed: mem.heapUsed,
+      heapTotal: mem.heapTotal,
+      external: mem.external,
+      ptySessions: ptyMgr?.sessions?.size ?? -1,
+    }) + '\n'
+    fs.stat(memLogPath, (statErr, stat) => {
+      // statErr is expected on first run (file doesn't exist yet) — ignore.
+      if (stat && stat.size > MAX_MEM_LOG_BYTES) {
+        fs.writeFile(memLogPath, line, 'utf8', onMemLogError)
+      } else {
+        fs.appendFile(memLogPath, line, 'utf8', onMemLogError)
+      }
+    })
   }, 60_000)
 
   // Clear interval on app quit so the event loop can exit cleanly.
