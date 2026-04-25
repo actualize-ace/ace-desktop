@@ -168,6 +168,11 @@ contextBridge.exposeInMainWorld('ace', {
     speak:      (text)        => ipcRenderer.invoke(ch.INSIGHT_SPEAK, text),
   },
 
+  // ─── Memory telemetry ────────────────────────────────────────────────────────
+  memory: {
+    usage: () => ipcRenderer.invoke(ch.MAIN_MEMORY_USAGE),
+  },
+
   // ─── Shell ──────────────────────────────────────────────────────────────────
   shell: {
     openPath:     (p)   => ipcRenderer.invoke(ch.SHELL_OPEN_PATH, p),

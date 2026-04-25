@@ -871,6 +871,21 @@ ipcMain.handle(ch.STRESS_COLD_START, async () => {
   }
 })
 
+// Memory telemetry IPC — production, no isPackaged guard.
+// Renderer calls this on each refresh-engine tick; main also logs on a 60s interval.
+ipcMain.handle(ch.MAIN_MEMORY_USAGE, () => {
+  const mem = process.memoryUsage()
+  const ptyMgr = (() => { try { return require('./src/pty-manager') } catch { return null } })()
+  return {
+    ts: Date.now(),
+    rss: mem.rss,
+    heapUsed: mem.heapUsed,
+    heapTotal: mem.heapTotal,
+    external: mem.external,
+    ptySessions: ptyMgr?.sessions?.size ?? -1,
+  }
+})
+
 // powerMonitor sleep/wake logging — fires stress-wake-event to renderer on resume
 app.whenReady().then(() => {
   let _suspendAt = 0
@@ -882,6 +897,28 @@ app.whenReady().then(() => {
       mainWindow.webContents.send(ch.STRESS_WAKE_EVENT, { wakeAt: Date.now(), sleepMs })
     }
   })
+
+  // Log main-process memory to ~/Library/Logs/ACE/memory.ndjson every 60s.
+  // 7-day retention via size cap (~200 bytes/sample × 10_080 samples ≈ 2MB max).
+  const memLogPath = path.join(app.getPath('logs'), 'memory.ndjson')
+  const MAX_MEM_LOG_BYTES = 2 * 1024 * 1024
+  setInterval(() => {
+    try {
+      const mem = process.memoryUsage()
+      const ptyMgr = (() => { try { return require('./src/pty-manager') } catch { return null } })()
+      const line = JSON.stringify({
+        ts: Date.now(),
+        rss: mem.rss,
+        heapUsed: mem.heapUsed,
+        heapTotal: mem.heapTotal,
+        external: mem.external,
+        ptySessions: ptyMgr?.sessions?.size ?? -1,
+      }) + '\n'
+      const stat = (() => { try { return fs.statSync(memLogPath) } catch { return null } })()
+      if (stat && stat.size > MAX_MEM_LOG_BYTES) fs.writeFileSync(memLogPath, line, 'utf8')
+      else fs.appendFileSync(memLogPath, line, 'utf8')
+    } catch {}
+  }, 60_000)
 })
 
 // ─── Artifacts IPC Handlers ──────────────────────────────────────────────────

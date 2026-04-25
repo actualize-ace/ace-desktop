@@ -125,6 +125,9 @@ module.exports = {
   MARK_DONE:       'mark-done',
   SNOOZE_ITEM:     'snooze-item',
 
+  // Memory telemetry (production — no isPackaged guard)
+  MAIN_MEMORY_USAGE: 'main-memory-usage',
+
   // Stress harness (dev only — registered only when !app.isPackaged)
   STRESS_APPEND_RESULT: 'stress-append-result',
   STRESS_SNAPSHOT:      'stress-snapshot',

@@ -143,11 +143,27 @@ function updateVitalsDot() {
   }
 }
 
+// ── Memory snapshot (fire-and-forget, logged to console each tick) ────────────
+function _sampleMemory() {
+  window.ace?.memory?.usage?.().then(snap => {
+    if (!snap) return
+    console.log('[refresh-engine] mem', JSON.stringify({
+      rssMB:      +(snap.rss      / 1024 / 1024).toFixed(1),
+      heapMB:     +(snap.heapUsed / 1024 / 1024).toFixed(1),
+      externalMB: +(snap.external / 1024 / 1024).toFixed(1),
+      ptySessions: snap.ptySessions,
+      ts: snap.ts,
+    }))
+    window.dispatchEvent(new CustomEvent('ace:memory-sample', { detail: snap }))
+  }).catch(() => {})
+}
+
 // ── Tick ──────────────────────────────────────────────────────────────────────
 function tick() {
   healthScore = computeHealth()
   window.dispatchEvent(new CustomEvent('ace:health-score', { detail: healthScore }))
   updateVitalsDot()
+  _sampleMemory()
 
   const now = Date.now()
   const idleMs = now - (state.atmosphere?.lastActivity || now)
@@ -209,5 +225,6 @@ export function initRefreshEngine() {
     lastSoftGC: () => new Date(lastSoftGC).toLocaleTimeString(),
     // Simulate a specific health score to preview vitals dot states
     setHealth:  (score) => { healthScore = Math.max(0, Math.min(1, score)); updateVitalsDot() },
+    memSnapshot: () => window.ace?.memory?.usage?.(),
   }
 }
