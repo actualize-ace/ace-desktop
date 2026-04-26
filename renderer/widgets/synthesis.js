@@ -1052,6 +1052,9 @@ function showRisenWhyOverlay(leg, allData, ctx) {
 
   const topLabel = top?.label || '(no candidate)'
   const topCtx = top?.context || ''
+  const typeLabel = top?.type
+    ? { followup: 'Top follow-up', outcome: 'Top outcome', regulation: 'Signal', recovery: 'Signal', block: 'Top build block', pattern: 'Pattern', ritual: 'Ritual' }[top.type] || 'Top item'
+    : 'Top item'
 
   const overlay = document.createElement('div')
   overlay.className = 'cockpit-overlay'
@@ -1063,8 +1066,9 @@ function showRisenWhyOverlay(leg, allData, ctx) {
       </div>
       <div class="cockpit-overlay-body">
         <div style="margin-bottom:14px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:6px;">${escAttr(typeLabel)}</div>
           <div style="font-family:'Space Grotesk',sans-serif;font-size:15px;color:var(--text-primary);margin-bottom:4px;">${escAttr(topLabel)}</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);">${escAttr(topCtx)}</div>
+          ${topCtx ? `<div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);">${escAttr(topCtx)}</div>` : ''}
         </div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;">Leverage score: ${total}</div>
         ${breakdownHtml || '<div style="font-style:italic;color:var(--text-dim);font-size:12px;">No candidates available.</div>'}
