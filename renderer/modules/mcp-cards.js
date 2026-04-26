@@ -195,16 +195,30 @@ export function renderPermissionApprovalCard(s, chatId, denials) {
 
     // Inject confirmation message into chat
     const msgsEl = document.getElementById('chat-msgs-' + chatId)
+    const paths = unique.map(d => d.tool_input.file_path.replace(/^.*\/\.claude\//, '.claude/')).join(', ')
     if (msgsEl) {
       const confirm = document.createElement('div')
       confirm.className = 'chat-msg assistant'
-      const paths = unique.map(d => d.tool_input.file_path.replace(/^.*\/\.claude\//, '.claude/')).join(', ')
       confirm.innerHTML = `<div class="msg-content md-body">${allOk
         ? `<strong>Done.</strong> Edited ${paths} directly (bypassed CLI permission).`
-        : `<strong>Partial.</strong> Some edits to ${paths} may not have applied — check the files.`
+        : `<strong>Partial.</strong> Some edits to ${paths} may not have applied — check the files. Send a follow-up to continue.`
       }</div>`
       msgsEl.appendChild(confirm)
       msgsEl.scrollTop = msgsEl.scrollHeight
+    }
+
+    // Auto-continue: -p mode CLI exited when it emitted the denial, so the
+    // session's view of the turn is "tool failed". Without this nudge, the
+    // next --resume would likely retry the same edit and re-trigger the
+    // approval card (loop). Skip on partial failure — user needs to inspect.
+    if (allOk) {
+      try {
+        const sessionsObj = state.sessions[chatId] === s ? state.sessions : state.agentSessions
+        const continuation = `[approved and applied via desktop bypass: ${paths}. don't retry the edit — continue from where you left off.]`
+        sendChatMessage(chatId, continuation, sessionsObj)
+      } catch (err) {
+        console.warn('[permission-card] auto-continue failed:', err)
+      }
     }
   })
 
