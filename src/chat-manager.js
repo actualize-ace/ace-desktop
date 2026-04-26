@@ -375,7 +375,7 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
     // would clobber the new session's flushTimer and emit CHAT_EXIT for a
     // chat that's still streaming.
     if (entry && entry.proc !== proc) return
-    if (entry?._flushTimer) { clearTimeout(entry._flushTimer); flushEvents() }
+    if (entry) { if (entry._flushTimer) clearTimeout(entry._flushTimer); if (entry._evtQueue.length > 0) flushEvents() }
     sessions.delete(chatId)
     if (!win.isDestroyed()) {
       win.webContents.send(`${ch.CHAT_EXIT}:${chatId}`, code)
