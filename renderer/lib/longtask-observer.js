@@ -20,6 +20,7 @@
       activeChatCount: activeChatIds.length,
       activeChatIds: activeChatIds.slice(0, 8),
       visibleView,
+      documentHidden: document.hidden,
       jsHeapMB: perf.usedJSHeapSize ? Math.round(perf.usedJSHeapSize / 1048576) : null,
     }
   }
@@ -51,7 +52,9 @@
   channel.port1.onmessage = () => {
     const now = performance.now()
     const overrun = now - lastScheduledAt - HEARTBEAT_INTERVAL_MS
-    if (overrun >= THRESHOLD_MS) {
+    // Suppress reports when the window is hidden — Chromium throttles
+    // setTimeout to 1Hz in background tabs, producing ~900ms phantom overruns.
+    if (overrun >= THRESHOLD_MS && !document.hidden) {
       const stack = (new Error('longtask-heartbeat-overrun')).stack
       window.ace.debug.reportLongTask({
         source: 'heartbeat',
