@@ -9,6 +9,27 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## v0.2.7 — 2026-04-26
+
+Stability + cockpit polish release. Renderer lifecycle hardened, auto-reload made non-destructive, and several silent failure modes surfaced.
+
+### Added
+- **Live vitality card** — header card now reflects real-time signal state instead of static mode pills.
+- **Warn-before-reload toast** — 30-second countdown with Postpone button before the auto-reload fires; idle window bumped 6h → 12h while Windows still lacks `claude --resume` history recovery.
+- **Risen-why overlay item-type label** — top candidate is now labeled by category (follow-up, outcome, signal, build block, pattern, ritual); context row hidden when empty.
+- **Disposable lifecycle store** — central `DisposableStore` adopted across `chat-manager`, `pty-manager`, and `lifecycle.js`; listeners and timers released cleanly on session close.
+- **Spawn timeout for chat-manager** — Claude CLI spawns fail fast instead of hanging if the binary doesn't come up.
+- **Memory telemetry** — renderer memory snapshots stream to console and `~/Library/Logs/ACE/memory.ndjson` for diagnosis of long-session growth.
+
+### Fixed
+- **`.claude/` approval auto-continue** — chat auto-continues after the renderer applies a `.claude/` write the CLI hard-denies, so the turn no longer dead-ends.
+- **Longtask false positives** — main-thread stalls reported only when the window is visible; suppresses the ~900ms phantom warnings Chromium emits on hidden windows.
+- **Cockpit follow-up filter** — text-valued `due` fields like "Session 2" no longer crash the candidate parser.
+- **Memory telemetry shutdown** — interval cleared on `before-quit`; first log-write I/O error now surfaces instead of failing silently.
+- **Close-handler identity check** — proc/shell handlers verify identity before terminating, preventing wrong-process kills on close.
+
+---
+
 ## v0.2.6 — 2026-04-23
 
 Branch hygiene release. No user-facing changes.
