@@ -604,7 +604,6 @@ body.streaming .stab.active .stab-dot {
   display: flex; align-items: center; gap: 4px;
   padding: 4px 8px;
 }
-.sidebar-footer-row .hrv-btn,
 .sidebar-footer-row .settings-btn {
   width: auto; padding: 8px; flex: 0 0 auto;
 }

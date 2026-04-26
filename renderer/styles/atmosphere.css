@@ -886,3 +886,97 @@ body.light .atm-audio-popover {
 }
 
 .vitals-dot:hover::after { opacity: 1; }
+
+/* ── Vitality card ─────────────────────────────────────────────────────────── */
+.vitality-card {
+  position: fixed;
+  width: 224px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity 180ms ease, transform 180ms ease;
+  z-index: 200;
+}
+body.light .vitality-card { box-shadow: 0 8px 24px rgba(80,70,140,0.15); }
+.vitality-card.vc-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.vc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.vc-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.vc-score-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(96,216,168,0.12);
+  color: var(--green);
+  transition: background 1s, color 1s;
+}
+.vc-score-badge[data-level="warming"] { background: rgba(200,160,96,0.12); color: #c8a060; }
+.vc-score-badge[data-level="hot"]     { background: rgba(212,120,74,0.12); color: #d4784a; }
+body.light .vc-score-badge[data-level="warming"] { background: rgba(200,160,96,0.15); }
+body.light .vc-score-badge[data-level="hot"]     { background: rgba(212,120,74,0.15); }
+.vc-bar-wrap {
+  height: 2px;
+  background: var(--border);
+  border-radius: 1px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.vc-bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 1px;
+  background: var(--green);
+  transition: width 1.2s ease, background 1.2s ease;
+}
+.vc-section-label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  opacity: 0.6;
+  margin-bottom: 6px;
+  margin-top: 10px;
+}
+.vc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.vc-row-name { font-size: 10px; color: var(--text-secondary); width: 68px; flex-shrink: 0; }
+.vc-row-bar-wrap { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.vc-row-bar { height: 100%; width: 0%; border-radius: 2px; background: var(--green); transition: width 1.2s ease, background 1.2s ease; }
+.vc-row-val { font-size: 10px; color: var(--text-dim); width: 28px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.vc-mem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 6px; }
+.vc-mem-cell { background: var(--bg-card); border-radius: 5px; padding: 5px 7px; }
+.vc-mem-cell-label { font-size: 9px; color: var(--text-dim); opacity: 0.7; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 2px; }
+.vc-mem-cell-val { font-size: 12px; font-weight: 500; color: var(--green); font-variant-numeric: tabular-nums; }
+.vc-mem-cell-unit { font-size: 9px; color: var(--text-dim); margin-left: 1px; }
+.vc-footer { margin-top: 10px; display: flex; align-items: center; justify-content: space-between; }
+.vc-live-pip { width: 5px; height: 5px; border-radius: 50%; background: var(--green); opacity: 0.3; transition: opacity 0.3s; flex-shrink: 0; }
+.vc-live-pip.vc-flash { opacity: 1; }
+.vc-footer-text { font-size: 9px; color: var(--text-dim); opacity: 0.6; letter-spacing: 0.04em; }
+.vc-interval-note { font-size: 9px; color: var(--text-dim); opacity: 0.35; }
+
+/* suppress the dot's tooltip when the card is open */
+.vitals-dot.open::after { opacity: 0; }

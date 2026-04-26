@@ -220,6 +220,13 @@ export function initRefreshEngine() {
       staleness: sensorStaleness(),
       total:     computeHealth(),
     }),
+    rawSensors: () => ({
+      dom:       { val: document.querySelectorAll('.chat-msg').length, ceil: DOM_CEIL },
+      listeners: { val: (() => { let n = 0; for (const s of Object.values(state.sessions || {})) { if (s._cleanupListeners) n += 3 } for (const s of Object.values(state.agentSessions || {})) { if (s._cleanupListeners) n += 3 } return n })(), ceil: LIS_CEIL },
+      sessions:  { val: Object.keys(state.sessions || {}).length + Object.keys(state.agentSessions || {}).length, ceil: SES_CEIL },
+      uptime:    { val: +((Date.now() - bootedAt) / 3_600_000).toFixed(2), ceil: UPT_CEIL },
+      staleness: { val: +((Date.now() - lastSoftGC) / 60_000).toFixed(1), ceil: GCS_CEIL },
+    }),
     softGC:     () => runSoftGC(),
     bootedAt:   () => new Date(bootedAt).toLocaleTimeString(),
     lastSoftGC: () => new Date(lastSoftGC).toLocaleTimeString(),
