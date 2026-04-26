@@ -31,7 +31,6 @@ export default {
     // Risen leg indicator + energy replaces the static operating-mode pill
     const risenLeg = allData._risenLeg
     const risenLabel = risenLeg ? `${risenLeg} rising` : 'in flow'
-    const energyTag = ctx.energy ? `energy ${ctx.energy}` : ''
     const risenTitle = risenLeg ? 'Click: why this leg is rising' : 'Coherence in flow'
 
     el.innerHTML = `
@@ -44,7 +43,6 @@ export default {
         </div>
         <div class="cockpit-synthesis-mode">
           <span class="tag ${risenLeg ? 'clickable-pill' : ''}" data-action="risen-why" title="${risenTitle}">${escapeHtml(risenLabel)}</span>
-          ${energyTag ? `<span class="tag energy">${escapeHtml(energyTag)}</span>` : ''}
         </div>
         <div class="cockpit-affirmation" id="cc-affirmation">${escapeHtml(initialAff)}</div>
       </div>`

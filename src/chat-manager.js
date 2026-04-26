@@ -194,6 +194,7 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env, PATH: augmentedPath, TERM: 'xterm-256color', COLORTERM: 'truecolor', ELECTRON_RUN_AS_NODE: undefined, MCP_CONNECTION_NONBLOCKING: undefined },
     shell: needsShell,
+    windowsVerbatimArguments: false,
   })
   if (!win.isDestroyed()) win.webContents.send(`${ch.CHAT_SPAWN_STATUS}:${chatId}`, { status: 'starting' })
 

@@ -1,7 +1,7 @@
 {
   "name": "ace-desktop",
   "productName": "ACE",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "ACE Desktop — control plane for the Actualize Coherence Engine",
   "main": "main.js",
   "scripts": {
