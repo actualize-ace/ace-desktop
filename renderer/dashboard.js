@@ -354,6 +354,7 @@ function buildCapacityCandidates(allData) {
   today.setHours(0, 0, 0, 0)
   const overdueFu = followUps.filter(f => {
     if (!f.due) return false
+    if (!/^\d{4}-\d{2}-\d{2}/.test(f.due)) return false  // require YYYY-MM-DD; skip text values like "Session 2"
     const d = new Date(f.due)
     if (isNaN(d.getTime())) return false
     d.setHours(0, 0, 0, 0)
