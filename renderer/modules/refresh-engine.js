@@ -6,7 +6,8 @@ import { state } from '../state.js'
 const TICK_MS          = 60_000        // check every 60 seconds
 const SOFT_GC_INTERVAL = 30 * 60_000  // 30 min default soft GC cycle
 const SOFT_GC_COOLDOWN = 5 * 60_000   // skip GC if user active within this window
-const FULL_RELOAD_IDLE = 6 * 3_600_000 // 6 hours idle
+const FULL_RELOAD_IDLE = 12 * 3_600_000 // 12 hours idle (was 6h — bumped while Windows lacks `claude --resume` history recovery)
+const RELOAD_WARNING_S = 30            // grace window to postpone the auto-reload
 const MIN_UPTIME       = 2 * 3_600_000 // 2 hours before full reload eligible
 const HEALTH_THRESHOLD = 0.7           // soft GC fires immediately above this
 
@@ -95,7 +96,41 @@ function runSoftGC() {
 }
 
 // ── Full Reload ───────────────────────────────────────────────────────────────
+let reloadPending = false
+
 function runFullReload() {
+  if (reloadPending) return
+  reloadPending = true
+  scheduleReloadWithWarning()
+}
+
+function scheduleReloadWithWarning() {
+  let remaining = RELOAD_WARNING_S
+  let tickHandle = null
+
+  const toast = buildReloadToast(remaining, () => {
+    if (tickHandle) clearTimeout(tickHandle)
+    toast.remove()
+    reloadPending = false
+    if (state.atmosphere) state.atmosphere.lastActivity = Date.now()
+    console.log('[refresh-engine] reload postponed by user')
+  })
+
+  const step = () => {
+    remaining -= 1
+    if (remaining <= 0) {
+      toast.remove()
+      doFullReload()
+      return
+    }
+    const counter = toast.querySelector('[data-countdown]')
+    if (counter) counter.textContent = String(remaining)
+    tickHandle = setTimeout(step, 1000)
+  }
+  tickHandle = setTimeout(step, 1000)
+}
+
+function doFullReload() {
   console.log('[refresh-engine] full reload triggered')
   for (const fn of willReloadCallbacks) {
     try { fn() } catch (e) { console.error('[refresh-engine] will-reload callback error:', e) }
@@ -107,6 +142,33 @@ function runFullReload() {
     sidebarCollapsed: document.querySelector('.sidebar')?.classList.contains('collapsed') || false,
   }))
   location.reload()
+}
+
+function buildReloadToast(seconds, onCancel) {
+  const el = document.createElement('div')
+  el.id = 'ace-reload-warning'
+  el.style.position = 'fixed'
+  el.style.bottom = '24px'
+  el.style.left = '50%'
+  el.style.transform = 'translateX(-50%)'
+  el.style.zIndex = '99999'
+  el.style.padding = '14px 18px'
+  el.style.borderRadius = '12px'
+  el.style.background = 'rgba(20,20,24,0.92)'
+  el.style.color = '#f4f4f5'
+  el.style.fontSize = '13px'
+  el.style.fontFamily = 'system-ui, -apple-system, sans-serif'
+  el.style.boxShadow = '0 10px 40px rgba(0,0,0,0.4)'
+  el.style.display = 'flex'
+  el.style.alignItems = 'center'
+  el.style.gap = '14px'
+  el.style.backdropFilter = 'blur(10px)'
+  el.innerHTML =
+    '<span>Refreshing in <span data-countdown>' + seconds + '</span>s to free memory. Click Postpone to keep this session.</span>' +
+    '<button type="button" style="background:rgba(255,255,255,0.12);color:#f4f4f5;border:0;padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit">Postpone</button>'
+  el.querySelector('button').addEventListener('click', onCancel)
+  document.body.appendChild(el)
+  return el
 }
 
 // ── Post-Reload Restore ───────────────────────────────────────────────────────
