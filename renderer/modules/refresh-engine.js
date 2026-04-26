@@ -290,6 +290,7 @@ export function initRefreshEngine() {
       staleness: { val: +((Date.now() - lastSoftGC) / 60_000).toFixed(1), ceil: GCS_CEIL },
     }),
     softGC:     () => runSoftGC(),
+    fullReload: () => runFullReload(),
     bootedAt:   () => new Date(bootedAt).toLocaleTimeString(),
     lastSoftGC: () => new Date(lastSoftGC).toLocaleTimeString(),
     // Simulate a specific health score to preview vitals dot states
