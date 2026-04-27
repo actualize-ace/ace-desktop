@@ -153,6 +153,9 @@ Rebased 12 commingled landing-page commits off `main`; prior state preserved as 
 
 ## v0.1.9 — 2026-04-14
 
+### Added
+- **Cadence Ring** — new cockpit widget replacing the standalone ritual-streak tracker. Iris-style rotation showing review freshness across all cadenced items (rituals, patterns, reflections), with 365-day real streak counting, overdue pulse animation, gold glow states, streak tooltips, and since-date display. Includes `parseCadence` vault-reader with written-date parsing, birthtime fallback, and 800-byte stub filtering. Wired into dashboard via dedicated IPC channel.
+
 ### Fixed
 - **Velocity bar zeroes out after ~7pm:** widget used UTC dates (`toISOString()`) to look up daily counts, but execution log entries use local calendar dates — mismatch caused today's bar to read 0 after UTC midnight rollover. Both widget and vault-reader now use local date keys
 - **Claude CLI ENOENT on spawn:** augmented PATH in chat spawn and preflight now covers nvm, volta, fnm, mise, asdf, and `~/.local/bin` — previously only Homebrew + system paths, causing ENOENT for clients with non-Homebrew node installs
