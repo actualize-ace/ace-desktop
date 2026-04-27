@@ -78,6 +78,7 @@ Rebased 12 commingled landing-page commits off `main`; prior state preserved as 
 - **Cockpit font** — Cormorant Garamond replaced with Instrument Serif across Cockpit, Home, Learn, Welcome, North Star, and Synthesis surfaces.
 - **Cockpit layout** — full-width canvas; removed the 1320px max-width constraint.
 - **ace-analytics** — dashboard surface removed from the app; tooling remains operator-side only.
+- **MCP status dot removed** — visual MCP connection dot removed from the chat stream; silent perf telemetry kept.
 
 ### Fixed
 - **Stop button** — send button now visibly flips to red ■ when a stream activates, not only on deactivate. Fixes the stop button being invisible on restored or re-hydrated sessions.
@@ -113,6 +114,8 @@ Rebased 12 commingled landing-page commits off `main`; prior state preserved as 
 - **MCP server startup reliability** — strip `MCP_CONNECTION_NONBLOCKING` and `ELECTRON_RUN_AS_NODE` from child spawns so slow-starting MCP servers register their tools without dropping init.
 - **Cockpit triad deck** — correct amber yellow for caution-level signal dots.
 - **Sidebar toggle stability** — stops wiping the toggle's span structure on collapse; expand chevron stays visible when sidebar is collapsed.
+- **Sidebar context % resync** — context percentage in sidebar now updates immediately when the model dropdown changes.
+- **Expanded tool/status vocabulary** — `TOOL_WORDS` and `STATUS_WORDS` dictionaries broadened for better stream-event classification.
 - **Capture UX polish** — centered toast matching the capture box; visible expand chevron; status word fallthrough.
 
 ---
@@ -125,6 +128,7 @@ Rebased 12 commingled landing-page commits off `main`; prior state preserved as 
 
 ### Changed
 - Refactored platform branching across `pty-manager`, `preflight`, `chat-manager`, and `main` from two-way (`win32` vs. else-Mac) to three-way (`win32` | `darwin` | `linux`). No behavior change on Mac or Windows.
+- Linux window icon now loads the correct format.
 
 ---
 
