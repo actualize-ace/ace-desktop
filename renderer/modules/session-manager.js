@@ -684,6 +684,7 @@ export function spawnSession(opts) {
 
   const resumeId = opts?.resumeId || null
   const resumeCwd = opts?.resumeCwd || null
+  const resumeProject = opts?.resumeProject || null
   const id = 'sess-' + Date.now()
 
   const targetContainer = opts?.container || document.getElementById('pane-content-left')
@@ -718,6 +719,7 @@ export function spawnSession(opts) {
     claudeSessionId: null,
     resumeId: resumeId,
     resumeCwd: resumeCwd,
+    resumeProject: resumeProject,
     messages: [],
     pendingAttachments: [],
     currentStreamText: '',
@@ -815,6 +817,61 @@ export function spawnSession(opts) {
 
   // Auto-switch to terminal mode for resumed sessions
   if (resumeId) {
+    loadAndRenderHistory(id)
+  }
+}
+
+async function loadAndRenderHistory(id) {
+  const s = state.sessions[id]
+  if (!s || !s.resumeId) return
+
+  try {
+    const project = s.resumeProject
+    if (!project) {
+      console.warn('No project name available for resumed session')
+      requestAnimationFrame(() => toggleSessionMode(id))
+      return
+    }
+
+    // Load messages from session file
+    const result = await window.ace.history.read(project, s.resumeId)
+    if (!result || result.error) return
+
+    const loadedMessages = result.messages || []
+    const msgsEl = document.getElementById('chat-msgs-' + id)
+    if (!msgsEl) return
+
+    // Render each loaded message
+    for (const msg of loadedMessages) {
+      if (msg.role === 'user') {
+        const userMsg = document.createElement('div')
+        userMsg.className = 'chat-msg chat-msg-user'
+        userMsg.innerHTML = `<div class="chat-msg-label">YOU</div><div class="chat-msg-content">${escapeHtml(msg.content)}</div>`
+        msgsEl.appendChild(userMsg)
+        s.messages.push({ index: s.messages.length, role: 'user', content: msg.content, timestamp: Date.now() })
+        registerSettledMessage(id, userMsg)
+      } else if (msg.role === 'assistant') {
+        const assistantMsg = document.createElement('div')
+        assistantMsg.className = 'chat-msg chat-msg-assistant'
+        const raw = marked.parse(msg.content)
+        const safe = DOMPurify.sanitize(raw, SANITIZE_CONFIG)
+        assistantMsg.innerHTML = `<div class="chat-msg-label">ACE</div><div class="chat-msg-content md-body">${safe}</div>`
+        postProcessCodeBlocks(assistantMsg.querySelector('.chat-msg-content'))
+        postProcessWikilinks(assistantMsg.querySelector('.chat-msg-content'))
+        msgsEl.appendChild(assistantMsg)
+        s.messages.push({ index: s.messages.length, role: 'assistant', content: msg.content, timestamp: Date.now() })
+        registerSettledMessage(id, assistantMsg)
+      }
+    }
+
+    // Scroll to bottom to show latest messages
+    msgsEl.scrollTop = msgsEl.scrollHeight
+
+    // Now switch to terminal mode
+    requestAnimationFrame(() => toggleSessionMode(id))
+  } catch (e) {
+    console.error('Failed to load session history:', e)
+    // Still switch to terminal mode even if history load fails
     requestAnimationFrame(() => toggleSessionMode(id))
   }
 }

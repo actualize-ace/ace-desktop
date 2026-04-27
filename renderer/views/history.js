@@ -253,9 +253,10 @@ export async function openSessionDetail(project, sessionId) {
   if (resumeBtn) {
     resumeBtn.addEventListener('click', () => {
       const sid = resumeBtn.dataset.sessionId
-      const projectDir = resumeBtn.dataset.project.replace(/-/g, '/')
+      const project = resumeBtn.dataset.project
+      const projectDir = project.replace(/-/g, '/')
       document.querySelector('.nav-item[data-view="terminal"]').click()
-      setTimeout(() => spawnSession({ resumeId: sid, resumeCwd: projectDir }), 150)
+      setTimeout(() => spawnSession({ resumeId: sid, resumeCwd: projectDir, resumeProject: project }), 150)
     })
   }
 }
