@@ -9,6 +9,31 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## v0.3.0 — 2026-04-27
+
+### Fixed
+- **Windows prompt truncation (definitive fix)** — Claude CLI prompts sent through `.cmd` wrappers (npm install) were split at whitespace by cmd.exe, so only the first word reached Claude. Root cause: Node.js overrides `windowsVerbatimArguments` to `true` when `shell:true`, ignoring the v0.2.9 fix entirely. Now manually wraps the prompt in cmd.exe-safe double quotes before args are joined. Affects `chat-manager.js` and `synthesizer.js`. Users with `claude.exe` (standalone install) and all Mac/Linux users were never affected.
+
+### Changed
+- **Chat history restored on resume** — reopening a session now rehydrates prior messages from the Claude CLI session log instead of showing a blank pane.
+
+---
+
+## v0.2.9 — 2026-04-26
+
+### Fixed
+- **Energy pill overflow** — removed the energy tag from the cockpit synthesis card; the tag was rendering raw state text and overflowing its container on Windows.
+- **Windows CLI quoting (attempted)** — set `windowsVerbatimArguments: false` to fix prompt truncation on `.cmd` binaries. Did not resolve the issue — Node.js overrides this setting when `shell:true`. Superseded by v0.3.0.
+
+---
+
+## v0.2.8 — 2026-04-26
+
+### Fixed
+- **Output flush race condition** — the close handler only flushed buffered stream events if a flush timer was pending. Events arriving after the last timer-based flush but before process exit were silently dropped. Now flushes whenever the event queue is non-empty, regardless of timer state.
+
+---
+
 ## v0.2.7 — 2026-04-26
 
 Stability + cockpit polish release. Renderer lifecycle hardened, auto-reload made non-destructive, and several silent failure modes surfaced.
