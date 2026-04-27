@@ -147,7 +147,10 @@ Return JSON only. No markdown, no code fences.`
 
   return new Promise(resolve => {
     const needsShell = process.platform === 'win32' && /\.(cmd|bat)$/i.test(binaryPath)
-    const proc = execFile(binaryPath, ['--model', 'sonnet', '-p', prompt], {
+    const safePrompt = needsShell
+      ? '"' + prompt.replace(/%/g, '%%').replace(/"/g, '""') + '"'
+      : prompt
+    const proc = execFile(binaryPath, ['--model', 'sonnet', '-p', safePrompt], {
       timeout: 30000,
       env: process.env,
       shell: needsShell,

@@ -91,7 +91,14 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
     return
   }
 
-  const args = ['-p', prompt, '--output-format', 'stream-json',
+  // On Windows .cmd, shell:true joins args with spaces and cmd.exe splits
+  // at whitespace.  Node overrides windowsVerbatimArguments→true when
+  // shell:true, so we must quote the prompt ourselves for cmd.exe.
+  const needsShell = process.platform === 'win32' && /\.(cmd|bat)$/i.test(claudeBin)
+  const safePrompt = needsShell
+    ? '"' + prompt.replace(/%/g, '%%').replace(/"/g, '""') + '"'
+    : prompt
+  const args = ['-p', safePrompt, '--output-format', 'stream-json',
                 '--verbose', '--include-partial-messages']
   if (claudeSessionId) args.push('--resume', claudeSessionId)
 
@@ -187,14 +194,12 @@ function send(win, chatId, prompt, cwd, claudeBin, claudeSessionId, opts) {
   // invocation through cmd.exe — without it, stdio pipes never connect
   // and the process hangs silently (node-pty works because ConPTY handles
   // this internally; bare spawn does not).
-  const needsShell = process.platform === 'win32' && /\.(cmd|bat)$/i.test(claudeBin)
   const spawnStartMs = Date.now()
   const proc = spawn(claudeBin, args, {
     cwd,
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env, PATH: augmentedPath, TERM: 'xterm-256color', COLORTERM: 'truecolor', ELECTRON_RUN_AS_NODE: undefined, MCP_CONNECTION_NONBLOCKING: undefined },
     shell: needsShell,
-    windowsVerbatimArguments: false,
   })
   if (!win.isDestroyed()) win.webContents.send(`${ch.CHAT_SPAWN_STATUS}:${chatId}`, { status: 'starting' })
 
