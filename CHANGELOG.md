@@ -9,6 +9,34 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## [v0.3.7](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.3.7) — 2026-05-21 — Build Mode = True Bypass
+
+### Changed
+- **Build Mode now actually means Build Mode.** When the Build Mode toggle is ON, the chat engine launches with a true permission bypass (`--dangerously-skip-permissions`) instead of the `acceptEdits` mode + allowlist it used before. Commands, file edits, `.claude/` skill edits, MCP tools, and sub-agent calls all run without an approval card. The toggle previously only appended verb patterns to an allowlist, so anything the list did not name still spawned a card — a gap no list could close. Routing through the bypass closes it for good. Verified against Claude Code 2.1.144: the bypass is total, including `.claude/` writes.
+
+### Added
+- **Build Mode safety guard** — a `PreToolUse` hook (`.claude/hooks/build-mode-guard.cjs`) that hard-blocks a deliberately tight denylist of genuinely catastrophic Bash commands: recursive deletes of a filesystem root / system directory / home root (including `sudo`-prefixed and compound forms), fork bombs, and raw disk-device writes (`dd of=/dev/…`, `mkfs`, `> /dev/sd…`). It runs regardless of permission mode, so it is the one floor that survives the bypass. Ordinary destructive dev work (`rm -rf node_modules`, force-push, `git reset --hard`) is intentionally allowed. A block shows a non-actionable "Blocked for safety" note — no approval card, no retry. ACE Desktop installs and self-heals the guard on startup (`src/build-guard.js`), so fresh installs and client vaults get it automatically. Fails open: a missing or broken guard never bricks Build Mode.
+- **Build Mode toggle feedback** — toggling Build Mode now gives a calm, visible signal: the toggle plays a one-shot pulse on the transition, carries a slow ambient breathing glow the whole time it is ON, and a small auto-fading toast confirms the change (`commands run without approval` / `approval prompts restored`). Since Build Mode now changes the safety model rather than just lengthening an allowlist, the mode you are in should never be ambiguous. Honours `prefers-reduced-motion` — the static gold state remains as the signal.
+
+### Fixed
+- **Build Mode no longer shows approval cards for unlisted Bash verbs** — `renderBashPermissionCard` early-returns in Build Mode and calls `autoApproveBuildMode` instead: extracts verb patterns from all denied commands, writes them to `settings.json` in a single batched read-modify-write (no race), and auto-continues the session. Fixed the v0.3.5 regression where commands like `dscl`, `lsof`, `xattr`, and `strings` still prompted even with the toggle ON. Toggle-off sweep now unions `BUILD_PERMS` + `dynamicBuildPerms` so runtime-approved patterns are cleaned up on mode exit. (`renderer/modules/build-mode.js`, `renderer/modules/mcp-cards.js`)
+- **AskUserQuestion renders correctly in plan mode** — normalized real tool schema (`questions[]`, `multiSelect`, `{label, description}`) so proper tool calls produce an interactive card instead of an empty textarea; detects AskUserQuestion JSON emitted as plain text (plan mode / tool unavailable) and renders a card instead of a raw JSON box; routes card submit through `sendChatMessage` (stdin was dead in one-shot `-p` mode — writes silently no-opped); collapses duplicate prose behind a toggle when a card renders in the same turn. Fixes the broken plan-mode UI Joel Rafidi was seeing. (`renderer/modules/session-manager.js`, `renderer/modules/tool-renderer.js`)
+- **MCP subprocesses no longer leak on session teardown (ACED-25)** — `killProc` was signalling only the claude PID; child MCP servers (`uvx workspace-mcp`, `npx mcp-remote`) reparented to launchd and survived. After ~5 sessions they exhausted ports 8000-8004 and every new Google Workspace connection failed. Chat process now spawns detached (own process group); teardown signals the negative PID so the whole subtree dies with it. (`src/chat-manager.js`)
+- **History resume no longer spawns a blank session** — clicking a session in History briefly triggered the nav handler to auto-spawn an empty session before the resume took over. A `window.__resumeIncoming` flag suppresses the auto-spawn during the 150 ms hand-off. (`renderer/index.html`, `renderer/views/history.js`)
+- **Google Workspace MCP routes through the shared HTTP service** — the connector template was using per-spawn `stdio`/`uvx`, opening a new port per session and exhausting ports 8000-8004 after ~5 concurrent sessions. Now `type: http, url: http://localhost:8000/mcp`. Do not revert to stdio. (`src/connector-registry.js`)
+- **Large transcript renders no longer freeze the app** — `renderInBatches` yields to the event loop via `setTimeout(0)` between every 25 messages, keeping the renderer responsive during long session hydration. (`renderer/modules/render-in-batches.js`)
+- **Bypassed messages hidden** — `.chat-msg-bypassed { display:none }` rule was missing. (`renderer/styles/chat.css`)
+
+### Internal
+- `tryAutoApproveWrites` was removed from `mcp-cards.js` in `e8b7ddf` but its import and call site remained in `session-manager.js`. An ES-module import of a missing export throws a SyntaxError that takes down the whole renderer module graph — the dev instance opened to a blank, broken screen. Dropped the dead import; write-permission denials now call `renderWritePermissionCard` directly. (`renderer/modules/session-manager.js`)
+- Build-Mode Bash denials route through `autoApproveBuildMode` (see Fixed above) rather than the bash approval card. The old path would have auto-approved + retried the safety guard denial — an infinite loop. Caught in pre-implementation pressure testing. [Design](docs/plans/2026-05-20-build-mode-true-bypass-design.md).
+
+### Added
+- **HTML attachments** — `.html` files can now be attached to chat messages (🌐 icon). Both `attachment-manager.js` (main process) and `attachment-handler.js` (renderer) updated consistently.
+- **Cadence thresholds tightened** — green ≤ 5 days (was 7), yellow ≤ 7 days (was 9). (`renderer/widgets/cadence.js`)
+
+---
+
 ## [v0.3.6](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.3.6) — 2026-05-11 — Pomodoro + Reliability Sweep
 
 ### Added
