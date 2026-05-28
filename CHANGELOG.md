@@ -9,6 +9,20 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## [v0.3.8](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.3.8) — 2026-05-28 — Agents + Images previews, sidebar redesign
+
+### Added
+- **Agents view (preview, flag OFF by default).** A calm place to launch and watch background `claude --bg` sessions without living in a terminal: a unified list grouped by state (needs-input / running / scheduled / done / failed), a one-line dispatcher with a Task vs Goal mode hint, a read-only peek drawer with a live progress trail and reasoning-trail cards, macOS notifications on state transitions, unattended-task guardrails (scope rails, wall-clock cap, audit log), and a friendly scheduled-task builder (frequency + time + day, no cron required) backed by a cron-driven scheduler engine. Enable in Settings → Preview Features.
+- **Image generation v1 (preview, flag OFF by default).** Generate images from a prompt with your own Gemini or OpenAI (gpt-image-1) key, saved to a simple gallery; auto-selects the provider you have a key for, renders image file-refs inline in chat as thumbnails, and shows a clear up-front banner with a deep-link to Settings when no key is configured. Enable in Settings → Preview Features.
+- **Sidebar nav redesign (A6).** Views regrouped by function, a usable collapsed mode with a hover flyout, a refreshed icon set, and a "last used" hover on the command strip.
+- **One-click Copy on the active chat**, plus Copy + Delete buttons in the Vault view toolbar.
+
+### Fixed
+- **Connectors: Disconnect/Remove now works.** The native confirm dialog is silently suppressed in this renderer, so it always returned false and the action never fired; replaced with an inline confirm strip.
+- **Agents: no more false "blocked" state** on autonomous tasks that actually completed.
+- **Permissions:** the "Always allow cd" button is relabelled to name its standalone-only scope.
+- **Session continuity:** guarded chat stream/error/exit handlers against ghost events after teardown.
+
 ## [v0.3.7](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.3.7) — 2026-05-21 — Build Mode = True Bypass
 
 ### Changed
