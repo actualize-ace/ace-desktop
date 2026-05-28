@@ -9,6 +9,19 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## [v0.3.9-rc.1](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.3.9-rc.1) — 2026-05-28 — Windows Claude launch fix (release candidate)
+
+Release candidate for Windows beta testing. Not yet validated on a real Windows machine — cut to get the fix onto beta testers' Windows installs.
+
+### Fixed
+- **Windows Claude launch reliability.** Reworked how ACE finds and launches the Claude CLI so Windows installs start reliably instead of silently failing. Three changes:
+  - **Never trust a path that can't run.** Setup/preflight now persist a Claude path only after it actually responds to `--version`, ending the "configured but won't launch" state. Windows `.ps1` shims are no longer auto-selected.
+  - **Prompts no longer go through the command line.** The user message is piped to Claude via stdin, and ACE's system prompt (CLAUDE.md + identity block) is passed as a file (`--append-system-prompt-file`). This eliminates Windows `cmd.exe` breakage on characters like `& | % ^ < > " ( )` and newlines.
+  - **Windows install types are handled explicitly.** Native binary vs npm `.cmd` shim are each launched correctly through a single adapter.
+- New `src/claude-runtime/` module centralizes Claude discovery, verification, and launch (previously duplicated across `main.js`, `preflight.js`, and `chat-manager.js`). macOS/Linux native launch is unchanged. Scope: setup detection + structured chat only — terminal pane, background agents, and synthesis still use the prior launch path (migrating in a later release).
+
+---
+
 ## [v0.3.8](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.3.8) — 2026-05-28 — Agents + Images previews, sidebar redesign
 
 ### Added
