@@ -9,6 +9,22 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## [v0.3.9-rc.2](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.3.9-rc.2) — 2026-05-29 — Sprint cut for beta (Skills view, chat summaries, Agents + Images live)
+
+Mid-sprint release candidate cut to get the latest beta work onto testers' machines. Builds on rc.1's Windows Claude launch fix.
+
+### Added
+- **Skills view (Atelier).** New System-section view that catalogs the vault's skills, replacing the old Roadmap view. (`renderer/views/skills.js`, `renderer/data/skill-library.js`, `renderer/styles/views/skills.css`)
+- **One-click AI chat summary.** Summarize any live chat or past session in one click; summary renders inline in the chat pane and History view. New `src/chat-summarizer.js` + IPC channel. (`renderer/modules/chat-summary.js`, `renderer/modules/chat-pane.js`, `renderer/views/history.js`, `renderer/styles/chat-summary.css`)
+
+### Changed
+- **Agents and Images views are now visible by default.** Both were shipped as flag-gated previews in v0.3.8 (`ace-flag-agentsView` localStorage flag and the `imageGenV1` config flag). Their sidebar nav entries now show without any flag, so beta testers see them out of the box. (`renderer/index.html`)
+
+### Internal
+- Windows CI smoke tests for the `claude-runtime` module (real Claude launch on Windows runners). Test-only; no user-facing change.
+
+---
+
 ## [v0.3.9-rc.1](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.3.9-rc.1) — 2026-05-28 — Windows Claude launch fix (release candidate)
 
 Release candidate for Windows beta testing. Not yet validated on a real Windows machine — cut to get the fix onto beta testers' Windows installs.
