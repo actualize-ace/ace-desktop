@@ -5,7 +5,50 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
-## Unreleased
+## Unreleased — v0.4.0 (final) in progress
+
+These notes accumulate the full v0.4.0 stable scope. The release candidate below (v0.4.0-rc.1) is cut from this same line and carries everything here; v0.4.0 final ships under its own tag once the remaining hardening gates land, at which point these notes graduate to a dated `## [v0.4.0]` entry.
+
+**Remaining before v0.4.0 final:** strict CSP (`script-src 'self'` — externalize the four inline module blocks to drop `'unsafe-inline'`), `sandbox: true` on the renderer, and the Electron major bump off EOL 34. Held back from rc.1 by design; each needs a launch-verified regression pass.
+
+The v0.4 keel: the Agents and Images previews that landed across v0.3.8–v0.3.9 are now first-class, background scheduling moved to launchd, the freeze and lost-work bugs are fixed, and a security + onboarding pass rounds out the release.
+
+### Added
+- **Agents is a top-level surface.** Promoted out of the Sessions group to its own primary sidebar item so the background-task workflow is discoverable on first launch. Hand work off with Task (runs once) or Goal (runs until a condition you write is met), and set up recurring scheduled tasks. (`renderer/index.html`, `renderer/modules/agents-manager.js`)
+- **Scheduled tasks are visible from an empty state.** The Scheduled section and its "+ New" button now render even with zero tasks, so recurring work can be created in-app instead of hand-editing the filesystem. (`renderer/modules/agents-manager.js`, `renderer/styles/views/agents.css`)
+- **Standalone LEARN lessons for Agents and Sessions.** The onboarding "Sessions, Agents, History" lesson split into a dedicated Agents lesson (a guided in-view tour of dispatch, Task/Goal, and scheduling) and a Sessions, Panes & History lesson. (`renderer/data/learn/`)
+- **Background scheduling via macOS launchd (opt-in, off by default).** Scheduled tasks now fire through launchd instead of the Electron main process, so they run even when ACE is closed and catch up missed runs on wake. No launchd jobs are installed until you enable background scheduling in Settings. Platforms without a native backend (Windows/Linux) fall back to in-process firing while ACE is open. (`src/scheduler.js`, `src/scheduler/**`)
+
+### Changed
+- **Images view: clearer no-key path.** The free Gemini-key link is now clickable (opens in your browser) and every button has a keyboard focus ring. (`renderer/views/images.js`, `renderer/styles/views/images.css`)
+
+### Fixed
+- **Resume no longer freezes the app.** Reopening a long conversation renders in interruptible batches so the window stays responsive throughout (regression-guarded in `src/__tests__/history-render.test.js`).
+
+### Security
+- **Connector token cleanup is path-confined.** The clear-tokens handler now only deletes inside allow-listed credential directories under your home folder, instead of any path it is handed. (`main.js`)
+
+---
+
+## [v0.4.0-rc.1](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.0-rc.1) — 2026-06-11 — Early tester RC (Ultracode tier · v0.4 security hardening · partial CSP)
+
+First release candidate on the v0.4 line, cut to get the current build onto early testers ahead of the final hardening pass. Carries the full v0.4.0 scope in Unreleased above, plus the changes below. The strict-CSP / sandbox / Electron-bump work is intentionally deferred to v0.4.0 final.
+
+### Added
+- **Ultracode multi-agent tier.** A capstone "✦ Ultracode" rung above Max in the per-chat and Settings effort selectors. Selecting it engages the CLI's multi-agent fan-out on decomposable tasks while still sending a valid `--effort max`; your typed message stays clean. Gated to models that honor it (Opus, Fable) — Sonnet/Haiku fall back to Max — and arms a gradient send-button ring so the higher token cost is never silently on. (`renderer/models.js`, `renderer/modules/session-manager.js`, `renderer/modules/chat-pane.js`, `renderer/views/settings.js`, `renderer/styles/chat.css`)
+
+### Security
+- **Closed the renderer-XSS → IPC → host-RCE escalation class (partial v0.4 hardening).** A pre-v0.4 audit surfaced a path from a renderer XSS through the preload bridge to host code execution. This pass closes the verified holes — each adversarially re-verified for both hole-closed and legit-caller-preserved: a `--` terminator before background-dispatch prompts so a flag-shaped prompt can't become a CLI flag; rejection of catch-all permission patterns with in-process vault-path derivation; hook-injection rejection on settings writes; vault-containment + `0600` enforcement on connector env files and `ace-config.json`; a path-traversal guard on history reads; and symlink-escape realpathing on new-file writes; plus renderer XSS escaping across the command bar, slash menu, MCP cards, connectors, and LEARN (DOMPurify). 484 tests pass (4 skipped). (`main.js`, `src/dispatch-core.js`, `renderer/**`)
+- **Content-Security-Policy added (partial).** index.html now carries a CSP meta. `script-src` still allows `'unsafe-inline'` — the four inline module blocks are externalized in a later launch-verified pass — but it already blocks the highest-impact escalations: remote script loading, `eval` / `new Function`, plugins (`object-src 'none'`), `<base>` hijack, framing, and form exfil, and confines renderer fetch/connect/img/media/font to `'self'` plus the local coherence WebSocket. Pre-paint scripts externalized to `renderer/lib/prepaint.js`; dashboard and preflight buttons moved off inline `onclick`. (`renderer/index.html`, `renderer/lib/prepaint.js`)
+
+### Changed
+- **UI polish.** The Cmd+K command-bar input no longer draws a sharp-cornered focus ring inside its rounded panel; chat-pane header glyphs trimmed 14→12px (22px hit-target preserved); the astro birth-info line is centered to align with its toggle and links. (`renderer/styles/forms.css`, `renderer/styles/chat.css`, `renderer/styles/command-bar.css`, `renderer/styles/views/astro.css`)
+
+### Install & known limitations
+- **Unsigned build.** DMGs are not yet code-signed or notarized. On first launch, right-click the app → Open to bypass Gatekeeper. arm64 for Apple Silicon (M1/M2/M3), x64 for Intel Macs.
+- **Partial CSP.** `script-src` still includes `'unsafe-inline'`; strict `script-src 'self'`, `sandbox: true`, and the Electron major bump land in v0.4.0 final. Acceptable for trusted testers.
+- **Background scheduling is opt-in.** Off by default; enable it in Settings to have scheduled tasks run while ACE is closed (macOS launchd). See Unreleased above.
+- **Scheduled-task prompts are trusted code.** A task's prompt runs as written; don't import scheduled-task files (`~/.claude/scheduled-tasks/*/SKILL.md`) from sources you don't trust.
 
 ---
 
