@@ -30,6 +30,25 @@ The v0.4 keel: the Agents and Images previews that landed across v0.3.8–v0.3.9
 
 ---
 
+## [v0.4.0-rc.3](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.0-rc.3) — 2026-06-25 — RC refresh (People view · chat resilience · agent-dispatch + stall fixes)
+
+Rolls up everything cut since rc.1 (rc.2 was a quick rebuild carried without separate notes). Still on the v0.4 line; strict-CSP / sandbox / Electron-bump remain deferred to v0.4.0 final.
+
+### Added
+- **People view (Phase 0).** A first-class People surface with exact-match lookup, due-date discipline on follow-ups, and graph fidelity to the network map. (`renderer/views/people.js`, `renderer/styles/views/people.css`)
+- **Chat auto-retries transient overloads.** A turn that hits an HTTP 529 (API overloaded) now retries automatically instead of surfacing an error card. (`src/chat-manager.js`)
+
+### Changed
+- **People list tags are capped.** Category tags on the People list cap at two with an overflow chip, so dense entries stay scannable. (`renderer/views/people.js`)
+- **Rhythm widget reads honestly.** A single 28-day scan replaces the buggy week array (which could count future dates), and labels now reflect what is actually measured. (`renderer/modules/rhythm-widget.js`)
+
+### Fixed
+- **Agents no longer hang on dispatch.** Background dispatch now resolves on the CLI's `backgrounded · <id>` banner instead of waiting for an stdout EOF that the detached daemon never sends, so handoff no longer stalls for 15s and fails. (`src/dispatch-core.js`, `src/agents-manager.js`)
+- **Chat stall-card Resume loop is broken.** The Resume action now escalates and reaps the stuck process instead of re-entering the same stall card. (`renderer/modules/chat-pane.js`)
+- **Inactivity stall watchdog.** Long-silent turns are detected and recovered via resume-without-replay, so a wedged turn no longer hangs the pane. (`src/chat-manager.js`)
+
+---
+
 ## [v0.4.0-rc.1](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.0-rc.1) — 2026-06-11 — Early tester RC (Ultracode tier · v0.4 security hardening · partial CSP)
 
 First release candidate on the v0.4 line, cut to get the current build onto early testers ahead of the final hardening pass. Carries the full v0.4.0 scope in Unreleased above, plus the changes below. The strict-CSP / sandbox / Electron-bump work is intentionally deferred to v0.4.0 final.
