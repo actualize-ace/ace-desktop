@@ -5,28 +5,41 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
-## Unreleased — v0.4.0 (final) in progress
+## [v0.4.0](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.0) — 2026-07-02 — v0.4 stable (Ambient · Sovereign Mode · Intelligence · Agents & scheduling first-class)
 
-These notes accumulate the full v0.4.0 stable scope. The release candidate below (v0.4.0-rc.1) is cut from this same line and carries everything here; v0.4.0 final ships under its own tag once the remaining hardening gates land, at which point these notes graduate to a dated `## [v0.4.0]` entry.
-
-**Remaining before v0.4.0 final:** strict CSP (`script-src 'self'` — externalize the four inline module blocks to drop `'unsafe-inline'`), `sandbox: true` on the renderer, and the Electron major bump off EOL 34. Held back from rc.1 by design; each needs a launch-verified regression pass.
-
-The v0.4 keel: the Agents and Images previews that landed across v0.3.8–v0.3.9 are now first-class, background scheduling moved to launchd, the freeze and lost-work bugs are fixed, and a security + onboarding pass rounds out the release.
+The v0.4 keel lands stable. The Agents and Images previews from v0.3.8–v0.3.9 are now first-class, background scheduling runs on macOS launchd, an Ambient surface and an opt-in Sovereign Mode arrive, Intelligence briefings render in-app, and the freeze / lost-work / stall bugs are fixed. This entry graduates the rc.1 → rc.3 scope below and folds in everything cut since rc.3.
 
 ### Added
+- **Ambient surface.** A living-orb Ambient view with converse mode over bidirectional voice, a move engine that reads vault signals into a synthesis widget, and a Hero surface that offers one fresh suggestion at a time with suppression, a review nudge, and a depth drawer. You can mark a suggested move done from the view. (`renderer/views/ambient.js`, `renderer/widgets/ambient-orb.js`, `renderer/widgets/synthesis.js`, `renderer/modules/speakable.js`, `src/intelligence/ambient-move.js`, `src/intelligence/freshness-gate.js`, `src/vault-reader.js`)
+- **Sovereign Mode (opt-in, key-gated, off by default).** An in-app launcher for the local opencode + OpenRouter terminal host, gated behind a Settings toggle and your own OpenRouter key, with a boot overlay that masks cold-start and a pinned dark theme. (`renderer/views/settings.js`, `renderer/modules/session-manager.js`, `renderer/styles/views/terminal.css`, `src/pty-manager.js`)
+- **Intelligence briefings render in-app.** The weekly-review Health Runway can render an intelligence briefing on demand; a cockpit widget and a dedicated Intelligence view surface it, with an empty-state render CTA and a reading-history log. (`renderer/views/intelligence.js`, `renderer/widgets/intelligence.js`, `renderer/widgets/registry.js`, `main.js`, `src/ipc-channels.js`)
 - **Agents is a top-level surface.** Promoted out of the Sessions group to its own primary sidebar item so the background-task workflow is discoverable on first launch. Hand work off with Task (runs once) or Goal (runs until a condition you write is met), and set up recurring scheduled tasks. (`renderer/index.html`, `renderer/modules/agents-manager.js`)
 - **Scheduled tasks are visible from an empty state.** The Scheduled section and its "+ New" button now render even with zero tasks, so recurring work can be created in-app instead of hand-editing the filesystem. (`renderer/modules/agents-manager.js`, `renderer/styles/views/agents.css`)
 - **Standalone LEARN lessons for Agents and Sessions.** The onboarding "Sessions, Agents, History" lesson split into a dedicated Agents lesson (a guided in-view tour of dispatch, Task/Goal, and scheduling) and a Sessions, Panes & History lesson. (`renderer/data/learn/`)
 - **Background scheduling via macOS launchd (opt-in, off by default).** Scheduled tasks now fire through launchd instead of the Electron main process, so they run even when ACE is closed and catch up missed runs on wake. No launchd jobs are installed until you enable background scheduling in Settings. Platforms without a native backend (Windows/Linux) fall back to in-process firing while ACE is open. (`src/scheduler.js`, `src/scheduler/**`)
 
 ### Changed
+- **Sidebar reorg.** People is now a flat primary item under Agents, Intelligence moved into the Knowledge group, and Learn is a standalone item under System. (`renderer/index.html`)
+- **Per-chat aurora regulation field.** The chat pane carries a subtle regulation field during generation. (`renderer/modules/chat-pane.js`)
 - **Images view: clearer no-key path.** The free Gemini-key link is now clickable (opens in your browser) and every button has a keyboard focus ring. (`renderer/views/images.js`, `renderer/styles/views/images.css`)
 
 ### Fixed
 - **Resume no longer freezes the app.** Reopening a long conversation renders in interruptible batches so the window stays responsive throughout (regression-guarded in `src/__tests__/history-render.test.js`).
+- **Scheduler re-anchors on timezone change.** launchd jobs re-anchor when the machine timezone changes, so a job created in one timezone no longer fires at the wrong local hour. (`src/scheduler/os-scheduler/macos.js`, `src/scheduler/scheduler-sync.js`)
+- **Chat resilience.** Socket drops auto-retry up to three times before an error card, queued chat bubbles get a per-message Cancel button, and the engine-error card uses straight quotes so the renderer parses it. (`src/chat-manager.js`, `renderer/modules/chat-pane.js`)
+- **Agents auto-retry scheduled socket drops** with a manual Retry button for the ones that stay down. (`src/agents-manager.js`)
+- **Artifacts view repaired.** Visibility, search, preview, and live chip counts are fixed. (`renderer/views/artifacts.js`, `src/vault-reader.js`)
 
 ### Security
-- **Connector token cleanup is path-confined.** The clear-tokens handler now only deletes inside allow-listed credential directories under your home folder, instead of any path it is handed. (`main.js`)
+- **Connector token cleanup is path-confined.** The clear-tokens handler only deletes inside allow-listed credential directories under your home folder, instead of any path it is handed. (`main.js`)
+
+### Known limitations (carried forward)
+- **Partial CSP.** `script-src` still includes `'unsafe-inline'`; strict `script-src 'self'` did not land in this cut.
+- **`sandbox: false` on the main window.** The preload still requires `ipc-channels` at build time; `sandbox: true` needs the preload bundled first.
+- **Electron 34 (EOL).** The major version bump off 34 did not land in this cut.
+- **Unsigned build.** DMGs are not code-signed or notarized. On first launch, right-click the app → Open to bypass Gatekeeper. arm64 for Apple Silicon, x64 for Intel Macs.
+
+The strict-CSP, `sandbox: true`, and Electron-bump gates were flagged in rc.1 as targets for v0.4.0 final. They did not land here and are carried forward to a later release; v0.4.0 ships with the partial CSP, `sandbox: false`, and Electron 34 as accepted limitations for the current trusted-user base.
 
 ---
 
