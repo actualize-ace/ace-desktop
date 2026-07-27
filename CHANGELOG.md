@@ -5,6 +5,34 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## [Unreleased]
+
+---
+
+## [v0.4.1](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.1) — 2026-07-27 — chat context you can trust (true context windows · pressure nudge · reload no longer loses work)
+
+A maintenance release built around one theme: the numbers on a chat should be true, and a reload should not cost you anything. The context meter now reads each model's real window instead of a guess, a nudge reaches you before a long session hits the wall, and spend, model, and carried context all survive Cmd+R.
+
+### Added
+- **A context-pressure nudge that arrives before the slow zone.** A strip above the composer offers you a fresh chat while there is still room to act, instead of a passive percentage at the bottom of the pane that a heads-down dictation session sails straight past. It fires once per threshold rather than nagging, escalates its wording without escalating its styling, spills into the other pane and opens the split when the current pane is full, and plainly withdraws the offer when every slot is taken. (`renderer/modules/session-manager.js`, `renderer/modules/chat-pane.js`, `renderer/styles/chat.css`)
+- **A branch pill in the titlebar.** When your vault is on a branch, a linked worktree, or a detached HEAD, the titlebar says so; on `main` in the primary checkout it stays invisible, so nothing changes for a member who never uses branches. It also keeps up with a branch switch made inside the app instead of going stale until the next reload. (`src/git-context.js`, `renderer/modules/branch-pill.js`)
+- **A Codex runtime card in Connectors.** Log in to Codex and pick the model it rests on. ACE never stores an OpenAI credential, and writing the model setting leaves every other secret already in your `~/.codex/config.toml` byte-for-byte untouched. (`renderer/views/connectors.js`, `src/codex-auth.js`)
+- **Comms (ACE Link) ships present but dark, behind a preview flag.** ACE Link reads your messages locally to build a comms picture, and it is still in development, so it is off by default and no member sees it without opting in at Settings → Preview Features. Read-only by construction: it stages messages locally and has no send path at all. (`renderer/lib/prepaint.js`, `renderer/views/settings.js`, `renderer/views/connectors.js`)
+
+### Changed
+- **The context meter reads each model's true window.** Windows are now learned from the CLI itself as turns complete and remembered across restarts, with measured values used only until a model's first real turn. The table this replaces was confidently wrong: it pinned Opus and Fable at 1M while the CLI actually ran them at 200K, so the meter read roughly five times low and a chat could reach the wall with no warning. Related: plain `claude-opus-5` runs a 200K window, and only the `[1m]` suffix buys the full 1M, so the context-wall card no longer suggests switching models for headroom that was never there. (`renderer/modules/telemetry.js`)
+- **Instrument Sans throughout.** Display and body type move to Instrument Sans, with dashboard interaction fixes alongside. (`renderer/styles/`)
+- **A quieter chat status strip.** The token count is gone from the visible strip: it only counted cumulative uncached input, so it understated real usage and implied a cost-per-token rate that meant nothing. The raw numbers moved to a tooltip, and the context-window bar grew slightly, being the only actionable number left. (`renderer/modules/chat-pane.js`)
+
+### Fixed
+- **Cmd+R no longer drops open chats from a split view.** A renderer reload now restores every open chat to the pane it came from. The split is rebuilt idempotently and self-heals a stale active-flag / missing-DOM mismatch before any chat is placed, so right-pane chats no longer fall into the left pane and get dropped past the per-pane limit. A partial or failed restore never erases the recovery record either: `persistActiveSessions()` is the single writer, so a chat that could not be placed returns on the next reload instead of being lost for good. An opened-but-unsent create chat now survives the reload too: it respawns as an empty slot in its original pane on the model you had picked, where before it was never written to the recovery record and vanished on Cmd+R. The pane-placement decision is now a pure, unit-tested function. (`renderer/modules/session-manager.js`, `renderer/modules/split-pane-manager.js`, `renderer/modules/restore-plan.js`, `renderer/modules/__tests__/restore-plan.test.js`)
+- **A reloaded chat comes back on its own model, showing the context it is actually carrying.** Both were silently lost: the recovery record passed no model for a sent chat, on the belief that loading history re-derived it when nothing in that path ever did, and carried context size was never saved at all, so the bar read 0% on a chat sitting near full. (`renderer/modules/session-manager.js`, `renderer/__tests__/session-restore-state.test.js`)
+- **Chat spend survives a reload and a History reopen.** Cost reset to $0.00 on both paths because the running total lived only on the in-memory session object, which both paths recreate. Spend is now written once per turn and restored on resume, and it no longer clobbers a chat's label or tags on the way through. (`src/chat-meta-store.js`, `renderer/modules/session-manager.js`)
+- **Sovereign Mode: honest cost, and a key lifecycle that holds.** Session cost is labeled estimated rather than presented as exact, the server key lifecycle and boot-time catalog gate are fixed, and tool chips render atomically instead of flickering through partial states. (`renderer/modules/session-manager.js`, `src/pty-manager.js`)
+- **A globally installed Codex binary resolves regardless of your npm prefix.** Child-process PATH construction is deduplicated across macOS and Linux, `~/.npm-global/bin` is included, and callers can hint the resolved Claude CLI directory so a co-located Codex install is always found. (`src/claude-runtime/discover.js`, `src/pty-manager.js`)
+
+---
+
 ## [v0.4.0](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.0) — 2026-07-02 — v0.4 stable (Ambient · Sovereign Mode · Intelligence · Agents & scheduling first-class)
 
 The v0.4 keel lands stable. The Agents and Images previews from v0.3.8–v0.3.9 are now first-class, background scheduling runs on macOS launchd, an Ambient surface and an opt-in Sovereign Mode arrive, Intelligence briefings render in-app, and the freeze / lost-work / stall bugs are fixed. This entry graduates the rc.1 → rc.3 scope below and folds in everything cut since rc.3.
