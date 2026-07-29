@@ -9,6 +9,25 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## [v0.4.2](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.2) — 2026-07-29 — when the screen stays blank
+
+One release about one symptom: you send something and nothing comes back. A real cause of it is fixed, a whole class of failure that was previously invisible is now recorded, and the specific mistake that caused the worst version of it can no longer reach a build.
+
+### Added
+- **A renderer fault is now written down.** A JavaScript error inside the window does not kill the app, so nothing ever caught one: the crash log has been empty of them for this app's entire history, and the only handling wrote to a stream that a packaged app launched from Finder has nowhere to send. That is the blind spot behind "I typed something and ACE never responded." The reply is generated in full and simply never painted, while every health metric still reports a clean turn, because those metrics are stamped by a different half of the app than the one that failed. (`main.js`, `renderer/app.js`)
+- **A record of the turn that arrives and paints nothing.** Painting is now logged on the window side, so a reply that streams for a minute and shows you nothing leaves evidence behind instead of disappearing. Recounting the corpus this made possible also corrects a figure this project had been quoting: across 1,496 turns, 54 (3.61%) never saw a first token and 165 (11.0%) were killed mid-stream, where the previously published number was 1 in 1,437. Both numbers were measured honestly; the old one only ever counted one half of the pipe. (`renderer/modules/turn-paint-log.js`, `renderer/modules/session-manager.js`)
+
+### Changed
+- **A brand-new install now starts on Sonnet 5** rather than Sonnet 4.6. This is the model a member meets on their first ever launch, before they have chosen anything. It is written into their settings at that moment and never revisited, so an existing member keeps whatever they already have and is unaffected by this. Sonnet 5 over Opus because it carries a 1M context window on a current CLI at a fraction of the cost, which is the right first-weeks default before anyone knows when to reach for the expensive model. (`renderer/models.js`)
+- **The ALPHA card describes the build you are actually running.** Its contents had not been refreshed since v0.4.0, so it was still announcing that release's news two versions later. It now covers the context work, the previews, and this release's fixes, and the card is bounded so longer copy scrolls instead of pushing its own buttons off the bottom of the screen. (`renderer/index.html`, `renderer/styles/shell.css`)
+
+### Fixed
+- **Sharing a screenshot no longer swallows the reply.** Every screenshot attachment produced a red stream error in chat: an image is inlined on a single line that a 390KB PNG can push past 1MB, and the old guard threw away the entire buffer rather than the oversized line, so complete messages sharing that moment died alongside it. The limit is now 32MB, applies only to the incomplete tail, and resynchronises at the next line instead of feeding a truncated fragment onward. (`src/ndjson-buffer.js`, `src/chat-manager.js`)
+- **A long file write is no longer cut short as a false stall.** The watchdog moves a tool to its longer time limit when the tool begins rather than when it ends, so a large write is no longer judged against the limit meant for ordinary prose and killed part-way through. (`renderer/modules/stall-watchdog.js`)
+- **Comms group threads now attribute quotes to whoever said them (preview).** A group conversation could print one person's words under another person's name, and wear a single member's avatar as though the whole thread were them. Off by default behind Settings → Preview Features. (`src/connectors/digest.js`, `src/connectors/comms-store.js`, `renderer/views/comms.js`)
+
+---
+
 ## [v0.4.1](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.1) — 2026-07-27 — chat context you can trust (true context windows · pressure nudge · reload no longer loses work)
 
 A maintenance release built around one theme: the numbers on a chat should be true, and a reload should not cost you anything. The context meter now reads each model's real window instead of a guess, a nudge reaches you before a long session hits the wall, and spend, model, and carried context all survive Cmd+R.
