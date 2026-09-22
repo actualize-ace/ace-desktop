@@ -5,6 +5,14 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## [v0.4.7-rc.8](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.7-rc.8) — 2026-09-22 — Opus 5.5 in the picker
+
+Release candidate 8. One change, cut the day the model shipped.
+
+- **Claude Opus 5.5 is in the model picker.** Anthropic released it 2026-09-22: 1M context, adaptive thinking always on, $4 in and $20 out per million tokens where Opus 5 was $5 and $25, and it defaults to `medium` effort where every other model defaults to `high`. It sits at the top of the list; Opus 5 stays, and a saved Opus 5 or bare `opus` selection is deliberately not migrated onto it. **It needs Claude Code 2.1.280 or newer.** Probed live on 2.1.257 the day it shipped and the CLI refuses the id with a 400 that names the fix (`version 2.1.280 or newer is required. Run 'claude update'`), which the engine-error card shows verbatim; on 2.1.280 the same probe answered, reported a 1,000,000 context window through `modelUsage`, and accepted `--effort ultracode`. The measured window is seeded in the context meter so the first turn on it reads correctly. (`renderer/models.js`, `renderer/modules/telemetry.js`)
+
+**Verified on this candidate:** the model guard suites and the context-window and context-wall suites, plus the three live CLI probes above. Nothing else under `ace-desktop/` changed since rc.7.
+
 ## [v0.4.7-rc.7](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.7-rc.7) — 2026-09-21 — the pane follows the disk, and a signed-out account says so
 
 Release candidate 7. rc.6 (2026-09-15) was built and installed locally and never reached CI: its `package.json` asked for electron-builder 26.16.1 while the committed lock file still held 26.15.7, so every packaging job failed at `npm ci` on a dry run of this tree (run 35633791224). The regenerated lock file is committed here. This is the first tagged build since rc.2 (2026-09-11), so it carries everything the rc.6 section below describes plus the three changes here.
