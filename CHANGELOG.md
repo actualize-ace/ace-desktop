@@ -5,6 +5,55 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## [v0.4.7](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.7) · 2026-09-24 · Live Preview, the Hearth turns on, the Oracle is back, and ACE says what it is doing
+
+Everything since 0.4.6 in one place. Eight release candidates went out between 2026-09-04 and 2026-09-22; their sections below keep the detail and the verification records. This entry is the summary a member reads, plus the changes that landed after rc.8 and never had a section of their own.
+
+**This release has a companion vault update.** Comms Next step and the memory card's repair button call skills that reach your vault through ACE Core v1.20.0 and later. Run `/sync-core` after upgrading. The app notices when a core update is waiting and says so in the titlebar, and the Next step button opens `/sync-core` for you if the skill is not there yet.
+
+### New
+- **Live Preview: pages open beside the chat.** When ACE builds, edits or names a web page in your vault, a chip appears on that turn and the page opens in a pane next to the conversation. It reloads whenever the file changes on disk, whether ACE changed it or something else did. Ask ACE to show you a page and it opens the pane itself. Point at any part of the page to hand it to ACE as an attachment, switch between desktop, tablet and phone widths, and find every page a chat has shown you in the list in its header. Web fonts render. A page that wants something from the internet asks first, one click allows it, and Settings lists everything you have allowed. (rc.2, rc.6, rc.7)
+- **The Oracle is back, and it can be heard.** The Ask tab had been hidden on every view since June by a stylesheet rule; it is back everywhere, Panes included. Every Oracle answer carries Copy and Listen, Listen reads the whole answer through to its confidence line while skipping paths and code, and "Read every answer aloud" in the Oracle header runs on the same streaming voice with no Deepgram key needed. (`renderer/views/oracle.js`, `renderer/modules/msg-actions.js`, `renderer/modules/speakable.js`, `renderer/styles/views/ambient.css`)
+- **Activity: what ACE is doing and has done, in one place.** A new view under Sessions shows what is running, what is waiting on you, and what finished, each named in ACE's own words with the files it touched and the commands it ran. Background tasks appear there too. (rc.2, rc.3)
+- **The Hearth is on for everyone.** The orb at the bottom of the window shows at a glance whether ACE is working, waiting on you, or hit a problem, and clicking it opens the Hearth. The line beside it names the one thing worth knowing and opens a card with the detail. It raises only failures that still need you, and the room shows at most five follow-ups, with the rest one click away. An explicit `guide.enabled: false` in your config still turns it off. (`renderer/modules/guide-hearth.js`, `renderer/modules/hearth-card.js`, `src/guide/`, `renderer/views/ambient.js`)
+- **Comms: Next step.** Every Comms row gains one button that asks ACE what that relationship needs. It reads the whole thread from your own machine, checks whether a reply is actually owed, and proposes one concrete move. Nothing is sent. (`renderer/views/comms.js`, the `/nurture` skill in ACE Core v1.20.0)
+- **A Memory view.** Under Knowledge: what ACE remembers about you, what it learned lately, what it is about to let go of, and what needs you. The memory card now opens the fix it names, and "Not now" snoozes a fault for a week instead of returning every morning. (`renderer/views/memory.js`, `src/memory-overview.js`, `renderer/modules/memory-status-card.js`)
+- **Listen streams.** Replies read aloud start in about half a second, play without gaps, and are no longer cut off at 1,800 characters. Voice surfaces speak the answer and skip ACE's working ("Saving it now...") and its hidden notes. New installs start on the free system voice rather than a billed one, and the system voice list leads with natural voices instead of novelty ones. (`src/tts/`, `renderer/modules/chat-tts.js`, `renderer/modules/voice-reply.js`)
+- **Speak, then press send.** You no longer have to stop the mic first; the send arrow finishes the recording, waits for the words and sends them. (rc.2)
+- **Chat tabs tell you their state.** Each tab dot now means one thing: running, needs you, done, error, or sealed by `/close`. With two chats side by side, the one you are talking to is the one that lights. (`renderer/modules/session-manager.js`, `renderer/styles/`)
+- **Settings, reorganised by what you are doing.** Sections are Chat, Dictation, Reading aloud, Appearance, Automation, Keys & Services, Limits & Safety, Preview Features and System, with far less text and the price shown on the option you are choosing. (`renderer/views/settings.js`)
+- **Chats are named by what they are.** History and tab labels use the session's real title, not the first four words of the opening message. (rc.6)
+- **Claude Opus 5.5 and Fable 5.1 in the model picker.** Opus 5.5 needs Claude Code 2.1.280 or newer; Fable 5.1 needs 2.1.251 or newer. (rc.2, rc.8)
+- **The Learn tutorial matches the app.** Lessons were fact-checked against the code and rewritten where they were wrong, and three new ones cover Intelligence, People and Comms, and the page preview. (`renderer/data/learn/`)
+
+### Fixed
+- **A signed-out Claude account is named on screen, with a way back in.** Previously you got a generic error with two buttons that could not help. (rc.7)
+- **Scheduled tasks.** Two tasks firing at the same minute no longer silently kill one of them; a task that stopped firing says so; a job the background service lost is no longer shown as running for days; and on a Mac with "Run tasks when ACE is closed" switched off, Agents and Settings now say plainly that tasks will not run, because on macOS they do not. (rc.2, `renderer/modules/scheduler-copy.js`)
+- **On-device voice notes.** Faster Whisper on Windows, models downloaded from Settings are found, a dropped connection no longer eats a dictation, a voice note Beeper can no longer serve stops blocking the rest, and silence is no longer stored as words a contact said. (rc.2, rc.4)
+- **Comms times are your local time.** The comms file ACE reads at `/start` and `/brief` carried London time, so "this morning" meant the wrong morning outside the UK. (rc.4)
+- **Crash recovery takes half a second, not two minutes.** Reopening after a crash replayed the whole activity history before the window could paint. (`src/runtime-signal/`)
+- **The chat composer never collapses.** A chat squeezed beside the preview could shrink its text box to one letter per line; every pane now has a minimum width, and so does the window. (`renderer/styles/chat.css`, `renderer/modules/preview-pane.js`, `main.js`)
+- **The North Star gate shows the date you wrote**, not the day before, west of UTC. (`renderer/modules/date-only.js`)
+- **The Cadence Ring reads the day a review actually ran.** (rc.6)
+- **Clicks in the left of the bottom bar work.** An invisible decorative layer was swallowing them. (rc.7)
+- **The card that runs a blocked command for you works again.** An upstream package shipped a helper without its run permission, so every terminal process it started died at launch; the build now restores it and checks. (`scripts/fix-pty-permissions.js`)
+- **The turn note no longer leaks into replies**, and ACE's narration between tool steps no longer vanishes. (rc.2)
+- **Attaching a Google Drive file gives ACE a link it can open**, instead of the small placeholder file Drive leaves on disk. (rc.4)
+- **Answers render in the order they were written.** A large burst of streamed events could overtake itself, splicing part of an answer into the middle of a sentence while the saved transcript was clean. Each stream now delivers strictly in order. (`src/ordered-stream.js`, `preload.js`)
+
+### Security
+- **Three dependency advisories cleared** (`ws`, `js-yaml`, `dompurify`); `npm audit` on the shipped packages now reports zero. (`package.json`)
+- **Previewed pages are isolated from each other.** Two chats with open panes could let one page load the other's files; each page can now reach only its own folder. (`src/preview/`)
+- **The test suite no longer ships inside the app.** 327 test files were bundled into every installer. (rc.7)
+
+### Known limitations
+- **The freeze/reply-loss cluster remains open.** A chat that sometimes appears to hang with no reply, or a finished reply that never appears, mostly reported on Windows. The instrumentation from 0.4.6 stands; nothing in this release is a fix for it.
+- **Unsigned.** macOS shows the Gatekeeper warning on first launch (right-click, Open), and Windows may show SmartScreen.
+- **Windows: a restored chat can say its session file was not found** after a restart, because the history folder name is derived with forward slashes only. Still open.
+- **Sovereign Mode turns do not appear in Activity.**
+- **The preview pane does not survive a reload.** Cmd+R closes every pane; the chip returns on the next sighting.
+- **The safety guard blocks the most destructive commands but not every one.** Lesson 17 names exactly which paths it protects.
+
 ## [v0.4.7-rc.8](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.7-rc.8) — 2026-09-22 — Opus 5.5 in the picker
 
 Release candidate 8. One change, cut the day the model shipped.
