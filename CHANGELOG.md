@@ -5,6 +5,44 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## [v0.4.8-rc.4](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.8-rc.4) · 2026-09-30 · Sonnet 5.5 in the picker, System Vitals shows what is loading your machine, ACE goes still when you look away, and three shortcuts closed
+
+Release candidate 4 toward 0.4.8.
+
+### System Vitals
+- **The System Vitals card is three dials: your machine, ACE, and your chats.** It used to see only ACE's own memory. Now it shows your computer's CPU and memory, how much of it ACE is using (graphics, window and background services), and how many chats are running and how much of the machine they take, with a plain line naming what is using the most ("ACE graphics is using 2 of your 12 cores") and the top four users. When everything is clear the dials breathe green and fold to one line. It measures only while it is open and the window is visible. (`src/system-vitals.js`, `renderer/modules/vitality-card-poller.js`)
+- **The small dot in the sidebar is a live load ring.** It fills with your machine's load, and after twenty seconds of sustained load it opens into a short pill such as "Mac warming" or "ACE warming · graphics", naming the likely cause, then folds back as "Mac settling" once things calm down. It stays visible in the collapsed sidebar too, with the cause in its tooltip.
+- **A Check that measures instead of guessing.** When ACE's graphics are named as busy, the card offers a Check: it pauses ACE's own animations for a few seconds and tells you whether they were the cause, part of it, or not the cause at all.
+- **The card stays open through a theme change**, and a reopen shows the last reading, labelled with its time, until a fresh one lands.
+
+### Calmer when you look away
+- **ACE goes still when nobody is looking.** When the window is in the background, or after five minutes without input, every looping animation now pauses, including the guide orb and the sidebar mark that were missed before. Measured on a 120Hz Mac, ACE's idle load dropped from 7.7% to 1.3% of the machine. Anything that is actually working keeps moving: a reply streaming, background work, voice. (`renderer/modules/breath-stillness.js`, `renderer/styles/atmosphere.css`, `renderer/modules/ace-mark.js`)
+
+### Intensity
+- **The intensity meter comes down with rest.** It used to only climb, so it read 100% every evening. It now builds with work and drains with rest; time spent in another app holds it steady rather than counting as rest or as work; a full day's total clears only after about four hours of unbroken rest; and late-night work weighs more. The card says what is driving the number and what a break or a breathing protocol would actually do to it. Sessions are no longer scored.
+
+### Reliability
+- **Your settings file can no longer be cut off halfway through a save.** ACE now saves `ace-config.json`, the file that holds your API keys and settings, to a temporary file and swaps it in, so a crash or power loss mid-save leaves either the old settings or the new ones, never a broken file. (`src/config-file.js`)
+- **A failed background task you already acknowledged stays acknowledged** after ACE restarts, and "got it" now works on a failure that comes back later.
+
+### Projects
+- **Projects finds projects outside `Domains/`.** A top-level folder named like `Projects` or `08-Projects` is read too, and a folder's main note can say how it should be read with one frontmatter line: `project: collection` (each subfolder is its own project), `project: hidden`, or `project: maintain`. A folder with no such line reads exactly as before. Outcomes in `active.md` link to a project through their **Domain:** line first. (`src/projects/scan.js`, `renderer/views/projects.js`)
+
+### Models
+- **Claude Sonnet 5.5 is in the model picker.** Anthropic released it 2026-09-28: 1M context, the same $2 in and $10 out per million tokens as Sonnet 5, and faster at the same price. It sits above Sonnet 5, which stays; a saved Sonnet 5 or bare `sonnet` selection is not moved onto it. **It needs Claude Code 2.1.284 or newer**, and ACE now keeps Claude Code at least that new, so a member on an older copy is updated shortly after launch. Probed live the day after it shipped: on 2.1.280 the model still answers but Claude Code does not know it, runs it with a 200K window instead of 1M, and cannot price it; on 2.1.284 the same probe reported the full 1M. The measured window is seeded in the context meter. (`renderer/models.js`, `src/claude-runtime/self-update.js`, `renderer/modules/telemetry.js`)
+- **An older Claude Code on a newer model gets the update card, not a red error.** Because an old Claude Code runs Sonnet 5.5 rather than refusing it, the only sign was a raw `[claude-code:unrecognized_model]` line in red under a reply that had worked, with the tab flagged red. That line now brings up the same "This model needs a newer Claude Code" card that already covers Opus 5.5, saying the reply is coming through on a smaller working memory and offering the update in one click. The reply is never sent twice, and the tab stays calm. The card's words no longer name specific models, so they stay right as models change. (`renderer/modules/session-manager.js`, `renderer/modules/claude-update-copy.js`)
+
+### Notifications
+- **Choose which notifications ACE sends.** Settings has a new Notifications section: one switch for all of them, and one each for long replies that finish while you are away, background work, check-backs, agents and scheduled tasks, and the focus timer. Each is on unless you turn it off, a change takes effect at once with no restart, and a test button shows you what a notice looks like. The section also says where your operating system can silence ACE. (`src/notify-policy.js`, `src/chat-notify.js`, `renderer/views/settings.js`)
+- **No more red count on the Dock icon.** rc.3 added one; it is gone, and any count rc.3 left behind clears the first time this build opens.
+
+### Replies
+- **A reply that stopped mid-sentence is now completed.** Now and then the last words of a reply never reached the screen, even though ACE had received the whole reply. The pane now fills in the missing end from the full reply, and if that end asked to show you a page, the page still opens. Each time this happens, ACE writes one line to its log so the cause can be traced. (`renderer/modules/reply-tail.js`, `renderer/modules/session-manager.js`, `src/chat-manager.js`)
+
+### Safety
+- **Three shortcuts inside the app are closed.** Code running in the ACE window could ask your computer to open any kind of address through the connector sign-in route, have any file on your computer copied into your vault as an attachment, and start the built-in shell with any arguments it chose. Now a sign-in address must be a web address, a file is copied from disk only if you picked it or dropped it in yourself, and the shell accepts only the form the shell drawer uses. Nothing you do by hand works any differently. (`src/external-url.js`, `src/attachment-issued-paths.js`, `src/attachment-manager.js`, `src/pty-manager.js`, `preload.js`)
+- **A page in the preview pane can no longer quietly open a network connection through WebRTC.** WebRTC is the browser feature for calls and peer-to-peer links, and a previewed page could use it to reach the internet around the pane's rules. It is now switched off for UDP in every ACE window, removed from every HTML page the pane serves, and SVG, XHTML and XML files shown in the pane run no scripts at all, so an SVG that animates with a script shows still. This narrows the gap rather than closing it: a page that opens a `javascript:` child frame can still reach out over TCP, and that remaining route is tracked for a later release. (`src/webrtc-policy.js`, `main.js`, `src/preview/preview-webrtc-shim.js`, `src/preview/preview-protocol.js`)
+
 ## [v0.4.8-rc.3](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.8-rc.3) · 2026-09-26 · long work keeps going when you step away, ACE keeps its check-backs, and video plays in the pane
 
 Release candidate 3 toward 0.4.8.
