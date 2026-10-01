@@ -5,6 +5,23 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## [v0.4.8-rc.5](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.8-rc.5) · 2026-09-30 · long replies finish even while ACE is in the background, a quieter load pill that leaves the version in view, background agents that can save into your vault and give their memory back when they finish, and ACE's core rebuilt in smaller pieces
+
+Release candidate 5 toward 0.4.8.
+
+### Chat
+- **A long reply no longer stops mid-sentence when ACE is behind another window.** After a turn with many steps, the reply could stop painting partway through a sentence and stay that way, even though ACE had received all of it. The fix in rc.4 could not catch this one. The cause: while ACE's window was in the background, the reply's text queued up and arrived slowly, and the signal that the reply was finished overtook it, so ACE closed the reply before its last words landed. The finished signal and any error now wait behind the text, and the text keeps pace while ACE is in the background. Reproduced before the fix and checked after it: the same long reply, sent with ACE's window hidden, now arrives whole and matches the saved conversation word for word. Not yet checked on Windows or Linux. (`src/ordered-stream.js`, `preload.js`)
+
+### Agents
+- **A background agent can save its work into your vault.** Agents started from the Agents view, a schedule, or Run now could do their work but were refused when they tried to save it ("storing it in the vault was blocked by permissions denial"). Two things stood in the way: the agent was refused permission to write any file, and it moved itself into a hidden copy of the vault, so even a save that did succeed never showed up. Each agent now works in the vault itself and may save anywhere in it, except ACE's settings folder, git's internals, the connector config and `00-System/core`, which stay off limits. Read-only agents still save nothing. Checked on a member-style vault on a Mac: ordinary saves land where they should and every protected spot refuses. Not yet checked on Windows or Linux. (`src/scheduler/dispatch-core.js`, `src/agents-manager.js`)
+- **A finished background agent gives its memory back.** An agent stayed loaded after its work was done, about 330 MB each, until you clicked Dismiss. A day of scheduled runs could hold several gigabytes for nothing: on the operator's Mac, finished agents were holding about 5 GB, and clearing them freed 5.4 GB. Five minutes after an agent finishes, ACE now closes it. Its row stays in Done with its result, exactly as before, and opening its output still works. Only agents that finished cleanly are closed; an agent waiting for your approval, or one that failed, is left as it is. Checked live on a Mac: three finished agents were each closed once, on the first check past five minutes, their results intact, and older entries that only looked unfinished were left alone. Not yet checked on Windows or Linux. (`src/agents-release.js`, `src/agents-manager.js`)
+
+### System Vitals
+- **The load pill in the sidebar is smaller and says less.** In rc.4 it was large, bold, cut its own words short ("ACE warming · gra…") and hid the version while it showed. It now says only who is warm and how ("Mac warming", "ACE running hot", "Mac settling") in the same small type as the version, and the cause is in its tooltip and in the System Vitals card. The version stays beside it, showing just its number (`v0.4.8`) while the pill is open. At the default sidebar width every pill fits whole; in a sidebar dragged to its narrowest, the words shorten and the tooltip carries them. (`renderer/modules/vitals-ring.js`, `renderer/styles/atmosphere.css`)
+
+### Under the hood
+- **ACE's main process is rebuilt in smaller pieces.** The file that connects ACE's window to everything it does (chats, the terminal, attachments, connectors, the preview pane, agents, voice, settings) was over 4,000 lines in one place. It is now about 1,300, with each area in its own file. Nothing is meant to look or behave differently; every one of the 222 connections was checked, one by one, before and after. If something that worked in rc.4 does not work here, that is worth reporting. (`main.js`, `src/ipc/`)
+
 ## [v0.4.8-rc.4](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.8-rc.4) · 2026-09-30 · Sonnet 5.5 in the picker, System Vitals shows what is loading your machine, ACE goes still when you look away, and three shortcuts closed
 
 Release candidate 4 toward 0.4.8.
