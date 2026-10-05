@@ -5,6 +5,55 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## [v0.4.8-rc.6](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.8-rc.6) · 2026-10-04 · Range shows how much of your plan is left, signing in to Claude from inside ACE, a Projects view that reads each project from its real work, Comms that files and syncs correctly, and audio you can attach
+
+Release candidate 6 toward 0.4.8.
+
+### Signing in to Claude
+- **A model your Claude Code is too old for is caught before the turn, not after it.** ACE now knows the lowest Claude Code version each model needs. Picking a model your copy cannot run shows the update card straight away, with Update and retry, instead of an error or a quietly smaller model after a spent turn. A copy you updated outside ACE is re-checked before anything is refused. (`src/claude-runtime/compatibility.js`)
+- **Sign in from inside ACE, and it says signed in only once it has checked.** Sign in has Cancel, a box for the code the browser gives you, and a five-minute limit. A second click joins the sign-in already running, and every card follows the same one. ACE says you are signed in only after asking Claude Code fresh, whatever the login process reported. The titlebar's "Signed out of Claude" card now carries Sign in too, so you do not have to send a message to find out. (`src/connection/sign-in-operation.js`, `src/claude-runtime/auth-session.js`, `renderer/modules/titlebar-sign-in.js`)
+- **A message sent while signed out is kept, attachments and all.** After you sign in, Continue sends it. Anything you typed in the meantime is left alone. (`renderer/modules/draft-restore.js`)
+- **A usage limit, no network and a computer that slept each get their own words.** These used to land on a generic "This turn ended with an error" card. A usage limit now says when it resets, offers no retry, and puts your message back in the box. (`renderer/modules/failure-kind.js`)
+- **The titlebar's sign-in card draws above the chat** instead of sliding under it.
+
+### Range: your plan limits in the sidebar
+- **How much of your Claude and Codex plans is left, in the sidebar.** A section called Range shows a bar of what is left in each window (5-hour and Week), with a tick where even use would put you. Hover for the detail: how far ahead of or behind pace you are, whether your current rate lasts until the reset, when it resets, and roughly how many full sessions are left in the week. Range folds to a single line that shows your lowest number. You can also show it in the titlebar or beside each chat, or turn it off, in Settings. One notification when a window turns critical. (`src/limits/`, `renderer/modules/limits-meter.js`)
+- **Where the numbers come from.** For Claude, ACE uses the login Claude Code already keeps on your machine (Keychain on macOS, Claude Code's credentials file elsewhere) and asks Anthropic's usage endpoint at most every five minutes. The token is never logged, cached or shown. If the login cannot be read, ACE uses the limits Claude reports during your own chats. Signed out says "Sign in to Claude Code" rather than going blank. A member on an API key sees this week's spend instead, never beside plan numbers.
+- **The sidebar's old Sessions, Context, Uptime and 5H USAGE rows are gone,** replaced by Range.
+
+### Sidebar
+- **A new footer.** One row for status: the vitals ring with one word beside it ("Calm", "Warming", "Running hot") and a quiet Build switch. One row for the app: Settings and the version. In a narrow sidebar the version tag shortens to `v0.4.8` before it crowds the ring.
+- **The running mark lands in the hearth orb's glass** instead of a flat disc.
+
+### Projects
+- **Each project reads as one plain state.** In place of days-since-touched and seven nudge rules, every project now has one state, such as Needs you, In flow, Moving without a map, Waiting, Fading or Steady upkeep, with a sentence saying why. The list groups them into five: Needs you, Moving, Quiet, Steady upkeep, Set aside. The numbers behind each state are in a hover card, with where each came from.
+- **Read from real work.** One git pass per vault replaces three per project. An uncommitted edit counts as recent work. Checkouts, copies, and refreshing a project's PULSE.md or its status no longer count as working on it. If git does not answer, the last good reading is kept rather than falling back to file dates.
+- **An open goal past its date says it is overdue** rather than vanishing.
+- **New project and Update status buttons.** New project starts `/project` in a fresh chat. Update status asks ACE to propose a one-line Status and Next for the project's PULSE.md, which you read and send yourself.
+- **Set aside and Bring back.** Set a project aside from the page, find it in a folded Set aside section, and bring it back exactly as it was. When several projects have been quiet for over a month, the page offers to walk through them: Keep or Set aside.
+- **A status kept as a `## Status` section is read,** and a page that says it is resting but has clearly been worked on since asks "Still resting?"
+
+### Comms (ACE Link)
+- **Three bugs reported on rc.5.** Creating a person file from one thread could take its name from a different open thread. Evening messages in the Americas were filed under tomorrow's date. Open in Beeper focused Beeper but left it behind ACE.
+- **Filing is correct.** Picking an existing person in "Who is this?" works; it did nothing before. A group chat can no longer be filed as a person. A `$'` in a message no longer pastes the rest of a person file into it. Names in any script, and emoji-only names, can be filed, and aliases in other alphabets are kept.
+- **Sync is complete.** A chat that received more than one page of messages between syncs no longer loses the older part. Deleted messages disappear from Comms.
+- **Unmute.** An Undo right after muting, and a Muted list at the bottom of Comms with Unmute beside each sender.
+- Smaller fixes: the "new activity" pill cannot bring back a thread you just closed, the New message picker retries after a failed load, and a refresh no longer cuts off dictation.
+
+### Chat
+- **Attach audio.** `.m4a`, `.mp3`, `.wav`, `.ogg`, `.opus`, `.webm`, `.aac` and `.flac` can now be attached by drag, paste or the paperclip, which has an Audio filter. ACE is told where the file is and how to transcribe it on your machine with the bundled tools. Before this, an `.m4a` was refused as an unsupported file type.
+- **A file path with spaces in it links whole** when ACE names it in code, rather than linking only the last word.
+- **A blocked command's card says whether ACE carried on.** If the reply already did the job another way, the card says there is nothing to do. Its Run button stops working once you write again, so it can never run a command meant for an earlier moment.
+- **In a narrow chat the composer is one box,** with the mic beside send.
+
+### Learn and skills
+- **Learn lesson 9 practises `/followup`.**
+- **The skill library adds Higgsfield** (the official suite) and the community Higgsfield API skill.
+
+### Under the hood
+- The `get-usage` channel and `src/usage-probe.js` are retired. The limits meter replaced them.
+- Full suite on this tree: 428 test files, 8,004 tests passing.
+
 ## [v0.4.8-rc.5](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.8-rc.5) · 2026-09-30 · long replies finish even while ACE is in the background, a quieter load pill that leaves the version in view, background agents that can save into your vault and give their memory back when they finish, and ACE's core rebuilt in smaller pieces
 
 Release candidate 5 toward 0.4.8.
