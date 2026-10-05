@@ -5,6 +5,18 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## [v0.4.8-rc.7](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.8-rc.7) · 2026-10-05 · a narrow chat shows one lit message box, and Windows and Linux are tested before every release
+
+Release candidate 7 toward 0.4.8. A small one.
+
+### Chat
+- **In a narrow chat, the pane you are in lights its one message box.** rc.6 made the composer a single box below 380px, but the light that marks the current pane in a split still drew around the text field inside it, so you saw a lit box inside a box. The light now sits on the outer box, and the hover and focus glow still show as before. Wide chats are unchanged.
+
+### Under the hood
+- **Every release is now tested on Windows and Linux before it builds,** not only on macOS, so a release cannot publish while its Windows tests are red.
+- **A ritual reminder for the titlebar is in the build, switched off.** Nothing about it shows, runs or is stored unless `features.ritualPill` is set to true in your config, which no member's is. It is being trialled on the founder's build first. One addition runs for everyone: the rhythm reading now also reports the date of your earliest daily note, and it falls back to nothing if that cannot be read.
+- Full suite on this tree: 437 test files, 8,185 tests passing.
+
 ## [v0.4.8-rc.6](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.8-rc.6) · 2026-10-04 · Range shows how much of your plan is left, signing in to Claude from inside ACE, a Projects view that reads each project from its real work, Comms that files and syncs correctly, and audio you can attach
 
 Release candidate 6 toward 0.4.8.
