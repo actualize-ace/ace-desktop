@@ -5,6 +5,25 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## [v0.4.8-rc.8](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.8-rc.8) · 2026-10-06 · Projects is in the menu
+
+Release candidate 8 toward 0.4.8. Projects has been in the build, hidden, since rc.3. This is the release that shows it.
+
+### Projects
+- **Projects is in the menu,** under Knowledge, beside Vault, Graph, Memory and Intelligence. The Learn lesson on Knowledge describes it.
+- **The first time you open it, ACE says what it found** ("ACE found 6 projects in your vault") and asks only about what it is unsure of: a folder it could not read, a goal with no project, a folder that may hold several projects, a project it reads as upkeep, a folder outside your projects with recent work. Each has one-click answers. Nothing is written unless you choose an answer and confirm it. Looks right and Later are remembered in the app, never in your vault. Most vaults have nothing to ask, or one thing.
+- **Every wrong reading has a one-click correction,** on the first visit and on each project's page for good: Not a project, It's an ongoing area, It's several projects, Make it a project. Each shows the exact line it will add to the project's main note before it writes, refuses if the note changed meanwhile, and can be undone exactly. A folder you marked Not a project waits in a folded "Not listed as projects" section with Bring back, and a correction never makes a project look worked on.
+- **An open goal with no project is named,** with Create a project, or Link an existing project, which adds one line under that goal in your outcomes file. It shows the line first, writes only on your click, never touches the goal's name, date or status, and Undo takes it back. A vault whose permissions file forbids the Projects page adding that line is shown the line to add by hand instead.
+- **Each project opens on how it is going and the next thing,** then where you left off, your status note, your written next steps, and the goals that point to it. "Why ACE says this" explains the reading in plain sentences with where each part came from.
+- **Plain words throughout.** The states say only what ACE observed ("Files changed 2 days ago. No goal linked.", "No changes for 4 months."), the PULSE file is called your status note, and no markdown or file syntax appears in sentences. One summary sentence sits above the list ("24 projects: 20 moving and 4 quiet. Nothing is due in the next two weeks.").
+- **Keyboard and narrow windows.** The list is one Tab stop: arrows, Home and End move through it, focus and selection look different, and it holds only projects, so Tab reaches them first. Below about a 900 px window the page is one column, and the first-visit review folds behind one button so a project stays in view. Focus rings, text sizes, contrast and state shapes follow the design system, in light and dark.
+
+### Sidebar
+- **Rituals say when they last ran, not when you last clicked them,** for /start, /eod, /pulse, /weekly-review and /monthly-reflection, read from your vault. This only shows with the ritual reminder switched on (`features.ritualPill`), which no member's is; with it off, nothing changes.
+
+### Under the hood
+- Full suite on this tree: 446 test files, 8,477 tests passing.
+
 ## [v0.4.8-rc.7](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.8-rc.7) · 2026-10-05 · a narrow chat shows one lit message box, and Windows and Linux are tested before every release
 
 Release candidate 7 toward 0.4.8. A small one.
