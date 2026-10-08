@@ -5,6 +5,32 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## [v0.4.8-rc.9](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.8-rc.9) · 2026-10-08 · point at a frame of a video, and a calmer Projects page
+
+Release candidate 9 toward 0.4.8.
+
+### Preview
+- **Point at a frame of a video.** Turn on Pick on a video in the preview and ACE opens it in its own player: step frame by frame (`,` and `.`, with shift to jump a shot), click a face or a caption, or drag a box. Each pick lands in the chat with the exact frame attached, marked where you pointed, plus a small thumbnail on its chip. Several picks send together, and each can carry a note. Turn Pick off and the video plays as before.
+- **Nothing to install.** ACE takes the frame with the same video decoder the preview already plays it with, so it works on a fresh Mac or PC. A video your computer cannot play in the preview (for example an iPhone HEVC clip on some Windows and Linux machines) still lands as a pick with its time and point, and says the frame could not be taken rather than guessing.
+
+### Projects
+- **Projects has its own place in the menu,** at the top level beside People and Comms, since it is where the day's work gets chosen.
+- **The page opens on an Overview:** one card per state (Moving, Quiet, Steady upkeep, Set aside, and Needs you when something does), what is coming up in the next two months, and the chosen card's last 13 weeks of work. List rows are one line, and the first-visit review folds to one line and asks one question at a time.
+- **Each project page leads with your status note** while it is recent, then how it is going and the one next step, then tabs. Set aside and the corrections sit in one menu.
+- **Continue,** one click from a project to a chat that reads the project, says where it stands, proposes the one next step and names the files it read. It asks before changing anything.
+
+### Comms
+- **Your own last message is marked "You:"** in Comms and its digest, so a thread where you spoke last no longer reads as someone waiting on you, and filing that exchange records it as yours.
+
+### Polish
+- **The titlebar holds together when zoomed.** At 130% the energy bar used to slide under the pills; it now stays centred while there is room and moves aside when there is not.
+- **The vitals ring lines up with the Settings gear** in the sidebar footer.
+
+### Under the hood
+- The ritual reminder in the titlebar gained a clearer menu and windows that fit real routines. It is still switched off for every member (`features.ritualPill`).
+- Video frames are now tested on macOS, Windows and Linux before every release, against a small test video whose every frame carries its own number.
+- Full suite on this tree: 463 test files, 8,805 tests passing.
+
 ## [v0.4.8-rc.8](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.8-rc.8) · 2026-10-06 · Projects is in the menu
 
 Release candidate 8 toward 0.4.8. Projects has been in the build, hidden, since rc.3. This is the release that shows it.
