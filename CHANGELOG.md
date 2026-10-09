@@ -25,6 +25,9 @@ Release candidate 10 toward 0.4.8.
 ### Privacy
 - **Your notes are in your words.** Filing a message no longer copies the other person's words into their file or your follow-ups. "Add to their notes" adds a dated line to their Interactions in your own words, so other people's messages stay out of your synced vault.
 
+### Preview
+- **The video player looks and works like ACE.** When you turn on Pick for a video, its player now uses ACE's own fonts, colours and cards in light and dark, and follows a theme switch straight away. The shot strip doubles as the scrubber, and four controls help you review: loop the shot (L), half or normal speed ([ and ]), volume and mute (M), and fullscreen (F).
+
 ### Under the hood
 - ACE Link keeps a small log of each sync and transcription in your system's logs folder, with no message text or names in it.
 - Full suite on this tree: 495 test files, 9,350 tests passing.
