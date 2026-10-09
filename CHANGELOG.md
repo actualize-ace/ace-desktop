@@ -5,6 +5,30 @@ Format: newest first. Tags link to GitHub Releases.
 
 ---
 
+## [v0.4.8-rc.10](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.8-rc.10) · 2026-10-09 · Comms you can actually read, and people it actually knows
+
+Release candidate 10 toward 0.4.8.
+
+### Comms
+- **Show conversation on every row.** Open it to read the last few messages of the thread in order, with voice notes transcribed in place, photos and files as small labels, and long messages folded with "more". It refreshes on its own when something new lands.
+- **Open in Beeper on every row.** One click brings that chat to the front in Beeper with nothing typed. Drafting still needs your yes before ACE puts any words in Beeper's box, and ACE still never sends.
+- **Voice notes reach the screen.** The newest notes are transcribed first, a row updates the moment its words arrive, and the header says "Transcribing voice notes · 3 waiting" while it works. On a computer that is slow for the large model, ACE switches to the faster one and says so.
+- **Sync is quick.** It finishes in seconds and transcription runs afterwards in the background at low priority, so the Sync button no longer sits spinning. ACE also syncs shortly after it opens, and picks up again on its own if it was closed mid-sync.
+- **Easier to act on.** "Asked you" marks a thread with a question in it, and each waiting thread says how long it has waited. Group chats fold into a Groups line unless someone asked you something. There is one Done, and Done, Snooze and Nothing needed can each be undone for a few seconds. Snooze offers real times (later today, tomorrow morning, next week) and a Snoozed list.
+- **Calmer and easier to read.** Larger text and buttons, times that stay current, the exact time on hover, and plain words when you are caught up, not connected, or something went wrong.
+- **Faster to open.** ACE reads each stored message once instead of on every visit, which matters most on slower Windows computers.
+
+### People
+- **ACE knows who a chat is with.** It now reads who is actually in a chat rather than trusting a display name, so a bridge bot or a housekeeping line no longer becomes a contact, and two people with the same name stay apart. When a chat looks like someone in your People ("David G" and David Gilbert), ACE asks "Is this David Gilbert?" with Link and Not them. Links live on this computer only, never in your vault.
+- **Each profile shows recent contact.** Last contact, who wrote last, and their threads, each with Open in Comms and Next step. A "Waiting on you" list sits at the top of People, and a linked name in Comms opens that person's profile.
+
+### Privacy
+- **Your notes are in your words.** Filing a message no longer copies the other person's words into their file or your follow-ups. "Add to their notes" adds a dated line to their Interactions in your own words, so other people's messages stay out of your synced vault.
+
+### Under the hood
+- ACE Link keeps a small log of each sync and transcription in your system's logs folder, with no message text or names in it.
+- Full suite on this tree: 495 test files, 9,350 tests passing.
+
 ## [v0.4.8-rc.9](https://github.com/actualize-ace/ace-desktop/releases/tag/ace-desktop-v0.4.8-rc.9) · 2026-10-08 · point at a frame of a video, and a calmer Projects page
 
 Release candidate 9 toward 0.4.8.
